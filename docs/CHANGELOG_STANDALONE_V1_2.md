@@ -17,3 +17,13 @@
 - heróis recrutados e rivais usam fallback visual por raça;
 - corrige a barra de ação cobrindo a formação no mobile;
 - mantém os retratos específicos de inimigos já existentes.
+
+
+## v1.2.2 — Mobile First
+- subnavegação Missão/Equipe/Liga/Descanso agora fica visível abaixo do cabeçalho;
+- reduz altura do cabeçalho e da barra inferior;
+- compacta os cards de heróis sem diminuir os alvos de toque;
+- botão Partir deixa de ser coberto pela navegação inferior;
+- aumenta a área segura no fim de todas as telas;
+- batalha passa a ocupar corretamente a viewport móvel;
+- melhora espaçamento, tipografia e toque em telas de 420–760 px.

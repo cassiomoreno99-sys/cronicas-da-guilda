@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Toaster, toast } from "sonner";
-import { CLASSES, RACES, heroRace, TACTICS, ITEMS, REGIONS, SPECIALIZATIONS, KIND_NAMES, missions, missionLocks, seasonBoss, battleActive, activeExpeditions, heroOnExpedition, heroStats, talentPoints, market, teamPower, rating, threshold, available, standings, payroll, rank, seasonDay, missionReadiness, trainingPlan, defaultFormationLine, formationValid, type Action, type BattleFighter, type Campaign, type Hero, type HeroClass, type HeroRace, type Tactic, type FormationLine } from "@/lib/game";
+import { CLASSES, RACES, heroRace, TACTICS, ITEMS, REGIONS, SPECIALIZATIONS, KIND_NAMES, missions, missionLocks, seasonBoss, battleActive, activeExpeditions, freeExpeditionSlots, heroOnExpedition, SQUAD_SPECIALTIES, suggestSpecialistTeam, heroStats, talentPoints, market, teamPower, rating, threshold, available, standings, payroll, rank, seasonDay, missionReadiness, trainingPlan, defaultFormationLine, formationValid, type Action, type BattleFighter, type Campaign, type Hero, type HeroClass, type HeroRace, type Tactic, type FormationLine, type MissionKind, type ExpeditionSlot } from "@/lib/game";
 import { battleFrame, battleTimeline, advanceBattleClock, formatBattleClock, type PlaybackSpeed, type BattleEvent } from "@/lib/battle-playback";
 import { portraitPosition } from "@/lib/portraits";
 import { EventPanel, SeasonJourney, ChestAndShop, SpecializationPanel, RaceEvolutionPanel, HeroStoryPanel, JourneyPanel, HeroEquipment, BattleOrders, ItemIcon, IndividualTraining, ClassesGuide } from "./game-dynamics";
@@ -89,6 +89,8 @@ export default function Game() {
   const [confirm, setConfirm] = useState<Confirm>(null);
   const [battleOpen, setBattleOpen] = useState(false);
   const [activeExpeditionId, setActiveExpeditionId] = useState<string | null>(null);
+  const [selectedExpeditionSlot, setSelectedExpeditionSlot] = useState<ExpeditionSlot>(1);
+  const [squadNameDrafts, setSquadNameDrafts] = useState<Record<string, string>>({});
   const [elapsed, setElapsed] = useState(0);
   const [paused, setPaused] = useState(false);
   const [battleSpeed, setBattleSpeed] = useState<PlaybackSpeed>(1);
@@ -103,6 +105,9 @@ export default function Game() {
   const hydrateSave = useCallback((body: Save) => {
     setSave(body); saveRef.current = body; setTeam(body.state.team); setFormation(body.state.formation || {}); setTactic(body.state.tactic); setGuildName(body.state.name);
     const firstActive = activeExpeditions(body.state)[0];
+    const firstFree = freeExpeditionSlots(body.state)[0];
+    setSelectedExpeditionSlot(firstFree || 1);
+    setSquadNameDrafts(Object.fromEntries((body.state.squads || []).map(q => [q.specialty, q.name])));
     if (firstActive) { setActiveExpeditionId(firstActive.id); setElapsed(battleTimeline(firstActive.battle).availableUntil); setWatchingBattle(true); }
   }, []);
 
@@ -116,7 +121,8 @@ export default function Game() {
   useEffect(() => { void load(); }, [load]);
   const state = save?.state;
   const runningExpeditions = state ? activeExpeditions(state) : [];
-  const expeditionBatch = state ? state.expeditions.filter(e => e.battle.status === "active" || e.startedDay === state.day).slice(-3) : [];
+  const freeSlots = state ? freeExpeditionSlots(state) : [];
+  const expeditionSlots = ([1, 2, 3] as ExpeditionSlot[]).map(slot => ({ slot, expedition: runningExpeditions.find(e => e.slot === slot) }));
   const selectedExpedition = state ? state.expeditions.find(e => e.id === activeExpeditionId) || runningExpeditions[0] || state.expeditions[state.expeditions.length - 1] : undefined;
   const active = selectedExpedition?.battle.status === "active" && !!selectedExpedition.battle.combat;
   const blocked = busy;
@@ -151,8 +157,9 @@ export default function Game() {
       if (action.type === "mission") {
         const newest = body.state.expeditions[body.state.expeditions.length - 1];
         if (newest) setActiveExpeditionId(newest.id);
+        const nextFree = freeExpeditionSlots(body.state)[0]; if (nextFree) setSelectedExpeditionSlot(nextFree);
         setElapsed(0); setPaused(false); setBattleSpeed(1); setWatchingBattle(true); setBattleOpen(false); setBattleView("combat");
-        toast.success("Expedição enviada. Ela continuará em segundo plano enquanto você usa a guilda.");
+        toast.success("Expedição " + (newest?.slot || action.expeditionSlot || "") + " enviada. A vaga continua visível e a guilda segue funcionando.");
       }
       else if (action.type === "rest") toast.success("Equipe descansada. Um novo dia começou.");
       else if (action.type === "train-hero") { const h = current.state.heroes.find(h => h.id === action.heroId)!; toast.success(h.name + " treinou: +" + trainingPlan(current.state, h).xp + " XP."); }
@@ -258,6 +265,42 @@ export default function Game() {
     return () => lifecycle.abort();
   }, []);
 
+  function setPreparedTeam(ids: string[], savedFormation?: Record<string, FormationLine>, savedTactic?: Tactic) {
+    if (!state) return;
+    const valid = ids.filter(id => state.heroes.some(h => h.id === id && available(h, state))).slice(0, 4);
+    if (valid.length < 3) { toast.error("Não há pelo menos 3 heróis disponíveis para montar essa equipe."); return; }
+    const nextFormation: Record<string, FormationLine> = {};
+    for (const id of valid) {
+      const hero = state.heroes.find(h => h.id === id)!;
+      nextFormation[id] = savedFormation?.[id] || defaultFormationLine(hero.class);
+    }
+    if (!formationValid(valid, nextFormation)) { nextFormation[valid[0]] = "front"; nextFormation[valid.length - 1] = "back"; }
+    setTeam(valid); setFormation(nextFormation); if (savedTactic) setTactic(savedTactic);
+    setMobileView("team");
+  }
+  function loadSavedSquad(kind: MissionKind) {
+    if (!state) return;
+    const squad = state.squads.find(q => q.specialty === kind);
+    const saved = (squad?.team || []).filter(id => state.heroes.some(h => h.id === id && available(h, state)));
+    if (saved.length >= 3) setPreparedTeam(saved, squad?.formation, squad?.tactic);
+    else {
+      const suggested = suggestSpecialistTeam(state, kind);
+      setPreparedTeam(suggested, undefined, squad?.tactic);
+      toast("Parte da equipe estava ocupada. Montei uma versão disponível para " + SQUAD_SPECIALTIES[kind].label + ".");
+    }
+  }
+  function buildSpecialistSquad(kind: MissionKind) {
+    if (!state) return;
+    const ids = suggestSpecialistTeam(state, kind);
+    setPreparedTeam(ids, undefined, kind === "defense" || kind === "boss" ? "defensive" : kind === "hunt" ? "aggressive" : "balanced");
+  }
+  function saveCurrentSquad(kind: MissionKind) {
+    if (!state) return;
+    const current = state.squads.find(q => q.specialty === kind);
+    const name = (squadNameDrafts[kind] || current?.name || SQUAD_SPECIALTIES[kind].label).trim();
+    act({ type: "save-squad", specialty: kind, name, team, tactic, formation });
+  }
+
   function toggleTeamHero(h: Hero) {
     if (!state) return;
     if (team.includes(h.id)) { setTeam(team.filter(id => id !== h.id)); setFormation(old => { const next = { ...old }; delete next[h.id]; return next; }); return; }
@@ -349,7 +392,7 @@ export default function Game() {
     <Toaster theme="dark" position="bottom-right" richColors />
     <header className="topbar"><div className="topbar-inner">
       <div className="brand"><div className="brand-mark"><Shield strokeWidth={1.5} /><Sword strokeWidth={1.5} /></div><div><span className="eyebrow">SIMULADOR DE GUILDA</span><span className="brand-title">Crônicas da Guilda</span></div></div>
-      <div className="header-tools"><span className="version">v1.2.4 · EXPEDIÇÕES PARALELAS</span><Button variant="ghost" size="sm" className="help-button" aria-label="Como jogar" onClick={() => setHelp(true)}><CircleHelp /> <span>Como jogar</span></Button></div>
+      <div className="header-tools"><span className="version">v1.2.5 · VAGAS FIXAS + EQUIPES PRONTAS</span><Button variant="ghost" size="sm" className="help-button" aria-label="Como jogar" onClick={() => setHelp(true)}><CircleHelp /> <span>Como jogar</span></Button></div>
     </div></header>
     {!state ? <main className="loading-screen"><Shield size={42} /><h1>{loading ? "Abrindo o salão da guilda…" : "Não foi possível abrir o save"}</h1><p role="status">{loading ? "Carregando sua campanha deste aparelho." : error}</p>{!loading && <Button onClick={() => void load()}>Tentar novamente</Button>}</main> : <main className="workspace">
       <div className="guild-heading"><div><span className="eyebrow">SALÃO DO COMANDANTE</span><h1>{state.name}</h1></div><span className="save-status" role="status">{busy ? <><LoaderCircle className="spin" /> Salvando…</> : <><HardDrive /> Salvo neste aparelho</>}</span></div>
@@ -361,7 +404,7 @@ export default function Game() {
       </div>
       {error && <div className="error-banner" role="alert"><span>{error}</span><Button variant="ghost" size="icon" onClick={() => setError("")} aria-label="Fechar aviso"><X /></Button></div>}
       <EventPanel state={state} disabled={blocked} act={act} />
-      {expeditionBatch.length > 0 && <section className="expedition-dock" aria-label="Expedições da guilda"><div className="expedition-dock-heading"><div><span className="eyebrow">CENTRAL DE EXPEDIÇÕES</span><strong>{runningExpeditions.length} / 3 equipes em campo</strong></div><span>A guilda continua funcionando</span></div><div className="expedition-dock-grid">{expeditionBatch.map(exp => <button key={exp.id} className="expedition-mini-card" data-status={exp.battle.status || "active"} onClick={() => openBattle(exp.id)}><span className="expedition-mini-icon">{exp.battle.status === "active" ? <Swords /> : exp.battle.won ? <Trophy /> : <Shield />}</span><span className="expedition-mini-copy"><strong>{exp.battle.title}</strong><small>{exp.battle.status === "active" ? "Turno " + exp.battle.rounds + " · em andamento" : exp.battle.won ? "Vitória · ver relatório" : exp.battle.status === "retreated" ? "Retirada · ver relatório" : "Encerrada · ver relatório"}</small></span><span className="expedition-mini-team">{exp.team.map(id => { const h = state.heroes.find(hero => hero.id === id); return h ? <Portrait key={id} hero={h} /> : null; })}</span><ChevronRight /></button>)}</div><p className="expedition-dock-note">Você pode abrir Heróis, Baú, Taverna e Guilda enquanto as equipes lutam. Heróis em campo ficam indisponíveis para outra expedição.</p></section>}
+      <section className="expedition-dock" aria-label="Expedições da guilda"><div className="expedition-dock-heading"><div><span className="eyebrow">CENTRAL DE EXPEDIÇÕES</span><strong>{runningExpeditions.length} / 3 equipes em campo</strong></div><span>As três vagas ficam sempre visíveis</span></div><div className="expedition-dock-grid">{expeditionSlots.map(({ slot, expedition }) => expedition ? <button key={slot} className="expedition-mini-card" data-status="active" onClick={() => openBattle(expedition.id)}><span className="expedition-slot-number">EXPEDIÇÃO {slot}</span><span className="expedition-mini-icon"><Swords /></span><span className="expedition-mini-copy"><strong>{expedition.battle.title}</strong><small>Turno {expedition.battle.rounds} · em andamento · tocar para abrir</small></span><span className="expedition-mini-team">{expedition.team.map(id => { const h = state.heroes.find(hero => hero.id === id); return h ? <Portrait key={id} hero={h} /> : null; })}</span><ChevronRight /></button> : <button key={slot} className="expedition-mini-card expedition-free-slot" data-selected={selectedExpeditionSlot === slot} onClick={() => { setSelectedExpeditionSlot(slot); setView("expeditions"); setMobileView("mission"); }}><span className="expedition-slot-number">EXPEDIÇÃO {slot}</span><span className="expedition-mini-icon"><Tent /></span><span className="expedition-mini-copy"><strong>Vaga livre</strong><small>{selectedExpeditionSlot === slot ? "Selecionada para a próxima equipe" : "Tocar para preparar esta expedição"}</small></span><ChevronRight /></button>)}</div><p className="expedition-dock-note">Uma vaga ocupada não some. Você verá Expedição 1, 2 e 3 o tempo todo; as livres ficam prontas para receber outra equipe.</p></section>
       <Tabs value={view} onValueChange={navigate} className="game-tabs">
         <TabsList variant="line" className="main-tabs" aria-label="Navegação da guilda"><TabsTrigger value="expeditions"><Swords /><span className="desktop-label">Expedições</span><span className="mobile-label">Missões</span></TabsTrigger><TabsTrigger value="heroes"><Users />Heróis <span className="tab-count">{state.heroes.length}</span></TabsTrigger><TabsTrigger value="inventory"><Archive /><span className="desktop-label">Baú e mercador</span><span className="mobile-label">Baú</span></TabsTrigger><TabsTrigger value="market"><ScrollText /><span className="desktop-label">Recrutamento</span><span className="mobile-label">Taverna</span></TabsTrigger><TabsTrigger value="guild"><Crown />Guilda</TabsTrigger></TabsList>
         <TabsContent value="expeditions">
@@ -379,9 +422,10 @@ export default function Game() {
               </RadioGroup>
               {readiness && <p className={"desktop-readiness readiness readiness-" + readiness.level}><Shield size={16} />{readiness.label}<span>{readiness.hint}</span></p>}
             </section>
-            <section className="panel roster-panel"><div className="panel-heading"><div><h2>Equipe da expedição</h2><p>Escolha 3 ou 4 heróis. Quem estiver em outra expedição fica indisponível.</p></div><span className={"team-count " + (team.length >= 3 ? "complete" : "")}>{team.length} / 3–4</span></div>{roster()}
+            <section className="panel roster-panel"><div className="panel-heading"><div><h2>Equipe da Expedição {selectedExpeditionSlot}</h2><p>Escolha 3 ou 4 heróis. Quem estiver em outra expedição fica indisponível.</p></div><span className={"team-count " + (team.length >= 3 ? "complete" : "")}>{team.length} / 3–4</span></div>{roster()}
               <div className="roster-footer"><span><Shield />Força da equipe <strong>{power}</strong></span><span className="muted">Energia mínima: 25%</span></div>
             </section>
+            <section className="panel saved-squads-panel"><div className="panel-heading"><div><h2>Equipes especialistas</h2><p>Salve formações prontas por tipo de missão e dê o nome que quiser.</p></div><Users /></div><div className="saved-squads-grid">{(Object.keys(SQUAD_SPECIALTIES) as MissionKind[]).map(kind => { const squad = state.squads.find(q => q.specialty === kind); const members = (squad?.team || []).map(id => state.heroes.find(h => h.id === id)).filter(Boolean) as Hero[]; return <article className="saved-squad-card" key={kind}><div className="saved-squad-head"><span className="specialty-badge">{SQUAD_SPECIALTIES[kind].label}</span><Input value={squadNameDrafts[kind] ?? squad?.name ?? SQUAD_SPECIALTIES[kind].label} onChange={e => setSquadNameDrafts(old => ({ ...old, [kind]: e.target.value }))} maxLength={32} aria-label={"Nome da equipe de " + SQUAD_SPECIALTIES[kind].label} /></div><p>{SQUAD_SPECIALTIES[kind].description}</p><div className="saved-squad-members">{members.length ? members.map(h => <span key={h.id}><Portrait hero={h} /><small>{h.name.split(" ")[0]}</small></span>) : <small>Nenhuma formação salva ainda.</small>}</div><div className="saved-squad-actions"><Button variant="outline" size="sm" onClick={() => buildSpecialistSquad(kind)} disabled={blocked}>Montar especialista</Button><Button variant="outline" size="sm" onClick={() => loadSavedSquad(kind)} disabled={blocked}>{members.length ? "Usar equipe" : "Usar sugestão"}</Button><Button size="sm" onClick={() => saveCurrentSquad(kind)} disabled={blocked || team.length < 3}>Salvar atual</Button></div></article>; })}</div></section>
             <section className="panel strategy-panel"><div className="panel-heading"><div><h2>Plano de batalha</h2><p>{selectedMission?.flavor}</p></div><span className="subtle-chip">Combate 2.0</span></div>
               <div className="formation-editor"><div className="formation-heading"><div><h3>Formação</h3><p>A frente recebe +10% de defesa e segura a maior parte dos ataques. A retaguarda recebe +6% de ataque/magia, mas flanqueadores podem alcançá-la.</p></div><span>{frontCount} frente · {backCount} retaguarda</span></div><div className="formation-list">{state.heroes.filter(h => team.includes(h.id)).map(h => <div className="formation-hero" key={h.id}><div className="formation-hero-name"><Portrait hero={h} /><span><strong>{h.name}</strong><small>{CLASSES[h.class].name} · {RACES[heroRace(h)].name}</small></span></div><ToggleGroup type="single" value={formation[h.id] || defaultFormationLine(h.class)} onValueChange={v => { if (v) changeFormation(h.id, v as FormationLine); }} variant="outline" disabled={blocked} aria-label={"Posição de " + h.name}><ToggleGroupItem value="front"><Shield />Frente</ToggleGroupItem><ToggleGroupItem value="back"><Target />Retaguarda</ToggleGroupItem></ToggleGroup></div>)}</div>{team.length < 3 && <p className="formation-note">Escale pelo menos três heróis para formar uma equipe.</p>}{team.length >= 3 && !formationReady && <p className="team-warning">A formação precisa ter ao menos um herói em cada linha.</p>}</div>
               <RadioGroup value={tactic} onValueChange={v => setTactic(v as Tactic)} className="tactic-grid" aria-label="Tática da equipe" disabled={blocked}>
@@ -390,7 +434,7 @@ export default function Game() {
               {(!teamReady || lackHealer) && <p className="team-warning">{!teamReady ? "Escale 3 ou 4 heróis disponíveis para partir." : "Sem cura: inclua uma curandeira, druida ou herói com caminho de cura."}</p>}
               <p className="mobile-tactic-description">{TACTICS[tactic].description}</p>
               {state.event && <p className="team-warning">Resolva a decisão do conselho para partir.</p>}
-              <div className="launch-row"><div><span className="eyebrow">DESTINO SELECIONADO</span><strong>{selectedMission?.title}</strong><span className="muted">{selectedLocks.length ? "Contrato bloqueado" : state.event ? "Conselho pendente" : !formationReady ? "Complete a equipe e a formação" : "Derrota: −" + (selectedMission ? 6 + selectedMission.rank * 3 : 0) + " renome"}</span></div><Button className="primary-launch" size="lg" disabled={blocked || !formationReady || !!state.event || selectedLocks.length > 0} onClick={() => selectedMission && act({ type: "mission", missionId: selectedMission.id, team, tactic, formation, startedAt: Date.now() })}>{busy ? <LoaderCircle className="spin" /> : <Swords />}<span className="desktop-label">Iniciar expedição</span><span className="mobile-label">Partir</span></Button></div>
+              <div className="launch-row"><div><span className="eyebrow">DESTINO SELECIONADO</span><strong>{selectedMission?.title}</strong><span className="muted">{selectedLocks.length ? "Contrato bloqueado" : state.event ? "Conselho pendente" : !formationReady ? "Complete a equipe e a formação" : "Derrota: −" + (selectedMission ? 6 + selectedMission.rank * 3 : 0) + " renome"}</span></div><Button className="primary-launch" size="lg" disabled={blocked || !freeSlots.includes(selectedExpeditionSlot) || !formationReady || !!state.event || selectedLocks.length > 0} onClick={() => selectedMission && act({ type: "mission", missionId: selectedMission.id, team, tactic, formation, startedAt: Date.now(), expeditionSlot: selectedExpeditionSlot })}>{busy ? <LoaderCircle className="spin" /> : <Swords />}<span className="desktop-label">Iniciar expedição</span><span className="mobile-label">Partir</span></Button></div>
             </section>
           </div>
           <aside className="side-column">

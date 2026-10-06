@@ -36,15 +36,19 @@ export type MissionKind = "escort" | "defense" | "dungeon" | "hunt" | "boss";
 export type Mission = { id: string; title: string; location: string; description: string; rank: number; force: number; reward: number; enemy: string; count: number; specialty: string; flavor: string; kind: MissionKind; requiredFame: number; requiredItem?: string; boss?: number };
 type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
 export type Battle = { title: string; day: number; won: boolean; reward: number; xp: number; rounds: number; log: BattleLog[]; levelUps: string[]; wounded: string[]; remaining: number; fighters?: BattleFighter[]; status?: "active" | "won" | "lost" | "retreated"; combat?: Combat; loot?: string[]; fameChange?: number; regionUnlocked?: number; objective?: { name: string; hp: number; maxHp: number; targetRounds: number } };
-export type Expedition = { id: string; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; battle: Battle; startedDay: number; nextRoundAt: number };
+export type ExpeditionSlot = 1 | 2 | 3;
+export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic };
+export type Expedition = { id: string; slot: ExpeditionSlot; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; battle: Battle; startedDay: number; nextRoundAt: number };
 export type LeagueResult = "win" | "draw" | "loss";
 export type LeagueMatch = { season: number; day: number; opponentId: string; opponentName: string; playerScore: number; opponentScore: number; result: LeagueResult; playerPower: number; opponentPower: number; rivalry: boolean; cup?: boolean; stage?: string };
 export type Rivalry = { guildId: string; heat: number; sinceSeason: number; lastReason: string };
 export type CupStage = "oitavas" | "quartas" | "semifinal" | "final" | "champion" | "eliminated";
 export type CupState = { season: number; stage: CupStage; wins: number; history: LeagueMatch[] };
-export type Campaign = { schema: 1; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; bossSeasons: number[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number> };
+export type Campaign = { schema: 1; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; bossSeasons: number[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[] };
 export type Action =
-  | { type: "mission"; missionId: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine>; startedAt?: number }
+  | { type: "mission"; missionId: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine>; startedAt?: number; expeditionSlot?: ExpeditionSlot }
+  | { type: "save-squad"; specialty: MissionKind; name: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
+  | { type: "rename-squad"; specialty: MissionKind; name: string }
   | { type: "expedition-tick"; now: number }
   | { type: "battle-round"; expeditionId?: string } | { type: "battle-auto"; expeditionId?: string } | { type: "battle-retreat"; expeditionId?: string }
   | { type: "battle-tactic"; tactic: Tactic; expeditionId?: string } | { type: "battle-potion"; heroId: string; expeditionId?: string }
@@ -347,7 +351,11 @@ function random(s: Campaign) { s.rng = (Math.imul(s.rng, 1664525) + 1013904223) 
 export function seasonDay(s: Campaign) { return ((s.day - 1) % 28) + 1; }
 export function threshold(h: Hero) { return 100 + h.level * 35; }
 export function activeJourney(s: Campaign, heroId: string) { return s.journeys?.find(j => j.heroId === heroId); }
-export function activeExpeditions(s: Campaign) { return (s.expeditions || []).filter(e => e.battle.status === "active" && !!e.battle.combat); }
+export function activeExpeditions(s: Campaign) { return (s.expeditions || []).filter(e => e.battle.status === "active" && !!e.battle.combat).toSorted((a, b) => a.slot - b.slot); }
+export function freeExpeditionSlots(s: Campaign): ExpeditionSlot[] {
+  const occupied = new Set(activeExpeditions(s).map(e => e.slot));
+  return ([1, 2, 3] as ExpeditionSlot[]).filter(slot => !occupied.has(slot));
+}
 export function heroOnExpedition(s: Campaign, heroId: string) { return activeExpeditions(s).some(e => e.team.includes(heroId)); }
 export function available(h: Hero, s: Campaign) { return h.energy >= 25 && h.injuredUntil <= s.day && !activeJourney(s, h.id) && !heroOnExpedition(s, h.id); }
 export function battleActive(s: Campaign, expeditionId?: string) {
@@ -418,6 +426,42 @@ export function missionReadiness(s: Campaign, m: Mission, ids = s.team) {
   const highRisk = average < recommended - .75 || team.some(h => h.energy < 40);
   return { level: ready ? "ready" : highRisk ? "risk" : "prepare", label: ready ? "Boa preparação" : highRisk ? "Alto risco para esta equipe" : "Reforce sua preparação", hint: reference + " O objetivo e a composição também influenciam o resultado." };
 }
+export const SQUAD_SPECIALTIES: Record<MissionKind, { label: string; description: string }> = {
+  escort: { label: "Escolta", description: "Mobilidade, proteção da caravana e resposta rápida." },
+  defense: { label: "Defesa", description: "Linha de frente, resistência e cura para segurar posições." },
+  dungeon: { label: "Masmorra", description: "Armadilhas, magia e sobrevivência em exploração." },
+  hunt: { label: "Caçada", description: "Velocidade, dano e precisão para eliminar alvos antes que escapem." },
+  boss: { label: "Chefes", description: "Equipe equilibrada para combates longos e inimigos especiais." },
+};
+function specialistScore(h: Hero, kind: MissionKind, s: Campaign) {
+  const byKind: Record<MissionKind, Partial<Record<HeroClass, number>>> = {
+    escort: { ranger: 42, rogue: 30, monk: 27, warrior: 18, paladin: 18, healer: 14, bard: 12 },
+    defense: { paladin: 45, warrior: 40, healer: 32, monk: 24, druid: 20, bard: 12 },
+    dungeon: { rogue: 45, mage: 34, paladin: 28, healer: 24, necromancer: 22, druid: 16 },
+    hunt: { ranger: 48, rogue: 34, monk: 30, bard: 18, druid: 16, healer: 12 },
+    boss: { paladin: 38, warrior: 36, healer: 36, druid: 28, mage: 24, necromancer: 23, ranger: 22, monk: 20, bard: 18 },
+  };
+  let score = rating(h, s.arsenal, s) + (byKind[kind][h.class] || 0);
+  if (h.talent?.path === "defense" && ["escort", "defense", "boss"].includes(kind)) score += 15 * h.talent.rank;
+  if (h.talent?.path === "healing" && ["defense", "boss"].includes(kind)) score += 18 * h.talent.rank;
+  if (h.energy >= 70) score += 12; else if (h.energy < 45) score -= 18;
+  return score;
+}
+export function suggestSpecialistTeam(s: Campaign, kind: MissionKind, size = 4) {
+  const candidates = s.heroes.filter(h => available(h, s)).toSorted((a, b) => specialistScore(b, kind, s) - specialistScore(a, kind, s));
+  const picked: Hero[] = [];
+  const take = (predicate: (h: Hero) => boolean) => {
+    const h = candidates.find(hero => !picked.includes(hero) && predicate(hero));
+    if (h) picked.push(h);
+  };
+  if (["defense", "boss"].includes(kind)) { take(h => ["paladin", "warrior", "monk"].includes(h.class)); take(h => ["healer", "druid"].includes(h.class) || h.talent?.path === "healing"); }
+  if (kind === "dungeon") take(h => h.class === "rogue");
+  if (kind === "hunt") take(h => h.class === "ranger");
+  if (kind === "escort") take(h => ["ranger", "rogue", "monk"].includes(h.class));
+  for (const h of candidates) if (picked.length < size && !picked.includes(h)) picked.push(h);
+  return picked.slice(0, Math.min(size, 4)).map(h => h.id);
+}
+
 function entry(s: Campaign, label: string, amount: number) { s.transaction++; s.ledger.unshift({ id: s.transaction, day: s.day, label, amount }); s.ledger = s.ledger.slice(0, 80); s.gold += amount; }
 function note(s: Campaign, text: string) { s.journal.unshift({ day: s.day, text }); s.journal = s.journal.slice(0, 40); }
 function addItem(s: Campaign, key: string) { const item = { id: "item-" + (++s.itemSequence), key }; s.chest.push(item); return item; }
@@ -456,7 +500,7 @@ function createEvent(s: Campaign): GuildEvent {
     { id: "ignore", label: "Recusar o pedido", effect: "−8 renome" },
   ] };
 }
-type AddedFields = "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "bossSeasons" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay";
+type AddedFields = "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "bossSeasons" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads";
 type StoredRival = Pick<RivalGuild, "id" | "name" | "points" | "victories"> & Partial<RivalGuild>;
 type StoredCampaign = Omit<Campaign, AddedFields | "rivals"> & Partial<Pick<Campaign, AddedFields>> & { rivals: StoredRival[] };
 function normalizedFormation(s: Pick<Campaign, "heroes" | "team"> & Partial<Pick<Campaign, "formation">>) {
@@ -489,15 +533,28 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.journeys ??= []; s.journeySequence ??= 0;
   s.journeys = s.journeys.filter(j => s.heroes.some(h => h.id === j.heroId) && j.remaining > 0).map(j => ({ ...j, choice: ["camp", "explore", "shortcut"].includes(j.choice) ? j.choice : "camp", xpEarned: j.xpEarned || 0, loot: j.loot || [] }));
   s.expeditions ??= []; s.expeditionSequence ??= 0; s.hqActionDay ??= {};
+  s.squads ??= ([
+    ["escort", "Vanguarda da Estrada"], ["defense", "Muralha da Guilda"], ["dungeon", "Lâminas da Cripta"], ["hunt", "Caçadores da Bruma"], ["boss", "Companhia de Elite"],
+  ] as [MissionKind, string][]).map(([specialty, name]) => ({ id: "squad-" + specialty, name, specialty, team: [], formation: {}, tactic: specialty === "defense" || specialty === "boss" ? "defensive" : specialty === "hunt" ? "aggressive" : "balanced" }));
+  s.squads = s.squads.filter(q => q && SQUAD_SPECIALTIES[q.specialty]).map(q => ({ ...q, id: q.id || "squad-" + q.specialty, name: (q.name || SQUAD_SPECIALTIES[q.specialty].label).slice(0, 32), team: (q.team || []).filter(id => s.heroes.some(h => h.id === id)).slice(0, 4), formation: q.formation || {}, tactic: Object.hasOwn(TACTICS, q.tactic) ? q.tactic : "balanced" }));
   if (!s.expeditions.length && s.lastBattle?.status === "active" && s.lastBattle.combat) {
     const legacyTeam = s.lastBattle.combat.fighters.filter(f => f.side === "hero").map(f => f.id);
-    s.expeditions.push({ id: "expedition-" + (++s.expeditionSequence), team: legacyTeam, formation: { ...s.lastBattle.combat.formation }, tactic: s.lastBattle.combat.tactic, battle: s.lastBattle, startedDay: s.lastBattle.day, nextRoundAt: Date.now() + 2500 });
+    s.expeditions.push({ id: "expedition-" + (++s.expeditionSequence), slot: 1, team: legacyTeam, formation: { ...s.lastBattle.combat.formation }, tactic: s.lastBattle.combat.tactic, battle: s.lastBattle, startedDay: s.lastBattle.day, nextRoundAt: Date.now() + 2500 });
   }
+  const claimedSlots = new Set<ExpeditionSlot>();
   for (const expedition of s.expeditions) {
     expedition.team = expedition.team.filter(id => s.heroes.some(h => h.id === id)).slice(0, 4);
     expedition.nextRoundAt = Number.isFinite(expedition.nextRoundAt) ? expedition.nextRoundAt : Date.now() + 2500;
     expedition.formation ??= {};
     expedition.tactic = Object.hasOwn(TACTICS, expedition.tactic) ? expedition.tactic : "balanced";
+    if (expedition.battle.status === "active" && expedition.battle.combat) {
+      const desired = ([1, 2, 3] as ExpeditionSlot[]).includes(expedition.slot as ExpeditionSlot) ? expedition.slot as ExpeditionSlot : undefined;
+      if (desired && !claimedSlots.has(desired)) { expedition.slot = desired; claimedSlots.add(desired); }
+      else {
+        const fallback = ([1, 2, 3] as ExpeditionSlot[]).find(slot => !claimedSlots.has(slot)) || 3;
+        expedition.slot = fallback; claimedSlots.add(fallback);
+      }
+    } else if (!([1, 2, 3] as ExpeditionSlot[]).includes(expedition.slot as ExpeditionSlot)) expedition.slot = 1;
     if (expedition.battle?.combat) {
       const c = expedition.battle.combat;
       c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= { ...expedition.formation };
@@ -1033,18 +1090,43 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
   if (battleActive(s) && ["rest", "train"].includes(action.type)) requireRule(false, "Há expedições em andamento. Administre a sede ou treine individualmente os heróis que ficaram; descanso e treino de equipe voltam quando as equipes retornarem.");
   switch (action.type) {
     case "mission": {
-      requireRule(activeExpeditions(s).length < 3, "A guilda já mantém três expedições simultâneas.");
+      const freeSlots = freeExpeditionSlots(s);
+      requireRule(freeSlots.length > 0, "A guilda já mantém três expedições simultâneas.");
+      const expeditionSlot = action.expeditionSlot ?? freeSlots[0];
+      requireRule(freeSlots.includes(expeditionSlot), "Essa vaga de expedição já está ocupada. Escolha uma vaga livre.");
       const mission = [...missions(s), seasonBoss(s)].find(m => m?.id === action.missionId);
       requireRule(mission, "Essa missão não está mais disponível. Escolha uma missão do dia.");
       const locks = missionLocks(s, mission); requireRule(!locks.length, "Missão bloqueada: precisa de " + locks.join(" e ") + ".");
       const selected = selectTeam(s, action.team, action.tactic, action.formation);
       const battle = startBattle(s, mission, selected);
-      const expedition: Expedition = { id: "expedition-" + (++s.expeditionSequence), team: selected.map(h => h.id), formation: { ...s.formation }, tactic: s.tactic, battle, startedDay: s.day, nextRoundAt: (Number.isFinite(action.startedAt) ? Number(action.startedAt) : Date.now()) + 2500 };
+      const expedition: Expedition = { id: "expedition-" + (++s.expeditionSequence), slot: expeditionSlot, team: selected.map(h => h.id), formation: { ...s.formation }, tactic: s.tactic, battle, startedDay: s.day, nextRoundAt: (Number.isFinite(action.startedAt) ? Number(action.startedAt) : Date.now()) + 2500 };
       s.expeditions.push(expedition); s.lastBattle = battle;
       const next = s.heroes.filter(h => available(h, s)).slice(0, 4);
       s.team = next.map(h => h.id); s.formation = normalizedFormation(s);
       note(s, "Expedição enviada: " + mission.title + " com " + expedition.team.length + " heróis. A sede continua disponível.");
       break;
+    }
+    case "save-squad": {
+      requireRule(SQUAD_SPECIALTIES[action.specialty], "Especialidade de equipe inválida.");
+      requireRule(Array.isArray(action.team) && action.team.length >= 3 && action.team.length <= 4 && new Set(action.team).size === action.team.length, "Uma equipe pronta precisa de 3 ou 4 heróis.");
+      requireRule(action.team.every(id => s.heroes.some(h => h.id === id)), "Um dos heróis dessa equipe não pertence mais à guilda.");
+      const name = action.name.trim().slice(0, 32); requireRule(name.length >= 2, "Dê um nome com pelo menos 2 caracteres.");
+      const formation: Record<string, FormationLine> = {};
+      for (const id of action.team) {
+        const hero = s.heroes.find(h => h.id === id)!;
+        formation[id] = action.formation?.[id] || defaultFormationLine(hero.class);
+      }
+      if (!formationValid(action.team, formation)) { formation[action.team[0]] = "front"; formation[action.team[action.team.length - 1]] = "back"; }
+      const saved: SavedSquad = { id: "squad-" + action.specialty, name, specialty: action.specialty, team: [...action.team], formation, tactic: action.tactic };
+      const index = s.squads.findIndex(q => q.specialty === action.specialty);
+      if (index >= 0) s.squads[index] = saved; else s.squads.push(saved);
+      note(s, "Equipe pronta salva: " + name + " · especialidade " + SQUAD_SPECIALTIES[action.specialty].label + ".");
+      break;
+    }
+    case "rename-squad": {
+      const squad = s.squads.find(q => q.specialty === action.specialty); requireRule(squad, "Equipe pronta não encontrada.");
+      const name = action.name.trim().slice(0, 32); requireRule(name.length >= 2, "Dê um nome com pelo menos 2 caracteres.");
+      squad.name = name; break;
     }
     case "expedition-tick": {
       const now = Number.isFinite(action.now) ? action.now : Date.now();

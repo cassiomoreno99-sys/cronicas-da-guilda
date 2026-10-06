@@ -41,6 +41,8 @@ for (let i = 0; i < 3; i++) {
 }
 
 check(activeExpeditions(state).length === 3, "O jogo não manteve três expedições simultâneas.");
+const slots = activeExpeditions(state).map(e => e.slot);
+check(slots.join(",") === "1,2,3", "As expedições não ocuparam as três vagas fixas 1, 2 e 3.");
 const deployed = new Set(activeExpeditions(state).flatMap(e => e.team));
 check(deployed.size === 9, "Heróis foram reutilizados entre expedições.");
 
@@ -52,6 +54,14 @@ for (const heroId of deployed) {
 const reserve = state.heroes.find(h => !deployed.has(h.id));
 check(!!reserve, "Não sobrou herói na sede para o teste.");
 check(available(reserve, state), "Herói da sede deveria continuar disponível.");
+
+const specialist = state.heroes.filter(h => !deployed.has(h.id)).slice(0, 1).map(h => h.id);
+const squadTeam = [...specialist, ...ids.filter(id => !deployed.has(id) && !specialist.includes(id))].slice(0, 3);
+if (squadTeam.length >= 3) {
+  state = applyAction(state, { type: "save-squad", specialty: "hunt", name: "Caçadores Teste", team: squadTeam, tactic: "aggressive" });
+  const saved = state.squads.find(q => q.specialty === "hunt");
+  check(saved?.name === "Caçadores Teste" && saved.team.length === 3, "A equipe especialista não foi salva corretamente.");
+}
 
 const beforeDay = state.day;
 state = applyAction(state, { type: "train-hero", heroId: reserve.id });

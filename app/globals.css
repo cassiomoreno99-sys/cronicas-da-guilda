@@ -1920,3 +1920,161 @@ body::before {
     font-weight:400;
   }
 }
+
+
+/* v1.2.5 — VAGAS FIXAS + EQUIPES ESPECIALISTAS */
+.expedition-slot-number {
+  flex:0 0 auto;
+  padding:3px 6px;
+  border-radius:6px;
+  background:#172535;
+  color:#e8bb68;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.05em;
+}
+.expedition-free-slot {
+  border-style:dashed;
+  background:#0d1824;
+}
+.expedition-free-slot[data-selected="true"] {
+  border-color:#d7a853;
+  background:#142131;
+  box-shadow:inset 0 0 0 1px rgba(215,168,83,.18);
+}
+.expedition-free-slot[data-selected="true"] .expedition-mini-icon {
+  color:#9fd2ae;
+}
+.saved-squads-panel {
+  margin-top:14px;
+}
+.saved-squads-grid {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:10px;
+}
+.saved-squad-card {
+  min-width:0;
+  padding:12px;
+  border:1px solid #3b4d60;
+  border-radius:11px;
+  background:#0f1b28;
+}
+.saved-squad-head {
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.saved-squad-head [data-slot="input"] {
+  min-width:0;
+  height:34px;
+  font-weight:700;
+}
+.specialty-badge {
+  flex:0 0 auto;
+  padding:4px 7px;
+  border-radius:7px;
+  background:#253447;
+  color:#e6b762;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+.saved-squad-card > p {
+  margin:8px 0;
+  color:#91a4b7;
+  font-size:12px;
+  line-height:1.35;
+}
+.saved-squad-members {
+  display:flex;
+  min-height:48px;
+  align-items:center;
+  gap:5px;
+  margin-bottom:9px;
+}
+.saved-squad-members > span {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+  min-width:42px;
+}
+.saved-squad-members .hero-portrait {
+  width:34px;
+  height:34px;
+  border-radius:50%;
+}
+.saved-squad-members small {
+  max-width:52px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  color:#b7c2ce;
+  font-size:9px;
+}
+.saved-squad-actions {
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+}
+.saved-squad-actions [data-slot="button"] {
+  flex:1 1 auto;
+  min-height:34px;
+  font-size:11px;
+}
+
+@media (max-width:760px) {
+  .expedition-dock-grid {
+    display:grid;
+    grid-template-columns:1fr !important;
+  }
+  .expedition-mini-card {
+    display:grid;
+    grid-template-columns:auto auto minmax(0,1fr) auto auto;
+    gap:7px;
+  }
+  .expedition-slot-number {
+    grid-column:1 / -1;
+    justify-self:start;
+    margin-bottom:-1px;
+  }
+  .saved-squads-panel {
+    margin-top:10px;
+    padding:10px !important;
+  }
+  .saved-squads-grid {
+    grid-template-columns:1fr;
+    gap:8px;
+  }
+  .saved-squad-card {
+    padding:10px;
+  }
+  .saved-squad-head {
+    align-items:stretch;
+    flex-direction:column;
+    gap:5px;
+  }
+  .specialty-badge {
+    align-self:flex-start;
+  }
+  .saved-squad-head [data-slot="input"] {
+    width:100%;
+    height:38px;
+  }
+  .saved-squad-card > p {
+    margin:6px 0;
+    font-size:11px;
+  }
+  .saved-squad-members {
+    min-height:42px;
+    overflow-x:auto;
+  }
+  .saved-squad-actions {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  .saved-squad-actions [data-slot="button"]:last-child {
+    grid-column:1 / -1;
+  }
+}

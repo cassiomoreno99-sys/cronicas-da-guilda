@@ -39,3 +39,13 @@
 - expedições avançam automaticamente por turnos e recuperam o progresso ao reabrir o jogo;
 - treino individual e história pessoal continuam disponíveis para heróis que ficaram na sede, uma atividade por herói no mesmo dia;
 - o dia só avança quando todas as expedições simultâneas daquele ciclo forem resolvidas.
+
+
+## v1.2.5 — Vagas fixas e equipes especialistas
+- Expedição 1, 2 e 3 passam a ser vagas fixas e sempre visíveis.
+- Uma vaga ocupada continua aparecendo com a batalha em andamento; as demais aparecem como livres.
+- O jogador escolhe explicitamente qual vaga livre receberá a próxima equipe.
+- Adiciona equipes prontas por especialidade: Escolta, Defesa, Masmorra, Caçada e Chefes.
+- Cada equipe pronta pode receber nome personalizado, formação e tática.
+- Botão de montagem especialista sugere automaticamente heróis disponíveis conforme o tipo de missão.
+- Se membros de uma equipe salva estiverem em outra expedição, o jogo monta uma alternativa com heróis disponíveis.

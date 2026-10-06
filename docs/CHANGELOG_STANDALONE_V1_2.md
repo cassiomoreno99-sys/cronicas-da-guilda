@@ -27,3 +27,15 @@
 - aumenta a área segura no fim de todas as telas;
 - batalha passa a ocupar corretamente a viewport móvel;
 - melhora espaçamento, tipografia e toque em telas de 420–760 px.
+
+
+## v1.2.4 — Expedições paralelas
+- permite equipes de 3 ou 4 heróis por expedição;
+- permite até 3 expedições simultâneas, sempre com heróis diferentes;
+- batalhas continuam em segundo plano enquanto o jogador usa Heróis, Baú, Taverna e Guilda;
+- heróis em expedição ficam indisponíveis para outra missão, viagem, troca de equipamento ou transferência;
+- adiciona Central de Expedições otimizada para mobile;
+- permite minimizar qualquer batalha e retomar cada expedição separadamente;
+- expedições avançam automaticamente por turnos e recuperam o progresso ao reabrir o jogo;
+- treino individual e história pessoal continuam disponíveis para heróis que ficaram na sede, uma atividade por herói no mesmo dia;
+- o dia só avança quando todas as expedições simultâneas daquele ciclo forem resolvidas.

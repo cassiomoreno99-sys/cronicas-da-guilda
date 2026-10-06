@@ -1,0 +1,30 @@
+name: Aplicar patch mobile v1.2.2
+
+on:
+  push:
+    paths:
+      - "scripts/patch-mobile-v122.py"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-mobile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Aplicar melhorias mobile
+        run: python scripts/patch-mobile-v122.py
+      - name: Gravar v1.2.2
+        shell: bash
+        run: |
+          set -e
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Nenhuma alteração."
+            exit 0
+          fi
+          git commit -m "Otimiza interface mobile v1.2.2"
+          git push

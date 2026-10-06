@@ -379,7 +379,7 @@ export default function Game() {
               </RadioGroup>
               {readiness && <p className={"desktop-readiness readiness readiness-" + readiness.level}><Shield size={16} />{readiness.label}<span>{readiness.hint}</span></p>}
             </section>
-            <section className="panel roster-panel"><div className="panel-heading"><div><h2>Equipe da expedição</h2><p>Escolha quatro heróis. As reservas recuperam energia.</p></div><span className={"team-count " + (team.length === 4 ? "complete" : "")}>{team.length} / 4</span></div>{roster()}
+            <section className="panel roster-panel"><div className="panel-heading"><div><h2>Equipe da expedição</h2><p>Escolha 3 ou 4 heróis. Quem estiver em outra expedição fica indisponível.</p></div><span className={"team-count " + (team.length >= 3 ? "complete" : "")}>{team.length} / 3–4</span></div>{roster()}
               <div className="roster-footer"><span><Shield />Força da equipe <strong>{power}</strong></span><span className="muted">Energia mínima: 25%</span></div>
             </section>
             <section className="panel strategy-panel"><div className="panel-heading"><div><h2>Plano de batalha</h2><p>{selectedMission?.flavor}</p></div><span className="subtle-chip">Combate 2.0</span></div>

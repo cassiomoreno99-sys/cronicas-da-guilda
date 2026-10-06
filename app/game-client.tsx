@@ -12,7 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Input } from "@/components/ui/input";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Toaster, toast } from "sonner";
-import { CLASSES, RACES, heroRace, TACTICS, ITEMS, REGIONS, SPECIALIZATIONS, KIND_NAMES, missions, missionLocks, seasonBoss, battleActive, heroStats, talentPoints, market, teamPower, rating, threshold, available, standings, payroll, rank, seasonDay, missionReadiness, trainingPlan, defaultFormationLine, formationValid, type Action, type BattleFighter, type Campaign, type Hero, type HeroClass, type Tactic, type FormationLine } from "@/lib/game";
+import { CLASSES, RACES, heroRace, TACTICS, ITEMS, REGIONS, SPECIALIZATIONS, KIND_NAMES, missions, missionLocks, seasonBoss, battleActive, heroStats, talentPoints, market, teamPower, rating, threshold, available, standings, payroll, rank, seasonDay, missionReadiness, trainingPlan, defaultFormationLine, formationValid, type Action, type BattleFighter, type Campaign, type Hero, type HeroClass, type HeroRace, type Tactic, type FormationLine } from "@/lib/game";
 import { battleFrame, battleTimeline, advanceBattleClock, formatBattleClock, type PlaybackSpeed, type BattleEvent } from "@/lib/battle-playback";
 import { portraitPosition } from "@/lib/portraits";
 import { EventPanel, SeasonJourney, ChestAndShop, SpecializationPanel, RaceEvolutionPanel, HeroStoryPanel, JourneyPanel, HeroEquipment, BattleOrders, ItemIcon, IndividualTraining, ClassesGuide } from "./game-dynamics";
@@ -23,8 +23,9 @@ const fmt = (n: number) => n.toLocaleString("pt-BR");
 function Energy({ hero }: { hero: Hero }) {
   return <div className={"energy " + (hero.energy < 40 ? "energy-low" : "")}><span>{hero.energy}%</span><Progress value={hero.energy} aria-label={"Energia de " + hero.name} /></div>;
 }
-function Portrait({ hero, large = false }: { hero: { id?: string; name: string; class?: HeroClass }; large?: boolean }) {
-  return <span role="img" aria-label={"Retrato de " + hero.name} className={"hero-portrait " + (large ? "portrait-large" : "")} style={{ backgroundPosition: portraitPosition(hero.name, hero.id, hero.class) }} />;
+function Portrait({ hero, large = false }: { hero: { id?: string; name: string; class?: HeroClass; race?: HeroRace }; large?: boolean }) {
+  const race = hero.class ? heroRace({ id: hero.id || hero.name, name: hero.name, class: hero.class, race: hero.race }) : undefined;
+  return <span role="img" aria-label={"Retrato de " + hero.name} className={"hero-portrait " + (large ? "portrait-large" : "")} style={{ backgroundPosition: portraitPosition(hero.name, hero.id, hero.class, race) }} />;
 }
 function enemyPortraitKey(name: string) {
   const n = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -312,7 +313,7 @@ export default function Game() {
     <Toaster theme="dark" position="bottom-right" richColors />
     <header className="topbar"><div className="topbar-inner">
       <div className="brand"><div className="brand-mark"><Shield strokeWidth={1.5} /><Sword strokeWidth={1.5} /></div><div><span className="eyebrow">SIMULADOR DE GUILDA</span><span className="brand-title">Crônicas da Guilda</span></div></div>
-      <div className="header-tools"><span className="version">v1.2 · VISUAL 3D</span><Button variant="ghost" size="sm" className="help-button" aria-label="Como jogar" onClick={() => setHelp(true)}><CircleHelp /> <span>Como jogar</span></Button></div>
+      <div className="header-tools"><span className="version">v1.2.1 · VISUAL 3D</span><Button variant="ghost" size="sm" className="help-button" aria-label="Como jogar" onClick={() => setHelp(true)}><CircleHelp /> <span>Como jogar</span></Button></div>
     </div></header>
     {!state ? <main className="loading-screen"><Shield size={42} /><h1>{loading ? "Abrindo o salão da guilda…" : "Não foi possível abrir o save"}</h1><p role="status">{loading ? "Carregando sua campanha deste aparelho." : error}</p>{!loading && <Button onClick={() => void load()}>Tentar novamente</Button>}</main> : <main className="workspace">
       <div className="guild-heading"><div><span className="eyebrow">SALÃO DO COMANDANTE</span><h1>{state.name}</h1></div><span className="save-status" role="status">{busy ? <><LoaderCircle className="spin" /> Salvando…</> : <><HardDrive /> Salvo neste aparelho</>}</span></div>

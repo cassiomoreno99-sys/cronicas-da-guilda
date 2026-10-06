@@ -52,7 +52,7 @@ export function LeagueTable({ state, openGuild }: { state: Campaign; openGuild: 
     <Dialog open={prizes} onOpenChange={setPrizes}><DialogContent className="league-prizes-dialog"><DialogHeader><DialogTitle>Premiação · Divisão {tier.name}</DialogTitle><DialogDescription>O prêmio é pago ao encerrar os 28 dias. A divisão {tier.name} aplica multiplicador de {tier.prizeMultiplier.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}×.</DialogDescription></DialogHeader><div className="league-prizes">{LEAGUE_PRIZES.map((p, i) => { const start = i ? LEAGUE_PRIZES[i - 1].through + 1 : 1; return <div key={p.through}><span>{start === p.through ? start + "º lugar" : start + "º a " + p.through + "º"}</span><strong>{Math.round(p.gold * tier.prizeMultiplier)} ouro</strong></div>; })}</div></DialogContent></Dialog>
   </section>;
 }
-function Face({ hero }: { hero: RivalHero }) { return <span role="img" aria-label={"Retrato de " + hero.name} className="hero-portrait" style={{ backgroundPosition: portraitPosition(hero.name, hero.id, hero.class) }} />; }
+function Face({ hero }: { hero: RivalHero }) { return <span role="img" aria-label={"Retrato de " + hero.name} className="hero-portrait" style={{ backgroundPosition: portraitPosition(hero.name, hero.id, hero.class, heroRace(hero)) }} />; }
 
 export function RivalRecruitment({ state, disabled, act, selectedGuildId, selectGuild }: { state: Campaign; disabled: boolean; act: (a: Action) => void; selectedGuildId: string | null; selectGuild: (id: string | null) => void }) {
   const [query, setQuery] = useState(""), [page, setPage] = useState(0), size = usePageSize();

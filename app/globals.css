@@ -1250,3 +1250,32 @@ body::before {
   .guild-heading h1 { font-size:25px; }
   .enemy-portrait,.combatant .enemy-portrait,.combatant .hero-portrait { width:34px; height:34px; }
 }
+
+/* v1.2.1 — retratos coerentes + correção de sobreposição mobile */
+.hero-portrait {
+  background-image:url("/hero-portraits-v121.webp") !important;
+  background-size:400% 300% !important;
+  background-repeat:no-repeat;
+  overflow:hidden;
+}
+@media (max-width:760px) {
+  .workspace { padding-bottom:calc(118px + env(safe-area-inset-bottom)); }
+  .workspace:has(.command-grid[data-mobile-view="mission"]) { padding-bottom:calc(190px + env(safe-area-inset-bottom)); }
+  .workspace:has(.command-grid[data-mobile-view="team"]) { padding-bottom:calc(118px + env(safe-area-inset-bottom)); }
+  .command-grid[data-mobile-view="team"] .launch-row {
+    position:static;
+    margin-top:16px;
+    padding:12px 0 0;
+    border-top:1px solid #536054;
+    background:transparent;
+    box-shadow:none;
+  }
+  .command-grid[data-mobile-view="team"] .launch-row > div { display:none; }
+  .command-grid[data-mobile-view="team"] .launch-row .primary-launch { width:100%; }
+  .command-grid[data-mobile-view="mission"] .launch-row {
+    position:fixed;
+    left:0; right:0;
+    bottom:calc(72px + env(safe-area-inset-bottom));
+  }
+  .game-tabs [data-slot="tabs-content"] { scroll-margin-bottom:110px; }
+}

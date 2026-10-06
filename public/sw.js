@@ -1,5 +1,5 @@
-const CACHE = "cronicas-da-guilda-standalone-v1-2";
-const CORE = ["/", "/guild-favicon.svg", "/manifest.webmanifest", "/hero-portraits-v12.webp", "/ui/guild-night.webp", "/ui/battle-night.webp", "/enemies/wolf.webp", "/enemies/bandit.webp", "/enemies/skeleton.webp"];
+const CACHE = "cronicas-da-guilda-standalone-v1-2-1";
+const CORE = ["/", "/guild-favicon.svg", "/manifest.webmanifest", "/hero-portraits-v121.webp", "/ui/guild-night.webp", "/ui/battle-night.webp", "/enemies/wolf.webp", "/enemies/bandit.webp", "/enemies/skeleton.webp"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
 });

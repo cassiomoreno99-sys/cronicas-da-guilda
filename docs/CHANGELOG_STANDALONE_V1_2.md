@@ -10,3 +10,10 @@
 - Cartões, painéis, navegação, recursos, botões, barras e diálogos ganharam brilho, profundidade e molduras de jogo.
 - Mobile preservado com navegação inferior e efeitos reduzidos para manter desempenho.
 - Save permanece compatível com v1.1.
+
+
+## v1.2.1
+- corrige a associação grotesca de retratos: heróis iniciais agora têm arte coerente com identidade/raça;
+- heróis recrutados e rivais usam fallback visual por raça;
+- corrige a barra de ação cobrindo a formação no mobile;
+- mantém os retratos específicos de inimigos já existentes.

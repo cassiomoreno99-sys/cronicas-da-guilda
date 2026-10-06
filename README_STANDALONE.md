@@ -14,6 +14,7 @@ Esta edição é independente do ChatGPT para jogar. Não usa login do ChatGPT, 
 - assets comprimidos para preservar o carregamento rápido no PC e no celular;
 - nenhuma alteração no formato do save: campanhas da v1.1 continuam compatíveis.
 
+
 ## O que existe nesta versão
 
 Além de todo o conteúdo da Standalone v1.0/v0.7, a v1.1 incorpora o conjunto de sistemas da v0.8:

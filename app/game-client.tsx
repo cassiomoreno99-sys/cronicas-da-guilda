@@ -400,7 +400,7 @@ export default function Game() {
             <section className="panel camp-panel"><div className="panel-heading"><h2>Acampamento</h2><Tent /></div><p>Uma equipe exausta perde força. Prepare seus heróis antes da próxima missão.</p>
               <Button variant="outline" disabled={blocked || !!state.event} onClick={() => act({ type: "rest" })}><Tent />Descansar a guilda<span>+40 energia</span></Button><Button variant="outline" disabled={blocked || !!state.event || !teamReady || state.gold < 200} onClick={() => act({ type: "train", team, tactic })}><Target />Treinar equipe<span>200 ouro</span></Button><IndividualTraining state={state} disabled={blocked} act={act} /><p className="camp-note">Cada ação avança 1 dia. Treino em equipe: +65 XP por herói. Treino individual: 90 XP mais bônus para heróis de nível baixo.</p>
             </section>
-            <section className="council-note"><BookOpen /><div><span className="eyebrow">ÚLTIMA NOTÍCIA</span><p>{state.journal[0]?.text}</p>{battle && <Button variant="link" onClick={openBattle}>{active || watchingBattle && !resultReady ? "Continuar batalha" : "Ver última batalha"}</Button>}</div></section>
+            <section className="council-note"><BookOpen /><div><span className="eyebrow">ÚLTIMA NOTÍCIA</span><p>{state.journal[0]?.text}</p>{battle && <Button variant="link" onClick={() => openBattle()}>{active || watchingBattle && !resultReady ? "Continuar batalha" : "Ver última batalha"}</Button>}</div></section>
           </aside></div>
         </TabsContent>
         <TabsContent value="inventory"><ChestAndShop state={state} disabled={blocked} act={act} /></TabsContent>

@@ -1180,7 +1180,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "rest": s.heroes.forEach(h => h.energy = Math.min(100, h.energy + 40)); note(s, "Um dia de descanso: todos recuperaram até 40 de energia."); advance(s, s.heroes.map(h => h.id)); break;
     case "train": {
       const team = selectTeam(s, action.team, action.tactic), cost = 50 * team.length; requireRule(s.gold >= cost, "O treino da equipe custa " + cost + " de ouro.");
-      entry(s, "Treino de quatro heróis", -cost); team.forEach(h => { h.energy -= 12; gainXp(h, 65); }); note(s, "A equipe treinou: +65 XP por herói e −12 energia."); advance(s, action.team); break;
+      entry(s, "Treino da equipe", -cost); team.forEach(h => { h.energy -= 12; gainXp(h, 65); }); note(s, "A equipe treinou: +65 XP por herói e −12 energia."); advance(s, action.team); break;
     }
     case "train-hero": {
       const h = s.heroes.find(h => h.id === action.heroId); requireRule(h, "Herói não encontrado na guilda.");

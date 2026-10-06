@@ -313,7 +313,7 @@ export default function Game() {
     <Toaster theme="dark" position="bottom-right" richColors />
     <header className="topbar"><div className="topbar-inner">
       <div className="brand"><div className="brand-mark"><Shield strokeWidth={1.5} /><Sword strokeWidth={1.5} /></div><div><span className="eyebrow">SIMULADOR DE GUILDA</span><span className="brand-title">Crônicas da Guilda</span></div></div>
-      <div className="header-tools"><span className="version">v1.2.2 · MOBILE FIRST</span><Button variant="ghost" size="sm" className="help-button" aria-label="Como jogar" onClick={() => setHelp(true)}><CircleHelp /> <span>Como jogar</span></Button></div>
+      <div className="header-tools"><span className="version">v1.2.3 · MOBILE FIRST</span><Button variant="ghost" size="sm" className="help-button" aria-label="Como jogar" onClick={() => setHelp(true)}><CircleHelp /> <span>Como jogar</span></Button></div>
     </div></header>
     {!state ? <main className="loading-screen"><Shield size={42} /><h1>{loading ? "Abrindo o salão da guilda…" : "Não foi possível abrir o save"}</h1><p role="status">{loading ? "Carregando sua campanha deste aparelho." : error}</p>{!loading && <Button onClick={() => void load()}>Tentar novamente</Button>}</main> : <main className="workspace">
       <div className="guild-heading"><div><span className="eyebrow">SALÃO DO COMANDANTE</span><h1>{state.name}</h1></div><span className="save-status" role="status">{busy ? <><LoaderCircle className="spin" /> Salvando…</> : <><HardDrive /> Salvo neste aparelho</>}</span></div>

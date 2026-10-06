@@ -210,7 +210,7 @@ svg { flex-shrink:0; }
 @media (max-width:640px) { .game .main-tabs [data-slot="tabs-trigger"] { font-size:14px; } .game .main-tabs [data-slot="tabs-trigger"] > svg { display:none; } .hero-name label { font-size:14px; } .hero-table .number-col { font-size:14px; } }
 
 /* Original character portraits. Every face occupies one cell of a shared atlas. */
-.hero-portrait { display:block; width:42px; height:42px; flex-shrink:0; border:1px solid #65594a; border-radius:6px; background-color:#14202b; background-image:url("/hero-portraits.png"); background-size:400% 400%; background-repeat:no-repeat; }
+.hero-portrait { display:block; width:42px; height:42px; flex-shrink:0; border:1px solid #65594a; border-radius:6px; background-color:#14202b; background-image:url("/hero-portraits-v121.webp"); background-size:400% 300%; background-repeat:no-repeat; }
 .hero-portrait.portrait-large { width:82px; height:82px; border-radius:7px; border-color:#8a7757; }
 .hero-name .hero-portrait { margin-right:1px; }
 .recruit-top .hero-portrait { width:88px; height:88px; }
@@ -1649,5 +1649,104 @@ body::before {
     height:auto !important;
     max-height:none !important;
     overflow:visible !important;
+  }
+}
+
+
+/* v1.2.3 — ESTABILIDADE MOBILE APÓS REVISÃO GERAL */
+@media (max-width:760px) {
+  html {
+    scroll-padding-top:112px;
+    scroll-padding-bottom:92px;
+  }
+
+  html,
+  body {
+    width:100%;
+    min-width:0;
+    height:auto !important;
+    min-height:100% !important;
+    overflow-x:clip !important;
+    overflow-y:auto !important;
+  }
+
+  body {
+    min-height:100dvh !important;
+    touch-action:pan-y pinch-zoom !important;
+    overscroll-behavior-y:auto !important;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  #root,
+  .game,
+  .workspace,
+  .game-tabs,
+  .game-tabs > [data-slot="tabs-content"] {
+    min-width:0;
+    height:auto !important;
+    max-height:none !important;
+    overflow-y:visible !important;
+  }
+
+  #root,
+  .game,
+  .workspace {
+    overflow-x:clip !important;
+  }
+
+  .topbar,
+  .mobile-subnav {
+    -webkit-backdrop-filter:none !important;
+    backdrop-filter:none !important;
+  }
+
+  .mobile-subnav {
+    background:#0a1420 !important;
+  }
+
+  .game .main-tabs {
+    contain:layout paint;
+  }
+
+  .mobile-hero,
+  .mission-card,
+  .item-card,
+  .recruit-card,
+  .rival-hero-card {
+    max-width:100%;
+  }
+
+  .mobile-hero-info,
+  .mobile-hero-info > strong,
+  .mobile-hero-info > span {
+    min-width:0;
+  }
+
+  [data-slot="dialog-content"],
+  [data-slot="alert-dialog-content"] {
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+}
+
+@media (max-width:420px) {
+  .game .main-tabs [data-slot="tabs-trigger"] {
+    font-size:11px !important;
+  }
+
+  .game .main-tabs [data-slot="tabs-trigger"] > svg {
+    width:19px !important;
+    height:19px !important;
+  }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior:auto !important;
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
   }
 }

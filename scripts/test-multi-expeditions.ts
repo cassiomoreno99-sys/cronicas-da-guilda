@@ -26,7 +26,7 @@ while (state.heroes.length < 10) {
 
 const ids = state.heroes.map(h => h.id);
 const missionIds = missions(state).slice(0, 3).map(m => m.id);
-const startedAt = 1_800_000_000_000;
+const startedAt = 1_700_000_000_000;
 
 for (let i = 0; i < 3; i++) {
   const team = ids.slice(i * 3, i * 3 + 3);

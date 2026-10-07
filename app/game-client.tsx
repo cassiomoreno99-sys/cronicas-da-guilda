@@ -52,6 +52,27 @@ function enemyPortraitKey(name: string) {
   if (n.includes("saqueador")) return "raider";
   return "bandit";
 }
+const CONTRACT_DIFFICULTY = ["", "Muito baixa", "Baixa", "Média", "Alta", "Muito alta"];
+function contractSpecialists(kind: MissionKind) {
+  const map: Record<MissionKind, HeroClass[]> = {
+    escort: ["ranger", "warrior"],
+    defense: ["paladin", "healer"],
+    dungeon: ["rogue", "mage"],
+    hunt: ["ranger", "rogue"],
+    boss: ["warrior", "healer"],
+  };
+  return map[kind] || ["warrior", "healer"];
+}
+function contractDropHints(rank: number, kind: MissionKind) {
+  const base = rank <= 1 ? ["iron_ore", "minor_healing", "lucky_clover"]
+    : rank === 2 ? ["steel_ingot", "hunter_charm", "arcane_dust"]
+    : rank === 3 ? ["moon_silver", "shadow_silk", "holy_symbol"]
+    : rank === 4 ? ["dragon_scale", "star_pendant", "ancient_key"]
+    : ["royal_relic", "abyss_crystal", "seven_sided_die"];
+  return kind === "dungeon" ? [...base.slice(0, 2), "secret_map"] : base;
+}
+function contractWinXp(rank: number) { return 30 + rank * 23; }
+
 function EnemyPortrait({ name }: { name: string }) {
   const key = enemyPortraitKey(name);
   return <span className="enemy-portrait" role="img" aria-label={"Retrato de " + name}><img src={"/enemies/" + key + ".webp"} alt="" onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = "/enemies/fallback.webp"; }} /></span>;
@@ -405,14 +426,38 @@ export default function Game() {
       </div>
       {error && <div className="error-banner" role="alert"><span>{error}</span><Button variant="ghost" size="icon" onClick={() => setError("")} aria-label="Fechar aviso"><X /></Button></div>}
       <EventPanel state={state} disabled={blocked} act={act} />
-      <section className="expedition-dock" aria-label="Expedições da guilda"><div className="expedition-dock-heading"><div><span className="eyebrow">CENTRAL DE EXPEDIÇÕES</span><strong>{runningExpeditions.length} / 3 equipes em campo</strong></div><span>As três vagas ficam sempre visíveis</span></div><div className="expedition-dock-grid">{expeditionSlots.map(({ slot, expedition }) => expedition ? <button key={slot} className="expedition-mini-card" data-status="active" onClick={() => openBattle(expedition.id)}><span className="expedition-slot-number">EXPEDIÇÃO {slot}</span><span className="expedition-mini-icon"><Swords /></span><span className="expedition-mini-copy"><strong>{expedition.battle.title}</strong><small>Turno {expedition.battle.rounds} · em andamento · tocar para abrir</small></span><span className="expedition-mini-team">{expedition.team.map(id => { const h = state.heroes.find(hero => hero.id === id); return h ? <Portrait key={id} hero={h} /> : null; })}</span><ChevronRight /></button> : <button key={slot} className="expedition-mini-card expedition-free-slot" data-selected={selectedExpeditionSlot === slot} onClick={() => { setSelectedExpeditionSlot(slot); setView("expeditions"); setMobileView("mission"); }}><span className="expedition-slot-number">EXPEDIÇÃO {slot}</span><span className="expedition-mini-icon"><Tent /></span><span className="expedition-mini-copy"><strong>Vaga livre</strong><small>{selectedExpeditionSlot === slot ? "Selecionada para a próxima equipe" : "Tocar para preparar esta expedição"}</small></span><ChevronRight /></button>)}</div><p className="expedition-dock-note">Uma vaga ocupada não some. Você verá Expedição 1, 2 e 3 o tempo todo; as livres ficam prontas para receber outra equipe.</p></section>
       <Tabs value={view} onValueChange={navigate} className="game-tabs">
         <TabsList variant="line" className="main-tabs" aria-label="Navegação da guilda"><TabsTrigger value="expeditions"><Swords /><span className="desktop-label">Expedições</span><span className="mobile-label">Missões</span></TabsTrigger><TabsTrigger value="heroes"><Users />Heróis <span className="tab-count">{state.heroes.length}</span></TabsTrigger><TabsTrigger value="inventory"><Archive /><span className="desktop-label">Baú e mercador</span><span className="mobile-label">Baú</span></TabsTrigger><TabsTrigger value="market"><ScrollText /><span className="desktop-label">Recrutamento</span><span className="mobile-label">Taverna</span></TabsTrigger><TabsTrigger value="guild"><Crown />Guilda</TabsTrigger></TabsList>
         <TabsContent value="expeditions">
-          <ToggleGroup className="compact-nav mobile-subnav" type="single" value={mobileView} onValueChange={v => { if (v) { setMobileView(v); window.scrollTo({ top: 0, behavior: "instant" }); } }} aria-label="Painéis da expedição"><ToggleGroupItem value="mission"><Swords />Missão</ToggleGroupItem><ToggleGroupItem value="team"><Users />Equipe</ToggleGroupItem><ToggleGroupItem value="league"><Trophy />Liga</ToggleGroupItem><ToggleGroupItem value="camp"><Tent />Descanso</ToggleGroupItem></ToggleGroup>
+          <ToggleGroup className="compact-nav mobile-subnav" type="single" value={mobileView} onValueChange={v => { if (v) { setMobileView(v); window.scrollTo({ top: 0, behavior: "instant" }); } }} aria-label="Painéis de missões"><ToggleGroupItem value="mission"><ScrollText />Contratos</ToggleGroupItem><ToggleGroupItem value="league"><Swords />Expedições</ToggleGroupItem><ToggleGroupItem value="team"><Users />Equipes</ToggleGroupItem><ToggleGroupItem value="camp"><Tent />Descanso</ToggleGroupItem></ToggleGroup>
           <div className="command-grid" data-mobile-view={mobileView}><div className="main-column">
-            <section className="mission-section"><div className="section-heading"><div><span className="eyebrow">QUADRO DE CONTRATOS · {selectedMission?.location || REGIONS[state.activeRegion - 1]}</span><h2>Escolha sua expedição</h2></div><span className="subtle-chip">{board.filter(m => !missionLocks(state, m).length).length} liberadas / 5</span></div>
-              <div className="mobile-mission-picker"><RadioGroup value={selectedMission?.id} onValueChange={setMissionId} className="mission-levels" aria-label="Dificuldade da missão" disabled={blocked}>{board.map(m => <label key={m.id} data-chosen={selectedMission?.id === m.id} htmlFor={"mobile-" + m.id}><RadioGroupItem value={m.id} id={"mobile-" + m.id} className="sr-only" /><span>{missionLocks(state, m).length ? <LockKeyhole size={14} /> : "0" + m.rank}</span><strong>{["", "Rotina", "Desafio", "Épica", "Secreta", "Lendária"][m.rank]}</strong></label>)}</RadioGroup>{selectedMission && <section className="mobile-mission-detail"><span className="location">{KIND_NAMES[selectedMission.kind]} · {selectedMission.location}</span><h3>{selectedMission.title}</h3><p>{selectedMission.description}</p><div className="mission-footer"><span><Swords />{selectedMission.force} <small>força</small></span><strong><Coins />{fmt(selectedMission.reward)} ouro</strong></div>{selectedLocks.length > 0 ? <p className="mission-lock-note"><LockKeyhole size={16} />Exige {selectedLocks.join(" + ")}</p> : readiness && <p className={"readiness readiness-" + readiness.level}><Shield size={16} />{readiness.label}<span>{readiness.hint}</span></p>}</section>}<button className="team-preview" onClick={() => setMobileView("team")}><span className="team-portraits">{state.heroes.filter(h => team.includes(h.id)).map(h => <Portrait key={h.id} hero={h} />)}</span><span><strong>Equipe {team.length}/3–4 · Força {power}</strong><small>{runningExpeditions.length}/3 expedições ativas · trocar equipe</small></span><ChevronRight /></button></div>
+      <section className="expedition-dock" aria-label="Expedições da guilda"><div className="expedition-dock-heading"><div><span className="eyebrow">CENTRAL DE EXPEDIÇÕES</span><strong>{runningExpeditions.length} / 3 equipes em campo</strong></div><span>As três vagas ficam sempre visíveis</span></div><div className="expedition-dock-grid">{expeditionSlots.map(({ slot, expedition }) => expedition ? <button key={slot} className="expedition-mini-card" data-status="active" onClick={() => openBattle(expedition.id)}><span className="expedition-slot-number">EXPEDIÇÃO {slot}</span><span className="expedition-mini-icon"><Swords /></span><span className="expedition-mini-copy"><strong>{expedition.battle.title}</strong><small>Turno {expedition.battle.rounds} · em andamento · tocar para abrir</small></span><span className="expedition-mini-team">{expedition.team.map(id => { const h = state.heroes.find(hero => hero.id === id); return h ? <Portrait key={id} hero={h} /> : null; })}</span><ChevronRight /></button> : <button key={slot} className="expedition-mini-card expedition-free-slot" data-selected={selectedExpeditionSlot === slot} onClick={() => { setSelectedExpeditionSlot(slot); setView("expeditions"); setMobileView("mission"); }}><span className="expedition-slot-number">EXPEDIÇÃO {slot}</span><span className="expedition-mini-icon"><Tent /></span><span className="expedition-mini-copy"><strong>Vaga livre</strong><small>{selectedExpeditionSlot === slot ? "Selecionada para a próxima equipe" : "Tocar para preparar esta expedição"}</small></span><ChevronRight /></button>)}</div><p className="expedition-dock-note">Uma vaga ocupada não some. Você verá Expedição 1, 2 e 3 o tempo todo; as livres ficam prontas para receber outra equipe.</p></section>
+
+            <section className="mission-section"><div className="section-heading"><div><span className="eyebrow">QUADRO DE CONTRATOS · {selectedMission?.location || REGIONS[state.activeRegion - 1]}</span><h2>Missões disponíveis</h2><p>Escolha um contrato, confira perigo, recompensa e possíveis saques.</p></div><span className="subtle-chip">{board.filter(m => !missionLocks(state, m).length).length} liberadas / 5</span></div>
+              <div className="mobile-mission-picker parchment-contract-board">
+                {board.map(m => {
+                  const locks = missionLocks(state, m), chosen = selectedMission?.id === m.id;
+                  const specialists = contractSpecialists(m.kind), drops = contractDropHints(m.rank, m.kind);
+                  return <article key={m.id} className="parchment-contract" data-chosen={chosen} data-locked={locks.length > 0} role="button" tabIndex={0} onClick={() => { if (!locks.length) setMissionId(m.id); }} onKeyDown={e => { if (!locks.length && (e.key === "Enter" || e.key === " ")) setMissionId(m.id); }}>
+                    <div className="contract-art">
+                      <img src={"/enemies/" + enemyPortraitKey(m.enemy) + ".webp"} alt={"Ameaça da missão " + m.title} onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = "/enemies/fallback.webp"; }} />
+                      <span>{KIND_NAMES[m.kind]}</span>
+                    </div>
+                    <div className="contract-copy">
+                      <div className="contract-title-row"><div><small>{m.location}</small><h3>{m.title}</h3></div><span className={"contract-rank contract-rank-" + m.rank}>NÍVEL {m.rank}</span></div>
+                      <p>{m.description}</p>
+                      <div className="contract-difficulty"><strong>Dificuldade: <em>{CONTRACT_DIFFICULTY[m.rank]}</em></strong><span aria-label={m.rank + " de 5 de dificuldade"}>{[1,2,3,4,5].map(n => <i key={n} data-on={n <= m.rank}>◆</i>)}</span></div>
+                      <div className="contract-specialists"><small>Especialistas recomendados</small><div>{specialists.map(id => <span key={id}>{CLASSES[id].name}</span>)}</div></div>
+                      <div className="contract-bottom">
+                        <div className="contract-rewards"><span><Coins />{fmt(m.reward)} ouro</span><span className="xp-reward">XP +{contractWinXp(m.rank)}</span><div className="contract-drop-hints" aria-label="Possíveis saques">{drops.map(key => <span key={key} title={ITEMS[key]?.name || key}><ItemIcon itemKey={key} /></span>)}</div></div>
+                        <Button className="contract-prepare" disabled={blocked || locks.length > 0} onClick={e => { e.stopPropagation(); setMissionId(m.id); if (!locks.length) setMobileView("team"); }}>{locks.length ? <><LockKeyhole />Bloqueada</> : <>Preparar equipe<ChevronRight /></>}</Button>
+                      </div>
+                      {locks.length > 0 && <div className="contract-lock-reason"><LockKeyhole />Exige {locks.join(" + ")}</div>}
+                    </div>
+                  </article>;
+                })}
+                <button className="team-preview parchment-team-preview" onClick={() => setMobileView("team")}><span className="team-portraits">{state.heroes.filter(h => team.includes(h.id)).map(h => <Portrait key={h.id} hero={h} />)}</span><span><strong>Equipe atual {team.length}/3–4 · Força {power}</strong><small>{runningExpeditions.length}/3 expedições ativas · tocar para organizar</small></span><ChevronRight /></button>
+              </div>
               <RadioGroup value={selectedMission?.id} onValueChange={setMissionId} className="mission-grid desktop-mission-grid" aria-label="Missão da expedição" disabled={blocked}>
                 {board.map(m => { const Icon = m.enemy === "Esqueleto" ? Skull : m.enemy === "Lobo sombrio" ? Trees : m.kind === "defense" ? Shield : Swords, locks = missionLocks(state, m); return <label key={m.id} htmlFor={m.id} className="mission-card" data-chosen={selectedMission?.id === m.id} data-locked={locks.length > 0}>
                   <div className="mission-top"><span className={"difficulty difficulty-" + m.rank}>{["", "ROTINA", "DESAFIO", "ÉPICA", "SECRETA", "LENDÁRIA"][m.rank]}</span>{locks.length > 0 && <LockKeyhole size={16} />}<RadioGroupItem value={m.id} id={m.id} aria-label={m.title} disabled={blocked || locks.length > 0} /></div>

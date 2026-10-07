@@ -174,14 +174,14 @@ console.log("v1.3.0: iniciando bateria ampla...");
 {
   let s = prep(newCampaign(1011));
   const team = s.heroes.slice(0,4).map(h => h.id);
-  s = applyAction(s, { type:"save-squad", specialty:"hunt", name:"Teste de Caça", team, tactic:"aggressive" });
+  s = applyAction(s, { type:"save-squad", specialty:"escort", name:"Vanguarda Teste", team, tactic:"balanced" });
   for (const h of s.heroes.filter(h => team.includes(h.id))) { h.attack += 40; h.defense += 30; h.magic += 30; }
-  const hunt = missions(s).find(m => m.kind === "hunt")!;
+  const escort = missions(s).find(m => m.kind === "escort")!;
   s.event = null;
-  s = applyAction(s, { type:"mission", missionId:hunt.id, team, tactic:"aggressive", expeditionSlot:1, startedAt:1_700_000_000_000 });
+  s = applyAction(s, { type:"mission", missionId:escort.id, team, tactic:"balanced", expeditionSlot:1, startedAt:1_700_000_000_000 });
   const expId = s.expeditions[s.expeditions.length-1].id;
   s = applyAction(s, { type:"battle-auto", expeditionId:expId });
-  const q = s.squads.find(q => q.specialty === "hunt")!;
+  const q = s.squads.find(q => q.specialty === "escort")!;
   ok(q.xp > 0 || q.level > 1, "Equipe pronta não ganhou experiência/entrosamento.");
 }
 

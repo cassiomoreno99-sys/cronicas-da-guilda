@@ -720,7 +720,6 @@ export default function Game() {
   const [save,setSave] = useState<Save | null>(null);
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState("");
-  const [flash,setFlash] = useState("");
   const [screen,setScreen] = useState<Screen>("mission");
   const [selectedMissionId,setSelectedMissionId] = useState("");
   const [team,setTeam] = useState<string[]>([]);
@@ -754,17 +753,7 @@ export default function Game() {
       const result = updateLocalCampaign(current.revision,action);
       const next: Save = {state:result.state,revision:result.revision};
       hydrate(next);
-      if (result.conflict) setFlash("A campanha mudou em outra aba. Estado atualizado.");
-      else {
-        const names: Partial<Record<Action["type"],string>> = {
-          mission:"Expedição enviada.", rest:"Guilda descansada.", "train-hero":"Treino concluído.",
-          hire:"Novo herói recrutado.", buy:"Item comprado.", sell:"Item vendido.", equip:"Item equipado.",
-          unequip:"Item guardado.", "upgrade-hq":"Construção melhorada.", craft:"Item fabricado.",
-          "rival-battle":"Desafio resolvido.", "guild-raid":"Raid resolvida.", "negotiate-rival":"Negociação concluída.",
-          specialize:"Evolução aplicada.", "racial-specialize":"Evolução racial aplicada.", "story-step":"História avançou."
-        };
-        setFlash(names[action.type] || "Ação concluída.");
-      }
+      if (result.conflict) setError("A campanha mudou em outra aba. Estado atualizado.");
       if (action.type === "mission") {
         const newest = next.state.expeditions[next.state.expeditions.length-1];
         if (newest) setBattleExpeditionId(newest.id);
@@ -773,12 +762,6 @@ export default function Game() {
       setError(e instanceof Error ? e.message : "A ação não pôde ser concluída.");
     } finally { setBusy(false); }
   },[busy,hydrate]);
-
-  useEffect(() => {
-    if (!flash) return;
-    const timer = window.setTimeout(() => setFlash(""), 1800);
-    return () => window.clearTimeout(timer);
-  }, [flash]);
 
   const state = save?.state;
   const running = state ? activeExpeditions(state) : [];
@@ -803,14 +786,13 @@ export default function Game() {
     a.href=url; a.download="cronicas-da-guilda-backup.json"; a.click(); URL.revokeObjectURL(url);
   };
   const restore = async (file: File) => {
-    try { const next = importLocalCampaign(await file.text()); hydrate({state:next.state,revision:next.revision}); setFlash("Backup restaurado."); }
+    try { const next = importLocalCampaign(await file.text()); hydrate({state:next.state,revision:next.revision}); }
     catch(e){ setError(e instanceof Error ? e.message : "Backup inválido."); }
   };
 
   return <div className="app-shell">
     <TopBar state={state} goGuild={() => go("guild")} musicEnabled={musicEnabled} toggleMusic={toggleMusic} />
     {screen !== "guild" && <TopNav screen={screen} go={go} />}
-    {flash && <button className="flash" onClick={() => setFlash("")}><Check /> {flash}</button>}
     {error && <button className="error" onClick={() => setError("")}><X /> {error}</button>}
     <main className="game-content">
       {screen === "mission" && <MissionPage state={state} selectedId={selectedMission.id} selectMission={setSelectedMissionId} goTeam={() => go("team")} />}

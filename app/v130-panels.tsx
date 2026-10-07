@@ -1,6 +1,6 @@
 "use client";
 import { useMemo, useState } from "react";
-import { Castle, Map, Hammer, GraduationCap, Swords, Shield, Coins, LockKeyhole, Users, Trophy, FlaskConical, Sparkles } from "lucide-react";
+import { Castle, Map as MapIcon, Hammer, GraduationCap, Swords, Shield, Coins, LockKeyhole, Users, Trophy, FlaskConical, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -16,7 +16,7 @@ const fmt = (n: number) => n.toLocaleString("pt-BR");
 
 export function WorldMapPanel({ state, disabled, act }: Props) {
   return <section className="panel v130-panel world-panel">
-    <div className="panel-heading"><div><h2>Mundo conhecido</h2><p>{state.region} de {WORLD_MAP.length} regiões descobertas · operações em {WORLD_MAP[state.activeRegion - 1]?.name}</p></div><Map /></div>
+    <div className="panel-heading"><div><h2>Mundo conhecido</h2><p>{state.region} de {WORLD_MAP.length} regiões descobertas · operações em {WORLD_MAP[state.activeRegion - 1]?.name}</p></div><MapIcon /></div>
     <div className="world-region-grid">
       {WORLD_MAP.map((region, index) => {
         const number = index + 1, unlocked = number <= state.region, active = number === state.activeRegion;

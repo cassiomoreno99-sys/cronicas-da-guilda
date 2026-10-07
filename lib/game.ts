@@ -33,9 +33,11 @@ export type AbilityTarget = "self" | "ally" | "enemy" | "all-allies" | "all-enem
 export type AbilityEffect = "challenge" | "fireball" | "restore" | "venom" | "pinning" | "aegis" | "chi" | "drain" | "renew" | "anthem" | "execution" | "storm" | "lifebloom" | "sanctuary" | "fortress" | "control";
 export type AbilitySpec = { id: string; name: string; description: string; target: AbilityTarget; cooldown: number; effect: AbilityEffect; evolved?: boolean };
 export type PendingAbility = { heroId: string; abilityId: string; targetId?: string };
+export type BattleConsumableKey = "healing_potion" | "antidote" | "stun_bomb";
+export type PendingConsumable = { key: BattleConsumableKey; targetId: string };
 export type MissionKind = "escort" | "defense" | "dungeon" | "hunt" | "boss";
 export type Mission = { id: string; title: string; location: string; description: string; rank: number; force: number; reward: number; enemy: string; count: number; specialty: string; flavor: string; kind: MissionKind; requiredFame: number; requiredItem?: string; boss?: number };
-type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
+type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
 export type Battle = { title: string; day: number; won: boolean; reward: number; xp: number; rounds: number; log: BattleLog[]; levelUps: string[]; wounded: string[]; remaining: number; fighters?: BattleFighter[]; status?: "active" | "won" | "lost" | "retreated"; combat?: Combat; loot?: string[]; fameChange?: number; regionUnlocked?: number; objective?: { name: string; hp: number; maxHp: number; targetRounds: number } };
 export type ExpeditionSlot = 1 | 2 | 3;
 export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; level: number; xp: number; wins: number };
@@ -64,6 +66,7 @@ export type Action =
   | { type: "expedition-tick"; now: number }
   | { type: "battle-round"; expeditionId?: string } | { type: "battle-auto"; expeditionId?: string } | { type: "battle-retreat"; expeditionId?: string }
   | { type: "battle-tactic"; tactic: Tactic; expeditionId?: string } | { type: "battle-potion"; heroId: string; expeditionId?: string }
+  | { type: "battle-consumable"; key: BattleConsumableKey; targetId: string; expeditionId?: string }
   | { type: "battle-ability"; heroId: string; abilityId: string; targetId?: string; expeditionId?: string }
   | { type: "event"; eventId: string; choiceId: string }
   | { type: "equip"; itemId: string; heroId: string } | { type: "unequip"; itemId: string }
@@ -745,7 +748,8 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     } else if (!([1, 2, 3] as ExpeditionSlot[]).includes(expedition.slot as ExpeditionSlot)) expedition.slot = 1;
     if (expedition.battle?.combat) {
       const c = expedition.battle.combat;
-      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= { ...expedition.formation };
+      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= { ...expedition.formation }; c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
+      if (c.pendingPotion && !c.pendingConsumable) { c.pendingConsumable = { key: "healing_potion", targetId: c.pendingPotion.targetId }; delete c.pendingPotion; }
       for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
       if (expedition.battle.fighters) for (const f of expedition.battle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
     }
@@ -766,7 +770,8 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   if (s.event === undefined) s.event = createEvent(s);
   if (s.lastBattle?.combat) {
     const c = s.lastBattle.combat;
-    c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= normalizedFormation(s);
+    c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= normalizedFormation(s); c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
+    if (c.pendingPotion && !c.pendingConsumable) { c.pendingConsumable = { key: "healing_potion", targetId: c.pendingPotion.targetId }; delete c.pendingPotion; }
     for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
     if (s.lastBattle.fighters) for (const f of s.lastBattle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
   }
@@ -1102,7 +1107,7 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   const scout = team.some(h => h.class === "ranger" && h.talent?.path === "defense");
   const objectiveMax = m.kind === "escort" ? 170 + m.rank * 25 : m.kind === "defense" ? 200 + Math.round(fighters.filter(f => f.side === "hero").reduce((n, f) => n + f.defense, 0) * .6) : 0;
   const targetRounds = m.kind === "escort" ? Math.max(3, 6 - (agile >= 2 ? 1 : 0) - (scout ? 1 : 0)) : m.kind === "defense" ? 6 : m.kind === "hunt" ? 12 : 24;
-  return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, pendingAbilities: [], abilityCooldowns: {}, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
+  return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, consumablesUsed: 0, pendingAbilities: [], abilityCooldowns: {}, autoAbilities: true, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
 }
 function grantLoot(s: Campaign, m: Mission, deployedIds: string[] = s.team) {
   const deployed = s.heroes.filter(h => deployedIds.includes(h.id));
@@ -1188,7 +1193,24 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     log.push({ round, text: text + amount + " PV.", kind, actorId, targetId: target.id, targetHp: target.hp, amount }); return amount;
   };
   if (c.lastTactic !== c.tactic) { log.push({ round, text: "Nova ordem: tática " + TACTICS[c.tactic].name.toLowerCase() + ".", kind: "order" }); c.lastTactic = c.tactic; }
-  if (c.pendingPotion) { const f = heroes().find(f => f.id === c.pendingPotion!.targetId); if (f) heal(f, 70, "Poção recupera a vida de " + f.name + ": "); delete c.pendingPotion; }
+  if (c.pendingConsumable) {
+    const use = c.pendingConsumable;
+    if (use.key === "healing_potion") {
+      const f = heroes().find(f => f.id === use.targetId);
+      if (f) heal(f, 70, "Intervenção da guilda: Poção de Cura recupera " + f.name + " em ");
+    } else if (use.key === "antidote") {
+      const f = heroes().find(f => f.id === use.targetId);
+      if (f) {
+        const before = f.statuses.length;
+        f.statuses = f.statuses.filter(st => !["poison", "bleed", "vulnerable"].includes(st.kind));
+        log.push({ round, text: "Intervenção da guilda: Antídoto purifica " + f.name + (before === f.statuses.length ? ", mas não havia efeito nocivo ativo." : "."), kind: "status", targetId: f.id, targetHp: f.hp });
+      }
+    } else if (use.key === "stun_bomb") {
+      const f = enemies().find(f => f.id === use.targetId);
+      if (f) { addStatus(f, "stun", 1, undefined, "guild"); log.push({ round, text: "Intervenção da guilda: Bomba Atordoante atinge " + f.name + ". O inimigo perde a próxima ação.", kind: "status", targetId: f.id, targetHp: f.hp }); }
+    }
+    delete c.pendingConsumable;
+  }
 
   for (const f of c.fighters.filter(f => f.hp > 0)) {
     for (const status of [...f.statuses]) {
@@ -1438,9 +1460,27 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "battle-potion": {
       const targetBattle = expeditionBattle(s, action.expeditionId); requireRule(targetBattle, "Essa expedição não está mais em combate.");
       const c = targetBattle.battle.combat!, item = s.chest.find(i => i.key === "healing_potion"), target = c.fighters.find(f => f.id === action.heroId && f.side === "hero");
-      requireRule(item, "Não há poção de cura no baú."); requireRule(c.potionsUsed < 2 && !c.pendingPotion, "Use no máximo duas poções por combate e aguarde a cura pendente.");
+      requireRule(item, "Não há poção de cura no baú."); requireRule(!c.pendingConsumable, "Aguarde o consumível já preparado ser usado no próximo turno.");
       requireRule(target && target.hp > 0 && target.hp < target.maxHp, "Escolha um herói vivo e ferido para receber a poção.");
-      s.chest = s.chest.filter(i => i.id !== item.id); c.potionsUsed++; c.pendingPotion = { targetId: target.id }; s.lastBattle = targetBattle.battle; break;
+      s.chest = s.chest.filter(i => i.id !== item.id); c.potionsUsed++; c.consumablesUsed = (c.consumablesUsed || 0) + 1; c.pendingConsumable = { key: "healing_potion", targetId: target.id }; s.lastBattle = targetBattle.battle; break;
+    }
+    case "battle-consumable": {
+      const targetBattle = expeditionBattle(s, action.expeditionId); requireRule(targetBattle, "Essa expedição não está mais em combate.");
+      const c = targetBattle.battle.combat!, item = s.chest.find(i => i.key === action.key);
+      requireRule(item, "Você não possui " + (ITEMS[action.key]?.name || "esse consumível") + " no baú.");
+      requireRule(!c.pendingConsumable, "Aguarde o consumível já preparado ser usado no próximo turno.");
+      if (action.key === "healing_potion") {
+        const target = c.fighters.find(f => f.id === action.targetId && f.side === "hero");
+        requireRule(target && target.hp > 0 && target.hp < target.maxHp, "Escolha um herói vivo e ferido.");
+      } else if (action.key === "antidote") {
+        const target = c.fighters.find(f => f.id === action.targetId && f.side === "hero");
+        requireRule(target && target.hp > 0, "Escolha um herói vivo.");
+        requireRule(target.statuses.some(st => ["poison", "bleed", "vulnerable"].includes(st.kind)), "Esse herói não possui efeito nocivo removível.");
+      } else if (action.key === "stun_bomb") {
+        const target = c.fighters.find(f => f.id === action.targetId && f.side === "enemy");
+        requireRule(target && target.hp > 0, "Escolha um inimigo vivo.");
+      }
+      s.chest = s.chest.filter(i => i.id !== item.id); c.consumablesUsed = (c.consumablesUsed || 0) + 1; c.pendingConsumable = { key: action.key, targetId: action.targetId }; s.lastBattle = targetBattle.battle; break;
     }
     case "battle-ability": {
       const targetBattle = expeditionBattle(s, action.expeditionId); requireRule(targetBattle, "Essa expedição não está mais em combate.");

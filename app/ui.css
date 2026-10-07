@@ -195,7 +195,7 @@ img{display:block;max-width:100%}
   display:block;flex:0 0 auto;
   width:46px;height:46px;
   border:1px solid #8d682f;border-radius:5px;
-  background-image:url("/hero-portraits-v121.webp");
+  background-image:url("/hero-portraits-v5.svg");
   background-size:400% 300%;background-repeat:no-repeat;background-color:#112033;
   box-shadow:0 2px 5px #0008;
 }

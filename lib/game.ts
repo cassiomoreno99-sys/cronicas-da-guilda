@@ -562,7 +562,7 @@ function addScar(s: Campaign, h: Hero, source: "defeat" | "boss" = "defeat") {
   const available = HERO_SCARS.filter(scar => !h.scars!.includes(scar.id));
   if (!available.length) return;
   const pick = available[Math.floor(random(s) * available.length)];
-  if (source === "boss" || random(s) < .32) { h.scars.push(pick.id); note(s, h.name + " ganhou a marca "" + pick.name + ""."); }
+  if (source === "boss" || random(s) < .32) { h.scars.push(pick.id); note(s, h.name + " ganhou a marca \"" + pick.name + "\"."); }
 }
 function resolveGuildRaid(s: Campaign, teams: string[][], rivalId?: string) {
   requireRule(!battleActive(s), "Conclua as expedições antes de iniciar uma raid.");

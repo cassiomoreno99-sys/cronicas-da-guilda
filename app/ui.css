@@ -108,6 +108,15 @@ img{display:block;max-width:100%}
   height:16px;display:grid;place-items:center;
   color:#f6ca62;border-left:1px solid #6e512d;font-size:13px
 }
+.header-music{
+  position:absolute;right:4px;top:48px;z-index:4;
+  width:22px;height:22px;padding:2px;
+  display:grid;place-items:center;
+  border:1px solid #795c34;border-radius:50%;
+  color:#e2bf79;background:#0b1722dc;
+  box-shadow:0 1px 4px #0009
+}
+.header-music svg{width:14px;height:14px}
 .header-settings{
   position:absolute;right:3px;top:8px;z-index:4;
   border:0;background:transparent;color:#dfbf83;
@@ -195,8 +204,8 @@ img{display:block;max-width:100%}
   display:block;flex:0 0 auto;
   width:46px;height:46px;
   border:1px solid #8d682f;border-radius:5px;
-  background-image:url("/hero-portraits-v5.svg");
-  background-size:400% 300%;background-repeat:no-repeat;background-color:#112033;
+  background-image:url("/hero-portraits-v6.webp");
+  background-size:300% auto;background-repeat:no-repeat;background-color:#112033;
   box-shadow:0 2px 5px #0008;
 }
 .hero-portrait-large{width:100%;height:100%;border:0;border-radius:0}
@@ -542,4 +551,73 @@ img{display:block;max-width:100%}
   .hero-feature{height:165px}
   .tavern-hero{height:210px}
   .recruit-grid .hero-portrait{height:72px}
+}
+
+
+/* ================ V6: LEGIBILIDADE + MERCADOR ================ */
+.hero-list strong{font-size:9.3px;font-weight:700}
+.hero-list small{font-size:6.5px;font-weight:600}
+.hero-list em{font-size:7px;font-weight:600}
+.hero-feature p{font-size:8.8px;font-weight:600}
+.hero-level>span{font-size:6.7px;font-weight:600}
+.hero-core span{font-size:6.2px;font-weight:600}
+.hero-core strong{font-size:8.6px;font-weight:700}
+.sheet-section>label{font-size:6.1px;font-weight:700}
+.sheet-section h3{font-size:9.8px;font-weight:700}
+.sheet-section p{font-size:7.2px;line-height:1.2;font-weight:600}
+.stat-grid b{font-size:7.2px}
+.choice-grid button{font-size:6.8px;font-weight:600}
+.choice-grid button small{font-size:5.6px}
+
+.item-tile>span{font-size:5.4px;font-weight:600}
+.rarity-label{font-size:6.6px;font-weight:700}
+.item-detail p{font-size:7.7px;line-height:1.2;font-weight:600}
+.item-stats span{font-size:7.1px}
+.item-detail small{font-size:6.4px;font-weight:600}
+.item-detail select{font-size:7.1px;font-weight:600}
+.combat-only-note{font-size:6.6px;font-weight:600}
+
+.recruit-grid h3{font-size:8.8px;font-weight:700}
+.recruit-grid article>span,.recruit-grid article>small{font-size:6.3px;font-weight:600}
+.rumors strong{font-size:8.2px;font-weight:700}
+.rumors small{font-size:6.1px;line-height:1.14;font-weight:600}
+.rumors em{font-size:7px;font-weight:700}
+.drinks p{font-size:7.1px;line-height:1.15;font-weight:600}
+.shop{padding:4px}
+.merchant-head{display:grid;grid-template-columns:39px minmax(0,1fr);align-items:center;gap:4px;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #997447}
+.merchant-portrait{width:39px;height:39px;border:1px solid #8b673c;border-radius:4px;background:url("/reference/tavern-hero.webp") 94% 42%/490% auto no-repeat;box-shadow:0 1px 4px #0007}
+.merchant-head span{min-width:0;display:grid}
+.merchant-head h3{font-size:10px!important;font-weight:700;margin:0!important}
+.merchant-head small{font-size:5.8px!important;line-height:1.05;font-weight:600;white-space:normal!important}
+.shop>button span{font-size:7.1px;font-weight:700}
+.shop small{font-size:5.7px;font-weight:600}
+
+.guild-identity p{font-size:7.2px;font-weight:600}
+.guild-identity>div:nth-child(2)>span{font-size:7.1px;font-weight:600}
+.guild-identity aside strong{font-size:7.1px;font-weight:700}
+.council p{font-size:8.6px;font-weight:600}
+.council small{font-size:6.1px;font-weight:600}
+.building-list h3{font-size:11.2px;font-weight:700}
+.building-list h3 small{font-size:6.1px}
+.building-list p{font-size:6.6px;line-height:1.15;font-weight:600}
+.building-list article>div:last-child>span{font-size:6.2px;font-weight:600}
+.building-list .action-button{font-size:7.1px;font-weight:700}
+.guild-mini h3{font-size:12.6px;font-weight:700}
+.guild-mini p{font-size:7.2px;line-height:1.15;font-weight:600}
+.world-list button,.forge-list button{font-size:7.2px;font-weight:700;padding:4px 3px}
+.world-list small,.forge-list small{font-size:5.8px;line-height:1.12;font-weight:600}
+.guild-mini select,.rival-recruit select{font-size:6.7px;font-weight:600}
+.rival-recruit h3{font-size:13.5px;font-weight:700}
+.rival-hero strong{font-size:7.8px;font-weight:700}
+.rival-hero small{font-size:6.1px;font-weight:600}
+.negotiation-grid button{font-size:6.3px;font-weight:600}
+.negotiation-grid small{font-size:5.6px}
+.negotiation-grid em{font-size:5.2px}
+.settings-panel button{font-size:6.7px;font-weight:700}
+
+@media (max-width:360px){
+  .merchant-head{grid-template-columns:34px minmax(0,1fr)}
+  .merchant-portrait{width:34px;height:34px}
+  .guild-grid{gap:2px}
+  .world-list button,.forge-list button{font-size:6.8px}
 }

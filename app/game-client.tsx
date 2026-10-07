@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   Archive, BookOpen, Check, ChevronRight, CircleHelp, Coins, Crown, Download,
   Flag, Hammer, Heart, LockKeyhole, ScrollText, Shield, Sparkles, Swords,
-  Target, Tent, Trophy, Upload, Users, X
+  Target, Tent, Trophy, Upload, Users, Volume2, VolumeX, X
 } from "lucide-react";
 import {
   CLASSES, RACES, TACTICS, ITEMS, KIND_NAMES, PATH_NAMES, RACIAL_PATH_NAMES,
@@ -55,6 +55,119 @@ const itemArtFile = (key: string) => {
   if (/idol|relic|scarab|crown|die/.test(k)) return "ancient_idol";
   return "gemstone";
 };
+
+
+type AudioWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
+
+function useAmbientRpgMusic() {
+  const [musicEnabled,setMusicEnabled] = useState(true);
+  const enabledRef = useRef(true);
+  const ctxRef = useRef<AudioContext | null>(null);
+  const masterRef = useRef<GainNode | null>(null);
+  const timerRef = useRef<number | null>(null);
+  const stepRef = useRef(0);
+
+  const roots = useMemo(() => [
+    45,48,52,50, 43,47,50,45, 48,52,55,50, 45,50,53,48,
+    43,48,52,47, 45,49,52,50, 41,45,48,43, 46,50,53,48
+  ], []);
+
+  const hz = (midi:number) => 440 * Math.pow(2,(midi - 69) / 12);
+
+  const playStep = useCallback((ctx:AudioContext, master:GainNode, step:number) => {
+    const now = ctx.currentTime;
+    const root = roots[step % roots.length];
+    const third = step % 6 === 2 || step % 6 === 5 ? 3 : 4;
+    const notes = [root - 12, root, root + third, root + 7, root + 12];
+
+    notes.forEach((note,index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const filter = ctx.createBiquadFilter();
+      osc.type = index === 0 ? "triangle" : "sine";
+      osc.frequency.value = hz(note);
+      filter.type = "lowpass";
+      filter.frequency.value = index === 0 ? 520 : 1050;
+      filter.Q.value = .45;
+      const peak = index === 0 ? .014 : .0085;
+      gain.gain.setValueAtTime(.0001,now);
+      gain.gain.exponentialRampToValueAtTime(peak,now + 1.5 + index * .08);
+      gain.gain.setValueAtTime(peak,now + 4.6);
+      gain.gain.exponentialRampToValueAtTime(.0001,now + 8.2);
+      osc.connect(filter); filter.connect(gain); gain.connect(master);
+      osc.start(now + index * .035);
+      osc.stop(now + 8.35);
+    });
+
+    if (step % 2 === 0) {
+      [root + 12,root + 19,root + 24].forEach((note,index) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.value = hz(note);
+        const when = now + .8 + index * .62;
+        gain.gain.setValueAtTime(.0001,when);
+        gain.gain.exponentialRampToValueAtTime(.0045,when + .04);
+        gain.gain.exponentialRampToValueAtTime(.0001,when + 2.2);
+        osc.connect(gain); gain.connect(master);
+        osc.start(when); osc.stop(when + 2.25);
+      });
+    }
+  },[roots]);
+
+  const stopMusic = useCallback(() => {
+    if (timerRef.current !== null) window.clearInterval(timerRef.current);
+    timerRef.current = null;
+    const ctx = ctxRef.current;
+    ctxRef.current = null; masterRef.current = null; stepRef.current = 0;
+    if (ctx && ctx.state !== "closed") void ctx.close();
+  },[]);
+
+  const startMusic = useCallback(async () => {
+    if (!enabledRef.current) return;
+    if (ctxRef.current) {
+      if (ctxRef.current.state === "suspended") await ctxRef.current.resume();
+      return;
+    }
+    const AudioCtor = window.AudioContext || (window as AudioWindow).webkitAudioContext;
+    if (!AudioCtor) return;
+    const ctx = new AudioCtor();
+    const master = ctx.createGain();
+    master.gain.value = .52;
+    master.connect(ctx.destination);
+    ctxRef.current = ctx; masterRef.current = master;
+    const tick = () => {
+      if (!enabledRef.current || !ctxRef.current || !masterRef.current) return;
+      playStep(ctxRef.current,masterRef.current,stepRef.current++);
+    };
+    tick();
+    timerRef.current = window.setInterval(tick,7000);
+    if (ctx.state === "suspended") await ctx.resume();
+  },[playStep]);
+
+  useEffect(() => {
+    const saved = window.localStorage.getItem("cronicas-musica");
+    const enabled = saved === null ? true : saved === "on";
+    enabledRef.current = enabled; setMusicEnabled(enabled);
+    const unlock = () => { if (enabledRef.current) void startMusic(); };
+    window.addEventListener("pointerdown",unlock,{once:true,passive:true});
+    window.addEventListener("keydown",unlock,{once:true});
+    return () => {
+      window.removeEventListener("pointerdown",unlock);
+      window.removeEventListener("keydown",unlock);
+      stopMusic();
+    };
+  },[startMusic,stopMusic]);
+
+  const toggleMusic = useCallback(() => {
+    const next = !enabledRef.current;
+    enabledRef.current = next; setMusicEnabled(next);
+    window.localStorage.setItem("cronicas-musica",next ? "on" : "off");
+    if (next) void startMusic(); else stopMusic();
+  },[startMusic,stopMusic]);
+
+  return { musicEnabled, toggleMusic };
+}
 
 function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" | "class" | "race">; large?: boolean }) {
   return <span
@@ -110,7 +223,7 @@ function enemyArtKey(name: string) {
   return "bandit";
 }
 
-function TopBar({ state, goGuild }: { state: Campaign; goGuild: () => void }) {
+function TopBar({ state, goGuild, musicEnabled, toggleMusic }: { state: Campaign; goGuild: () => void; musicEnabled: boolean; toggleMusic: () => void }) {
   return <header className="game-header">
     <div className="header-banner"><Crown /></div>
     <div className="header-title">CRÔNICAS DA GUILDA</div>
@@ -118,6 +231,7 @@ function TopBar({ state, goGuild }: { state: Campaign; goGuild: () => void }) {
       <button onClick={goGuild}><Coins /><strong>{fmt(state.gold)}</strong><b>+</b></button>
       <button onClick={goGuild}><Sparkles /><strong>{fmt(state.fame)}</strong><b>+</b></button>
     </div>
+    <button className="header-music" onClick={toggleMusic} aria-label={musicEnabled ? "Desligar música" : "Ligar música"} title={musicEnabled ? "Música ambiente ligada" : "Música ambiente desligada"}>{musicEnabled ? <Volume2 /> : <VolumeX />}</button>
     <button className="header-settings" onClick={goGuild} aria-label="Configurações">⚙</button>
   </header>;
 }
@@ -451,7 +565,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
       <section className="rumors parchment"><ParchmentTitle icon={<ScrollText />} title="Rumores da Taverna" />{rumors.map(m => <button key={m.id} onClick={() => openMission(m.id)}><span><strong>{m.title}</strong><small>{m.description}</small></span><em><Coins /> {m.reward}</em></button>)}</section>
       <aside className="tavern-side">
         <section className="parchment drinks"><div className="mug">🍺</div><h3>Bebidas da Casa</h3><p>Brinde com a guilda para recuperar o moral e a energia.</p><button className="action-button green" disabled={busy || state.gold < 8} onClick={() => act({type:"rest"})}>Descansar</button></section>
-        <section className="parchment shop"><h3>Mercador</h3>{offers.map(o => <button key={o.key} disabled={busy || !o.available || state.gold < o.price || state.fame < o.requiredFame} onClick={() => act({type:"buy",key:o.key})}><ItemArt itemKey={o.key} /><span>{ITEMS[o.key].name}<small>{o.price} ouro</small></span></button>)}</section>
+        <section className="parchment shop"><div className="merchant-head"><div className="merchant-portrait" role="img" aria-label="Mercador da taverna" /><span><h3>Mercador</h3><small>Suprimentos e achados da estrada</small></span></div>{offers.map(o => <button key={o.key} disabled={busy || !o.available || state.gold < o.price || state.fame < o.requiredFame} onClick={() => act({type:"buy",key:o.key})}><ItemArt itemKey={o.key} /><span>{ITEMS[o.key].name}<small>{o.price} ouro</small></span></button>)}</section>
       </aside>
     </div>
   </section>;
@@ -573,6 +687,7 @@ export default function Game() {
   const [battleExpeditionId,setBattleExpeditionId] = useState<string | null>(null);
   const saveRef = useRef<Save | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { musicEnabled, toggleMusic } = useAmbientRpgMusic();
 
   const hydrate = useCallback((body: Save) => {
     setSave(body); saveRef.current = body;
@@ -643,7 +758,7 @@ export default function Game() {
   };
 
   return <div className="app-shell">
-    <TopBar state={state} goGuild={() => go("guild")} />
+    <TopBar state={state} goGuild={() => go("guild")} musicEnabled={musicEnabled} toggleMusic={toggleMusic} />
     {screen !== "guild" && <TopNav screen={screen} go={go} />}
     {flash && <button className="flash" onClick={() => setFlash("")}><Check /> {flash}</button>}
     {error && <button className="error" onClick={() => setError("")}><X /> {error}</button>}

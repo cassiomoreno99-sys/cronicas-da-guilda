@@ -48,6 +48,11 @@ await bottom("Heróis","05-herois");
 await bottom("Baú","06-bau");
 await bottom("Taverna","07-taverna");
 await bottom("Guilda","08-guilda");
+const councilChoice = page.locator(".council-actions button:not([disabled])").first();
+if (await councilChoice.count()) {
+  await councilChoice.click();
+  await page.waitForTimeout(250);
+}
 
 await bottom("Missões","09-missoes-volta");
 const missionAction = page.locator(".mission-card .action-button:not([disabled])").first();
@@ -65,12 +70,6 @@ if (await missionAction.count()) {
   send = page.locator(".send-row .action-button").first();
   if (await send.count() && await send.isEnabled()) {
     await send.click();
-    await page.waitForTimeout(350);
-    const details = page.getByRole("button",{name:"Detalhes",exact:true}).first();
-    if (await details.count()) {
-      await details.click();
-      await page.waitForTimeout(250);
-    }
     await page.locator(".battle-overlay").waitFor({state:"visible",timeout:5000});
     await sanity("10-batalha");
   } else {

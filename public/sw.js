@@ -1,4 +1,4 @@
-const CACHE = "cronicas-da-guilda-standalone-v1-2-5";
+const CACHE = "cronicas-da-guilda-standalone-v1-3-0-beta-1";
 const CORE = [
   "/",
   "/guild-favicon.svg",

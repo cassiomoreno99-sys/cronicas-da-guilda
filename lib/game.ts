@@ -544,7 +544,7 @@ function createEvent(s: Campaign): GuildEvent {
     { id: "ignore", label: "Recusar o pedido", effect: "−8 renome" },
   ] };
 }
-type AddedFields = "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "bossSeasons" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads";
+type AddedFields = "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "activeRegion" | "bossSeasons" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads" | "balanceVersion" | "hq" | "academy" | "raidHistory" | "rivalBattleHistory";
 type StoredRival = Pick<RivalGuild, "id" | "name" | "points" | "victories"> & Partial<RivalGuild>;
 type StoredCampaign = Omit<Campaign, AddedFields | "rivals"> & Partial<Pick<Campaign, AddedFields>> & { rivals: StoredRival[] };
 function normalizedFormation(s: Pick<Campaign, "heroes" | "team"> & Partial<Pick<Campaign, "formation">>) {
@@ -559,8 +559,37 @@ function normalizedFormation(s: Pick<Campaign, "heroes" | "team"> & Partial<Pick
   }
   return map;
 }
+const CLASSIC_MIGRATION: Partial<Record<HeroClass, HeroClass>> = { monk: "warrior", necromancer: "mage", druid: "healer" };
+function resetClassicBalance(h: Hero) {
+  h.class = CLASSIC_MIGRATION[h.class] || h.class;
+  if (!CLASSIC_CLASSES.includes(h.class)) h.class = "warrior";
+  const b = V130_BASE_STATS[h.class] || V130_BASE_STATS.warrior;
+  h.level = 1; h.xp = 0; h.attack = b.attack; h.defense = b.defense; h.magic = b.magic;
+  h.energy = Math.max(60, Math.min(100, h.energy || 100)); h.injuredUntil = 0; h.salary = 8; h.value = 120;
+  h.scars = []; delete h.talent; delete h.racial; h.storyStage = 0; h.storyAbilityUnlocked = false;
+  h.race ??= heroRace(h);
+}
 export function normalizeCampaign(previous: StoredCampaign): Campaign {
   const s = structuredClone(previous) as Campaign;
+  s.balanceVersion ??= 0;
+  s.hq ??= { infirmary: 0, forge: 0, academy: 0, library: 0, stables: 0, warroom: 0 };
+  for (const key of Object.keys(HQ_BUILDINGS) as HQBuilding[]) s.hq[key] = Math.max(0, Math.min(HQ_BUILDINGS[key].max, s.hq[key] || 0));
+  s.academy ??= { trainees: [] }; s.academy.trainees ??= [];
+  s.raidHistory ??= []; s.rivalBattleHistory ??= [];
+  s.region ??= 1; s.region = Math.max(1, Math.min(WORLD_REGIONS.length, s.region));
+  s.activeRegion ??= Math.min(s.region, 1); s.activeRegion = Math.max(1, Math.min(s.region, s.activeRegion));
+  if (s.balanceVersion < 3) {
+    for (const h of s.heroes) resetClassicBalance(h);
+    for (let gi = 0; gi < (s.rivals || []).length; gi++) {
+      const rival = s.rivals[gi];
+      if (!rival.heroes) continue;
+      for (let hi = 0; hi < rival.heroes.length; hi++) {
+        const h = rival.heroes[hi]; resetClassicBalance(h); h.name = uniqueAdventurerName(gi * 32 + hi + 200); h.loyalty = h.loyalty || 50;
+      }
+    }
+    s.expeditions = []; s.lastBattle = null; s.journeys = [];
+    s.balanceVersion = 3;
+  }
   s.leagueTier ??= 3; s.leagueWins ??= 0; s.leagueDraws ??= 0; s.leagueLosses ??= 0; s.leagueHistory ??= []; s.rivalries ??= [];
   if (!s.cup) {
     const d = seasonDay(s), stage: CupStage = d <= 7 ? "oitavas" : d <= 14 ? "quartas" : d <= 21 ? "semifinal" : "final";
@@ -579,8 +608,8 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.expeditions ??= []; s.expeditionSequence ??= 0; s.hqActionDay ??= {};
   s.squads ??= ([
     ["escort", "Vanguarda da Estrada"], ["defense", "Muralha da Guilda"], ["dungeon", "Lâminas da Cripta"], ["hunt", "Caçadores da Bruma"], ["boss", "Companhia de Elite"],
-  ] as [MissionKind, string][]).map(([specialty, name]) => ({ id: "squad-" + specialty, name, specialty, team: [], formation: {}, tactic: specialty === "defense" || specialty === "boss" ? "defensive" : specialty === "hunt" ? "aggressive" : "balanced" }));
-  s.squads = s.squads.filter(q => q && SQUAD_SPECIALTIES[q.specialty]).map(q => ({ ...q, id: q.id || "squad-" + q.specialty, name: (q.name || SQUAD_SPECIALTIES[q.specialty].label).slice(0, 32), team: (q.team || []).filter(id => s.heroes.some(h => h.id === id)).slice(0, 4), formation: q.formation || {}, tactic: Object.hasOwn(TACTICS, q.tactic) ? q.tactic : "balanced" }));
+  ] as [MissionKind, string][]).map(([specialty, name]) => ({ id: "squad-" + specialty, name, specialty, team: [], formation: {}, tactic: specialty === "defense" || specialty === "boss" ? "defensive" : specialty === "hunt" ? "aggressive" : "balanced", level: 1, xp: 0, wins: 0 }));
+  s.squads = s.squads.filter(q => q && SQUAD_SPECIALTIES[q.specialty]).map(q => ({ ...q, id: q.id || "squad-" + q.specialty, name: (q.name || SQUAD_SPECIALTIES[q.specialty].label).slice(0, 32), team: (q.team || []).filter(id => s.heroes.some(h => h.id === id)).slice(0, 4), formation: q.formation || {}, tactic: Object.hasOwn(TACTICS, q.tactic) ? q.tactic : "balanced", level: Math.max(1, Math.min(10, q.level || 1)), xp: Math.max(0, q.xp || 0), wins: Math.max(0, q.wins || 0) }));
   if (!s.expeditions.length && s.lastBattle?.status === "active" && s.lastBattle.combat) {
     const legacyTeam = s.lastBattle.combat.fighters.filter(f => f.side === "hero").map(f => f.id);
     s.expeditions.push({ id: "expedition-" + (++s.expeditionSequence), slot: 1, team: legacyTeam, formation: { ...s.lastBattle.combat.formation }, tactic: s.lastBattle.combat.tactic, battle: s.lastBattle, startedDay: s.lastBattle.day, nextRoundAt: Date.now() + 2500 });

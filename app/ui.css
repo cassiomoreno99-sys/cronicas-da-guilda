@@ -1194,7 +1194,7 @@ img{display:block;max-width:100%}
 .bottom-nav button[data-active="true"]{color:#fff1ba;text-shadow:0 0 5px #64cfff}
 .bottom-nav button[data-active="true"]>svg{color:#f5dda1;border-color:#5ac9ff;background:#163953;box-shadow:0 0 12px #35bfff}
 
-.flash,.error{
+.error{
   position:fixed;
   left:50%;
   top:10px;
@@ -1212,9 +1212,8 @@ img{display:block;max-width:100%}
   font-size:12px;
   font-weight:700;
 }
-.flash{background:#17572f;border:1px solid #4b9b62}
 .error{background:#832920;border:1px solid #d46656}
-.flash svg,.error svg{width:16px}
+.error svg{width:16px}
 
 .boot-screen{
   min-height:100svh;

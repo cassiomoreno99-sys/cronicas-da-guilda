@@ -35,6 +35,26 @@ const specialtyNames: Record<string,string> = {
   undead:"Mago / Paladino", boss:"Equipe completa"
 };
 const specialtyName = (value: string) => specialtyNames[value] || value;
+const CORE_RACE_NAMES: Record<string,string> = {
+  aric:"Humano", lyra:"Elfa", elen:"Anão", kael:"Meio-Elfa", sora:"Elfo", doran:"Draconato"
+};
+const raceLabel = (hero: Pick<Hero,"id"|"name"|"class"|"race">) => CORE_RACE_NAMES[hero.id] || raceLabel(hero);
+const itemArtFile = (key: string) => {
+  const k = key.toLowerCase();
+  if (k === "antidote") return "antidote";
+  if (/bomb/.test(k)) return "stun_bomb";
+  if (/healing|potion|tonic|repair/.test(k)) return "healing_potion";
+  if (/bow/.test(k)) return "hunter_bow";
+  if (/staff|wand|cane|orb|book|cards/.test(k)) return "runic_staff";
+  if (/ring/.test(k)) return "amber_ring";
+  if (/pendant|charm|symbol|medallion|emblem|bell|coin/.test(k)) return "star_pendant";
+  if (/armor|mail|plate|guard|coat|vest|shroud|hood|gloves|boots|robe|costume|bracers/.test(k)) return "ancient_armor";
+  if (/map|scroll/.test(k)) return "secret_map";
+  if (/key/.test(k)) return "ancient_key";
+  if (/sword|blade|dagger|cleaver|scythe|spear|hammer|mace|axe/.test(k)) return /dragon|king|dawn/.test(k) ? "dragon_fang" : "iron_sword";
+  if (/idol|relic|scarab|crown|die/.test(k)) return "ancient_idol";
+  return "gemstone";
+};
 
 function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" | "class" | "race">; large?: boolean }) {
   return <span
@@ -50,7 +70,7 @@ function ItemArt({ itemKey }: { itemKey: string }) {
   return <span className={"item-art rarity-" + (def?.rarity || "common")}>
     <Archive className="item-fallback" />
     <img
-      src={"/items/" + itemKey + ".svg"}
+      src={"/items/" + itemArtFile(itemKey) + ".svg"}
       alt={def?.name || itemKey}
       onError={e => { e.currentTarget.style.display = "none"; }}
     />
@@ -340,13 +360,13 @@ function HeroPage({ state, selectedId, selectHero, act, busy }: {
       <aside className="hero-list">
         <ParchmentTitle icon={<Users />} title="Meus Heróis" side={<span>{state.heroes.length}/12</span>} />
         {state.heroes.map(h => <button key={h.id} data-active={h.id === hero.id} onClick={() => selectHero(h.id)}>
-          <HeroPortrait hero={h} /><span><strong>{h.name}</strong><small>{CLASSES[h.class].name} · {RACES[heroRace(h)].name}</small><em>⚔ {fmt(teamPower(state,[h.id]))}</em><ProgressBar value={h.energy} tone={h.energy < 40 ? "red" : "blue"} /></span><b>Nv. {h.level}</b>
+          <HeroPortrait hero={h} /><span><strong>{h.name}</strong><small>{CLASSES[h.class].name} · {raceLabel(h)}</small><em>⚔ {fmt(teamPower(state,[h.id]))}</em><ProgressBar value={h.energy} tone={h.energy < 40 ? "red" : "blue"} /></span><b>Nv. {h.level}</b>
         </button>)}
       </aside>
       <article className="hero-sheet parchment">
         <div className="hero-feature"><div className="feature-portrait"><HeroPortrait hero={hero} large /></div><div><h2>{hero.name}</h2><p>{hero.trait}</p></div></div>
         <div className="hero-level"><strong>Nv. {hero.level}</strong><ProgressBar value={hero.level >= 50 ? 100 : hero.xp / threshold(hero) * 100} tone="gold" /><span>{hero.xp}/{hero.level >= 50 ? "MAX" : threshold(hero)} XP</span></div>
-        <div className="hero-core"><div><span>Classe</span><strong>{CLASSES[hero.class].name}</strong></div><div><span>Raça</span><strong>{RACES[heroRace(hero)].name}</strong></div><div><span>Força</span><strong>{fmt(teamPower(state,[hero.id]))}</strong></div></div>
+        <div className="hero-core"><div><span>Classe</span><strong>{CLASSES[hero.class].name}</strong></div><div><span>Raça</span><strong>{raceLabel(hero)}</strong></div><div><span>Força</span><strong>{fmt(teamPower(state,[hero.id]))}</strong></div></div>
         <section className="sheet-section"><label>Atributos</label><div className="stat-grid">
           <b>❤ Vida <em>{stats.hp}</em></b><b>⚔ Ataque <em>{stats.attack}</em></b><b>🛡 Defesa <em>{stats.defense}</em></b><b>✦ Magia <em>{stats.magic}</em></b><b>★ Crítico <em>{Math.round(stats.critical*100)}%</em></b><b>➤ Velocidade <em>{stats.speed}</em></b>
         </div></section>

@@ -2491,3 +2491,203 @@ body::before {
   .contract-drop-hints > span { width:26px; height:26px; }
   .contract-prepare { font-size:13px !important; }
 }
+
+
+/* v1.3.0 PREVIEW — MOBILE COMPACT PASS */
+@media (max-width:760px) {
+  /* O primeiro contrato precisa aparecer quase imediatamente no celular. */
+  .topbar-inner { min-height:56px !important; padding:5px 10px !important; }
+  .brand-mark { width:25px !important; height:30px !important; flex-basis:25px !important; }
+  .brand-mark > svg:first-child { width:25px !important; height:30px !important; }
+  .brand-title { font-size:20px !important; }
+  .help-button { width:38px !important; height:38px !important; min-width:38px !important; }
+
+  .workspace { padding-top:7px !important; }
+  .guild-heading { margin:2px 0 7px !important; padding:0 2px !important; min-height:36px; }
+  .guild-heading h1 { font-size:22px !important; line-height:1.08 !important; }
+  .guild-heading .rank-badge { min-height:32px; padding:4px 8px; font-size:11px; }
+
+  .resources {
+    min-height:58px !important;
+    margin-bottom:7px !important;
+    border-radius:9px !important;
+  }
+  .resource { padding:5px 2px !important; }
+  .resource div > span { font-size:10px !important; }
+  .resource strong { font-size:16px !important; line-height:1.1 !important; }
+
+  .council-banner {
+    min-height:58px !important;
+    margin-bottom:8px !important;
+    padding:8px 10px !important;
+    border-radius:9px !important;
+  }
+  .council-banner .eyebrow { font-size:9px !important; }
+  .council-banner strong { font-size:13px !important; margin-top:1px !important; }
+  .council-banner > button { min-height:38px !important; padding:6px 10px !important; font-size:12px !important; }
+
+  .mobile-subnav {
+    top:56px !important;
+    margin-bottom:8px !important;
+  }
+  .mobile-subnav [data-slot="toggle-group-item"] {
+    min-height:38px !important;
+    padding:5px 3px !important;
+    font-size:11px !important;
+  }
+
+  .mission-section .section-heading {
+    margin:0 2px 7px !important;
+  }
+  .mission-section .section-heading .eyebrow { font-size:9px !important; }
+  .mission-section .section-heading h2 {
+    font-size:21px !important;
+    line-height:1.05 !important;
+    margin-top:2px !important;
+  }
+  .mission-section .section-heading p {
+    display:none !important;
+  }
+
+  .parchment-contract-board { gap:7px !important; }
+  .parchment-contract {
+    display:grid !important;
+    grid-template-columns:112px minmax(0,1fr) !important;
+    min-height:0 !important;
+    border-radius:8px !important;
+  }
+  .contract-art {
+    min-height:0 !important;
+    height:100% !important;
+  }
+  .contract-art img {
+    width:100% !important;
+    height:100% !important;
+    min-height:0 !important;
+    object-fit:cover !important;
+    object-position:center !important;
+  }
+  .contract-art > span {
+    left:6px !important;
+    bottom:7px !important;
+    padding:3px 5px !important;
+    font-size:8px !important;
+  }
+  .contract-art-rank {
+    position:absolute;
+    z-index:2;
+    top:7px;
+    left:7px;
+    width:27px;
+    height:27px;
+    display:grid;
+    place-items:center;
+    border:1px solid #d6ad62;
+    border-radius:50%;
+    background:rgba(20,15,10,.82);
+    color:#f4d795;
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:11px;
+  }
+
+  .contract-copy { padding:8px 9px !important; min-width:0; }
+  .contract-title-row small { font-size:8px !important; margin-bottom:1px !important; }
+  .contract-title-row h3 {
+    font-size:17px !important;
+    line-height:1.02 !important;
+  }
+  .contract-copy > p {
+    margin:4px 0 5px !important;
+    display:-webkit-box;
+    overflow:hidden;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    font-size:10px !important;
+    line-height:1.18 !important;
+  }
+  .contract-rank { display:none !important; }
+
+  .contract-difficulty {
+    padding:4px 0 !important;
+  }
+  .contract-difficulty strong { font-size:9px !important; }
+  .contract-difficulty > span { gap:1px !important; font-size:9px !important; }
+
+  .contract-specialists {
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    padding:4px 0 3px !important;
+    gap:5px !important;
+  }
+  .contract-specialists > small {
+    display:none !important;
+  }
+  .contract-specialists > div {
+    justify-content:flex-start !important;
+    gap:3px !important;
+  }
+  .contract-specialists span {
+    padding:2px 5px !important;
+    font-size:8px !important;
+  }
+
+  .contract-bottom {
+    grid-template-columns:minmax(0,1fr) 92px !important;
+    align-items:end !important;
+    gap:6px !important;
+    margin-top:0 !important;
+  }
+  .contract-rewards { gap:3px 5px !important; }
+  .contract-rewards > span { font-size:9px !important; }
+  .contract-rewards > span svg { width:11px !important; height:11px !important; }
+  .contract-rewards .xp-reward { padding:2px 4px !important; }
+  .contract-drop-hints {
+    width:auto !important;
+    gap:3px !important;
+    margin-top:1px !important;
+  }
+  .contract-drop-hints > span {
+    width:22px !important;
+    height:22px !important;
+    border-radius:4px !important;
+  }
+
+  .contract-prepare {
+    width:92px !important;
+    min-width:92px !important;
+    min-height:36px !important;
+    height:36px !important;
+    padding:4px 6px !important;
+    font-size:11px !important;
+    line-height:1.05 !important;
+  }
+  .contract-prepare svg { width:12px !important; height:12px !important; }
+  .contract-lock-reason {
+    margin-top:4px !important;
+    padding:4px 5px !important;
+    font-size:8px !important;
+  }
+
+  .parchment-team-preview {
+    min-height:46px !important;
+    margin-top:1px !important;
+    padding:7px 8px !important;
+  }
+
+  /* A barra fixa continua visível sem esconder o final da tela. */
+  .workspace,
+  .workspace:has(.command-grid[data-mobile-view="mission"]),
+  .workspace:has(.command-grid[data-mobile-view="team"]),
+  .workspace:has(.command-grid[data-mobile-view="league"]),
+  .workspace:has(.command-grid[data-mobile-view="camp"]) {
+    padding-bottom:calc(116px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (max-width:390px) {
+  .parchment-contract { grid-template-columns:96px minmax(0,1fr) !important; }
+  .contract-title-row h3 { font-size:16px !important; }
+  .contract-bottom { grid-template-columns:minmax(0,1fr) 84px !important; }
+  .contract-prepare { width:84px !important; min-width:84px !important; font-size:10px !important; }
+}

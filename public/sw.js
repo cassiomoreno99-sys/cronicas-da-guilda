@@ -1,4 +1,4 @@
-const CACHE = "cronicas-da-guilda-standalone-v1-3-0-final";
+const CACHE = "cronicas-da-guilda-standalone-v1-3-2-mockups";
 const CORE = [
   "/",
   "/guild-favicon.svg",
@@ -17,6 +17,10 @@ self.addEventListener("install", event => {
       .then(cache => cache.addAll(CORE))
       .then(() => self.skipWaiting())
   );
+});
+
+self.addEventListener("message", event => {
+  if (event.data?.type === "SKIP_WAITING") self.skipWaiting();
 });
 
 self.addEventListener("activate", event => {
@@ -61,7 +65,7 @@ self.addEventListener("fetch", event => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
 
-  if (event.request.mode === "navigate") {
+  if (event.request.mode === "navigate" || ["script", "style", "worker"].includes(event.request.destination)) {
     event.respondWith(networkFirst(event.request));
     return;
   }

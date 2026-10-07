@@ -712,6 +712,12 @@ export default function Game() {
     } finally { setBusy(false); }
   },[busy,hydrate]);
 
+  useEffect(() => {
+    if (!flash) return;
+    const timer = window.setTimeout(() => setFlash(""), 1800);
+    return () => window.clearTimeout(timer);
+  }, [flash]);
+
   const state = save?.state;
   const running = state ? activeExpeditions(state) : [];
   useEffect(() => {

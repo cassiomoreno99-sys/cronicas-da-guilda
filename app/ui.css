@@ -751,7 +751,7 @@ img{display:block;max-width:100%}
 .inventory-layout{
   display:grid;
   grid-template-columns:54% 46%;
-  min-height:650px;
+  min-height:0;
   background:#130c08;
   border:1px solid #775025;
 }
@@ -1003,7 +1003,7 @@ img{display:block;max-width:100%}
 .battle-overlay{
   position:fixed;
   left:50%;
-  top:calc(var(--header-h) + var(--topnav-h));
+  top:0;
   bottom:var(--bottom-h);
   width:min(100vw,var(--max-app));
   transform:translateX(-50%);

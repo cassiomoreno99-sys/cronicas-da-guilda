@@ -35,15 +35,6 @@ const specialtyNames: Record<string,string> = {
   undead:"Mago / Paladino", boss:"Equipe completa"
 };
 const specialtyName = (value: string) => specialtyNames[value] || value;
-const rarityNames: Record<string,string> = {
-  common:"Comum", uncommon:"Incomum", rare:"Raro", epic:"Épico", legendary:"Lendário"
-};
-const statusNames: Record<string,string> = {
-  bleed:"Sangramento", poison:"Veneno", stun:"Atordoado", shield:"Escudo",
-  regen:"Regeneração", taunt:"Provocado", inspired:"Inspirado", vulnerable:"Vulnerável"
-};
-const rarityLabel = (value: string) => rarityNames[value] || value;
-const statusLabel = (value: string) => statusNames[value] || value;
 const CORE_RACE_NAMES: Record<string,string> = {
   aric:"Humano", lyra:"Elfa", elen:"Anão", kael:"Meio-Elfa", sora:"Elfo", doran:"Draconato"
 };
@@ -527,7 +518,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
         <ItemArt itemKey={item.key} /><span>{ITEMS[item.key].name}</span>{item.equippedTo && <b>✓</b>}
       </button>)}</div>
       {selected && def ? <article className="item-detail parchment">
-        <span className="rarity-label">{rarityLabel(def.rarity)}</span><h2>{def.name}</h2>
+        <span className="rarity-label">{def.rarity.toUpperCase()}</span><h2>{def.name}</h2>
         <div className="selected-item-art"><ItemArt itemKey={selected.key} /></div>
         <p>{def.description}</p>
         <div className="item-stats">{([["Ataque",def.attack],["Defesa",def.defense],["Magia",def.magic],["Vida",def.hp],["Velocidade",def.speed]] as Array<[string,number|undefined]>).filter(([,v]) => v).map(([k,v]) => <span key={k}><b>{k}</b><em>+{v}</em></span>)}</div>
@@ -643,7 +634,7 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
       <div className="battle-stage">
         <div className="fighters allies">{heroes.map(f => <article key={f.id}><HeroPortrait hero={{id:f.id,name:f.name,class:f.class || "warrior"}}/><div><strong>{f.name}</strong><small>{f.class ? CLASSES[f.class].name : "Herói"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
         <div className="battle-center-mark"><Swords /></div>
-        <div className="fighters enemies">{enemies.map(f => <article key={f.id}><img src={"/enemies/" + enemyArtKey(f.name) + ".webp"} alt="" /><div><strong>{f.name}</strong><small>{f.statuses?.map(s=>statusLabel(s.kind)).join(" · ") || "Inimigo"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
+        <div className="fighters enemies">{enemies.map(f => <article key={f.id}><img src={"/enemies/" + enemyArtKey(f.name) + ".webp"} alt="" /><div><strong>{f.name}</strong><small>{f.statuses?.map(s=>s.kind).join(" · ") || "Inimigo"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
       </div>
       <div className="battle-log parchment">{battle.log.slice(-5).map((l,i) => <p key={i} data-kind={l.kind}>{l.text}</p>)}{!battle.log.length && <p>Os combatentes tomam posição.</p>}</div>
       <div className="consumable-title"><Archive /> Consumíveis</div>
@@ -679,12 +670,6 @@ export default function Game() {
   const saveRef = useRef<Save | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { musicEnabled, toggleMusic } = useAmbientRpgMusic();
-
-  useEffect(() => {
-    if (!flash) return;
-    const timer = window.setTimeout(() => setFlash(""), 2200);
-    return () => window.clearTimeout(timer);
-  }, [flash]);
 
   const hydrate = useCallback((body: Save) => {
     setSave(body); saveRef.current = body;
@@ -726,6 +711,12 @@ export default function Game() {
       setError(e instanceof Error ? e.message : "A ação não pôde ser concluída.");
     } finally { setBusy(false); }
   },[busy,hydrate]);
+
+  useEffect(() => {
+    if (!flash) return;
+    const timer = window.setTimeout(() => setFlash(""), 1800);
+    return () => window.clearTimeout(timer);
+  }, [flash]);
 
   const state = save?.state;
   const running = state ? activeExpeditions(state) : [];

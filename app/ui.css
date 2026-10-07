@@ -1044,12 +1044,12 @@ img{display:block;max-width:100%}
 }
 .battle-stage{
   position:relative;
-  min-height:435px;
+  min-height:300px;
   display:grid;
   grid-template-columns:minmax(0,1fr) 28px minmax(0,1fr);
   align-items:center;
   gap:4px;
-  padding:18px 7px 12px;
+  padding:10px 6px 8px;
   overflow:hidden;
   background:
     linear-gradient(90deg,#06101ad4,#06101a55 47%,#06101ad4),
@@ -1063,41 +1063,41 @@ img{display:block;max-width:100%}
   background:radial-gradient(circle at 50% 45%,transparent,#0007 82%);
   pointer-events:none;
 }
-.fighters{position:relative;z-index:2;display:grid;gap:7px}
+.fighters{position:relative;z-index:2;display:grid;gap:4px}
 .fighters article{
   min-width:0;
-  min-height:67px;
+  min-height:53px;
   display:grid;
-  grid-template-columns:53px minmax(0,1fr);
+  grid-template-columns:42px minmax(0,1fr);
   align-items:center;
-  gap:6px;
-  padding:5px;
+  gap:4px;
+  padding:4px;
   color:#f2e5c6;
   background:linear-gradient(180deg,#101d2cee,#08131fee);
   border:1px solid #9a6c34;
   border-radius:6px;
   box-shadow:0 3px 8px #000b;
 }
-.fighters.enemies article{grid-template-columns:minmax(0,1fr) 53px}
+.fighters.enemies article{grid-template-columns:minmax(0,1fr) 42px}
 .fighters.enemies article>img{grid-column:2;grid-row:1}
 .fighters.enemies article>div{grid-column:1;grid-row:1;text-align:right}
-.fighters article>img,.fighters .hero-portrait{width:51px;height:51px;border:2px solid #ba8742;border-radius:6px;object-fit:cover}
+.fighters article>img,.fighters .hero-portrait{width:40px;height:40px;border:2px solid #ba8742;border-radius:6px;object-fit:cover}
 .fighters article>div{min-width:0;display:grid;gap:2px}
-.fighters strong{font-size:10px;line-height:1.05;overflow:hidden;text-overflow:ellipsis}
-.fighters small{font-size:7px;color:#d7c5a5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fighters span{font-size:7px}
-.fighters .progress{height:7px}
+.fighters strong{font-size:8.5px;line-height:1.05;overflow:hidden;text-overflow:ellipsis}
+.fighters small{font-size:6.5px;color:#d7c5a5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fighters span{font-size:6.5px}
+.fighters .progress{height:6px}
 .battle-center-mark{position:relative;z-index:2;display:grid;place-items:center;color:#f0bd52}
 .battle-center-mark svg{width:25px;height:25px;filter:drop-shadow(0 2px 2px #000)}
 .battle-log{
   margin:6px;
-  min-height:96px;
-  max-height:128px;
+  min-height:70px;
+  max-height:88px;
   overflow:auto;
   padding:7px;
   color:#4a2818;
 }
-.battle-log p{margin:0;padding:2px 0;border-bottom:1px solid #b89759;font-size:8px;line-height:1.15}
+.battle-log p{margin:0;padding:2px 0;border-bottom:1px solid #b89759;font-size:7.5px;line-height:1.15}
 .battle-log p:last-child{border-bottom:0}
 .battle-log p[data-kind="hero"]{color:#154c8b}
 .battle-log p[data-kind="enemy"]{color:#8f2824}
@@ -1130,9 +1130,9 @@ img{display:block;max-width:100%}
 .battle-consumables button{
   position:relative;
   min-width:0;
-  min-height:82px;
+  min-height:66px;
   display:grid;
-  grid-template-columns:50px minmax(0,1fr);
+  grid-template-columns:40px minmax(0,1fr);
   grid-template-rows:auto 1fr;
   align-items:center;
   gap:2px 5px;
@@ -1143,12 +1143,12 @@ img{display:block;max-width:100%}
   border:1px solid #705437;
   border-radius:5px;
 }
-.battle-consumables .item-art{grid-row:1/3;width:48px;height:48px}
+.battle-consumables .item-art{grid-row:1/3;width:38px;height:38px}
 .battle-consumables b{position:absolute;right:3px;top:2px;padding:1px 4px;border-radius:4px;background:#0a0b0c;color:#fff;font-size:8px}
-.battle-consumables strong{align-self:end;font-size:9px}
-.battle-consumables small{align-self:start;font-size:7px;line-height:1.08;color:#c8c2b4}
+.battle-consumables strong{align-self:end;font-size:8px}
+.battle-consumables small{align-self:start;font-size:6.5px;line-height:1.08;color:#c8c2b4}
 .battle-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:7px;background:#07121c}
-.battle-actions .action-button{min-height:42px}
+.battle-actions .action-button{min-height:36px}
 .battle-actions .huge{grid-column:1/-1}
 
 /* NAV INFERIOR */
@@ -1263,12 +1263,12 @@ img{display:block;max-width:100%}
   .building-list article{grid-template-columns:28% minmax(0,1fr) 26%}
   .building-list img{height:88px}
   .building-list h3{font-size:13px}
-  .battle-stage{min-height:390px}
-  .fighters article{grid-template-columns:44px minmax(0,1fr);min-height:59px;padding:4px}
-  .fighters.enemies article{grid-template-columns:minmax(0,1fr) 44px}
-  .fighters article>img,.fighters .hero-portrait{width:42px;height:42px}
-  .battle-consumables button{grid-template-columns:40px minmax(0,1fr);min-height:74px}
-  .battle-consumables .item-art{width:38px;height:38px}
+  .battle-stage{min-height:286px}
+  .fighters article{grid-template-columns:38px minmax(0,1fr);min-height:48px;padding:3px}
+  .fighters.enemies article{grid-template-columns:minmax(0,1fr) 38px}
+  .fighters article>img,.fighters .hero-portrait{width:36px;height:36px}
+  .battle-consumables button{grid-template-columns:36px minmax(0,1fr);min-height:60px}
+  .battle-consumables .item-art{width:34px;height:34px}
 }
 
 /* Very narrow fallback: keep functionality readable rather than forcing microscopic text */

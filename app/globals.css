@@ -3392,3 +3392,673 @@ body::before {
     height:19px!important;
   }
 }
+
+/* === MOCKUP EXACT PASS v1.3.2 ===
+   As artes conceituais aprovadas passam a ser a referência visual.
+   A prioridade é mobile e coerência entre todas as páginas. */
+
+/* Cabeçalho: cidade noturna limpa, brasão à esquerda, título central e moedas à direita. */
+.topbar{
+  background:
+    linear-gradient(180deg,rgba(3,8,15,.10),rgba(5,13,22,.54) 55%,rgba(6,12,18,.92)),
+    url("/ui/guild-night.webp") center top / cover no-repeat !important;
+  overflow:hidden;
+}
+.topbar::before{
+  background:linear-gradient(180deg,rgba(3,8,14,.28),rgba(2,7,12,.56)) !important;
+  opacity:1!important;
+}
+.brand{
+  position:absolute!important;
+  left:50%!important;
+  transform:translateX(-50%)!important;
+  width:auto!important;
+  justify-content:center!important;
+  pointer-events:none;
+}
+.brand-mark{
+  position:fixed!important;
+  left:12px!important;
+  transform:none!important;
+  pointer-events:auto;
+  border-radius:3px!important;
+  background:linear-gradient(180deg,#153957,#0a2032)!important;
+  border-color:#b48842!important;
+}
+.brand-title{
+  font-weight:600!important;
+  letter-spacing:.01em!important;
+  color:#f6d99b!important;
+  text-shadow:0 2px 2px #000,0 0 14px rgba(236,190,98,.30)!important;
+}
+.header-tools{margin-left:auto!important;z-index:2}
+.header-currencies button{
+  background:linear-gradient(180deg,#172431,#090e14)!important;
+  border-color:#9a7434!important;
+  color:#f7e9c8!important;
+}
+.header-currencies button b{color:#f8cc63!important}
+
+/* Navegação superior como nas artes. */
+.fantasy-command-nav{
+  border-color:#5e4c34!important;
+  background:linear-gradient(180deg,#162638,#07111b)!important;
+  box-shadow:inset 0 1px rgba(255,255,255,.04),0 4px 12px rgba(0,0,0,.38)!important;
+}
+.fantasy-command-nav button{
+  border-left:1px solid rgba(121,95,54,.26)!important;
+  border-radius:0!important;
+  background:linear-gradient(180deg,#15283a,#0b1723)!important;
+  color:#c8c9c5!important;
+}
+.fantasy-command-nav button:first-child{border-left:0!important}
+.fantasy-command-nav button[data-active="true"]{
+  color:#ffebac!important;
+  border:1px solid #a87c3d!important;
+  background:linear-gradient(180deg,#78542d,#3c2817)!important;
+  box-shadow:inset 0 0 0 2px rgba(255,222,153,.10),0 0 12px rgba(229,174,83,.22)!important;
+}
+
+/* Missões: pergaminhos, arte lateral, recompensas legíveis e botão encaixado. */
+.parchment-contract{
+  border:1px solid #8e6d3c!important;
+  border-radius:7px!important;
+  background:#e6ce96!important;
+  box-shadow:0 5px 10px rgba(0,0,0,.34),inset 0 0 0 1px rgba(255,244,211,.30)!important;
+}
+.contract-copy{
+  background:
+    radial-gradient(circle at 90% 15%,rgba(117,71,26,.05),transparent 25%),
+    linear-gradient(90deg,#ead7a8,#e1c790)!important;
+}
+.contract-title-row h3{font-weight:600!important;color:#5a2117!important}
+.contract-specialists span{
+  border-color:#8e7445!important;
+  background:#ead7a7!important;
+}
+.contract-prepare{
+  border:1px solid #c18d45!important;
+  box-shadow:inset 0 0 0 2px rgba(255,232,174,.13),0 2px 0 #28170d!important;
+}
+.parchment-contract:nth-child(3n+1) .contract-prepare{background:linear-gradient(180deg,#8c372b,#561d18)!important}
+.parchment-contract:nth-child(3n+2) .contract-prepare{background:linear-gradient(180deg,#3d713f,#1b4a24)!important}
+.parchment-contract:nth-child(3n) .contract-prepare{background:linear-gradient(180deg,#245c88,#143d62)!important}
+
+/* Equipes / expedições: três cartões grandes, formação e painel de bônus. */
+.expedition-dock{
+  background:linear-gradient(180deg,#241811,#100b08)!important;
+  border-color:#7f6137!important;
+}
+.expedition-dock-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+}
+.expedition-mini-card{
+  position:relative!important;
+  overflow:hidden!important;
+  min-height:168px!important;
+  padding:82px 7px 8px!important;
+  border:1px solid #8e6c3c!important;
+  background:linear-gradient(180deg,#1b2630,#21130c)!important;
+}
+.expedition-mini-card::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto;
+  height:78px;
+  background:center/cover no-repeat;
+  border-bottom:1px solid #8a6637;
+  opacity:.95;
+}
+.expedition-mini-card:nth-child(1)::before{background-image:linear-gradient(180deg,transparent,#17100b),url("/enemies/spider.webp")}
+.expedition-mini-card:nth-child(2)::before{background-image:linear-gradient(180deg,transparent,#17100b),url("/enemies/ambusher.webp")}
+.expedition-mini-card:nth-child(3)::before{background-image:linear-gradient(180deg,transparent,#17100b),url("/ui/guild-night.webp")}
+.expedition-mini-card .expedition-slot-number{position:absolute!important;top:6px!important;left:6px!important}
+.expedition-mini-copy strong{font-family:Georgia,"Times New Roman",serif!important;color:#f2d8a0!important}
+.saved-squads-panel,.roster-panel{
+  background:linear-gradient(90deg,#e8d19a,#d4b376)!important;
+  color:#3e2817!important;
+}
+.saved-squads-panel .panel-heading,.roster-panel .panel-heading{border-bottom-color:#9e7e4f!important}
+
+/* Heróis: lista em pergaminho, retratos em moldura e diálogo no estilo ficha. */
+.fantasy-heroes-page .section-heading{margin-bottom:8px!important}
+.fantasy-heroes-page .roster-panel{
+  padding:10px!important;
+  border:1px solid #816039!important;
+}
+.mobile-hero{
+  border-radius:4px!important;
+  border-color:#9a7137!important;
+  background:linear-gradient(90deg,#ecd6a0,#d7b777)!important;
+  box-shadow:inset 0 0 0 1px rgba(255,243,204,.25)!important;
+}
+.mobile-hero[data-selected="true"]{
+  outline:2px solid #d9a443!important;
+  box-shadow:0 0 10px rgba(226,168,63,.28),inset 0 0 0 1px rgba(255,243,204,.35)!important;
+}
+.mobile-hero .hero-portrait{
+  border:2px solid #6d4c28!important;
+  border-radius:5px!important;
+}
+.hero-dialog{
+  background:
+    radial-gradient(circle at 82% 0%,rgba(171,119,49,.12),transparent 30%),
+    linear-gradient(90deg,#ead3a0,#d7b77d)!important;
+  border:2px solid #80603a!important;
+}
+.hero-dialog .hero-detail-heading{
+  padding:8px;
+  border:1px solid #8f6b3d;
+  background:linear-gradient(90deg,#1b2a36,#0c1620);
+  color:#f2deb0;
+}
+.hero-dialog .hero-detail-heading [data-slot="dialog-title"],
+.hero-dialog .hero-detail-heading .location{color:#f1d79f!important}
+
+/* TAVERNA — cena superior, quatro contratos compactos e rumores. */
+.fantasy-tavern-page{display:grid;gap:9px}
+.tavern-scene{
+  position:relative;
+  min-height:230px;
+  margin:0 -8px 0;
+  border:1px solid #70532e;
+  border-left:0;border-right:0;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 18% 45%,rgba(232,145,66,.28),transparent 23%),
+    linear-gradient(180deg,rgba(28,12,4,.10),rgba(20,9,4,.48)),
+    url("/ui/guild-night.webp") center 72% / cover no-repeat;
+}
+.tavern-scene::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(circle at 15% 60%,rgba(255,145,48,.40),transparent 18%),
+    radial-gradient(circle at 78% 55%,rgba(255,184,79,.18),transparent 24%);
+  mix-blend-mode:screen;
+}
+.tavern-scene>div{
+  position:absolute;
+  right:15px;top:18px;
+  width:165px;padding:12px;
+  border:1px solid #8f6f42;
+  background:linear-gradient(90deg,#ead5a2,#d9bd82);
+  color:#54261b;
+  text-align:center;
+  font-size:18px;
+  line-height:1.15;
+  box-shadow:0 4px 10px rgba(0,0,0,.25);
+}
+.fantasy-tavern-page .section-heading{
+  margin:0!important;
+  padding:8px 9px 2px!important;
+  border:1px solid #7d6038;
+  border-bottom:0;
+  background:linear-gradient(90deg,#e8d19b,#d3b276);
+}
+.fantasy-tavern-page .section-heading h2{color:#552218!important}
+.fantasy-tavern-page .section-heading .eyebrow,
+.fantasy-tavern-page .section-heading p{color:#74522d!important}
+.fantasy-tavern-page .market-switch{
+  margin:0!important;border-radius:0!important;border-color:#7a5e36!important
+}
+.fantasy-tavern-page .classes-guide-trigger{margin:0 0 3px!important}
+.fantasy-tavern-page .recruit-grid{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:4px!important;
+}
+.fantasy-tavern-page .recruit-card{
+  display:flex!important;
+  flex-direction:column!important;
+  min-width:0!important;
+  padding:4px!important;
+  border:1px solid #8f6d3f!important;
+  border-radius:3px!important;
+  background:linear-gradient(180deg,#ead5a2,#d5b67c)!important;
+  color:#3d2617!important;
+}
+.fantasy-tavern-page .recruit-card .recruit-top{
+  margin:-4px -4px 3px!important;
+  min-height:92px!important;
+  overflow:hidden!important;
+  background:#1d1510!important;
+}
+.fantasy-tavern-page .recruit-card .portrait-large{
+  width:100%!important;
+  height:96px!important;
+  border:0!important;
+  border-radius:0!important;
+  background-size:400% 300%!important;
+  background-repeat:no-repeat!important;
+}
+.fantasy-tavern-page .recruit-card .subtle-chip{
+  position:absolute!important;
+  left:4px!important;bottom:4px!important;
+  padding:2px 4px!important;
+  font-size:8px!important;
+}
+.fantasy-tavern-page .recruit-card .location{
+  font-size:7px!important;
+  line-height:1.15!important;
+  min-height:20px;
+}
+.fantasy-tavern-page .recruit-card h3{
+  margin:2px 0!important;
+  font-size:11px!important;
+  line-height:1.05!important;
+  min-height:23px;
+}
+.fantasy-tavern-page .recruit-stats{
+  display:none!important;
+}
+.fantasy-tavern-page .recruit-salary{
+  margin-top:auto!important;
+  display:block!important;
+  font-size:7px!important;
+}
+.fantasy-tavern-page .recruit-salary strong{display:block!important;font-size:8px!important}
+.fantasy-tavern-page .recruit-card>button{
+  min-height:30px!important;
+  margin-top:3px!important;
+  padding:3px!important;
+  font-size:8px!important;
+}
+.fantasy-tavern-page .recruit-card>button span{display:none!important}
+.tavern-rumors{
+  padding:9px;
+  border:1px solid #7f6038;
+  background:linear-gradient(90deg,#ead5a2,#d3b174);
+  color:#3b2415;
+}
+.tavern-rumors h3{margin:1px 0 7px;color:#572418;font-size:18px}
+.tavern-rumors .eyebrow{color:#7c552a}
+.tavern-rumors>button{
+  width:100%;display:grid;grid-template-columns:1fr auto;gap:2px 7px;text-align:left;
+  padding:7px 4px;border:0;border-top:1px solid rgba(100,68,32,.22);background:transparent;color:#422818;
+}
+.tavern-rumors>button strong{font-size:12px}
+.tavern-rumors>button span{grid-column:1;font-size:9px;line-height:1.2}
+.tavern-rumors>button em{grid-column:2;grid-row:1/3;align-self:center;font-size:8px;color:#7a542c;font-style:normal}
+
+/* BAÚ — grade de ícones compacta. O mercador não pode virar um ícone gigante. */
+.fantasy-inventory-page .section-heading{margin-bottom:7px!important}
+.fantasy-inventory-page .chest-summary{
+  border-color:#775b34!important;
+  background:linear-gradient(180deg,#251812,#10141a)!important;
+}
+.fantasy-inventory-page .inventory-tabs>[data-slot="tabs-list"]{
+  background:#142333!important;border-color:#705738!important
+}
+.fantasy-inventory-page .inventory-filter{
+  display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:2px!important;
+  overflow:hidden!important;
+}
+.fantasy-inventory-page .inventory-filter [data-slot="toggle-group-item"]{
+  min-width:0!important;padding:4px 2px!important;font-size:8px!important
+}
+.fantasy-inventory-page .item-grid.chest-grid{
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  gap:5px!important;
+}
+.fantasy-inventory-page .chest-grid .item-card{
+  aspect-ratio:.82;
+  padding:3px!important;
+  border:1px solid #6e5b42!important;
+  border-radius:3px!important;
+  background:linear-gradient(180deg,#1d1a18,#0e1114)!important;
+}
+.fantasy-inventory-page .chest-grid .item-card .item-card-top{
+  display:grid!important;justify-items:center!important;gap:1px!important
+}
+.fantasy-inventory-page .chest-grid .item-icon{
+  width:100%!important;height:auto!important;aspect-ratio:1!important;max-width:none!important;
+  border-radius:2px!important;
+}
+.fantasy-inventory-page .chest-grid .item-card h3{
+  font-size:8px!important;line-height:1.05!important;margin:2px 0!important
+}
+.fantasy-inventory-page .chest-grid .item-card .item-card-top>span:not(.item-icon){
+  font-size:6px!important;line-height:1.05!important
+}
+.fantasy-inventory-page .chest-grid .item-actions button{
+  min-height:23px!important;padding:2px!important;font-size:7px!important
+}
+.fantasy-inventory-page .inventory-tabs [data-slot="tabs-content"][data-state="active"]>.item-grid:not(.chest-grid){
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px!important;
+}
+.fantasy-inventory-page .inventory-tabs [data-slot="tabs-content"][data-state="active"]>.item-grid:not(.chest-grid) .item-card{
+  display:grid!important;
+  grid-template-columns:76px minmax(0,1fr)!important;
+  gap:6px!important;
+  min-height:112px!important;
+  padding:6px!important;
+}
+.fantasy-inventory-page .inventory-tabs [data-slot="tabs-content"][data-state="active"]>.item-grid:not(.chest-grid) .item-card-top{
+  grid-row:1/5!important;align-self:start!important;
+}
+.fantasy-inventory-page .inventory-tabs [data-slot="tabs-content"][data-state="active"]>.item-grid:not(.chest-grid) .item-icon{
+  width:72px!important;height:72px!important;max-width:72px!important;aspect-ratio:1!important
+}
+.fantasy-inventory-page .inventory-tabs [data-slot="tabs-content"][data-state="active"]>.item-grid:not(.chest-grid) .item-card h3{
+  font-size:12px!important;margin:0!important
+}
+.fantasy-inventory-page .inventory-tabs [data-slot="tabs-content"][data-state="active"]>.item-grid:not(.chest-grid) .item-card>p{
+  display:block!important;font-size:8px!important;line-height:1.2!important;margin:0!important
+}
+.fantasy-inventory-page .merchant-intro{
+  margin:0 0 7px!important;padding:8px!important;border-color:#866638!important;
+  background:linear-gradient(90deg,#ead5a1,#d3b174)!important
+}
+.fantasy-inventory-page .merchant-intro h3{font-size:19px!important;color:#57231a!important}
+.fantasy-inventory-page .merchant-intro p{font-size:9px!important;color:#63472e!important}
+
+/* LIGA — posição, classificação e desafio, como na arte aprovada. */
+.fantasy-league-page{
+  gap:7px!important;
+}
+.fantasy-league-page>.section-heading{
+  min-height:112px;
+  display:grid!important;
+  grid-template-columns:1fr auto!important;
+  align-items:center!important;
+  padding:11px 14px!important;
+  margin:0!important;
+  border:1px solid #7f6037;
+  background:linear-gradient(90deg,#ead4a1,#d2af74)!important;
+  color:#3b2416!important;
+}
+.fantasy-league-page>.section-heading .eyebrow{color:#7b542b!important}
+.fantasy-league-page>.section-heading h2{color:#562219!important;font-size:28px!important}
+.fantasy-league-page>.section-heading .rank-badge{
+  min-width:108px;min-height:74px;
+  display:grid;place-items:center;
+  background:transparent!important;border:0!important;color:#69271e!important;
+  font-size:22px!important;
+}
+.fantasy-league-page>.section-heading .rank-badge svg{width:31px;height:31px}
+.fantasy-league-page .league-panel{
+  display:flex!important;
+  flex-direction:column!important;
+  padding:0!important;
+  overflow:hidden!important;
+  border-radius:4px!important;
+  border:1px solid #7f6038!important;
+  background:linear-gradient(90deg,#ead4a2,#d3b277)!important;
+}
+.fantasy-league-page .league-panel .panel-heading{
+  order:1!important;padding:9px 10px!important;
+  border-bottom:1px solid #8f6e41!important;
+  background:linear-gradient(90deg,#2d1d13,#17100c)!important;
+}
+.fantasy-league-page .league-panel .panel-heading h2,
+.fantasy-league-page .league-panel .panel-heading .eyebrow{color:#f0d49a!important}
+.fantasy-league-page .league-dashboard{
+  order:2!important;
+  display:grid!important;
+  grid-template-columns:1.1fr .9fr!important;
+  gap:0!important;
+  border-bottom:1px solid #9e7e50!important;
+}
+.fantasy-league-page .league-position,.fantasy-league-page .cup-card{
+  min-height:88px!important;
+  padding:10px!important;
+  border:0!important;border-radius:0!important;
+  background:rgba(255,244,205,.16)!important;
+  color:#482d1c!important
+}
+.fantasy-league-page .cup-card{border-left:1px solid #9e7e50!important}
+.fantasy-league-page .league-position strong,.fantasy-league-page .cup-card strong{color:#63261b!important}
+.fantasy-league-page .league-latest{display:none!important}
+.fantasy-league-page .league-calendar{display:none!important}
+.fantasy-league-page .cup-latest{display:none!important}
+.fantasy-league-page .division-rules{display:none!important}
+.fantasy-league-page .league-shortcuts{display:none!important}
+.fantasy-league-page .league-panel>.list-pagination{display:none!important}
+.fantasy-league-page .league-caption{display:none!important}
+.fantasy-league-page .season-progress{display:none!important}
+.fantasy-league-page .league-panel>[data-slot="table"]{
+  order:3!important;
+  min-width:0!important;width:100%!important;
+  background:transparent!important
+}
+.fantasy-league-page .league-panel table{min-width:0!important;width:100%!important}
+.fantasy-league-page .league-panel th,
+.fantasy-league-page .league-panel td{
+  padding:8px 6px!important;
+  border-color:#a8885a!important;
+  color:#442918!important;
+  background:transparent!important;
+}
+.fantasy-league-page .league-panel .player-row{
+  background:rgba(223,170,64,.18)!important;
+  box-shadow:inset 0 0 0 1px #d39d3f!important;
+}
+.fantasy-league-page .guild-war-panel{
+  margin-top:0!important;
+  border:1px solid #7f6038!important;
+  background:linear-gradient(90deg,#ead4a1,#d2b176)!important;
+}
+.fantasy-league-page .guild-war-panel .panel-heading{
+  background:linear-gradient(90deg,#2e1c12,#17100c)!important;
+  margin:-9px -9px 8px!important;padding:9px!important
+}
+.fantasy-league-page .guild-war-panel .panel-heading h2,
+.fantasy-league-page .guild-war-panel .panel-heading p{color:#efd4a0!important}
+.fantasy-league-page .guild-war-panel>button{
+  min-height:52px!important;
+  background:linear-gradient(180deg,#8d3528,#551b18)!important;
+  color:#fff0cf!important;border-color:#ae7b3b!important
+}
+.fantasy-league-page .raid-panel{display:none!important}
+
+/* DESCANSO / SANTUÁRIO — imagem superior, heróis em recuperação e suprimentos. */
+.camp-panel{
+  padding:0!important;
+  overflow:hidden!important;
+  border:1px solid #806039!important;
+  background:linear-gradient(90deg,#ead4a1,#d2b176)!important;
+}
+.camp-panel::before{display:none!important}
+.sanctuary-hero{
+  min-height:210px;
+  position:relative;
+  display:flex;
+  align-items:flex-end;
+  padding:14px;
+  background:
+    linear-gradient(180deg,rgba(25,12,5,.06),rgba(24,12,6,.76)),
+    url("/ui/guild-night.webp") center 80%/cover no-repeat;
+  border-bottom:1px solid #76582f;
+}
+.sanctuary-hero>div{
+  width:100%;
+  padding:9px 10px;
+  background:linear-gradient(90deg,rgba(234,214,170,.94),rgba(214,183,125,.92));
+  border:1px solid #7e6038;
+  color:#402719;
+}
+.sanctuary-hero .eyebrow{color:#7b542b!important}
+.sanctuary-hero h2{margin:1px 0;color:#562219;font-size:27px}
+.sanctuary-hero p{margin:2px 0 7px;color:#533b28!important;font-size:11px}
+.sanctuary-capacity{display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(95,64,32,.18);padding-top:6px}
+.sanctuary-capacity strong{font-size:11px}.sanctuary-capacity span{font-size:9px}
+.recovery-heading{
+  display:flex;align-items:center;gap:7px;padding:8px 10px;
+  background:linear-gradient(90deg,#2b1c12,#16100c);color:#efd5a0
+}
+.recovery-heading h3{margin:0;font-size:19px}
+.recovery-list{display:grid}
+.recovery-card{
+  display:grid;grid-template-columns:58px 1fr;gap:8px;align-items:center;
+  min-height:82px;padding:7px 10px;border-top:1px solid #9f8052;
+  background:linear-gradient(90deg,#ead6a4,#d7b97e);color:#422919
+}
+.recovery-card .hero-portrait{width:54px!important;height:54px!important;border:2px solid #72502c!important}
+.recovery-card>div{display:grid;gap:2px}
+.recovery-card strong{font-size:15px}.recovery-card span,.recovery-card small{font-size:9px;color:#674b30}
+.recovery-card [data-slot="progress"]{height:7px!important;background:#3b3027!important}
+.recovery-empty{margin:0;padding:16px;color:#60452e!important}
+.sanctuary-actions{display:grid;gap:6px;padding:9px;background:#e4c98f}
+.sanctuary-actions>button{
+  min-height:45px!important;justify-content:space-between!important;
+  background:linear-gradient(180deg,#37713a,#1e5126)!important;color:#fff1cf!important;border-color:#a0783e!important
+}
+.recovery-items{
+  display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:9px;border-top:1px solid #9b7a49;background:#e4c990
+}
+.recovery-items>div{grid-column:1/-1}
+.recovery-items h3{margin:1px 0;color:#572418;font-size:17px}
+.recovery-items article{
+  display:flex;gap:6px;align-items:center;padding:5px;border:1px solid #9a7847;background:#d7b777
+}
+.recovery-items .item-icon{width:38px!important;height:38px!important}
+.recovery-items article span{display:grid}.recovery-items article strong{font-size:10px}.recovery-items article small{font-size:8px}
+.camp-panel>.individual-training,.camp-panel>.camp-note{margin:9px!important}
+
+/* GUILDA — identidade, conselho e construções em uma página de pergaminho. */
+.fantasy-guild-page{display:grid;gap:7px}
+.fantasy-guild-page>.section-heading{
+  margin:0!important;padding:9px!important;border:1px solid #806039;
+  background:linear-gradient(90deg,#ead4a0,#d3b176)
+}
+.fantasy-guild-page>.section-heading .eyebrow{color:#7c552b!important}
+.fantasy-guild-page>.section-heading h2{color:#562219!important}
+.fantasy-guild-page .council-banner{
+  margin:0!important;border-radius:3px!important;border-color:#87663a!important
+}
+.fantasy-guild-page .guild-subnav{
+  margin:0!important;border-radius:3px!important
+}
+.fantasy-guild-page .guild-identity{
+  padding:10px!important;
+  border:1px solid #806039!important;
+  background:linear-gradient(90deg,#ead4a0,#d2b174)!important
+}
+.fantasy-guild-page .guild-identity::before{
+  height:105px!important;width:82px!important;
+  background:
+    radial-gradient(circle,#315b7e,#0c2740 67%),
+    linear-gradient(180deg,#193b5a,#0b2135)!important
+}
+.fantasy-guild-page .guild-identity .panel-heading h2{font-size:21px!important;color:#572319!important}
+.fantasy-guild-page .guild-record{margin-top:8px!important}
+.fantasy-guild-page .hq-building-card,
+.fantasy-guild-page .craft-card{
+  position:relative;
+  padding:9px 9px 9px 94px!important;
+  min-height:94px!important;
+  border:1px solid #8d6c3e!important;
+  background:linear-gradient(90deg,#ead4a0,#d1ae72)!important;
+  color:#3c2617!important
+}
+.fantasy-guild-page .hq-building-card::before,
+.fantasy-guild-page .craft-card::before{
+  content:"";
+  position:absolute;left:0;top:0;bottom:0;width:84px;
+  background:
+    linear-gradient(180deg,transparent,rgba(24,11,4,.32)),
+    url("/ui/guild-night.webp") center/cover no-repeat;
+  border-right:1px solid #846238
+}
+.fantasy-guild-page .hq-building-card strong,
+.fantasy-guild-page .craft-card h3{color:#572319!important}
+.fantasy-guild-page .hq-building-card p,
+.fantasy-guild-page .craft-card p{color:#60452f!important;font-size:9px!important}
+.fantasy-guild-page .hq-building-card button,
+.fantasy-guild-page .craft-card button{
+  background:linear-gradient(180deg,#37713a,#1e4d25)!important;color:#fff0cc!important;border-color:#9f773b!important
+}
+
+/* Barra inferior final, sem sobrepor o conteúdo. */
+.game .main-tabs{
+  background:linear-gradient(180deg,#142536,#08121b)!important;
+  border-top-color:#7a5b31!important;
+}
+.game .main-tabs [data-slot="tabs-trigger"]{
+  color:#e4dfd1!important
+}
+.game .main-tabs [data-slot="tabs-trigger"][data-state="active"]{
+  color:#fff0b8!important;
+  box-shadow:inset 0 -4px #3fc0ff!important
+}
+
+/* Pequenas correções gerais de contraste. */
+.game-footer{display:none!important}
+.fantasy-league-page .panel p,
+.fantasy-guild-page .panel p,
+.fantasy-heroes-page .panel p,
+.fantasy-inventory-page .panel p{color:inherit}
+
+/* MOBILE — alvo principal */
+@media (max-width:760px){
+  .topbar-inner{min-height:110px!important;padding:8px 9px!important}
+  .brand{top:28px!important}
+  .brand-mark{top:18px!important;width:42px!important;height:63px!important}
+  .brand-title{font-size:25px!important}
+  .header-tools{align-self:flex-start!important;margin-top:7px!important}
+  .header-currencies button{height:29px!important;min-width:88px!important}
+  .fantasy-command-nav{top:110px!important;margin:0 -8px 8px!important}
+  .fantasy-command-nav button{min-height:48px!important;font-size:13px!important}
+
+  .parchment-contract{
+    grid-template-columns:25% minmax(0,75%)!important;
+  }
+  .contract-art,.contract-art img{min-height:152px!important}
+  .contract-copy{padding:7px 7px!important}
+  .contract-title-row h3{font-size:16px!important}
+  .contract-copy>p{font-size:9px!important;line-height:1.16!important}
+  .contract-bottom{grid-template-columns:minmax(0,1fr) 108px!important}
+  .contract-prepare{
+    width:108px!important;min-width:108px!important;max-width:108px!important;
+    min-height:39px!important;height:39px!important;font-size:9px!important
+  }
+
+  .fantasy-tavern-page .section-heading p{display:block!important;font-size:9px!important}
+  .tavern-scene{min-height:185px!important}
+  .tavern-scene>div{width:130px!important;font-size:13px!important}
+  .fantasy-tavern-page .recruit-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .fantasy-tavern-page .recruit-card .recruit-top{min-height:78px!important}
+  .fantasy-tavern-page .recruit-card .portrait-large{height:82px!important;background-size:400% 300%!important}
+
+  .fantasy-inventory-page .inventory-filter{grid-template-columns:repeat(3,1fr)!important}
+  .fantasy-inventory-page .inventory-tabs [data-slot="tabs-content"][data-state="active"]>.item-grid:not(.chest-grid){
+    grid-template-columns:1fr!important
+  }
+  .fantasy-inventory-page .inventory-tabs [data-slot="tabs-content"][data-state="active"]>.item-grid:not(.chest-grid) .item-card{
+    grid-template-columns:82px minmax(0,1fr)!important
+  }
+
+  .fantasy-league-page .league-panel{overflow:hidden!important}
+  .fantasy-league-page .league-dashboard{grid-template-columns:1fr 1fr!important}
+  .fantasy-league-page .league-panel table{font-size:10px!important}
+  .fantasy-league-page .league-panel th,.fantasy-league-page .league-panel td{padding:7px 4px!important}
+
+  .fantasy-guild-page .guild-base-panels,
+  .fantasy-guild-page .guild-world-panels,
+  .fantasy-guild-page .guild-war-panels{grid-template-columns:1fr!important}
+  .fantasy-guild-page .hq-building-grid,.fantasy-guild-page .craft-grid{grid-template-columns:1fr!important}
+
+  .workspace,
+  .workspace:has(.command-grid[data-mobile-view="mission"]),
+  .workspace:has(.command-grid[data-mobile-view="team"]),
+  .workspace:has(.command-grid[data-mobile-view="league"]),
+  .workspace:has(.command-grid[data-mobile-view="camp"]){
+    padding-bottom:calc(140px + env(safe-area-inset-bottom))!important
+  }
+}
+
+@media (max-width:390px){
+  .topbar-inner{min-height:104px!important}
+  .brand{top:27px!important}
+  .brand-title{font-size:22px!important}
+  .fantasy-command-nav{top:104px!important}
+  .parchment-contract{grid-template-columns:24% minmax(0,76%)!important}
+  .contract-bottom{grid-template-columns:minmax(0,1fr) 100px!important}
+  .contract-prepare{width:100px!important;min-width:100px!important;max-width:100px!important}
+  .fantasy-tavern-page .recruit-card h3{font-size:9px!important}
+  .fantasy-tavern-page .recruit-card .location{font-size:6px!important}
+}

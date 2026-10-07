@@ -1043,8 +1043,9 @@ function processJourneys(s: Campaign) {
   if (completed.length) s.journeys = s.journeys.filter(j => !completed.includes(j));
 }
 function advance(s: Campaign, used: string[]) {
-  s.heroes.forEach(h => { if (!used.includes(h.id) && !activeJourney(s, h.id)) h.energy = Math.min(100, h.energy + 18); });
-  processJourneys(s);
+  const recovery = 14 + (s.hq?.infirmary || 0) * 3 + (s.hq?.stables || 0) * 2;
+  s.heroes.forEach(h => { if (!used.includes(h.id) && !activeJourney(s, h.id)) h.energy = Math.min(100, h.energy + recovery); });
+  processJourneys(s); processAcademy(s);
   resolveLeagueDay(s); resolveCupDay(s);
   const upkeep = Math.min(8, s.gold); if (upkeep) entry(s, "Manutenção diária", -upkeep);
   s.rivalries.forEach(r => r.heat = Math.max(0, r.heat - 2)); s.rivalries = s.rivalries.filter(r => r.heat > 0);
@@ -1086,10 +1087,10 @@ function selectTeam(s: Campaign, ids: string[], tactic: Tactic, formation?: Reco
   s.team = [...ids]; s.formation = chosen; s.tactic = tactic; return team as Hero[];
 }
 function startBattle(s: Campaign, m: Mission, team: Hero[]) {
-  const scaling = m.force / [90, 142, 190, 250, 310][m.rank - 1];
+  const scaling = m.force / [30, 48, 68, 92, 125][m.rank - 1], cohesion = squadBonus(s, team.map(h => h.id));
   const fighters: Combatant[] = team.map(h => {
     const base = heroStats(h, s), position = s.formation[h.id] || defaultFormationLine(h.class);
-    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1), attack: base.attack * (position === "back" ? 1.06 : 1), magic: base.magic * (position === "back" ? 1.06 : 1), speed: base.speed + (position === "back" ? 2 : 0) };
+    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion, attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion, magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion, speed: base.speed + (position === "back" ? 2 : 0) };
     const hp = Math.round(80 + n.defense * 3 + h.level * 15 + n.hp);
     return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy, guarding: h.talent?.path === "defense" && ["warrior", "paladin", "monk"].includes(h.class) ? h.talent.rank : 0 };
   });
@@ -1097,27 +1098,36 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
     const boss = m.kind === "boss" && i === 0, hp = Math.round((65 + m.rank * 48) * scaling * (boss ? 2.1 : 1));
     fighters.push({ id: "enemy-" + i, name: boss ? m.title : m.enemy + " " + (i + 1), side: "enemy", hp, maxHp: hp, attack: (12 + m.rank * 9.5) * scaling * (boss ? 1.16 : 1), defense: 5 + m.rank * 4 + (boss ? 8 : 0), magic: 0, speed: boss ? 22 : 17, critical: .05, energy: 100, healing: 1, guarding: 0, statuses: [] });
   }
-  const agile = team.filter(h => ["rogue", "ranger", "monk"].includes(h.class)).length;
+  const agile = team.filter(h => ["rogue", "ranger"].includes(h.class)).length;
   const scout = team.some(h => h.class === "ranger" && h.talent?.path === "defense");
   const objectiveMax = m.kind === "escort" ? 170 + m.rank * 25 : m.kind === "defense" ? 200 + Math.round(fighters.filter(f => f.side === "hero").reduce((n, f) => n + f.defense, 0) * .6) : 0;
   const targetRounds = m.kind === "escort" ? Math.max(3, 6 - (agile >= 2 ? 1 : 0) - (scout ? 1 : 0)) : m.kind === "defense" ? 6 : m.kind === "hunt" ? 12 : 24;
   return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, pendingAbilities: [], abilityCooldowns: {}, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
 }
 function grantLoot(s: Campaign, m: Mission, deployedIds: string[] = s.team) {
-  const keys: string[] = [m.rank >= 4 ? "royal_relic" : m.rank >= 2 ? "ancient_idol" : "gemstone"];
-  const pools = [["iron_sword", "oak_staff", "leather_armor"], ["hunter_bow", "runic_staff", "sentinel_armor", "swift_boots"], ["hunter_bow", "runic_staff", "sentinel_armor", "amber_ring"], ["dawn_blade", "ash_staff", "ancient_armor"], ["dragon_fang", "star_pendant", "ancient_armor"]];
-  if (m.kind === "boss") { keys.push(pools[3][Math.floor(random(s) * 3)], "ancient_key"); }
-  else {
-    if (m.kind === "dungeon" || random(s) < [.55, .75, .9, 1, 1][m.rank - 1]) { const pool = pools[m.rank - 1]; keys.push(pool[Math.floor(random(s) * pool.length)]); }
-    if (!hasItem(s, "secret_map") && m.rank >= 2 && random(s) < .25) keys.push("secret_map");
-    if (!hasItem(s, "ancient_key") && m.rank >= 4 && random(s) < .35) keys.push("ancient_key");
-  }
   const deployed = s.heroes.filter(h => deployedIds.includes(h.id));
-  if (deployed.length && (m.kind === "boss" || random(s) < .48)) {
-    const race = heroRace(deployed[Math.floor(random(s) * deployed.length)]), gear = RACE_GEAR[race];
-    keys.push(random(s) < .5 ? gear.weapon : gear.armor);
+  const luck = deployed.reduce((best, h) => Math.max(best, heroLuck(h, s)), 0);
+  const keys: string[] = [];
+  const rank = Math.max(1, Math.min(5, m.rank));
+
+  // Toda vitória rende pelo menos um material/tesouro. O Pierrô aumenta quantidade e qualidade.
+  keys.push(randomLootKey(s, rank, luck, true));
+  keys.push(randomLootKey(s, rank, luck, false));
+
+  const extraChance = Math.min(.9, .18 + rank * .10 + luck * 1.65);
+  if (random(s) < extraChance) keys.push(randomLootKey(s, rank, luck, false));
+  if (random(s) < luck * 1.35) keys.push(randomLootKey(s, Math.min(5, rank + 1), luck, false));
+
+  if (m.kind === "dungeon") keys.push(randomLootKey(s, Math.min(5, rank + 1), luck, random(s) < .45));
+  if (m.kind === "boss") {
+    keys.push(randomLootKey(s, Math.min(5, rank + 2), Math.min(.45, luck + .12), false));
+    keys.push("ancient_key");
   }
-  keys.forEach(k => addItem(s, k)); return keys;
+  if (!hasItem(s, "secret_map") && m.rank >= 2 && random(s) < .16 + luck) keys.push("secret_map");
+  if (!hasItem(s, "ancient_key") && m.rank >= 4 && random(s) < .18 + luck) keys.push("ancient_key");
+
+  for (const key of keys) if (ITEMS[key]) addItem(s, key);
+  return keys.filter(key => !!ITEMS[key]);
 }
 function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreated") {
   const c = b.combat!, m = c.mission, won = status === "won";
@@ -1127,13 +1137,21 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
     const h = s.heroes.find(h => h.id === f.id)!;
     h.energy = Math.max(0, h.energy - (status === "retreated" ? 12 : Math.round(c.fatigueTotal / Math.max(1, b.rounds))) - (f.hp === 0 ? 12 : 0));
     if (gainXp(h, b.xp)) b.levelUps.push(h.name);
-    if (f.hp === 0 && random(s) < .45) { h.injuredUntil = s.day + 3; b.wounded.push(h.name); }
+    if (f.hp === 0 && random(s) < .45) {
+      const injuryDays = Math.max(1, 3 - Math.floor((s.hq?.infirmary || 0) / 2));
+      h.injuredUntil = s.day + injuryDays; b.wounded.push(h.name); addScar(s, h, m.kind === "boss" ? "boss" : "defeat");
+    }
   }
   const before = s.fame;
+  const battleTeam = c.fighters.filter(f => f.side === "hero").map(f => f.id);
+  awardSquadExperience(s, battleTeam, m.kind, won);
   if (won) {
-    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 45 : 6 + m.rank * 5; b.loot = grantLoot(s, m, c.fighters.filter(f => f.side === "hero").map(f => f.id));
-    if (m.kind === "boss") { s.bossSeasons.push(s.season); if (s.region < 4) { s.region++; b.regionUnlocked = s.region; } }
-  } else { s.losses++; s.fame = Math.max(0, s.fame - (status === "retreated" ? 3 + m.rank * 2 : 6 + m.rank * 3)); }
+    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = grantLoot(s, m, battleTeam);
+    if (m.kind === "boss") {
+      s.bossSeasons.push(s.season);
+      if (s.activeRegion >= s.region && s.region < WORLD_REGIONS.length) { s.region++; b.regionUnlocked = s.region; }
+    }
+  } else { s.losses++; s.fame = Math.max(0, s.fame - (status === "retreated" ? 2 + m.rank : 4 + m.rank * 2)); }
   b.fameChange = s.fame - before;
   note(s, (won ? "Vitória" : status === "retreated" ? "Retirada ordenada" : "Missão fracassou") + " em " + m.title + ". " + (won ? "+" + m.reward + " ouro e +" + b.fameChange + " renome. Saque no baú." : b.fameChange + " renome. A equipe ganhou experiência."));
   delete b.combat;

@@ -49,59 +49,115 @@ function useAmbientRpgMusic() {
   const timerRef = useRef<number | null>(null);
   const stepRef = useRef(0);
 
-  const roots = useMemo(() => [
-    45,48,52,50, 43,47,50,45, 48,52,55,50, 45,50,53,48,
-    43,48,52,47, 45,49,52,50, 41,45,48,43, 46,50,53,48
+  // "Caminho do Grifo": trilha procedural original, calma e medieval.
+  // O ciclo harmônico completo passa de 20 minutos antes de se repetir.
+  const progression = useMemo(() => [
+    38,41,45,43, 38,45,48,43, 41,45,50,48, 38,43,46,45,
+    36,41,45,43, 38,45,48,50, 41,43,46,45, 38,41,43,45,
+    38,45,43,41, 36,41,43,45, 38,43,48,46, 41,45,48,43,
+    38,41,45,48, 43,46,45,41, 38,45,50,48, 41,43,45,38,
+    38,43,45,41, 36,38,43,45, 41,45,48,46, 38,43,46,50,
+    41,45,43,38, 36,41,45,48, 43,46,50,48, 41,43,45,38,
+    38,41,46,43, 36,41,45,43, 38,45,48,46, 41,45,50,48,
+    38,43,46,45, 41,43,45,38, 36,41,43,45, 38,45,43,38
   ], []);
 
   const hz = (midi:number) => 440 * Math.pow(2,(midi - 69) / 12);
 
-  const playStep = useCallback((ctx:AudioContext, master:GainNode, step:number) => {
-    const now = ctx.currentTime;
-    const root = roots[step % roots.length];
-    const third = step % 6 === 2 || step % 6 === 5 ? 3 : 4;
-    const notes = [root - 12, root, root + third, root + 7, root + 12];
+  const tone = useCallback((
+    ctx:AudioContext,
+    destination:AudioNode,
+    note:number,
+    when:number,
+    duration:number,
+    peak:number,
+    wave:OscillatorType,
+    filterHz:number,
+    attack=.25,
+    release=.8
+  ) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    osc.type = wave;
+    osc.frequency.value = hz(note);
+    filter.type = "lowpass";
+    filter.frequency.value = filterHz;
+    filter.Q.value = .35;
+    gain.gain.setValueAtTime(.0001,when);
+    gain.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),when + attack);
+    gain.gain.setValueAtTime(Math.max(.0002,peak),Math.max(when + attack,when + duration - release));
+    gain.gain.exponentialRampToValueAtTime(.0001,when + duration);
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(destination);
+    osc.start(when);
+    osc.stop(when + duration + .05);
+  },[]);
 
-    notes.forEach((note,index) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      const filter = ctx.createBiquadFilter();
-      osc.type = index === 0 ? "triangle" : "sine";
-      osc.frequency.value = hz(note);
-      filter.type = "lowpass";
-      filter.frequency.value = index === 0 ? 520 : 1050;
-      filter.Q.value = .45;
-      const peak = index === 0 ? .014 : .0085;
-      gain.gain.setValueAtTime(.0001,now);
-      gain.gain.exponentialRampToValueAtTime(peak,now + 1.5 + index * .08);
-      gain.gain.setValueAtTime(peak,now + 4.6);
-      gain.gain.exponentialRampToValueAtTime(.0001,now + 8.2);
-      osc.connect(filter); filter.connect(gain); gain.connect(master);
-      osc.start(now + index * .035);
-      osc.stop(now + 8.35);
+  const pluck = useCallback((ctx:AudioContext,destination:AudioNode,note:number,when:number,peak=.017) => {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    osc.type = "triangle";
+    osc.frequency.value = hz(note);
+    filter.type = "lowpass";
+    filter.frequency.setValueAtTime(1850,when);
+    filter.frequency.exponentialRampToValueAtTime(620,when + 1.5);
+    gain.gain.setValueAtTime(.0001,when);
+    gain.gain.exponentialRampToValueAtTime(peak,when + .018);
+    gain.gain.exponentialRampToValueAtTime(.0001,when + 2.25);
+    osc.connect(filter); filter.connect(gain); gain.connect(destination);
+    osc.start(when); osc.stop(when + 2.3);
+  },[]);
+
+  const playStep = useCallback((ctx:AudioContext,master:GainNode,step:number) => {
+    const now = ctx.currentTime + .04;
+    const root = progression[step % progression.length];
+    const minor = step % 7 !== 2 && step % 11 !== 5;
+    const third = minor ? 3 : 4;
+    const fifth = 7;
+
+    // Base longa: cordas/pads muito discretos, sem percussão.
+    tone(ctx,master,root - 12,now,9.4,.0105,"triangle",420,1.2,2.4);
+    tone(ctx,master,root,now+.08,9.1,.0065,"sine",820,1.5,2.1);
+    tone(ctx,master,root + fifth,now+.18,8.8,.0048,"sine",940,1.7,2.0);
+
+    // Alaúde/harpa: pequenas figuras, alternadas para não virar loop perceptível.
+    const figure = step % 4 === 0
+      ? [0,fifth,12,third+12,fifth+12]
+      : step % 4 === 1
+        ? [0,third,fifth,12,fifth]
+        : step % 4 === 2
+          ? [fifth,0,third,12,third+12]
+          : [0,fifth,third,12,15];
+    figure.forEach((offset,index) => {
+      const drift = ((step + index * 3) % 5) * .055;
+      pluck(ctx,master,root + offset,now + .72 + index * 1.34 + drift,index === 0 ? .014 : .0105);
     });
 
-    if (step % 2 === 0) {
-      [root + 12,root + 19,root + 24].forEach((note,index) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = "sine";
-        osc.frequency.value = hz(note);
-        const when = now + .8 + index * .62;
-        gain.gain.setValueAtTime(.0001,when);
-        gain.gain.exponentialRampToValueAtTime(.0045,when + .04);
-        gain.gain.exponentialRampToValueAtTime(.0001,when + 2.2);
-        osc.connect(gain); gain.connect(master);
-        osc.start(when); osc.stop(when + 2.25);
+    // "Flauta" suave: só aparece em alguns compassos e com frases espaçadas.
+    if (step % 6 === 1 || step % 8 === 5) {
+      const melody = step % 12 === 5 ? [12,15,17] : [12,14,15];
+      melody.forEach((offset,index) => {
+        tone(ctx,master,root + offset,now + 1.2 + index * 2.15,2.7,.0042,"sine",1450,.35,.9);
+        tone(ctx,master,root + offset + 12,now + 1.23 + index * 2.15,2.55,.0013,"triangle",1750,.4,.8);
       });
     }
-  },[roots]);
+
+    // Uma nota de passagem rara dá sensação de jornada sem chamar atenção.
+    if (step % 13 === 9) {
+      tone(ctx,master,root + 10,now + 5.7,3.2,.0032,"sine",1200,.6,1.2);
+    }
+  },[pluck,progression,tone]);
 
   const stopMusic = useCallback(() => {
     if (timerRef.current !== null) window.clearInterval(timerRef.current);
     timerRef.current = null;
     const ctx = ctxRef.current;
-    ctxRef.current = null; masterRef.current = null; stepRef.current = 0;
+    ctxRef.current = null;
+    masterRef.current = null;
+    stepRef.current = 0;
     if (ctx && ctx.state !== "closed") void ctx.close();
   },[]);
 
@@ -115,22 +171,27 @@ function useAmbientRpgMusic() {
     if (!AudioCtor) return;
     const ctx = new AudioCtor();
     const master = ctx.createGain();
-    master.gain.value = .52;
+    master.gain.value = .72;
     master.connect(ctx.destination);
-    ctxRef.current = ctx; masterRef.current = master;
+    ctxRef.current = ctx;
+    masterRef.current = master;
+
+    // Começa em um ponto diferente a cada nova sessão para reduzir sensação de repetição.
+    stepRef.current = Math.floor(Date.now() / 60000) % progression.length;
     const tick = () => {
       if (!enabledRef.current || !ctxRef.current || !masterRef.current) return;
       playStep(ctxRef.current,masterRef.current,stepRef.current++);
     };
     tick();
-    timerRef.current = window.setInterval(tick,7000);
+    timerRef.current = window.setInterval(tick,9000);
     if (ctx.state === "suspended") await ctx.resume();
-  },[playStep]);
+  },[playStep,progression.length]);
 
   useEffect(() => {
     const saved = window.localStorage.getItem("cronicas-musica");
     const enabled = saved === null ? true : saved === "on";
-    enabledRef.current = enabled; setMusicEnabled(enabled);
+    enabledRef.current = enabled;
+    setMusicEnabled(enabled);
     const unlock = () => { if (enabledRef.current) void startMusic(); };
     window.addEventListener("pointerdown",unlock,{once:true,passive:true});
     window.addEventListener("keydown",unlock,{once:true});
@@ -143,7 +204,8 @@ function useAmbientRpgMusic() {
 
   const toggleMusic = useCallback(() => {
     const next = !enabledRef.current;
-    enabledRef.current = next; setMusicEnabled(next);
+    enabledRef.current = next;
+    setMusicEnabled(next);
     window.localStorage.setItem("cronicas-musica",next ? "on" : "off");
     if (next) void startMusic(); else stopMusic();
   },[startMusic,stopMusic]);

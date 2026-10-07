@@ -1,6 +1,10 @@
 name: Revisão visual mobile
 
 on:
+  push:
+    branches: [frontend-rebuild-mobile-v1]
+    paths-ignore:
+      - "visual-report/**"
   pull_request:
     branches: [main]
     paths-ignore:

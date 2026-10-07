@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - clean-ui-v140
+      - frontend-rebuild-mobile-v1
   pull_request:
     branches:
       - main

@@ -502,13 +502,20 @@ export function suggestSpecialistTeam(s: Campaign, kind: MissionKind, size = 4) 
 function entry(s: Campaign, label: string, amount: number) { s.transaction++; s.ledger.unshift({ id: s.transaction, day: s.day, label, amount }); s.ledger = s.ledger.slice(0, 80); s.gold += amount; }
 function note(s: Campaign, text: string) { s.journal.unshift({ day: s.day, text }); s.journal = s.journal.slice(0, 40); }
 function addItem(s: Campaign, key: string) { const item = { id: "item-" + (++s.itemSequence), key }; s.chest.push(item); return item; }
+function levelOneHero(id: string, name: string, heroClass: HeroClass, trait: string): Hero {
+  const b = V130_BASE_STATS[heroClass] || { attack: 4, defense: 4, magic: 2 };
+  const h: Hero = { id, name, class: heroClass, level: 1, attack: b.attack, defense: b.defense, magic: b.magic, energy: 100, xp: 0, salary: 8, value: 120, trait, injuredUntil: 0, scars: [] };
+  h.race = heroRace(h);
+  return h;
+}
 const initialHeroes: Hero[] = [
-  { id: "aric", name: "Aric Ferrabrava", class: "warrior", level: 3, attack: 29, defense: 26, magic: 4, energy: 100, xp: 35, salary: 24, value: 420, trait: "Protetor", injuredUntil: 0 },
-  { id: "lyra", name: "Lyra de Ashen", class: "mage", level: 3, attack: 10, defense: 12, magic: 35, energy: 100, xp: 70, salary: 26, value: 460, trait: "Arcana", injuredUntil: 0 },
-  { id: "elen", name: "Elen Luzverde", class: "healer", level: 2, attack: 9, defense: 14, magic: 31, energy: 100, xp: 40, salary: 20, value: 380, trait: "Restauradora", injuredUntil: 0 },
-  { id: "kael", name: "Kael Sombral", class: "rogue", level: 3, attack: 35, defense: 15, magic: 5, energy: 100, xp: 20, salary: 24, value: 430, trait: "Veloz", injuredUntil: 0 },
-  { id: "sora", name: "Sora Ventoleste", class: "ranger", level: 2, attack: 31, defense: 17, magic: 6, energy: 100, xp: 60, salary: 18, value: 350, trait: "Precisa", injuredUntil: 0 },
-  { id: "doran", name: "Doran Pedraluz", class: "paladin", level: 2, attack: 26, defense: 30, magic: 16, energy: 100, xp: 20, salary: 22, value: 400, trait: "Resiliente", injuredUntil: 0 },
+  levelOneHero("aric", "Aric Ferrabrava", "warrior", "Protetor"),
+  levelOneHero("lyra", "Lyra de Ashen", "mage", "Arcana"),
+  levelOneHero("elen", "Elen Luzverde", "healer", "Devoto"),
+  levelOneHero("kael", "Kael Sombral", "rogue", "Silencioso"),
+  levelOneHero("sora", "Sora Ventoleste", "ranger", "Preciso"),
+  levelOneHero("doran", "Doran Pedraluz", "paladin", "Resiliente"),
+  levelOneHero("mimo", "Mimo Seteluas", "bard", "Sortudo"),
 ];
 function createEvent(s: Campaign): GuildEvent {
   const n = s.eventSequence++, id = "event-" + s.day + "-" + n, kind = n % 4;
@@ -648,26 +655,21 @@ export function trainingPlan(s: Campaign, h: Hero) {
   const gap = Math.max(0, Math.max(...s.heroes.map(hero => hero.level)) - h.level);
   return { cost: 90, xp: 90 + Math.min(4, gap) * 35, energy: 15, catchup: Math.min(4, gap) * 35 };
 }
-const extraHeroes: Hero[] = [
-  { id: "monk-base", name: "Finn do Norte", class: "monk", level: 2, attack: 31, defense: 22, magic: 10, energy: 100, xp: 0, salary: 22, value: 400, trait: "Disciplinado", injuredUntil: 0 },
-  { id: "necro-base", name: "Iris Fogoluz", class: "necromancer", level: 2, attack: 12, defense: 12, magic: 34, energy: 100, xp: 0, salary: 24, value: 420, trait: "Sombria", injuredUntil: 0 },
-  { id: "druid-base", name: "Vera da Bruma", class: "druid", level: 2, attack: 17, defense: 18, magic: 28, energy: 100, xp: 0, salary: 20, value: 400, trait: "Naturalista", injuredUntil: 0 },
-  { id: "bard-base", name: "Bryn Ventoazul", class: "bard", level: 2, attack: 20, defense: 16, magic: 24, energy: 100, xp: 0, salary: 21, value: 380, trait: "Inspirador", injuredUntil: 0 },
-];
 export function market(s: Campaign): Hero[] {
-  const week = Math.floor((s.day - 1) / 7), names = ["Mira da Lua", "Thane Martelo", "Neris de Valen", "Vera da Bruma", "Orin Runapálida", "Finn do Norte", "Iris Fogoluz", "Bryn Ventoazul"], classes: HeroClass[] = ["monk", "necromancer", "druid", "bard", "ranger", "warrior", "mage", "healer", "paladin", "rogue"];
+  const week = Math.floor((s.day - 1) / 7), classes = [...CLASSIC_CLASSES];
   return [0, 1, 2, 3].map(i => {
-    const c = classes[(week * 4 + i) % classes.length], lvl = 2 + ((week + i) % 4) + Math.floor((s.season - 1) / 2), b = [...initialHeroes, ...extraHeroes].find(h => h.class === c)!;
-    const hero: Hero = { ...b, class: c, id: "hire-" + week + "-" + i, name: week === 0 ? b.name : names[(week * 3 + i) % names.length], level: lvl, attack: b.attack + (lvl - b.level) * 3, defense: b.defense + (lvl - b.level) * 2, magic: b.magic + (lvl - b.level) * 3, energy: 100, xp: 0, salary: 12 + lvl * 5, value: 140 + lvl * 115 + i * 25, injuredUntil: 0 };
-    hero.race = heroRace(hero); return hero;
+    const c = classes[(week * 4 + i) % classes.length], id = "hire-" + week + "-" + i;
+    const hero = levelOneHero(id, uniqueAdventurerName(10000 + week * 4 + i), c, c === "bard" ? "Afortunado" : c === "healer" ? "Devoto" : c === "rogue" ? "Discreto" : "Aventureiro");
+    const targetLevel = Math.min(MAX_HERO_LEVEL, 1 + Math.floor((s.day - 1) / 14));
+    while (hero.level < targetLevel) gainXp(hero, threshold(hero));
+    hero.salary = 8 + Math.floor(hero.level * 2.5); hero.value = 120 + hero.level * 45 + i * 15;
+    return hero;
   }).filter(h => !s.hired.includes(h.id));
 }
 function stableNumber(text: string) { let n = 2166136261; for (const c of text) n = Math.imul(n ^ c.charCodeAt(0), 16777619); return n >>> 0; }
 const guildNames = ["Lobos de Ferro", "Ordem da Aurora", "Corvos de Ashen", "Sentinelas do Norte", "Chama Eterna"];
 const guildOrders = ["Guardiões", "Cavaleiros", "Vigias", "Filhos", "Dragões", "Escudos", "Andarilhos", "Arautos", "Caçadores", "Juramentados"];
 const guildPlaces = ["da Lua", "do Sol", "da Montanha", "do Abismo", "da Tempestade", "do Crepúsculo", "da Floresta", "da Fronteira", "da Torre", "do Vale"];
-const adventurerNames = ["Aerin", "Borin", "Celia", "Darius", "Eira", "Faelan", "Galen", "Helia", "Isen", "Jora", "Korin", "Liora", "Mael", "Nyra", "Oren", "Petra", "Quinn", "Riven", "Selene", "Tarin"];
-const adventurerTitles = ["da Alvorada", "Pedrafria", "da Lua", "Ventonegro", "de Valen", "Solbravo", "da Bruma", "Ferroazul", "Runaclara", "do Norte", "Coração de Aço", "das Cinzas", "Luzalta", "da Fronteira", "Tempestade", "do Vale", "Flecha de Prata", "da Torre", "Folha Dourada", "do Abismo", "da Floresta", "Maré Alta", "Lâmina Branca", "do Ocaso", "da Fortaleza", "Chama Viva", "da Colina", "Sombra Longa", "do Horizonte", "do Lago"];
 function developRival(h: RivalHero, index: number) {
   let points = talentPoints(h);
   while (points-- > 0) {
@@ -677,11 +679,12 @@ function developRival(h: RivalHero, index: number) {
   }
 }
 function rivalAdventurer(guild: Pick<RivalGuild, "id" | "strength">, sequence: number, season: number, rookie = false): RivalHero {
-  const index = Number(guild.id.split("-")[1]) || 0, n = index * 6 + sequence;
-  const c = (Object.keys(CLASSES) as HeroClass[])[(index * 3 + sequence) % 10], base = [...initialHeroes, ...extraHeroes].find(h => h.class === c)!;
-  const level = (rookie ? 1 : guild.strength + sequence % 2) + Math.floor((season - 1) / 2), magical = ["mage", "healer", "necromancer", "druid", "bard"].includes(c);
-  const h: RivalHero = { ...base, id: guild.id + "-hero-" + sequence, name: adventurerNames[n % adventurerNames.length] + " " + adventurerTitles[Math.floor(n / adventurerNames.length) % adventurerTitles.length], class: c, level, attack: Math.max(5, base.attack + (level - base.level) * (magical ? 1 : 3)), defense: Math.max(5, base.defense + (level - base.level) * 2), magic: Math.max(1, base.magic + (level - base.level) * (magical || c === "paladin" ? 3 : 1)), energy: 100, xp: 0, salary: 12 + level * 5, value: 140 + level * 115, injuredUntil: 0, loyalty: 35 + stableNumber(guild.id + ":" + sequence) % 56 };
-  h.race = heroRace(h); developRival(h, index + sequence); return h;
+  const index = Number(guild.id.split("-")[1]) || 0, c = CLASSIC_CLASSES[(index * 3 + sequence) % CLASSIC_CLASSES.length];
+  const base = levelOneHero(guild.id + "-hero-" + sequence, uniqueAdventurerName(index * 32 + sequence + 200), c, c === "bard" ? "Sortudo" : "Rival");
+  const targetLevel = Math.min(MAX_HERO_LEVEL, rookie ? 1 : 1 + Math.floor((season - 1) / 2) + Math.floor(guild.strength / 2));
+  while (base.level < targetLevel) gainXp(base, threshold(base));
+  const h: RivalHero = { ...base, salary: 8 + targetLevel * 3, value: 120 + targetLevel * 55, loyalty: 35 + stableNumber(guild.id + ":" + sequence) % 56 };
+  developRival(h, index + sequence); return h;
 }
 export function rivalPower(guild: RivalGuild) { return guild.heroes.map(h => rating(h)).sort((a, b) => b - a).slice(0, 4).reduce((n, p) => n + p, 0); }
 export function rivalWinChance(guild: RivalGuild, s: Campaign) {

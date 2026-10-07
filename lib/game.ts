@@ -107,17 +107,18 @@ export const RACE_GEAR: Record<HeroRace, { weapon: string; armor: string }> = {
   umbral: { weapon: "umbral_soul_scythe", armor: "umbral_nightshroud" },
 };
 export const CLASSES: Record<HeroClass, { name: string; role: string; short: string; color: string; description: string }> = {
-  warrior: { name: "Guerreiro", role: "Linha de frente", short: "GR", color: "#d49779", description: "Protege os aliados e resiste aos ataques. Favorece missões de defesa." },
-  mage: { name: "Mago", role: "Dano mágico", short: "MG", color: "#b6a1e5", description: "Magia atravessa parte da defesa. Forte contra mortos-vivos." },
-  healer: { name: "Curandeira", role: "Cura", short: "CR", color: "#8fc7ad", description: "Cura o aliado vivo mais ferido quando sua vida fica abaixo de 70%." },
-  rogue: { name: "Ladino", role: "Dano e velocidade", short: "LD", color: "#d1b476", description: "Críticos, velocidade e proteção contra armadilhas em masmorras." },
-  ranger: { name: "Arqueira", role: "Dano à distância", short: "AR", color: "#9bc2d3", description: "Favorece escoltas rápidas e a caça de monstros." },
-  paladin: { name: "Paladino", role: "Defesa e magia", short: "PL", color: "#bfc7d8", description: "Resiste na linha de frente. Forte contra mortos-vivos e em defesas." },
-  monk: { name: "Monge", role: "Linha de frente ágil", short: "MN", color: "#e1b181", description: "Combate veloz, 12% de crítico e proteção da linha de frente. Também encurta escoltas." },
-  necromancer: { name: "Necromante", role: "Magia e drenagem", short: "NC", color: "#c4a3d9", description: "Causa dano mágico e recupera vida equivalente a 15% do dano causado." },
-  druid: { name: "Druida", role: "Cura e natureza", short: "DR", color: "#a1cda0", description: "Cura o aliado vivo mais ferido quando sua vida fica abaixo de 65%." },
-  bard: { name: "Bardo", role: "Inspiração", short: "BD", color: "#dec394", description: "Cada bardo vivo aumenta em 4% o dano dos aliados, até o limite de 12%." },
+  warrior: { name: "Guerreiro", role: "Linha de frente", short: "GR", color: "#d49779", description: "Força física, defesa e controle da linha de frente." },
+  mage: { name: "Mago", role: "Magia", short: "MG", color: "#b6a1e5", description: "Dano arcano, controle e ataques em área." },
+  healer: { name: "Sacerdote", role: "Cura e suporte", short: "SC", color: "#8fc7ad", description: "Cura, bênçãos e proteção da equipe." },
+  rogue: { name: "Assassino", role: "Crítico e velocidade", short: "AS", color: "#d1b476", description: "Ataques rápidos, veneno e execução de alvos." },
+  ranger: { name: "Arqueiro", role: "Dano à distância", short: "AR", color: "#9bc2d3", description: "Precisão, caça e controle à distância." },
+  paladin: { name: "Cavaleiro", role: "Defesa e fé", short: "CV", color: "#bfc7d8", description: "Armadura pesada, proteção e golpes sagrados." },
+  bard: { name: "Pierrô", role: "Sorte e saque", short: "PI", color: "#dec394", description: "Manipula a sorte, aumenta chances de drop e cria efeitos imprevisíveis." },
+  monk: { name: "Monge (legado)", role: "Classe aposentada", short: "MN", color: "#e1b181", description: "Convertido para Guerreiro nos saves da v1.3." },
+  necromancer: { name: "Necromante (legado)", role: "Classe aposentada", short: "NC", color: "#c4a3d9", description: "Convertido para Mago nos saves da v1.3." },
+  druid: { name: "Druida (legado)", role: "Classe aposentada", short: "DR", color: "#a1cda0", description: "Convertido para Sacerdote nos saves da v1.3." },
 };
+export const CLASSIC_CLASSES = CLASSIC_CLASS_IDS as readonly HeroClass[];
 export const TACTICS: Record<Tactic, { name: string; description: string; damage: number; incoming: number; fatigue: number }> = {
   balanced: { name: "Equilibrada", description: "Ataque e proteção na medida. Gasta 22 de energia.", damage: 1, incoming: 1, fatigue: 22 },
   aggressive: { name: "Ofensiva", description: "+25% de dano, +20% de dano recebido. Gasta 30 de energia.", damage: 1.25, incoming: 1.2, fatigue: 30 },
@@ -155,10 +156,11 @@ export const ITEMS: Record<string, ItemDef> = {
   gemstone: { name: "Pedra preciosa", slot: "treasure", rarity: "common", value: 25, description: "Tesouro para vender ao mercador." },
   ancient_idol: { name: "Ídolo antigo", slot: "treasure", rarity: "rare", value: 55, description: "Relíquia de coleção. Pode ser vendida por ouro." },
   royal_relic: { name: "Relíquia real", slot: "treasure", rarity: "epic", value: 120, description: "Tesouro valioso encontrado nas expedições mais perigosas." },
+  ...(V130_ITEMS as unknown as Record<string, ItemDef>),
 };
-export const SLOT_NAMES: Record<ItemSlot, string> = { weapon: "Arma", armor: "Armadura", accessory: "Acessório", consumable: "Consumível", quest: "Acesso", treasure: "Tesouro" };
+export const SLOT_NAMES: Record<ItemSlot, string> = { weapon: "Arma", offhand: "Mão secundária", helmet: "Elmo", armor: "Armadura", gloves: "Luvas", boots: "Botas", accessory: "Acessório", consumable: "Consumível", material: "Material", quest: "Acesso", treasure: "Tesouro" };
 export const RARITY_NAMES = { common: "Comum", uncommon: "Incomum", rare: "Raro", epic: "Épico", legendary: "Lendário" };
-export const REGIONS = ["Vale de Valen", "Terras de Brumavale", "Ruínas de Ashen", "Fronteira dos Dragões"];
+export const REGIONS = WORLD_REGIONS.map(region => region.name);
 type TalentSpec = { name: string; description: string; stages: [string, string, string]; bonus: { attack?: number; defense?: number; magic?: number; hp?: number; speed?: number; critical?: number; healing?: number } };
 const talent = (name: string, description: string, stages: [string, string, string], bonus: TalentSpec["bonus"]): TalentSpec => ({ name, description, stages, bonus });
 export const PATH_NAMES: Record<TalentPath, string> = { offense: "Poder", healing: "Cura", defense: "Defesa" };
@@ -361,7 +363,8 @@ const templates = [
 ];
 function random(s: Campaign) { s.rng = (Math.imul(s.rng, 1664525) + 1013904223) >>> 0; return s.rng / 4294967296; }
 export function seasonDay(s: Campaign) { return ((s.day - 1) % 28) + 1; }
-export function threshold(h: Hero) { return 100 + h.level * 35; }
+export const MAX_HERO_LEVEL = 50;
+export function threshold(h: Hero) { return h.level >= MAX_HERO_LEVEL ? Number.POSITIVE_INFINITY : 55 + h.level * 20 + Math.floor(h.level / 10) * 25; }
 export function activeJourney(s: Campaign, heroId: string) { return s.journeys?.find(j => j.heroId === heroId); }
 export function activeExpeditions(s: Campaign) { return (s.expeditions || []).filter(e => e.battle.status === "active" && !!e.battle.combat).toSorted((a, b) => a.slot - b.slot); }
 export function freeExpeditionSlots(s: Campaign): ExpeditionSlot[] {

@@ -1,0 +1,25 @@
+name: Exportar versão offline atual
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/exportar-offline.yml"
+  workflow_dispatch:
+
+jobs:
+  exportar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preparar ZIP offline
+        run: |
+          mkdir -p pacote/Cronicas_da_Guilda_OFFLINE
+          rsync -a --exclude='.git' --exclude='node_modules' --exclude='dist' ./ pacote/Cronicas_da_Guilda_OFFLINE/
+          cd pacote
+          zip -r ../Cronicas_da_Guilda_OFFLINE_ATUAL.zip Cronicas_da_Guilda_OFFLINE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Cronicas_da_Guilda_OFFLINE_ATUAL
+          path: Cronicas_da_Guilda_OFFLINE_ATUAL.zip
+          retention-days: 30

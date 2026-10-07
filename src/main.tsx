@@ -1,15 +1,15 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import Game from "../app/game-client";
-import "../app/globals.css";
+import "../app/ui.css";
 
-if ("serviceWorker" in navigator && import.meta.env.PROD) {
-  window.addEventListener("load", () => {
-    void navigator.serviceWorker
-      .register("/sw.js", { updateViaCache: "none" })
-      .then(registration => registration.update())
-      .catch(() => {});
-  });
+if ("serviceWorker" in navigator) {
+  void navigator.serviceWorker.getRegistrations().then(registrations => {
+    for (const registration of registrations) void registration.unregister();
+  }).catch(() => {});
+}
+if ("caches" in window) {
+  void caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith("cronicas-da-guilda")).map(key => caches.delete(key)))).catch(() => {});
 }
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

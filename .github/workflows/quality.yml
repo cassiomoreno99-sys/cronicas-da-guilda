@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - audit-v1.2.3
+      - clean-ui-v140
   pull_request:
     branches:
       - main
@@ -15,14 +15,11 @@ jobs:
     steps:
       - name: Baixar código
         uses: actions/checkout@v4
-
       - name: Preparar Node 22
         uses: actions/setup-node@v4
         with:
           node-version: "22"
-
       - name: Instalar dependências
         run: npm install --no-audit --no-fund
-
       - name: Verificar tipos e build
         run: npm run build

@@ -54,11 +54,22 @@ const missionAction = page.locator(".mission-card .action-button:not([disabled])
 if (await missionAction.count()) {
   await missionAction.click();
   await page.waitForTimeout(200);
-  const send = page.locator(".send-row .action-button:not([disabled])").first();
-  if (await send.count()) {
+  let send = page.locator(".send-row .action-button").first();
+  if (await send.count() && !(await send.isEnabled())) {
+    const specialist = page.getByRole("button",{name:"Montar especialista",exact:true});
+    if (await specialist.count()) {
+      await specialist.click();
+      await page.waitForTimeout(150);
+    }
+  }
+  send = page.locator(".send-row .action-button").first();
+  if (await send.count() && await send.isEnabled()) {
     await send.click();
-    await page.waitForTimeout(500);
-    if (await page.locator(".battle-overlay").count()) await sanity("10-batalha");
+    await page.waitForTimeout(350);
+    await page.locator(".battle-overlay").waitFor({state:"visible",timeout:3000});
+    await sanity("10-batalha");
+  } else {
+    throw new Error("Não foi possível habilitar Enviar para validar a batalha.");
   }
 }
 
@@ -66,4 +77,3 @@ if (errors.length) throw new Error(errors.join("\n"));
 await browser.close();
 console.log("VISUAL_OK");
 
-// sync trigger

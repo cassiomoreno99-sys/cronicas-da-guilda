@@ -98,15 +98,17 @@ img{display:block;max-width:100%}
 .header-banner svg{width:42px;height:42px}
 .header-title{
   position:absolute;
-  left:90px;
-  right:128px;
-  top:29px;
+  left:66px;
+  right:99px;
+  top:34px;
   z-index:2;
   color:#f0d18b;
-  font-size:clamp(25px,6.7vw,42px);
+  font-size:clamp(19px,5vw,31px);
   line-height:.98;
   font-weight:700;
-  letter-spacing:.02em;
+  letter-spacing:-.025em;
+  transform:scaleX(.9);
+  transform-origin:center;
   text-align:center;
   white-space:nowrap;
   text-shadow:0 2px 2px #000,0 0 6px #000;
@@ -278,8 +280,8 @@ img{display:block;max-width:100%}
   overflow:hidden;
   border:2px solid #936c31;
   border-radius:9px;
-  background-image:url("/hero-portraits-v121.webp");
-  background-size:400% 300%;
+  background-image:url("/hero-portraits-v6.webp");
+  background-size:300% 200%;
   background-repeat:no-repeat;
   background-color:#0d1b29;
   box-shadow:0 2px 5px #0008;
@@ -774,7 +776,7 @@ img{display:block;max-width:100%}
 }
 .item-tile[data-active="true"]{outline:2px solid #efbd4f;box-shadow:0 0 9px #ebb242}
 .item-tile .item-art{width:100%;height:100%;border:0;background:transparent;box-shadow:none}
-.item-tile>span{display:none}
+.item-tile>span:not(.item-art){display:none}
 .item-tile>b{position:absolute;right:2px;bottom:1px;color:#7ee39b;font-size:10px}
 .item-detail{
   min-width:0;
@@ -1246,7 +1248,7 @@ img{display:block;max-width:100%}
 @media (max-width:430px){
   :root{--header-h:106px;--topnav-h:54px;--bottom-h:74px}
   .header-banner{left:10px;width:61px;height:86px}
-  .header-title{left:78px;right:112px;top:31px;font-size:clamp(23px,7.1vw,31px)}
+  .header-title{left:61px;right:96px;top:35px;font-size:20px;transform:scaleX(.88)}
   .header-resources{right:15px;width:99px}
   .header-resources button{height:29px}
   .header-resources strong{font-size:13px}
@@ -1296,3 +1298,6 @@ img{display:block;max-width:100%}
   .tavern-lower,.guild-grid{grid-template-columns:1fr}
   .battle-stage{grid-template-columns:1fr 22px 1fr;padding-inline:3px}
 }
+
+/* Final visual corrections after screenshot review */
+.tavern-hero>div{display:none}

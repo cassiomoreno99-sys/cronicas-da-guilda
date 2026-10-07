@@ -1003,17 +1003,22 @@ img{display:block;max-width:100%}
 .battle-overlay{
   position:fixed;
   left:50%;
-  top:calc(var(--header-h) + var(--topnav-h));
-  bottom:var(--bottom-h);
+  top:0;
+  bottom:0;
   width:min(100vw,var(--max-app));
   transform:translateX(-50%);
-  z-index:70;
+  z-index:160;
   overflow:auto;
   overscroll-behavior:contain;
   background:#06101a;
   border-inline:1px solid #503719;
 }
-.battle-sheet{min-height:100%;color:#f2dfb3;background:#06101a}
+.battle-sheet{
+  min-height:100dvh;
+  padding-bottom:max(8px,env(safe-area-inset-bottom));
+  color:#f2dfb3;
+  background:#06101a
+}
 .battle-top{
   min-height:52px;
   display:flex;
@@ -1145,8 +1150,21 @@ img{display:block;max-width:100%}
 }
 .battle-consumables .item-art{grid-row:1/3;width:38px;height:38px}
 .battle-consumables b{position:absolute;right:3px;top:2px;padding:1px 4px;border-radius:4px;background:#0a0b0c;color:#fff;font-size:8px}
-.battle-consumables strong{align-self:end;font-size:8px}
-.battle-consumables small{align-self:start;font-size:7px;line-height:1.08;color:#c8c2b4}
+.battle-consumables strong{
+  align-self:end;
+  font-size:8px;
+  line-height:1.05;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
+.battle-consumables small{
+  align-self:start;
+  font-size:7px;
+  line-height:1.08;
+  color:#c8c2b4;
+  white-space:normal;
+  overflow-wrap:anywhere;
+}
 .battle-actions{display:grid;grid-template-columns:1fr 1fr;gap:5px;padding:7px;background:#07121c}
 .battle-actions .action-button{min-height:36px}
 .battle-actions .huge{grid-column:1/-1}
@@ -1234,10 +1252,16 @@ img{display:block;max-width:100%}
 @media (max-width:430px){
   :root{--header-h:106px;--topnav-h:54px;--bottom-h:74px}
   .header-banner{left:10px;width:61px;height:86px}
-  .header-title{left:61px;right:96px;top:35px;font-size:20px;transform:scaleX(.88)}
-  .header-resources{right:15px;width:99px}
+  .header-title{
+    left:68px;right:110px;top:39px;
+    font-size:clamp(15px,4.4vw,18px);
+    letter-spacing:-.05em;
+    transform:scaleX(.9);
+    transform-origin:center;
+  }
+  .header-resources{right:12px;width:92px}
   .header-resources button{height:29px}
-  .header-resources strong{font-size:13px}
+  .header-resources strong{font-size:12px}
   .top-nav button{font-size:14px;gap:5px}
   .top-nav button svg{width:19px;height:19px}
   .game-content{padding:7px 6px calc(var(--bottom-h) + 10px)}

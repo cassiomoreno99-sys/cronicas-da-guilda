@@ -30,6 +30,11 @@ type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "chest" | "tav
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp"];
 const itemSlots = new Set(["weapon","offhand","helmet","armor","gloves","boots","accessory"]);
+const specialtyNames: Record<string,string> = {
+  warrior:"Guerreiro", paladin:"Paladino", rogue:"Ladino", ranger:"Arqueiro",
+  undead:"Mago / Paladino", boss:"Equipe completa"
+};
+const specialtyName = (value: string) => specialtyNames[value] || value;
 
 function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" | "class" | "race">; large?: boolean }) {
   return <span
@@ -142,7 +147,7 @@ function MissionPage({
             <h2>{m.title}</h2>
             <p>{m.description}</p>
             <div className="difficulty"><b>Dificuldade:</b>{[0,1,2,3,4].map(i => <i key={i} data-on={i < m.rank}>◆</i>)}</div>
-            <div className="specialist"><Target /><span>Especialistas: {m.specialty}</span></div>
+            <div className="specialist"><Target /><span>Especialistas: {specialtyName(m.specialty)}</span></div>
             {!!locks.length && <small className="locked-copy"><LockKeyhole /> {locks[0]}</small>}
           </div>
           <div className="mission-rewards">
@@ -310,7 +315,7 @@ function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => v
     })}</div>
     <ParchmentTitle icon={<Archive />} title="Itens de Recuperação" />
     <div className="recovery-items parchment">
-      {[["healing_potion","Poção de Cura"],["minor_healing","Poção Menor"],["greater_healing","Poção Maior"]].map(([key,label]) => <article key={key}>
+      {[["healing_potion","Poção de Cura"],["antidote","Antídoto"],["stun_bomb","Bomba Atordoante"]].map(([key,label]) => <article key={key}>
         <ItemArt itemKey={key} /><strong>{label}</strong><span>Possui: {counts(key)}</span><small>Usado diretamente durante o combate.</small>
       </article>)}
     </div>
@@ -411,7 +416,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
 }
 
 function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (a: Action) => void; busy: boolean; openMission: (id:string) => void }) {
-  const recruits = market(state);
+  const recruits = market(state).slice(0,4);
   const rumors = missions(state).slice(0,3);
   const offers = shop(state).slice(0,6);
   return <section className="screen tavern-screen">

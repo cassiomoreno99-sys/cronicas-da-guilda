@@ -204,8 +204,8 @@ img{display:block;max-width:100%}
   display:block;flex:0 0 auto;
   width:46px;height:46px;
   border:1px solid #8d682f;border-radius:5px;
-  background-image:url("/hero-portraits-v6.webp");
-  background-size:300% auto;background-repeat:no-repeat;background-color:#112033;
+  background-image:url("/hero-portraits-v121.webp");
+  background-size:400% 300%;background-repeat:no-repeat;background-color:#112033;
   box-shadow:0 2px 5px #0008;
 }
 .hero-portrait-large{width:100%;height:100%;border:0;border-radius:0}
@@ -495,15 +495,14 @@ img{display:block;max-width:100%}
 .battle-overlay{position:fixed;z-index:110;inset:0;background:#02060af0;overflow:auto}
 .battle-sheet{
   width:min(100%,var(--phone));min-height:100dvh;margin:0 auto;padding-bottom:8px;
-  background:
-    linear-gradient(180deg,rgba(2,8,15,.04),rgba(2,8,15,.26) 68%,#081018 93%),
-    url("/ui/battle-night.webp") center top/cover no-repeat,#07111b;
+  background:linear-gradient(180deg,#08131f 0%,#071019 58%,#03090e 100%);
   border-inline:1px solid #5e4528;
 }
 .battle-top{display:flex;justify-content:space-between;align-items:center;padding:6px 7px;background:#091420e8;border-bottom:1px solid #8d6737;color:#f5d89d}
 .battle-top>div{display:grid}.battle-top strong{font-size:15px}.battle-top span{font-size:7px}.battle-top>button{border:0;background:transparent;color:#fff}.battle-top>button svg{width:18px;height:18px}
 .battle-objective{display:flex;justify-content:space-between;gap:4px;padding:5px 7px;color:#4b2a19;background:#ead4a2;border-bottom:1px solid #906b3e;font-size:7px}.battle-objective strong{color:#7d251e}
-.battle-stage{min-height:355px;display:grid;grid-template-columns:minmax(0,1fr) 24px minmax(0,1fr);align-items:center;gap:2px;padding:10px 5px 8px}
+.battle-stage{position:relative;isolation:isolate;min-height:390px;display:grid;grid-template-columns:minmax(0,1fr) 25px minmax(0,1fr);align-items:center;gap:3px;padding:16px 6px 12px;overflow:hidden;background:linear-gradient(90deg,rgba(3,10,17,.72),rgba(3,10,17,.34) 46%,rgba(3,10,17,.68)),url("/reference/league-challenge.webp") center/cover no-repeat}
+.battle-stage::after{content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(180deg,rgba(4,10,16,.08),rgba(4,10,16,.2) 58%,rgba(3,8,13,.68));pointer-events:none}
 .fighters{display:grid;gap:3px}.fighters article{display:grid;grid-template-columns:36px minmax(0,1fr);align-items:center;gap:3px;padding:3px;background:#0b121bdf;border:1px solid #5e4a34;border-radius:4px;box-shadow:0 3px 8px #000a}
 .fighters.enemies article{grid-template-columns:minmax(0,1fr) 36px}.fighters.enemies article>img{order:2}.fighters.enemies article>div{text-align:right}
 .fighters article>img,.fighters .hero-portrait{width:34px;height:34px;object-fit:cover;border:1px solid #8c5e39;border-radius:4px}
@@ -532,9 +531,9 @@ img{display:block;max-width:100%}
   display:grid;justify-items:center;align-content:center;gap:1px;font-size:9px
 }
 .bottom-nav button:last-child{border-right:0}
-.bottom-nav button>svg,.bottom-nav .beer-icon{width:27px;height:27px;font-size:20px;padding:4px;border:1px solid #76603f;border-radius:50%;background:#121c27}
+.bottom-nav button>svg{width:27px;height:27px;padding:4px;border:1px solid #76603f;border-radius:50%;background:#121c27;display:block;box-sizing:border-box;transform:none}
 .bottom-nav button[data-active="true"]{color:#fff2bd;text-shadow:0 0 7px #51cfff}
-.bottom-nav button[data-active="true"]>svg,.bottom-nav button[data-active="true"] .beer-icon{color:#f8dd93;border-color:#6dcfff;box-shadow:0 0 10px #37b9ff;background:#173654}
+.bottom-nav button[data-active="true"]>svg{color:#f8dd93;border-color:#6dcfff;box-shadow:0 0 10px #37b9ff;background:#173654}
 
 .boot-screen{min-height:100dvh;display:grid;place-items:center;align-content:center;gap:8px;background:#07111b;color:#f0d6a0}
 .boot-screen svg{width:50px;height:50px}.boot-screen h1{font-size:27px;margin:0}
@@ -620,4 +619,42 @@ img{display:block;max-width:100%}
   .merchant-portrait{width:34px;height:34px}
   .guild-grid{gap:2px}
   .world-list button,.forge-list button{font-size:6.8px}
+}
+
+
+/* ================ V7: BATALHA / RETRATOS / ITENS ================ */
+.hero-portrait{background-repeat:no-repeat;background-color:#0b1723}
+.bottom-nav button{overflow:hidden}
+.bottom-nav button>svg{margin:0 auto 1px}
+
+.battle-top{min-height:48px}
+.battle-top strong{font-size:16px;line-height:1.05}
+.battle-top span{font-size:8px;font-weight:600}
+.battle-objective{font-size:8px;font-weight:600;padding:6px 8px}
+.fighters{position:relative;z-index:1;gap:5px}
+.fighters article{grid-template-columns:40px minmax(0,1fr);gap:4px;padding:4px;background:linear-gradient(180deg,#101b28ed,#08111bed);border-color:#8b683d;box-shadow:0 3px 10px #000c}
+.fighters.enemies article{grid-template-columns:minmax(0,1fr) 40px}
+.fighters article>img,.fighters .hero-portrait{width:38px;height:38px;border-color:#bd8a45}
+.fighters strong{font-size:7.8px;font-weight:700}
+.fighters small{font-size:5.9px;font-weight:600}
+.fighters span{font-size:5.8px;font-weight:600}
+.battle-center-mark{position:relative;z-index:1}
+.battle-center-mark svg{width:22px;height:22px}
+.battle-log{font-size:7.1px;line-height:1.18;min-height:80px}
+.consumable-title{font-size:11px;font-weight:700}
+.battle-consumables button{min-height:54px}
+.battle-consumables .item-art{width:36px;height:36px}
+.battle-consumables strong{font-size:7.3px;font-weight:700}
+.battle-consumables small{font-size:5.4px;line-height:1.08}
+.battle-consumables b{font-size:6px}
+.battle-actions .action-button{min-height:34px;font-size:8px;font-weight:700}
+
+.item-art img{object-fit:contain}
+.item-fallback{opacity:.34}
+
+@media (max-width:360px){
+  .battle-stage{min-height:372px;padding-inline:4px;grid-template-columns:minmax(0,1fr) 21px minmax(0,1fr)}
+  .fighters article{grid-template-columns:36px minmax(0,1fr);padding:3px}
+  .fighters.enemies article{grid-template-columns:minmax(0,1fr) 36px}
+  .fighters article>img,.fighters .hero-portrait{width:34px;height:34px}
 }

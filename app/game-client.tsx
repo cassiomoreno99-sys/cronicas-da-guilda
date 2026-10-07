@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import {
   Archive, BookOpen, Check, ChevronRight, CircleHelp, Coins, Crown, Download,
   Flag, Hammer, Heart, LockKeyhole, ScrollText, Shield, Sparkles, Swords,
-  Target, Tent, Trophy, Upload, Users, Volume2, VolumeX, X
+  Target, Tent, Trophy, Upload, Users, Volume2, VolumeX, Beer, X
 } from "lucide-react";
 import {
   CLASSES, RACES, TACTICS, ITEMS, KIND_NAMES, PATH_NAMES, RACIAL_PATH_NAMES,
@@ -39,24 +39,6 @@ const CORE_RACE_NAMES: Record<string,string> = {
   aric:"Humano", lyra:"Elfa", elen:"Anão", kael:"Meio-Elfa", sora:"Elfo", doran:"Draconato"
 };
 const raceLabel = (hero: Pick<Hero,"id"|"name"|"class"|"race">): string => CORE_RACE_NAMES[hero.id] || RACES[heroRace(hero)].name;
-const itemArtFile = (key: string) => {
-  const k = key.toLowerCase();
-  if (k === "antidote") return "antidote";
-  if (/bomb/.test(k)) return "stun_bomb";
-  if (/healing|potion|tonic|repair/.test(k)) return "healing_potion";
-  if (/bow/.test(k)) return "hunter_bow";
-  if (/staff|wand|cane|orb|book|cards/.test(k)) return "runic_staff";
-  if (/ring/.test(k)) return "amber_ring";
-  if (/pendant|charm|symbol|medallion|emblem|bell|coin/.test(k)) return "star_pendant";
-  if (/armor|mail|plate|guard|coat|vest|shroud|hood|gloves|boots|robe|costume|bracers/.test(k)) return "ancient_armor";
-  if (/map|scroll/.test(k)) return "secret_map";
-  if (/key/.test(k)) return "ancient_key";
-  if (/sword|blade|dagger|cleaver|scythe|spear|hammer|mace|axe/.test(k)) return /dragon|king|dawn/.test(k) ? "dragon_fang" : "iron_sword";
-  if (/idol|relic|scarab|crown|die/.test(k)) return "ancient_idol";
-  return "gemstone";
-};
-
-
 type AudioWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
 
 function useAmbientRpgMusic() {
@@ -183,7 +165,7 @@ function ItemArt({ itemKey }: { itemKey: string }) {
   return <span className={"item-art rarity-" + (def?.rarity || "common")}>
     <Archive className="item-fallback" />
     <img
-      src={"/items/" + itemArtFile(itemKey) + ".svg"}
+      src={"/items/" + itemKey + ".svg"}
       alt={def?.name || itemKey}
       onError={e => { e.currentTarget.style.display = "none"; }}
     />
@@ -254,7 +236,7 @@ function BottomNav({ screen, go }: { screen: Screen; go: (s: Screen) => void }) 
     ["mission","Missões",<Target key="m" />,missionActive],
     ["heroes","Heróis",<Shield key="h" />,screen === "heroes"],
     ["chest","Baú",<Archive key="b" />,screen === "chest"],
-    ["tavern","Taverna",<span className="beer-icon" key="t">🍺</span>,screen === "tavern"],
+    ["tavern","Taverna",<Beer key="t" />,screen === "tavern"],
     ["guild","Guilda",<Crown key="g" />,screen === "guild"],
   ];
   return <nav className="bottom-nav">{tabs.map(([id,label,icon,active]) =>

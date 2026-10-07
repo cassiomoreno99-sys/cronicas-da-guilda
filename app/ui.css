@@ -99,18 +99,17 @@ img{display:block;max-width:100%}
 .header-title{
   position:absolute;
   left:66px;
-  right:99px;
-  top:34px;
+  right:38px;
+  top:38px;
   z-index:2;
   color:#f0d18b;
-  font-size:clamp(19px,5vw,31px);
-  line-height:.98;
+  font-size:clamp(18px,5.15vw,25px);
+  line-height:1;
   font-weight:700;
-  letter-spacing:-.025em;
-  transform:scaleX(.9);
-  transform-origin:center;
+  letter-spacing:-.035em;
   text-align:center;
   white-space:nowrap;
+  overflow:visible;
   text-shadow:0 2px 2px #000,0 0 6px #000;
 }
 .header-resources{
@@ -775,7 +774,7 @@ img{display:block;max-width:100%}
   border-radius:7px;
 }
 .item-tile[data-active="true"]{outline:2px solid #efbd4f;box-shadow:0 0 9px #ebb242}
-.item-tile .item-art{width:100%;height:100%;border:0;background:transparent;box-shadow:none}
+.item-tile .item-art{position:absolute;inset:2px;width:auto;height:auto;border:0;background:transparent;box-shadow:none}
 .item-tile>span:not(.item-art){display:none}
 .item-tile>b{position:absolute;right:2px;bottom:1px;color:#7ee39b;font-size:10px}
 .item-detail{
@@ -816,20 +815,7 @@ img{display:block;max-width:100%}
   box-shadow:var(--shadow);
 }
 .tavern-hero img{width:100%;height:100%;object-fit:cover}
-.tavern-hero>div{
-  position:absolute;
-  right:7%;top:8%;
-  width:33%;
-  padding:10px 6px;
-  color:#66251a;
-  background:#f0dca9e8;
-  border:1px solid #a6824b;
-  box-shadow:0 3px 8px #0006;
-  text-align:center;
-  font-size:14px;
-  line-height:1.15;
-  font-weight:700;
-}
+.tavern-hero>div{display:none}
 .recruit-grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);

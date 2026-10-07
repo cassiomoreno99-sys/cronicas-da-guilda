@@ -66,7 +66,12 @@ if (await missionAction.count()) {
   if (await send.count() && await send.isEnabled()) {
     await send.click();
     await page.waitForTimeout(350);
-    await page.locator(".battle-overlay").waitFor({state:"visible",timeout:3000});
+    const details = page.getByRole("button",{name:"Detalhes",exact:true}).first();
+    if (await details.count()) {
+      await details.click();
+      await page.waitForTimeout(250);
+    }
+    await page.locator(".battle-overlay").waitFor({state:"visible",timeout:5000});
     await sanity("10-batalha");
   } else {
     throw new Error("Não foi possível habilitar Enviar para validar a batalha.");

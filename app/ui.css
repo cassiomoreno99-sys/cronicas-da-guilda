@@ -1286,3 +1286,7 @@ img{display:block;max-width:100%}
 
 /* Final visual corrections after screenshot review */
 .tavern-hero>div{display:none}
+
+
+/* sem toast de sucesso */
+.flash{display:none!important}

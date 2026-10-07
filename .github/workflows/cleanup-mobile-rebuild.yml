@@ -1,0 +1,18 @@
+name: Limpar branch temporária da reconstrução mobile
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/cleanup-mobile-rebuild.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  limpar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apagar branch temporária
+        run: git push origin --delete rebuild-mobile-exact-v2

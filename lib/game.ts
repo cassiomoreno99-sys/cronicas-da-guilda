@@ -499,6 +499,121 @@ export function suggestSpecialistTeam(s: Campaign, kind: MissionKind, size = 4) 
   return picked.slice(0, Math.min(size, 4)).map(h => h.id);
 }
 
+export function hqUpgradeCost(s: Campaign, building: HQBuilding) {
+  const spec = HQ_BUILDINGS[building], level = s.hq?.[building] || 0;
+  return Math.round(spec.baseCost * (1 + level * .75));
+}
+export function academySlots(s: Campaign) { return s.hq?.academy ? Math.min(4, 1 + s.hq.academy) : 0; }
+export const HQ_DEFINITIONS = HQ_BUILDINGS;
+export const WORLD_MAP = WORLD_REGIONS;
+export const CRAFTING_RECIPES = CRAFT_RECIPES;
+export const ITEM_SET_DEFINITIONS = ITEM_SETS;
+export const SCAR_DEFINITIONS = HERO_SCARS;
+
+function sameTeam(a: string[], b: string[]) {
+  return a.length === b.length && a.every(id => b.includes(id));
+}
+export function squadForTeam(s: Campaign, ids: string[]) { return s.squads.find(q => q.team.length >= 3 && sameTeam(q.team, ids)); }
+export function squadThreshold(q: SavedSquad) { return 70 + q.level * 45; }
+function awardSquadExperience(s: Campaign, ids: string[], kind: MissionKind, won: boolean) {
+  const q = squadForTeam(s, ids); if (!q) return;
+  q.xp += 14 + (won ? 24 : 8) + (s.hq?.warroom || 0) * 3;
+  if (won) q.wins++;
+  while (q.level < 10 && q.xp >= squadThreshold(q)) { q.xp -= squadThreshold(q); q.level++; }
+  if (q.specialty === kind && won) q.xp += 8;
+}
+export function squadBonus(s: Campaign, ids: string[]) {
+  const q = squadForTeam(s, ids);
+  return q ? 1 + (q.level - 1) * .015 + (s.hq?.warroom || 0) * .005 : 1 + (s.hq?.warroom || 0) * .005;
+}
+function processAcademy(s: Campaign) {
+  const slots = academySlots(s); if (!slots) return;
+  s.academy.trainees = s.academy.trainees.filter(id => s.heroes.some(h => h.id === id)).slice(0, slots);
+  const mentor = s.heroes.find(h => h.id === s.academy.mentorId);
+  const mentorBonus = mentor ? Math.min(18, mentor.level) : 0;
+  for (const id of s.academy.trainees) {
+    const h = s.heroes.find(hero => hero.id === id); if (!h || h.level >= MAX_HERO_LEVEL || heroOnExpedition(s, h.id) || activeJourney(s, h.id)) continue;
+    const xp = 8 + s.hq.academy * 7 + mentorBonus;
+    gainXp(h, xp);
+  }
+}
+function itemCount(s: Campaign, key: string) { return s.chest.filter(i => i.key === key && !i.equippedTo).length; }
+function consumeItems(s: Campaign, key: string, quantity: number) {
+  let left = quantity;
+  s.chest = s.chest.filter(i => { if (!i.equippedTo && i.key === key && left > 0) { left--; return false; } return true; });
+  return left === 0;
+}
+function randomLootKey(s: Campaign, rank: number, luck = 0, preferMaterial = false) {
+  const rarities = rank >= 5 ? ["legendary","epic","rare"] : rank >= 4 ? ["epic","rare","uncommon"] : rank >= 3 ? ["rare","uncommon","common"] : ["uncommon","common"];
+  const candidates = Object.entries(ITEMS).filter(([_, d]) => {
+    if (["quest"].includes(d.slot)) return false;
+    if (preferMaterial && d.slot !== "material") return false;
+    if (!preferMaterial && ["treasure","consumable","material","weapon","offhand","helmet","armor","gloves","boots","accessory"].includes(d.slot) === false) return false;
+    return rarities.includes(d.rarity) && (!d.levelReq || d.levelReq <= Math.max(1, rank * 10));
+  });
+  if (!candidates.length) return "gemstone";
+  const boost = Math.min(.45, luck);
+  const sorted = candidates.toSorted((a,b) => ["common","uncommon","rare","epic","legendary"].indexOf(b[1].rarity) - ["common","uncommon","rare","epic","legendary"].indexOf(a[1].rarity));
+  const window = Math.max(1, Math.ceil(sorted.length * (.35 + boost)));
+  return sorted[Math.floor(random(s) * window)][0];
+}
+function addScar(s: Campaign, h: Hero, source: "defeat" | "boss" = "defeat") {
+  h.scars ??= []; if (h.scars.length >= 3) return;
+  const available = HERO_SCARS.filter(scar => !h.scars!.includes(scar.id));
+  if (!available.length) return;
+  const pick = available[Math.floor(random(s) * available.length)];
+  if (source === "boss" || random(s) < .32) { h.scars.push(pick.id); note(s, h.name + " ganhou a marca "" + pick.name + ""."); }
+}
+function resolveGuildRaid(s: Campaign, teams: string[][], rivalId?: string) {
+  requireRule(!battleActive(s), "Conclua as expedições antes de iniciar uma raid.");
+  requireRule(teams.length === 3 && teams.every(team => team.length >= 3 && team.length <= 4), "A raid exige três equipes de 3 ou 4 heróis.");
+  const all = teams.flat(); requireRule(new Set(all).size === all.length, "Um herói não pode participar de duas frentes da mesma raid.");
+  requireRule(all.every(id => s.heroes.some(h => h.id === id && available(h, s))), "Todos os heróis da raid precisam estar disponíveis.");
+  const rival = rivalId ? s.rivals.find(r => r.id === rivalId) : undefined;
+  if (rivalId) requireRule(rival, "Guilda rival não encontrada.");
+  const names = ["Portão Principal", "Passagem Subterrânea", "Torre dos Magos"];
+  const fronts: GuildRaidResult["fronts"] = [];
+  let previousWin = false;
+  for (let i = 0; i < 3; i++) {
+    const playerPower = Math.round(teamPower(s, teams[i]) * squadBonus(s, teams[i]) * (1 + (s.hq.warroom || 0) * .025));
+    let enemyPower = rival ? Math.round(rivalPower(rival) * (.28 + i * .05)) : 24 + s.activeRegion * 16 + i * 9;
+    if (previousWin) enemyPower = Math.round(enemyPower * .88);
+    const chance = Math.max(.18, Math.min(.88, .5 + (playerPower - enemyPower) / Math.max(80, enemyPower * 2.8)));
+    const won = random(s) < chance; fronts.push({ name: names[i], won, playerPower, enemyPower }); previousWin = won;
+    for (const id of teams[i]) { const h = s.heroes.find(hero => hero.id === id)!; gainXp(h, won ? 65 : 35); h.energy = Math.max(0, h.energy - (won ? 22 : 30)); if (!won && random(s) < .18) addScar(s, h); }
+    awardSquadExperience(s, teams[i], i === 0 ? "defense" : i === 1 ? "dungeon" : "boss", won);
+  }
+  const wins = fronts.filter(f => f.won).length, won = wins >= 2, reward = won ? 260 + s.activeRegion * 45 + (rival ? 120 : 0) : 60;
+  entry(s, (rival ? "Guerra de guildas · " + rival!.name : "Raid · " + WORLD_REGIONS[s.activeRegion - 1].name), reward);
+  const loot: string[] = [];
+  if (won) {
+    const luck = Math.max(...all.map(id => heroLuck(s.heroes.find(h => h.id === id)!, s)), 0);
+    for (let i = 0; i < 2 + Math.floor(luck * 8); i++) { const key = randomLootKey(s, Math.min(5, 2 + Math.floor(s.activeRegion / 2)), luck, i === 0); addItem(s, key); loot.push(key); }
+    s.fame += rival ? 22 : 16;
+  } else s.fame = Math.max(0, s.fame - 8);
+  if (rival) raiseRivalry(s, rival.id, won ? 20 : 10, "Raid entre guildas");
+  const result: GuildRaidResult = { id: "raid-" + s.day + "-" + s.raidHistory.length, day: s.day, rivalId: rival?.id, title: rival ? "Cerco contra " + rival.name : "Raid em " + WORLD_REGIONS[s.activeRegion - 1].name, teams: teams.map(x => [...x]), fronts, won, reward, loot };
+  s.raidHistory.unshift(result); s.raidHistory = s.raidHistory.slice(0, 30);
+  note(s, result.title + ": " + wins + "/3 frentes vencidas. " + (won ? "Vitória da guilda." : "A ofensiva falhou."));
+  advance(s, all);
+}
+function resolveRivalBattle(s: Campaign, guildId: string, team: string[]) {
+  requireRule(!battleActive(s), "Conclua as expedições antes de desafiar outra guilda.");
+  const rival = s.rivals.find(r => r.id === guildId); requireRule(rival, "Guilda rival não encontrada.");
+  requireRule(team.length >= 3 && team.length <= 4 && new Set(team).size === team.length, "Escale 3 ou 4 heróis.");
+  requireRule(team.every(id => s.heroes.some(h => h.id === id && available(h, s))), "A equipe precisa estar disponível.");
+  const playerPower = Math.round(teamPower(s, team) * (1 + (s.hq.warroom || 0) * .02)), enemyPower = rivalPower(rival);
+  const chance = Math.max(.2, Math.min(.82, .5 + (playerPower - enemyPower) / Math.max(100, enemyPower * 3)));
+  const won = random(s) < chance, reward = won ? 90 + rival.strength * 25 : 0, before = s.fame;
+  if (reward) entry(s, "Vitória contra " + rival.name, reward);
+  s.fame = Math.max(0, s.fame + (won ? 8 : -4)); raiseRivalry(s, rival.id, won ? 12 : 6, "Batalha direta entre guildas");
+  for (const id of team) { const h = s.heroes.find(hero => hero.id === id)!; gainXp(h, won ? 48 : 26); h.energy = Math.max(0, h.energy - 20); }
+  const result: RivalBattleResult = { id: "guildbattle-" + s.day + "-" + s.rivalBattleHistory.length, day: s.day, rivalId: rival.id, rivalName: rival.name, playerPower, rivalPower: enemyPower, won, reward, fameChange: s.fame - before };
+  s.rivalBattleHistory.unshift(result); s.rivalBattleHistory = s.rivalBattleHistory.slice(0, 40);
+  note(s, s.name + " " + (won ? "venceu" : "perdeu para") + " " + rival.name + " em batalha direta.");
+  advance(s, team);
+}
+
 function entry(s: Campaign, label: string, amount: number) { s.transaction++; s.ledger.unshift({ id: s.transaction, day: s.day, label, amount }); s.ledger = s.ledger.slice(0, 80); s.gold += amount; }
 function note(s: Campaign, text: string) { s.journal.unshift({ day: s.day, text }); s.journal = s.journal.slice(0, 40); }
 function addItem(s: Campaign, key: string) { const item = { id: "item-" + (++s.itemSequence), key }; s.chest.push(item); return item; }

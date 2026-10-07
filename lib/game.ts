@@ -317,11 +317,14 @@ export const HERO_STORIES: Record<HeroClass, HeroStorySpec> = {
   bard: { title: "A Canção Inacabada", synopsis: "Uma melodia perdida só termina após três provas.", stages: ["Treino do refrão", "Prova da plateia", "Desafio da última nota"], ability: { id: "story-bard", name: "Balada Imortal", description: "Inspira toda a equipe e concede proteção coletiva.", target: "all-allies", cooldown: 5, effect: "anthem", evolved: true } },
 };
 export function availableAbilities(hero: Hero): AbilitySpec[] {
-  const abilities = [CLASS_ABILITIES[hero.class]];
+  const levelSet = LEVEL_ABILITIES[hero.class];
+  const abilities: AbilitySpec[] = levelSet
+    ? levelSet.filter(a => hero.level >= a.level).map(a => ({ ...a, target: a.target as AbilityTarget, effect: a.effect as AbilityEffect, evolved: a.level >= 22 }))
+    : [CLASS_ABILITIES[hero.class]];
   if (hero.talent?.rank && hero.talent.rank >= 2 && hero.talent.branch) {
     const branch = SPECIALIZATION_BRANCHES[hero.class][hero.talent.path][hero.talent.branch];
     const target: AbilityTarget = branch.style === "storm" ? "all-enemies" : branch.style === "sanctuary" ? "all-allies" : branch.style === "fortress" ? "self" : branch.style === "lifebloom" ? "ally" : "enemy";
-    abilities.push({ id: hero.class + "-" + hero.talent.path + "-" + hero.talent.branch, name: branch.name, description: branch.description + (hero.talent.rank >= 3 ? " Ultimate desbloqueada no nível 10." : ""), target, cooldown: 4, effect: branch.style, evolved: true });
+    abilities.push({ id: hero.class + "-" + hero.talent.path + "-" + hero.talent.branch, name: branch.name, description: branch.description + (hero.talent.rank >= 3 ? " Forma máxima da especialização." : ""), target, cooldown: 4, effect: branch.style, evolved: true });
   }
   if (hero.racial?.rank) {
     const racial = RACE_TREES[heroRace(hero)][hero.racial.path];
@@ -392,13 +395,30 @@ export function storyProgress(h: Hero) {
   return { stage, label: "Concluída", requirement: "Habilidade desbloqueada", cost: 0, energy: 0 };
 }
 export function heroStats(h: Hero, s?: Campaign) {
-  const n = { attack: h.attack + (s?.arsenal || 0) * 2, defense: h.defense + (s?.arsenal || 0), magic: h.magic, hp: 0, speed: h.class === "rogue" ? 32 : h.class === "monk" ? 30 : h.class === "ranger" ? 26 : 18, critical: h.class === "rogue" ? .22 : h.class === "monk" ? .12 : .08, healing: 1 };
+  const base = V130_BASE_STATS[h.class] || { speed: h.class === "monk" ? 14 : 10, critical: .05 };
+  const n = { attack: h.attack + (s?.arsenal || 0), defense: h.defense + Math.floor((s?.arsenal || 0) / 2), magic: h.magic, hp: 0, speed: base.speed || 10, critical: base.critical || .04, healing: 1, luck: h.class === "bard" ? Math.min(.18, .06 + h.level * .002) : 0 };
   if (h.racial?.rank) {
     const racial = RACE_TREES[heroRace(h)][h.racial.path].bonus;
     for (const key of ["attack", "defense", "magic", "hp", "speed", "critical", "healing"] as const) n[key] += (racial[key] || 0) * h.racial.rank;
   }
-  for (const item of s?.chest || []) if (item.equippedTo === h.id) {
-    const d = ITEMS[item.key]; for (const k of ["attack", "defense", "magic", "hp", "speed", "critical"] as const) n[k] += d?.[k] || 0;
+  const equipped = (s?.chest || []).filter(item => item.equippedTo === h.id);
+  const sets = new Map<string, number>();
+  for (const item of equipped) {
+    const d = ITEMS[item.key]; if (!d) continue;
+    for (const k of ["attack", "defense", "magic", "hp", "speed", "critical"] as const) n[k] += d[k] || 0;
+    n.luck += d.luck || 0;
+    if (d.set) sets.set(d.set, (sets.get(d.set) || 0) + 1);
+  }
+  for (const [set, count] of sets) {
+    if (set === "fortress") { if (count >= 2) n.defense += 3; if (count >= 3) { n.defense += 3; n.hp += 10; } }
+    if (set === "astral") { if (count >= 2) n.magic += 4; if (count >= 3) { n.magic += 6; n.critical += .02; } }
+    if (set === "shadow") { if (count >= 2) n.speed += 3; if (count >= 3) { n.attack += 4; n.critical += .03; } }
+    if (set === "fortune") { if (count >= 2) n.luck += .05; if (count >= 3) { n.luck += .10; n.critical += .03; } }
+  }
+  for (const scarId of h.scars || []) {
+    const scar = HERO_SCARS.find(x => x.id === scarId); if (!scar) continue;
+    for (const k of ["attack", "defense", "magic", "hp", "speed", "critical"] as const) n[k] += (scar as Record<string, number | string | boolean>)[k] as number || 0;
+    n.luck += ("luck" in scar ? scar.luck : 0) || 0;
   }
   if (h.talent) {
     const bonus = SPECIALIZATIONS[h.class][h.talent.path].bonus;
@@ -408,8 +428,10 @@ export function heroStats(h: Hero, s?: Campaign) {
       for (const key of ["attack", "defense", "magic", "hp", "speed", "critical", "healing"] as const) n[key] += (branchBonus[key] || 0) * (h.talent.rank - 1);
     }
   }
+  if (s?.hq?.library) n.magic += Math.floor(s.hq.library / 2);
   return n;
 }
+export function heroLuck(h: Hero, s?: Campaign) { return Math.max(0, Math.min(.45, heroStats(h, s).luck)); }
 export function rating(h: Hero, arsenal = 0, s?: Campaign) {
   const n = heroStats(h, s);
   return Math.round((n.attack * .45 + n.defense * .3 + n.magic * .35 + h.level * 3 + (s ? 0 : arsenal * 2)) * (.55 + .45 * h.energy / 100));
@@ -795,8 +817,17 @@ export function shop(s: Campaign) {
   ];
 }
 function gainXp(h: Hero, value: number) {
-  h.xp += value; let levels = 0;
-  while (h.xp >= threshold(h)) { h.xp -= threshold(h); h.level++; h.attack += ["mage", "healer", "necromancer", "druid", "bard"].includes(h.class) ? 1 : 3; h.defense += 2; h.magic += ["mage", "healer", "paladin", "necromancer", "druid", "bard"].includes(h.class) ? 3 : 1; levels++; }
+  if (h.level >= MAX_HERO_LEVEL) { h.level = MAX_HERO_LEVEL; h.xp = 0; return 0; }
+  h.xp += Math.max(0, Math.round(value)); let levels = 0;
+  while (h.level < MAX_HERO_LEVEL && h.xp >= threshold(h)) {
+    h.xp -= threshold(h); h.level++; levels++;
+    if (["warrior", "ranger", "rogue"].includes(h.class)) h.attack += 1;
+    if (["paladin", "warrior"].includes(h.class) && h.level % 2 === 0) h.defense += 1;
+    if (["mage", "healer", "bard"].includes(h.class)) h.magic += 1;
+    if (h.class === "paladin" && h.level % 3 === 0) h.magic += 1;
+    if (h.class === "bard" && h.level % 4 === 0) h.attack += 1;
+  }
+  if (h.level >= MAX_HERO_LEVEL) { h.level = MAX_HERO_LEVEL; h.xp = 0; }
   return levels;
 }
 export const JOURNEY_OPTIONS: Record<JourneyDuration, { label: string; dailyXp: number; description: string }> = {

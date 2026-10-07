@@ -102,6 +102,7 @@ export function BattleOrders({ battle, state, visibleFighters, disabled, act }: 
   const [targeting, setTargeting] = useState<"healing_potion" | "antidote" | "stun_bomb" | null>(null);
   const [targetId, setTargetId] = useState("");
   const c = battle.combat; if (!c) return null;
+  const hasPendingConsumable = !!c.pendingConsumable;
 
   const livingHeroes = c.fighters.filter(f => f.side === "hero" && f.hp > 0 && visibleFighters.some(v => v.id === f.id && v.hp > 0));
   const livingEnemies = c.fighters.filter(f => f.side === "enemy" && f.hp > 0 && visibleFighters.some(v => v.id === f.id && v.hp > 0));
@@ -120,7 +121,7 @@ export function BattleOrders({ battle, state, visibleFighters, disabled, act }: 
   };
   function choose(key: "healing_potion" | "antidote" | "stun_bomb") {
     const options = key === "stun_bomb" ? livingEnemies : key === "antidote" ? afflicted : wounded;
-    if (!counts[key] || c.pendingConsumable) return;
+    if (!counts[key] || hasPendingConsumable) return;
     setTargetId(options[0]?.id || "");
     setTargeting(key);
   }

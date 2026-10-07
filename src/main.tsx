@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import Game from "../app/game-client";
-import "../app/ui.css";
+import "../app/ui-v2.css";
 
 if ("serviceWorker" in navigator) {
   void navigator.serviceWorker.getRegistrations().then(registrations => {

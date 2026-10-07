@@ -64,11 +64,11 @@ function contractSpecialists(kind: MissionKind) {
   return map[kind] || ["warrior", "healer"];
 }
 function contractDropHints(rank: number, kind: MissionKind) {
-  const base = rank <= 1 ? ["iron_ore", "minor_healing", "lucky_clover"]
-    : rank === 2 ? ["steel_ingot", "hunter_charm", "arcane_dust"]
-    : rank === 3 ? ["moon_silver", "shadow_silk", "holy_symbol"]
-    : rank === 4 ? ["dragon_scale", "star_pendant", "ancient_key"]
-    : ["royal_relic", "abyss_crystal", "seven_sided_die"];
+  const base = rank <= 1 ? ["healing_potion", "iron_sword", "leather_armor"]
+    : rank === 2 ? ["swift_boots", "amber_ring", "hunter_bow"]
+    : rank === 3 ? ["star_pendant", "sentinel_armor", "runic_staff"]
+    : rank === 4 ? ["ancient_armor", "dawn_blade", "dragon_fang"]
+    : ["royal_relic", "ancient_idol", "ash_staff"];
   return kind === "dungeon" ? [...base.slice(0, 2), "secret_map"] : base;
 }
 function contractWinXp(rank: number) { return 30 + rank * 23; }
@@ -441,10 +441,10 @@ export default function Game() {
                   return <article key={m.id} className="parchment-contract" data-chosen={chosen} data-locked={locks.length > 0} role="button" tabIndex={0} onClick={() => { if (!locks.length) setMissionId(m.id); }} onKeyDown={e => { if (!locks.length && (e.key === "Enter" || e.key === " ")) setMissionId(m.id); }}>
                     <div className="contract-art">
                       <img src={"/enemies/" + enemyPortraitKey(m.enemy) + ".webp"} alt={"Ameaça da missão " + m.title} onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = "/enemies/fallback.webp"; }} />
-                      <span>{KIND_NAMES[m.kind]}</span>
+                      <span>{KIND_NAMES[m.kind]}</span><b className="contract-art-rank">{"0" + m.rank}</b>
                     </div>
                     <div className="contract-copy">
-                      <div className="contract-title-row"><div><small>{m.location}</small><h3>{m.title}</h3></div><span className={"contract-rank contract-rank-" + m.rank}>NÍVEL {m.rank}</span></div>
+                      <div className="contract-title-row"><div><small>{m.location}</small><h3>{m.title}</h3></div></div>
                       <p>{m.description}</p>
                       <div className="contract-difficulty"><strong>Dificuldade: <em>{CONTRACT_DIFFICULTY[m.rank]}</em></strong><span aria-label={m.rank + " de 5 de dificuldade"}>{[1,2,3,4,5].map(n => <i key={n} data-on={n <= m.rank}>◆</i>)}</span></div>
                       <div className="contract-specialists"><small>Especialistas recomendados</small><div>{specialists.map(id => <span key={id}>{CLASSES[id].name}</span>)}</div></div>

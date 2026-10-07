@@ -3296,3 +3296,99 @@ body::before {
   .expedition-mini-card{min-height:118px!important}
   .item-grid.chest-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
 }
+
+/* === MOBILE SCREENSHOT HOTFIX v1.3.1 === */
+/* Corrige exatamente os problemas vistos no aparelho do Senhor Moreno. */
+.topbar{
+  background:
+    radial-gradient(circle at 82% 8%,rgba(71,122,169,.26),transparent 15rem),
+    radial-gradient(circle at 18% -8%,rgba(217,171,87,.12),transparent 12rem),
+    linear-gradient(180deg,#0c2034 0%,#091827 58%,#0b121a 100%) !important;
+}
+.topbar::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.25;
+  background:
+    linear-gradient(115deg,transparent 0 18%,rgba(255,255,255,.035) 18.5% 19%,transparent 19.5% 100%),
+    repeating-linear-gradient(90deg,transparent 0 38px,rgba(219,179,101,.025) 39px 40px);
+}
+.topbar-inner{position:relative;z-index:1}
+
+@media (max-width:760px){
+  .contract-copy{overflow:hidden!important}
+  .contract-bottom{
+    grid-template-columns:minmax(0,1fr) 104px!important;
+    gap:5px!important;
+    align-items:end!important;
+  }
+  .contract-rewards{
+    display:grid!important;
+    grid-template-columns:auto auto!important;
+    justify-content:start!important;
+    align-items:center!important;
+    gap:3px 5px!important;
+    min-width:0!important;
+  }
+  .contract-rewards>span{
+    min-width:0!important;
+    white-space:nowrap!important;
+  }
+  .contract-drop-hints{
+    grid-column:1 / -1!important;
+    width:100%!important;
+    min-width:0!important;
+    display:flex!important;
+    flex-wrap:nowrap!important;
+    gap:3px!important;
+    margin:1px 0 0!important;
+    overflow:hidden!important;
+  }
+  .contract-drop-hints>span{
+    flex:0 0 20px!important;
+    width:20px!important;
+    height:20px!important;
+  }
+  .contract-prepare{
+    width:104px!important;
+    min-width:104px!important;
+    max-width:104px!important;
+    min-height:39px!important;
+    height:39px!important;
+    padding:4px 5px!important;
+    justify-content:center!important;
+    gap:0!important;
+    overflow:hidden!important;
+    white-space:nowrap!important;
+    text-overflow:clip!important;
+    font-size:9.5px!important;
+    line-height:1!important;
+  }
+  .contract-prepare svg{display:none!important}
+
+  /* Dá respiro real ao último contrato para a barra inferior nunca esconder conteúdo. */
+  .workspace,
+  .workspace:has(.command-grid[data-mobile-view="mission"]),
+  .workspace:has(.command-grid[data-mobile-view="team"]),
+  .workspace:has(.command-grid[data-mobile-view="league"]),
+  .workspace:has(.command-grid[data-mobile-view="camp"]){
+    padding-bottom:calc(132px + env(safe-area-inset-bottom))!important;
+  }
+}
+
+@media (max-width:390px){
+  .contract-bottom{grid-template-columns:minmax(0,1fr) 96px!important}
+  .contract-prepare{
+    width:96px!important;
+    min-width:96px!important;
+    max-width:96px!important;
+    font-size:9px!important;
+  }
+  .contract-drop-hints>span{
+    flex-basis:19px!important;
+    width:19px!important;
+    height:19px!important;
+  }
+}

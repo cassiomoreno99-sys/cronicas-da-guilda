@@ -776,24 +776,55 @@ export function newCampaign(seed = 381077): Campaign {
   return normalizeCampaign({ schema: 1, name: "Guilda do Alvorecer", day: 1, season: 1, gold: 1500, fame: 0, points: 0, wins: 0, losses: 0, arsenal: 0, heroes: structuredClone(initialHeroes), team: ["aric", "lyra", "elen", "kael"], tactic: "balanced", hired: [], rivals: ["Lobos de Ferro", "Ordem da Aurora", "Corvos de Ashen", "Sentinelas do Norte", "Chama Eterna"].map((name, i) => ({ id: "rival-" + i, name, points: 0, victories: 0 })), ledger: [{ id: 0, day: 1, label: "Fundo inicial da guilda", amount: 1500 }], journal: [{ day: 1, text: "Sua guilda foi fundada. Resolva o pedido da aldeia e prepare sua primeira expedição." }], lastBattle: null, rng: seed >>> 0, transaction: 0 });
 }
 export function missions(s: Campaign): Mission[] {
-  const scaling = 1 + (s.season - 1) * .22 + ((s.region || 1) - 1) * .08 + Math.floor((seasonDay(s) - 1) / 7) * .03;
+  const regionIndex = Math.max(0, Math.min(WORLD_REGIONS.length - 1, (s.activeRegion || 1) - 1));
+  const region = WORLD_REGIONS[regionIndex], progression = Math.max(0, region.minLevel - 1);
+  const scaling = 1 + progression * .045 + (s.season - 1) * .055 + Math.floor((seasonDay(s) - 1) / 7) * .025;
+  const kinds: MissionKind[] = ["escort", "defense", "dungeon", "hunt", "dungeon"];
+  const descriptors = ["Rota de", "Defesa de", "Ruínas de", "Caçada em", "Tesouro perdido de"];
   return [1, 2, 3, 4, 5].map((difficulty, i) => {
-    const index = (s.day + i + 2) % templates.length, region = Math.min(4, s.region || 1), t = { ...templates[index] };
-    const titles = [
-      ["Caravana de Valen", "A defesa de Pedra Clara", "O despertar da cripta", "Caçada nas brumas"],
-      ["Escolta de Brumavale", "O posto da floresta", "As cavernas das raízes", "Predadores de Brumavale"],
-      ["Relíquias para Ashen", "O cerco à torre de Ashen", "Masmorra de Cinzabranca", "Caçada aos espectros"],
-      ["Caravana da Fronteira", "A muralha dos dragões", "O templo do dragão", "Caçada aos dracos"],
-    ];
-    t.title = titles[region - 1][index];
-    if (region > 1) { t.location = REGIONS[region - 1]; t.enemy = [["Bandido", "Saqueador", "Esqueleto", "Lobo sombrio"], ["Emboscador", "Troll", "Aranha ancestral", "Pantera das brumas"], ["Cultista", "Cavaleiro espectral", "Guardião antigo", "Espectro"], ["Salteador dracônico", "Guerreiro draco", "Guardião de obsidiana", "Draco selvagem"]][region - 1][index]; }
-    return { ...t, id: "mission-" + s.day + "-" + i, title: i === 3 ? "Passagem secreta de " + REGIONS[((s.region || 1) - 1) % 4] : i === 4 ? "O cofre dos antigos" : t.title, rank: difficulty, force: Math.round([100, 172, 205, 285, 380][i] * scaling), reward: Math.round([55, 90, 145, 230, 350][i] * (1 + (s.season - 1) * .07)), count: i === 0 ? 3 : 4, requiredFame: i === 3 ? 120 : i === 4 ? 260 : 0, requiredItem: i === 3 ? "secret_map" : i === 4 ? "ancient_key" : undefined };
+    const enemy = region.enemies[(s.day + i) % region.enemies.length];
+    const kind = kinds[i];
+    const title = i === 3 ? "Passagem secreta · " + region.name : i === 4 ? "O cofre de " + region.name : descriptors[i] + " " + region.name;
+    const forceBase = [30, 48, 68, 92, 125][i];
+    const rewardBase = [35, 58, 90, 135, 205][i];
+    return {
+      id: "mission-" + s.day + "-" + regionIndex + "-" + i,
+      title, location: region.name,
+      description: kind === "escort" ? "Escolte uma caravana pelas rotas de " + region.name + "."
+        : kind === "defense" ? "Segure a posição contra " + enemy + " e seus aliados."
+        : kind === "hunt" ? "Rastreie e elimine " + enemy + " antes que escape."
+        : "Explore uma área perigosa dominada por " + enemy + " e procure saque.",
+      rank: difficulty,
+      force: Math.round(forceBase * scaling),
+      reward: Math.round(rewardBase * (1 + regionIndex * .10 + (s.season - 1) * .04)),
+      enemy, count: i === 0 ? 3 : i >= 3 ? 4 : 3,
+      specialty: kind === "hunt" ? "ranger" : kind === "defense" ? "paladin" : kind === "dungeon" ? "rogue" : "warrior",
+      flavor: kind === "hunt" ? "Arqueiros e Assassinos se destacam na perseguição."
+        : kind === "defense" ? "Cavaleiros e Guerreiros seguram melhor a linha."
+        : kind === "dungeon" ? "Assassinos ajudam contra armadilhas; Magos lidam bem com ameaças arcanas."
+        : "Mobilidade e uma linha de frente estável reduzem os riscos.",
+      kind,
+      requiredFame: i === 3 ? 80 + regionIndex * 20 : i === 4 ? 180 + regionIndex * 30 : 0,
+      requiredItem: i === 3 ? "secret_map" : i === 4 ? "ancient_key" : undefined,
+    };
   });
 }
 export function seasonBoss(s: Campaign): Mission | null {
   if (seasonDay(s) < 21 || s.bossSeasons?.includes(s.season)) return null;
-  const idx = (s.season - 1) % 3;
-  return { id: "boss-" + s.season, title: ["O Vigia de Ashen", "A Matriarca das Brumas", "O Senhor da Fronteira"][idx], location: REGIONS[((s.region || 1) - 1) % 4], description: ["A cada três turnos, ataca todos os heróis.", "Recupera vida a cada três turnos. A ofensiva exige proteção.", "Seus golpes ficam mais fortes a cada turno. Prepare cura e defesa."][idx], rank: 3, force: Math.round(280 * (1 + (s.season - 1) * .24 + ((s.region || 1) - 1) * .06)), reward: Math.round(230 * (1 + (s.season - 1) * .07)), enemy: ["Vigia", "Matriarca", "Senhor da Fronteira"][idx], count: 3, specialty: idx === 0 ? "undead" : "ranger", flavor: "Vitória: +45 renome, equipamento épico e Chave Antiga." + (s.region < 4 ? " Libera uma nova região." : ""), kind: "boss", requiredFame: 0, boss: idx };
+  const regionIndex = Math.max(0, Math.min(WORLD_REGIONS.length - 1, (s.activeRegion || 1) - 1));
+  const region = WORLD_REGIONS[regionIndex], enemy = region.enemies[region.enemies.length - 1];
+  return {
+    id: "boss-" + s.season + "-" + regionIndex,
+    title: "Guardião de " + region.name,
+    location: region.name,
+    description: "Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
+    rank: 3,
+    force: Math.round((78 + regionIndex * 12) * (1 + (s.season - 1) * .06)),
+    reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
+    enemy, count: 3, specialty: "boss",
+    flavor: "Chefe regional: melhor chance de equipamento raro, materiais e cicatrizes memoráveis.",
+    kind: "boss", requiredFame: 0, boss: regionIndex,
+  };
 }
 export function trainingPlan(s: Campaign, h: Hero) {
   const gap = Math.max(0, Math.max(...s.heroes.map(hero => hero.level)) - h.level);
@@ -952,16 +983,19 @@ function createRetaliationEvent(s: Campaign): GuildEvent | null {
 }
 
 export function shop(s: Campaign) {
-  const week = Math.floor((s.day - 1) / 7), races = Object.keys(RACES) as HeroRace[];
-  const primary = races[week % races.length], secondary = races[(week + 1) % races.length];
-  const racialKeys = [RACE_GEAR[primary].weapon, RACE_GEAR[primary].armor, RACE_GEAR[secondary].weapon, RACE_GEAR[secondary].armor];
-  return [
-    { key: "healing_potion", price: 35, requiredFame: 0, available: true },
-    { key: "iron_sword", price: 95, requiredFame: 0, available: !s.shopPurchases.includes(week + ":iron_sword") },
-    { key: "leather_armor", price: 90, requiredFame: 0, available: !s.shopPurchases.includes(week + ":leather_armor") },
-    ...racialKeys.map((key, i) => ({ key, price: ITEMS[key].value + 55 + i * 4, requiredFame: 25, available: !s.shopPurchases.includes(week + ":" + key) })),
-    { key: "secret_map", price: 180, requiredFame: 80, available: !s.shopPurchases.includes(week + ":secret_map") },
-  ];
+  const week = Math.floor((s.day - 1) / 7);
+  const purchasable = Object.entries(ITEMS).filter(([_, d]) =>
+    ["weapon","offhand","helmet","armor","gloves","boots","accessory","consumable","material"].includes(d.slot) &&
+    (!d.levelReq || d.levelReq <= Math.max(5, Math.max(...s.heroes.map(h => h.level)) + 5))
+  );
+  const rotating = Array.from({ length: 9 }, (_, i) => purchasable[(stableNumber("shop:" + week + ":" + i) + i * 17) % purchasable.length]?.[0]).filter(Boolean) as string[];
+  const keys = [...new Set(["healing_potion","minor_healing","iron_ore","lucky_clover",...rotating])].slice(0, 12);
+  return keys.map((key, i) => ({
+    key,
+    price: Math.max(8, Math.round(ITEMS[key].value * (key === "healing_potion" ? 2.2 : 1.45))),
+    requiredFame: ITEMS[key].rarity === "legendary" ? 260 : ITEMS[key].rarity === "epic" ? 120 : ITEMS[key].rarity === "rare" ? 35 : 0,
+    available: ["consumable","material"].includes(ITEMS[key].slot) || !s.shopPurchases.includes(week + ":" + key),
+  }));
 }
 function gainXp(h: Hero, value: number) {
   if (h.level >= MAX_HERO_LEVEL) { h.level = MAX_HERO_LEVEL; h.xp = 0; return 0; }

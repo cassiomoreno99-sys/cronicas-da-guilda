@@ -49,3 +49,16 @@
 - Cada equipe pronta pode receber nome personalizado, formação e tática.
 - Botão de montagem especialista sugere automaticamente heróis disponíveis conforme o tipo de missão.
 - Se membros de uma equipe salva estiverem em outra expedição, o jogo monta uma alternativa com heróis disponíveis.
+
+
+## v1.3.0 — Interface fantasy e mundo vivo
+- Interface global refeita no estilo medieval/fantasy: azul-noturno, dourado, madeira e pergaminho.
+- Navegação mobile oficial: Missões, Heróis, Baú, Taverna e Guilda; contexto superior: Missão, Equipe, Liga e Descanso.
+- Missões em cartões de pergaminho com ameaça, dificuldade, especialistas, ouro, XP e possíveis saques.
+- Expedições com três vagas fixas, equipes de 3 ou 4 e acompanhamento simultâneo.
+- Heróis, inventário, taverna, liga, sede, santuário e guerra de guildas recebem o mesmo tema visual.
+- Combate passa a ser narrativo e automático: os heróis escolhem habilidades; o jogador interfere apenas com consumíveis.
+- Combate assistido oferece três atalhos clicáveis sem botão “Usar”: Poção de Cura, Antídoto e Bomba Atordoante.
+- Progressão rebalanceada do nível 1 ao 50 com atributos iniciais baixos e sete classes clássicas.
+- Mundo expandido, nomes mais variados, itens, conjuntos, materiais, crafting, academia, sede, raids e batalhas contra guildas rivais.
+- Bateria automatizada inclui múltiplas expedições, progressão/mundo, save, crafting, raids e consumíveis em combate.

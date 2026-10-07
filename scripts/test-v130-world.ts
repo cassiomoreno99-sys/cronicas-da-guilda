@@ -26,17 +26,18 @@ function cloneHero(h: Hero, id: string, name: string): Hero {
 
 console.log("v1.3.0: iniciando bateria ampla...");
 
-// 1) Elenco clássico, nível 1 e atributos baixos.
+// 1) Elenco canônico aprovado, nível 1 e atributos baixos.
 {
   const s = newCampaign(1001);
-  const expected = ["ranger","mage","healer","paladin","warrior","rogue","bard"].sort();
-  ok(s.heroes.length === 7, "Campanha nova deve começar com exatamente 7 heróis clássicos.");
-  ok([...CLASSIC_CLASSES].sort().join(",") === expected.join(","), "CLASSIC_CLASSES não corresponde às 7 classes pedidas.");
-  ok([...new Set(s.heroes.map(h => h.class))].sort().join(",") === expected.join(","), "Elenco inicial não contém exatamente uma unidade de cada classe clássica.");
+  const expectedClasses = ["ranger","mage","healer","paladin","warrior","rogue","bard"].sort();
+  const expectedNames = ["Aric Valen","Lyria Cael","Thorgar Pedraferro","Kaelith Sombria","Eldrin Silvestre","Rhokar Brasavil"];
+  ok(s.heroes.length === 6, "Campanha nova deve começar com exatamente os 6 heróis canônicos.");
+  ok([...CLASSIC_CLASSES].sort().join(",") === expectedClasses.join(","), "CLASSIC_CLASSES deve manter as 7 classes jogáveis do sistema.");
+  ok(s.heroes.map(h => h.name).join("|") === expectedNames.join("|"), "Elenco inicial não corresponde ao roster canônico aprovado.");
   ok(s.heroes.every(h => h.level === 1 && h.xp === 0), "Todo herói inicial deve começar no nível 1 e XP 0.");
   ok(s.heroes.every(h => Math.max(h.attack,h.defense,h.magic) <= 8), "Atributos iniciais ainda estão altos demais.");
   ok(new Set(s.heroes.map(h => h.name)).size === s.heroes.length, "Há nomes repetidos no elenco inicial.");
-  ok(CLASSES.bard.name === "Pierrô", "Classe de sorte deve aparecer como Pierrô.");
+  ok(CLASSES.bard.name === "Pierrô", "Classe de sorte deve continuar disponível no sistema como Pierrô.");
 }
 
 // 2) Habilidades progressivas até nível 50 e Pierrô focado em sorte.
@@ -49,10 +50,11 @@ console.log("v1.3.0: iniciando bateria ampla...");
     const lv50 = availableAbilities(maxed);
     ok(lv50.length >= 6, "Cada classe clássica precisa abrir pelo menos 6 habilidades até o nível 50: " + h.class);
   }
-  const p = s.heroes.find(h => h.class === "bard")!;
+  const p = s.rivals.flatMap(r => r.heroes).find(h => h.class === "bard")!;
+  ok(!!p, "O mundo deve continuar podendo gerar Pierrôs mesmo sem um no elenco inicial.");
   const names = availableAbilities({ ...p, level: 50 }).map(a => a.name).join(" ");
   ok(/Dado|Coelho|Jackpot|Fortuna|Sorte/.test(names), "Pierrô não está com árvore de habilidades centrada em sorte.");
-  ok(heroLuck(p, s) > 0, "Pierrô precisa ter sorte de saque positiva já no início.");
+  ok(heroLuck(p, s) > 0, "Pierrô precisa ter sorte de saque positiva.");
 }
 
 // 3) Progressão real não ultrapassa nível 50.
@@ -124,7 +126,10 @@ console.log("v1.3.0: iniciando bateria ampla...");
 // 7) Restrições de equipamento por classe e nível.
 {
   let s = prep(newCampaign(1006));
-  const pierrot = s.heroes.find(h => h.class === "bard")!;
+  const pierrot = structuredClone(s.rivals.flatMap(r => r.heroes).find(h => h.class === "bard")!);
+  ok(!!pierrot, "O teste de equipamento precisa encontrar um Pierrô no mundo.");
+  pierrot.id = "test-pierrot"; pierrot.level = 1; pierrot.energy = 100; pierrot.injuredUntil = 0;
+  s.heroes.push(pierrot);
   const warrior = s.heroes.find(h => h.class === "warrior")!;
   s.chest.push({ id:"test-mask", key:"jester_mask" }, { id:"test-die", key:"seven_sided_die" });
   s = applyAction(s, { type:"equip", itemId:"test-mask", heroId:pierrot.id });
@@ -146,7 +151,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
 {
   let s = prep(newCampaign(1008));
   s = applyAction(s, { type:"upgrade-hq", building:"academy" });
-  const trainee = s.heroes[6];
+  const trainee = s.heroes[5];
   s = applyAction(s, { type:"academy-trainees", heroIds:[trainee.id] });
   const before = s.heroes.find(h => h.id === trainee.id)!.xp;
   s.event = null;
@@ -189,7 +194,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
 {
   let s = prep(newCampaign(1012));
   while (s.heroes.length < 10) {
-    const base = s.heroes[s.heroes.length % 7];
+    const base = s.heroes[s.heroes.length % 6];
     s.heroes.push(cloneHero(base, "multi-"+s.heroes.length, "Teste Único "+s.heroes.length));
   }
   const ids = s.heroes.map(h=>h.id);
@@ -211,7 +216,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
 {
   let s = prep(newCampaign(1013));
   while (s.heroes.length < 10) {
-    const base=s.heroes[s.heroes.length%7];
+    const base=s.heroes[s.heroes.length%6];
     const h=cloneHero(base,"raid-"+s.heroes.length,"Raid Único "+s.heroes.length);
     h.attack += 25; h.defense += 20; h.magic += 20; s.heroes.push(h);
   }
@@ -234,8 +239,8 @@ console.log("v1.3.0: iniciando bateria ampla...");
   old.heroes[0].class = "monk";
   old.heroes[0].level = 9; old.heroes[0].attack = 40; old.heroes[0].defense = 35; old.heroes[0].magic = 18;
   const migrated = normalizeCampaign(JSON.parse(JSON.stringify(old)));
-  ok(migrated.balanceVersion === 3, "Save antigo não recebeu versão de balanceamento.");
-  ok(migrated.heroes[0].class === "warrior", "Monge legado não foi convertido para classe clássica.");
+  ok(migrated.balanceVersion === 4, "Save antigo não recebeu a versão canônica de dados.");
+  ok(migrated.heroes.map(h => h.name).join("|") === ["Aric Valen","Lyria Cael","Thorgar Pedraferro","Kaelith Sombria","Eldrin Silvestre","Rhokar Brasavil"].join("|"), "Save antigo não foi migrado para o elenco canônico.");
   ok(migrated.heroes[0].level === 1 && migrated.heroes[0].attack <= 8, "Save antigo não foi rebalanceado para nível 1/status baixo.");
 }
 
@@ -243,7 +248,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
 {
   let s=prep(newCampaign(1016)); s.hq.forge=2; s.academy.trainees=[s.heroes[0].id]; s.region=4; s.activeRegion=3;
   const restored=normalizeCampaign(JSON.parse(JSON.stringify(s)));
-  ok(restored.hq.forge===2 && restored.activeRegion===3 && restored.balanceVersion===3, "Backup JSON perdeu dados v1.3.");
+  ok(restored.hq.forge===2 && restored.activeRegion===3 && restored.balanceVersion===4, "Backup JSON perdeu dados v1.3.");
 }
 
 // 16) Stress: várias campanhas, dezenas de dias, batalhas, descanso e mercado.

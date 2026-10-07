@@ -382,8 +382,12 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const filtered = state.chest.filter(i => {
     const slot = ITEMS[i.key]?.slot;
     if (filter === "all") return slot !== "material";
-    if (filter === "equipment") return itemSlots.has(slot);
-    return slot === filter;
+    if (filter === "weapons") return slot === "weapon" || slot === "offhand";
+    if (filter === "armor") return ["helmet","armor","gloves","boots"].includes(slot);
+    if (filter === "accessory") return slot === "accessory";
+    if (filter === "consumable") return slot === "consumable";
+    if (filter === "other") return slot === "quest" || slot === "treasure";
+    return slot === "material";
   });
   const selected = filtered.find(i => i.id === selectedId) || filtered[0];
   const def = selected ? ITEMS[selected.key] : undefined;
@@ -392,7 +396,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const target = compatible.some(h => h.id === recipient) ? recipient : compatible[0]?.id || "";
   return <section className="screen chest-screen">
     <div className="inventory-top"><button data-active>▣ Inventário</button><button onClick={() => setFilter("material")} data-active={filter === "material"}>◆ Materiais</button><span>🎒 {state.chest.length}/80</span></div>
-    <div className="inventory-filters">{[["all","Todos"],["equipment","Equipamentos"],["accessory","Acessórios"],["consumable","Consumíveis"],["quest","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>
+    <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>
     <div className="inventory-layout">
       <div className="item-grid">{filtered.slice(0,40).map(item => <button key={item.id} data-active={selected?.id === item.id} className={"item-tile rarity-" + ITEMS[item.key].rarity} onClick={() => setSelectedId(item.id)}>
         <ItemArt itemKey={item.key} /><span>{ITEMS[item.key].name}</span>{item.equippedTo && <b>✓</b>}
@@ -620,7 +624,7 @@ export default function Game() {
 
   return <div className="app-shell">
     <TopBar state={state} goGuild={() => go("guild")} />
-    <TopNav screen={screen} go={go} />
+    {screen !== "guild" && <TopNav screen={screen} go={go} />}
     {flash && <button className="flash" onClick={() => setFlash("")}><Check /> {flash}</button>}
     {error && <button className="error" onClick={() => setError("")}><X /> {error}</button>}
     <main className="game-content">

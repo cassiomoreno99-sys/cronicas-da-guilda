@@ -36,11 +36,10 @@ jobs:
           exit 1
       - run: node scripts/visual-smoke.mjs
       - name: Publicar capturas na branch
-        if: github.event_name == 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add visual-report
           git diff --cached --quiet && exit 0
           git commit -m "Visual snapshots mobile"
-          git push origin HEAD:${{ github.head_ref }}
+          git push origin HEAD:${{ github.head_ref || github.ref_name }}

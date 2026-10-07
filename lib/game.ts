@@ -1362,7 +1362,8 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
         formation[id] = action.formation?.[id] || defaultFormationLine(hero.class);
       }
       if (!formationValid(action.team, formation)) { formation[action.team[0]] = "front"; formation[action.team[action.team.length - 1]] = "back"; }
-      const saved: SavedSquad = { id: "squad-" + action.specialty, name, specialty: action.specialty, team: [...action.team], formation, tactic: action.tactic };
+      const previousSquad = s.squads.find(q => q.specialty === action.specialty);
+      const saved: SavedSquad = { id: "squad-" + action.specialty, name, specialty: action.specialty, team: [...action.team], formation, tactic: action.tactic, level: previousSquad?.level || 1, xp: previousSquad?.xp || 0, wins: previousSquad?.wins || 0 };
       const index = s.squads.findIndex(q => q.specialty === action.specialty);
       if (index >= 0) s.squads[index] = saved; else s.squads.push(saved);
       note(s, "Equipe pronta salva: " + name + " · especialidade " + SQUAD_SPECIALTIES[action.specialty].label + ".");
@@ -1373,6 +1374,38 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const name = action.name.trim().slice(0, 32); requireRule(name.length >= 2, "Dê um nome com pelo menos 2 caracteres.");
       squad.name = name; break;
     }
+    case "upgrade-hq": {
+      const spec = HQ_BUILDINGS[action.building]; requireRule(spec, "Construção da sede inválida.");
+      const current = s.hq[action.building] || 0; requireRule(current < spec.max, spec.name + " já está no nível máximo.");
+      const cost = hqUpgradeCost(s, action.building); requireRule(s.gold >= cost, "Essa melhoria custa " + cost + " ouro.");
+      entry(s, "Sede · " + spec.name + " Nv." + (current + 1), -cost); s.hq[action.building] = current + 1;
+      note(s, spec.name + " evoluiu para o nível " + s.hq[action.building] + "."); break;
+    }
+    case "academy-trainees": {
+      const slots = academySlots(s); requireRule(slots > 0, "Construa a Academia antes de matricular aprendizes.");
+      requireRule(Array.isArray(action.heroIds) && action.heroIds.length <= slots && new Set(action.heroIds).size === action.heroIds.length, "A Academia comporta " + slots + " aprendiz(es).");
+      requireRule(action.heroIds.every(id => s.heroes.some(h => h.id === id && !heroOnExpedition(s, id) && !activeJourney(s, id))), "Todos os aprendizes precisam estar disponíveis na sede.");
+      s.academy.trainees = [...action.heroIds]; break;
+    }
+    case "academy-mentor": {
+      if (!action.heroId) { delete s.academy.mentorId; break; }
+      const mentor = s.heroes.find(h => h.id === action.heroId); requireRule(mentor && !heroOnExpedition(s, mentor.id) && !activeJourney(s, mentor.id), "O mentor precisa estar disponível na sede.");
+      requireRule(mentor.level >= 5, "O mentor precisa estar no nível 5 ou superior."); s.academy.mentorId = mentor.id; break;
+    }
+    case "travel-region": {
+      requireRule(Number.isInteger(action.region) && action.region >= 1 && action.region <= s.region && action.region <= WORLD_REGIONS.length, "Essa região ainda não foi desbloqueada.");
+      s.activeRegion = action.region; note(s, "A guilda estabeleceu operações em " + WORLD_REGIONS[action.region - 1].name + "."); break;
+    }
+    case "craft": {
+      const recipe = CRAFT_RECIPES.find(r => r.id === action.recipeId); requireRule(recipe, "Receita não encontrada.");
+      requireRule((s.hq.forge || 0) >= recipe.forge, "A receita exige Forja nível " + recipe.forge + ".");
+      const cost = Math.max(0, Math.round(recipe.cost * (1 - (s.hq.forge - 1) * .05))); requireRule(s.gold >= cost, "A fabricação custa " + cost + " ouro.");
+      for (const [key, qty] of Object.entries(recipe.materials)) requireRule(itemCount(s, key) >= qty, "Faltam " + qty + "x " + ITEMS[key].name + ".");
+      for (const [key, qty] of Object.entries(recipe.materials)) requireRule(consumeItems(s, key, qty), "Falha ao consumir materiais.");
+      entry(s, "Forja · " + ITEMS[recipe.result].name, -cost); addItem(s, recipe.result); note(s, ITEMS[recipe.result].name + " foi fabricado."); break;
+    }
+    case "guild-raid": resolveGuildRaid(s, action.teams, action.rivalId); break;
+    case "rival-battle": resolveRivalBattle(s, action.guildId, action.team); break;
     case "expedition-tick": {
       const now = Number.isFinite(action.now) ? action.now : Date.now();
       for (const expedition of activeExpeditions(s)) {
@@ -1424,8 +1457,10 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "equip": {
       const item = s.chest.find(i => i.id === action.itemId), hero = s.heroes.find(h => h.id === action.heroId);
       requireRule(item && hero, "Item ou herói não encontrado no baú da guilda."); requireRule(!heroOnExpedition(s, hero.id), "Esse herói está em expedição. Troque o equipamento quando ele retornar."); const def = ITEMS[item.key];
-      requireRule(["weapon", "armor", "accessory"].includes(def.slot), "Esse item não pode ser equipado.");
+      requireRule(["weapon", "offhand", "helmet", "armor", "gloves", "boots", "accessory"].includes(def.slot), "Esse item não pode ser equipado.");
       requireRule(!def.race || heroRace(hero) === def.race, def.race ? def.name + " é exclusivo para a raça " + RACES[def.race].name + "." : "Raça incompatível.");
+      requireRule(!def.classes || def.classes.includes(hero.class), def.name + " não pode ser equipado por " + CLASSES[hero.class].name + ".");
+      requireRule(!def.levelReq || hero.level >= def.levelReq, def.name + " exige nível " + def.levelReq + ".");
       s.chest.forEach(i => { if (i.equippedTo === hero.id && ITEMS[i.key].slot === def.slot) delete i.equippedTo; }); item.equippedTo = hero.id; break;
     }
     case "unequip": { const item = s.chest.find(i => i.id === action.itemId); requireRule(item, "Item não encontrado no baú."); requireRule(!item.equippedTo || !heroOnExpedition(s, item.equippedTo), "Esse equipamento está com um herói em expedição."); delete item.equippedTo; break; }

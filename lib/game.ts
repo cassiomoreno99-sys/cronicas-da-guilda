@@ -620,20 +620,24 @@ function resolveRivalBattle(s: Campaign, guildId: string, team: string[]) {
 function entry(s: Campaign, label: string, amount: number) { s.transaction++; s.ledger.unshift({ id: s.transaction, day: s.day, label, amount }); s.ledger = s.ledger.slice(0, 80); s.gold += amount; }
 function note(s: Campaign, text: string) { s.journal.unshift({ day: s.day, text }); s.journal = s.journal.slice(0, 40); }
 function addItem(s: Campaign, key: string) { const item = { id: "item-" + (++s.itemSequence), key }; s.chest.push(item); return item; }
-function levelOneHero(id: string, name: string, heroClass: HeroClass, trait: string): Hero {
+function levelOneHero(id: string, name: string, heroClass: HeroClass, trait: string, race?: HeroRace): Hero {
   const b = V130_BASE_STATS[heroClass] || { attack: 4, defense: 4, magic: 2 };
   const h: Hero = { id, name, class: heroClass, level: 1, attack: b.attack, defense: b.defense, magic: b.magic, energy: 100, xp: 0, salary: 8, value: 120, trait, injuredUntil: 0, scars: [] };
-  h.race = heroRace(h);
+  h.race = race || heroRace(h);
   return h;
 }
+/**
+ * Elenco canônico do projeto.
+ * Os IDs antigos foram mantidos apenas por compatibilidade interna com saves/testes;
+ * nomes, classes, raças visuais e identidade são a base oficial nova.
+ */
 const initialHeroes: Hero[] = [
-  levelOneHero("aric", "Aric Ferrabrava", "warrior", "Protetor"),
-  levelOneHero("lyra", "Lyra de Ashen", "mage", "Arcana"),
-  levelOneHero("elen", "Elen Luzverde", "healer", "Devoto"),
-  levelOneHero("kael", "Kael Sombral", "rogue", "Silencioso"),
-  levelOneHero("sora", "Sora Ventoleste", "ranger", "Preciso"),
-  levelOneHero("doran", "Doran Pedraluz", "paladin", "Resiliente"),
-  levelOneHero("mimo", "Mimo Seteluas", "bard", "Sortudo"),
+  levelOneHero("aric", "Aric Valen", "warrior", "O Escudo da Aurora", "human"),
+  levelOneHero("lyra", "Lyria Cael", "mage", "Tecelã Arcana", "elf"),
+  levelOneHero("elen", "Thorgar Pedraferro", "healer", "Guardião das Runas", "dwarf"),
+  levelOneHero("kael", "Kaelith Sombria", "rogue", "Lâmina do Crepúsculo", "umbral"),
+  levelOneHero("sora", "Eldrin Silvestre", "ranger", "Olhos da Floresta", "elf"),
+  levelOneHero("doran", "Rhokar Brasavil", "warrior", "Sangue Dracônico", "beastkin"),
 ];
 function createEvent(s: Campaign): GuildEvent {
   const n = s.eventSequence++, id = "event-" + s.day + "-" + n, kind = n % 4;
@@ -707,6 +711,21 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     }
     s.expeditions = []; s.lastBattle = null; s.journeys = [];
     s.balanceVersion = 3;
+  }
+  if (s.balanceVersion < 4) {
+    // Remove de uma vez a base de personagens/itens usada pelos protótipos anteriores.
+    s.heroes = structuredClone(initialHeroes);
+    s.team = ["aric", "lyra", "elen", "kael"];
+    s.formation = { aric: "front", lyra: "back", elen: "front", kael: "back" };
+    s.hired = [];
+    s.expeditions = [];
+    s.lastBattle = null;
+    s.journeys = [];
+    s.academy = { trainees: [] };
+    s.chest = [];
+    s.itemSequence = 0;
+    ["iron_sword","oak_staff","hunter_bow","leather_armor","healing_potion","healing_potion","healing_potion","antidote","stun_bomb"].forEach(key => addItem(s,key));
+    s.balanceVersion = 4;
   }
   s.leagueTier ??= 3; s.leagueWins ??= 0; s.leagueDraws ??= 0; s.leagueLosses ??= 0; s.leagueHistory ??= []; s.rivalries ??= [];
   if (!s.cup) {

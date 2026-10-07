@@ -1,3 +1,4 @@
+import { CLASSIC_CLASS_IDS, V130_BASE_STATS, WORLD_REGIONS, HQ_BUILDINGS, HERO_SCARS, LEVEL_ABILITIES, V130_ITEMS, ITEM_SETS, CRAFT_RECIPES, uniqueAdventurerName } from "./v130-content.ts";
 export type HeroClass = "warrior" | "mage" | "healer" | "rogue" | "ranger" | "paladin" | "monk" | "necromancer" | "druid" | "bard";
 export type HeroRace = "human" | "elf" | "dwarf" | "orc" | "beastkin" | "umbral";
 export type Tactic = "balanced" | "aggressive" | "defensive";
@@ -12,10 +13,10 @@ export type StoryStage = 0 | 1 | 2 | 3;
 export type JourneyDuration = 3 | 5 | 7;
 export type JourneyChoice = "camp" | "explore" | "shortcut";
 export type HeroJourney = { id: string; heroId: string; startedDay: number; duration: JourneyDuration; remaining: number; choice: JourneyChoice; xpEarned: number; loot: string[] };
-export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean };
+export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean; scars?: string[] };
 export type Ledger = { id: number; day: number; label: string; amount: number };
-export type ItemSlot = "weapon" | "armor" | "accessory" | "consumable" | "quest" | "treasure";
-export type ItemDef = { name: string; slot: ItemSlot; race?: HeroRace; rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"; value: number; description: string; attack?: number; defense?: number; magic?: number; hp?: number; speed?: number; critical?: number };
+export type ItemSlot = "weapon" | "offhand" | "helmet" | "armor" | "gloves" | "boots" | "accessory" | "consumable" | "material" | "quest" | "treasure";
+export type ItemDef = { name: string; slot: ItemSlot; race?: HeroRace; rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"; value: number; description: string; attack?: number; defense?: number; magic?: number; hp?: number; speed?: number; critical?: number; luck?: number; set?: string; classes?: HeroClass[]; levelReq?: number; material?: string };
 export type ChestItem = { id: string; key: string; equippedTo?: string };
 export type EventChoice = { id: string; label: string; effect: string; cost?: number };
 export type GuildEvent = { id: string; kind: "village" | "offer" | "map" | "caravan" | "retaliation"; title: string; text: string; heroId?: string; rivalId?: string; choices: EventChoice[] };
@@ -32,26 +33,40 @@ export type AbilityTarget = "self" | "ally" | "enemy" | "all-allies" | "all-enem
 export type AbilityEffect = "challenge" | "fireball" | "restore" | "venom" | "pinning" | "aegis" | "chi" | "drain" | "renew" | "anthem" | "execution" | "storm" | "lifebloom" | "sanctuary" | "fortress" | "control";
 export type AbilitySpec = { id: string; name: string; description: string; target: AbilityTarget; cooldown: number; effect: AbilityEffect; evolved?: boolean };
 export type PendingAbility = { heroId: string; abilityId: string; targetId?: string };
+export type BattleConsumableKey = "healing_potion" | "antidote" | "stun_bomb";
+export type PendingConsumable = { key: BattleConsumableKey; targetId: string };
 export type MissionKind = "escort" | "defense" | "dungeon" | "hunt" | "boss";
 export type Mission = { id: string; title: string; location: string; description: string; rank: number; force: number; reward: number; enemy: string; count: number; specialty: string; flavor: string; kind: MissionKind; requiredFame: number; requiredItem?: string; boss?: number };
-type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
+type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
 export type Battle = { title: string; day: number; won: boolean; reward: number; xp: number; rounds: number; log: BattleLog[]; levelUps: string[]; wounded: string[]; remaining: number; fighters?: BattleFighter[]; status?: "active" | "won" | "lost" | "retreated"; combat?: Combat; loot?: string[]; fameChange?: number; regionUnlocked?: number; objective?: { name: string; hp: number; maxHp: number; targetRounds: number } };
 export type ExpeditionSlot = 1 | 2 | 3;
-export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic };
+export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; level: number; xp: number; wins: number };
+export type HQBuilding = keyof typeof HQ_BUILDINGS;
+export type AcademyState = { trainees: string[]; mentorId?: string };
+export type GuildRaidResult = { id: string; day: number; rivalId?: string; title: string; teams: string[][]; fronts: { name: string; won: boolean; playerPower: number; enemyPower: number }[]; won: boolean; reward: number; loot: string[] };
+export type RivalBattleResult = { id: string; day: number; rivalId: string; rivalName: string; playerPower: number; rivalPower: number; won: boolean; reward: number; fameChange: number };
 export type Expedition = { id: string; slot: ExpeditionSlot; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; battle: Battle; startedDay: number; nextRoundAt: number };
 export type LeagueResult = "win" | "draw" | "loss";
 export type LeagueMatch = { season: number; day: number; opponentId: string; opponentName: string; playerScore: number; opponentScore: number; result: LeagueResult; playerPower: number; opponentPower: number; rivalry: boolean; cup?: boolean; stage?: string };
 export type Rivalry = { guildId: string; heat: number; sinceSeason: number; lastReason: string };
 export type CupStage = "oitavas" | "quartas" | "semifinal" | "final" | "champion" | "eliminated";
 export type CupState = { season: number; stage: CupStage; wins: number; history: LeagueMatch[] };
-export type Campaign = { schema: 1; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; bossSeasons: number[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[] };
+export type Campaign = { schema: 1; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
 export type Action =
   | { type: "mission"; missionId: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine>; startedAt?: number; expeditionSlot?: ExpeditionSlot }
   | { type: "save-squad"; specialty: MissionKind; name: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
   | { type: "rename-squad"; specialty: MissionKind; name: string }
+  | { type: "upgrade-hq"; building: HQBuilding }
+  | { type: "academy-trainees"; heroIds: string[] }
+  | { type: "academy-mentor"; heroId?: string }
+  | { type: "travel-region"; region: number }
+  | { type: "craft"; recipeId: string }
+  | { type: "guild-raid"; rivalId?: string; teams: string[][] }
+  | { type: "rival-battle"; guildId: string; team: string[] }
   | { type: "expedition-tick"; now: number }
   | { type: "battle-round"; expeditionId?: string } | { type: "battle-auto"; expeditionId?: string } | { type: "battle-retreat"; expeditionId?: string }
   | { type: "battle-tactic"; tactic: Tactic; expeditionId?: string } | { type: "battle-potion"; heroId: string; expeditionId?: string }
+  | { type: "battle-consumable"; key: BattleConsumableKey; targetId: string; expeditionId?: string }
   | { type: "battle-ability"; heroId: string; abilityId: string; targetId?: string; expeditionId?: string }
   | { type: "event"; eventId: string; choiceId: string }
   | { type: "equip"; itemId: string; heroId: string } | { type: "unequip"; itemId: string }
@@ -95,17 +110,18 @@ export const RACE_GEAR: Record<HeroRace, { weapon: string; armor: string }> = {
   umbral: { weapon: "umbral_soul_scythe", armor: "umbral_nightshroud" },
 };
 export const CLASSES: Record<HeroClass, { name: string; role: string; short: string; color: string; description: string }> = {
-  warrior: { name: "Guerreiro", role: "Linha de frente", short: "GR", color: "#d49779", description: "Protege os aliados e resiste aos ataques. Favorece missões de defesa." },
-  mage: { name: "Mago", role: "Dano mágico", short: "MG", color: "#b6a1e5", description: "Magia atravessa parte da defesa. Forte contra mortos-vivos." },
-  healer: { name: "Curandeira", role: "Cura", short: "CR", color: "#8fc7ad", description: "Cura o aliado vivo mais ferido quando sua vida fica abaixo de 70%." },
-  rogue: { name: "Ladino", role: "Dano e velocidade", short: "LD", color: "#d1b476", description: "Críticos, velocidade e proteção contra armadilhas em masmorras." },
-  ranger: { name: "Arqueira", role: "Dano à distância", short: "AR", color: "#9bc2d3", description: "Favorece escoltas rápidas e a caça de monstros." },
-  paladin: { name: "Paladino", role: "Defesa e magia", short: "PL", color: "#bfc7d8", description: "Resiste na linha de frente. Forte contra mortos-vivos e em defesas." },
-  monk: { name: "Monge", role: "Linha de frente ágil", short: "MN", color: "#e1b181", description: "Combate veloz, 12% de crítico e proteção da linha de frente. Também encurta escoltas." },
-  necromancer: { name: "Necromante", role: "Magia e drenagem", short: "NC", color: "#c4a3d9", description: "Causa dano mágico e recupera vida equivalente a 15% do dano causado." },
-  druid: { name: "Druida", role: "Cura e natureza", short: "DR", color: "#a1cda0", description: "Cura o aliado vivo mais ferido quando sua vida fica abaixo de 65%." },
-  bard: { name: "Bardo", role: "Inspiração", short: "BD", color: "#dec394", description: "Cada bardo vivo aumenta em 4% o dano dos aliados, até o limite de 12%." },
+  warrior: { name: "Guerreiro", role: "Linha de frente", short: "GR", color: "#d49779", description: "Força física, defesa e controle da linha de frente." },
+  mage: { name: "Mago", role: "Magia", short: "MG", color: "#b6a1e5", description: "Dano arcano, controle e ataques em área." },
+  healer: { name: "Sacerdote", role: "Cura e suporte", short: "SC", color: "#8fc7ad", description: "Cura, bênçãos e proteção da equipe." },
+  rogue: { name: "Assassino", role: "Crítico e velocidade", short: "AS", color: "#d1b476", description: "Ataques rápidos, veneno e execução de alvos." },
+  ranger: { name: "Arqueiro", role: "Dano à distância", short: "AR", color: "#9bc2d3", description: "Precisão, caça e controle à distância." },
+  paladin: { name: "Cavaleiro", role: "Defesa e fé", short: "CV", color: "#bfc7d8", description: "Armadura pesada, proteção e golpes sagrados." },
+  bard: { name: "Pierrô", role: "Sorte e saque", short: "PI", color: "#dec394", description: "Manipula a sorte, aumenta chances de drop e cria efeitos imprevisíveis." },
+  monk: { name: "Monge (legado)", role: "Classe aposentada", short: "MN", color: "#e1b181", description: "Convertido para Guerreiro nos saves da v1.3." },
+  necromancer: { name: "Necromante (legado)", role: "Classe aposentada", short: "NC", color: "#c4a3d9", description: "Convertido para Mago nos saves da v1.3." },
+  druid: { name: "Druida (legado)", role: "Classe aposentada", short: "DR", color: "#a1cda0", description: "Convertido para Sacerdote nos saves da v1.3." },
 };
+export const CLASSIC_CLASSES = CLASSIC_CLASS_IDS as readonly HeroClass[];
 export const TACTICS: Record<Tactic, { name: string; description: string; damage: number; incoming: number; fatigue: number }> = {
   balanced: { name: "Equilibrada", description: "Ataque e proteção na medida. Gasta 22 de energia.", damage: 1, incoming: 1, fatigue: 22 },
   aggressive: { name: "Ofensiva", description: "+25% de dano, +20% de dano recebido. Gasta 30 de energia.", damage: 1.25, incoming: 1.2, fatigue: 30 },
@@ -143,10 +159,11 @@ export const ITEMS: Record<string, ItemDef> = {
   gemstone: { name: "Pedra preciosa", slot: "treasure", rarity: "common", value: 25, description: "Tesouro para vender ao mercador." },
   ancient_idol: { name: "Ídolo antigo", slot: "treasure", rarity: "rare", value: 55, description: "Relíquia de coleção. Pode ser vendida por ouro." },
   royal_relic: { name: "Relíquia real", slot: "treasure", rarity: "epic", value: 120, description: "Tesouro valioso encontrado nas expedições mais perigosas." },
+  ...(V130_ITEMS as unknown as Record<string, ItemDef>),
 };
-export const SLOT_NAMES: Record<ItemSlot, string> = { weapon: "Arma", armor: "Armadura", accessory: "Acessório", consumable: "Consumível", quest: "Acesso", treasure: "Tesouro" };
+export const SLOT_NAMES: Record<ItemSlot, string> = { weapon: "Arma", offhand: "Mão secundária", helmet: "Elmo", armor: "Armadura", gloves: "Luvas", boots: "Botas", accessory: "Acessório", consumable: "Consumível", material: "Material", quest: "Acesso", treasure: "Tesouro" };
 export const RARITY_NAMES = { common: "Comum", uncommon: "Incomum", rare: "Raro", epic: "Épico", legendary: "Lendário" };
-export const REGIONS = ["Vale de Valen", "Terras de Brumavale", "Ruínas de Ashen", "Fronteira dos Dragões"];
+export const REGIONS = WORLD_REGIONS.map(region => region.name);
 type TalentSpec = { name: string; description: string; stages: [string, string, string]; bonus: { attack?: number; defense?: number; magic?: number; hp?: number; speed?: number; critical?: number; healing?: number } };
 const talent = (name: string, description: string, stages: [string, string, string], bonus: TalentSpec["bonus"]): TalentSpec => ({ name, description, stages, bonus });
 export const PATH_NAMES: Record<TalentPath, string> = { offense: "Poder", healing: "Cura", defense: "Defesa" };
@@ -303,11 +320,14 @@ export const HERO_STORIES: Record<HeroClass, HeroStorySpec> = {
   bard: { title: "A Canção Inacabada", synopsis: "Uma melodia perdida só termina após três provas.", stages: ["Treino do refrão", "Prova da plateia", "Desafio da última nota"], ability: { id: "story-bard", name: "Balada Imortal", description: "Inspira toda a equipe e concede proteção coletiva.", target: "all-allies", cooldown: 5, effect: "anthem", evolved: true } },
 };
 export function availableAbilities(hero: Hero): AbilitySpec[] {
-  const abilities = [CLASS_ABILITIES[hero.class]];
+  const levelSet = LEVEL_ABILITIES[hero.class];
+  const abilities: AbilitySpec[] = levelSet
+    ? levelSet.filter(a => hero.level >= a.level).map(a => ({ ...a, target: a.target as AbilityTarget, effect: a.effect as AbilityEffect, evolved: a.level >= 22 }))
+    : [CLASS_ABILITIES[hero.class]];
   if (hero.talent?.rank && hero.talent.rank >= 2 && hero.talent.branch) {
     const branch = SPECIALIZATION_BRANCHES[hero.class][hero.talent.path][hero.talent.branch];
     const target: AbilityTarget = branch.style === "storm" ? "all-enemies" : branch.style === "sanctuary" ? "all-allies" : branch.style === "fortress" ? "self" : branch.style === "lifebloom" ? "ally" : "enemy";
-    abilities.push({ id: hero.class + "-" + hero.talent.path + "-" + hero.talent.branch, name: branch.name, description: branch.description + (hero.talent.rank >= 3 ? " Ultimate desbloqueada no nível 10." : ""), target, cooldown: 4, effect: branch.style, evolved: true });
+    abilities.push({ id: hero.class + "-" + hero.talent.path + "-" + hero.talent.branch, name: branch.name, description: branch.description + (hero.talent.rank >= 3 ? " Forma máxima da especialização." : ""), target, cooldown: 4, effect: branch.style, evolved: true });
   }
   if (hero.racial?.rank) {
     const racial = RACE_TREES[heroRace(hero)][hero.racial.path];
@@ -349,7 +369,8 @@ const templates = [
 ];
 function random(s: Campaign) { s.rng = (Math.imul(s.rng, 1664525) + 1013904223) >>> 0; return s.rng / 4294967296; }
 export function seasonDay(s: Campaign) { return ((s.day - 1) % 28) + 1; }
-export function threshold(h: Hero) { return 100 + h.level * 35; }
+export const MAX_HERO_LEVEL = 50;
+export function threshold(h: Hero) { return h.level >= MAX_HERO_LEVEL ? Number.POSITIVE_INFINITY : 55 + h.level * 20 + Math.floor(h.level / 10) * 25; }
 export function activeJourney(s: Campaign, heroId: string) { return s.journeys?.find(j => j.heroId === heroId); }
 export function activeExpeditions(s: Campaign) { return (s.expeditions || []).filter(e => e.battle.status === "active" && !!e.battle.combat).toSorted((a, b) => a.slot - b.slot); }
 export function freeExpeditionSlots(s: Campaign): ExpeditionSlot[] {
@@ -377,13 +398,30 @@ export function storyProgress(h: Hero) {
   return { stage, label: "Concluída", requirement: "Habilidade desbloqueada", cost: 0, energy: 0 };
 }
 export function heroStats(h: Hero, s?: Campaign) {
-  const n = { attack: h.attack + (s?.arsenal || 0) * 2, defense: h.defense + (s?.arsenal || 0), magic: h.magic, hp: 0, speed: h.class === "rogue" ? 32 : h.class === "monk" ? 30 : h.class === "ranger" ? 26 : 18, critical: h.class === "rogue" ? .22 : h.class === "monk" ? .12 : .08, healing: 1 };
+  const base = V130_BASE_STATS[h.class] || { speed: h.class === "monk" ? 14 : 10, critical: .05 };
+  const n = { attack: h.attack + (s?.arsenal || 0), defense: h.defense + Math.floor((s?.arsenal || 0) / 2), magic: h.magic, hp: 0, speed: base.speed || 10, critical: base.critical || .04, healing: 1, luck: h.class === "bard" ? Math.min(.18, .06 + h.level * .002) : 0 };
   if (h.racial?.rank) {
     const racial = RACE_TREES[heroRace(h)][h.racial.path].bonus;
     for (const key of ["attack", "defense", "magic", "hp", "speed", "critical", "healing"] as const) n[key] += (racial[key] || 0) * h.racial.rank;
   }
-  for (const item of s?.chest || []) if (item.equippedTo === h.id) {
-    const d = ITEMS[item.key]; for (const k of ["attack", "defense", "magic", "hp", "speed", "critical"] as const) n[k] += d?.[k] || 0;
+  const equipped = (s?.chest || []).filter(item => item.equippedTo === h.id);
+  const sets = new Map<string, number>();
+  for (const item of equipped) {
+    const d = ITEMS[item.key]; if (!d) continue;
+    for (const k of ["attack", "defense", "magic", "hp", "speed", "critical"] as const) n[k] += d[k] || 0;
+    n.luck += d.luck || 0;
+    if (d.set) sets.set(d.set, (sets.get(d.set) || 0) + 1);
+  }
+  for (const [set, count] of sets) {
+    if (set === "fortress") { if (count >= 2) n.defense += 3; if (count >= 3) { n.defense += 3; n.hp += 10; } }
+    if (set === "astral") { if (count >= 2) n.magic += 4; if (count >= 3) { n.magic += 6; n.critical += .02; } }
+    if (set === "shadow") { if (count >= 2) n.speed += 3; if (count >= 3) { n.attack += 4; n.critical += .03; } }
+    if (set === "fortune") { if (count >= 2) n.luck += .05; if (count >= 3) { n.luck += .10; n.critical += .03; } }
+  }
+  for (const scarId of h.scars || []) {
+    const scar = HERO_SCARS.find(x => x.id === scarId); if (!scar) continue;
+    for (const k of ["attack", "defense", "magic", "hp", "speed", "critical"] as const) n[k] += (scar as Record<string, number | string | boolean>)[k] as number || 0;
+    n.luck += ("luck" in scar ? scar.luck : 0) || 0;
   }
   if (h.talent) {
     const bonus = SPECIALIZATIONS[h.class][h.talent.path].bonus;
@@ -393,8 +431,10 @@ export function heroStats(h: Hero, s?: Campaign) {
       for (const key of ["attack", "defense", "magic", "hp", "speed", "critical", "healing"] as const) n[key] += (branchBonus[key] || 0) * (h.talent.rank - 1);
     }
   }
+  if (s?.hq?.library) n.magic += Math.floor(s.hq.library / 2);
   return n;
 }
+export function heroLuck(h: Hero, s?: Campaign) { return Math.max(0, Math.min(.45, heroStats(h, s).luck)); }
 export function rating(h: Hero, arsenal = 0, s?: Campaign) {
   const n = heroStats(h, s);
   return Math.round((n.attack * .45 + n.defense * .3 + n.magic * .35 + h.level * 3 + (s ? 0 : arsenal * 2)) * (.55 + .45 * h.energy / 100));
@@ -462,16 +502,138 @@ export function suggestSpecialistTeam(s: Campaign, kind: MissionKind, size = 4) 
   return picked.slice(0, Math.min(size, 4)).map(h => h.id);
 }
 
+export function hqUpgradeCost(s: Campaign, building: HQBuilding) {
+  const spec = HQ_BUILDINGS[building], level = s.hq?.[building] || 0;
+  return Math.round(spec.baseCost * (1 + level * .75));
+}
+export function academySlots(s: Campaign) { return s.hq?.academy ? Math.min(4, 1 + s.hq.academy) : 0; }
+export const HQ_DEFINITIONS = HQ_BUILDINGS;
+export const WORLD_MAP = WORLD_REGIONS;
+export const CRAFTING_RECIPES = CRAFT_RECIPES;
+export const ITEM_SET_DEFINITIONS = ITEM_SETS;
+export const SCAR_DEFINITIONS = HERO_SCARS;
+
+function sameTeam(a: string[], b: string[]) {
+  return a.length === b.length && a.every(id => b.includes(id));
+}
+export function squadForTeam(s: Campaign, ids: string[]) { return s.squads.find(q => q.team.length >= 3 && sameTeam(q.team, ids)); }
+export function squadThreshold(q: SavedSquad) { return 70 + q.level * 45; }
+function awardSquadExperience(s: Campaign, ids: string[], kind: MissionKind, won: boolean) {
+  const q = squadForTeam(s, ids); if (!q) return;
+  q.xp += 14 + (won ? 24 : 8) + (s.hq?.warroom || 0) * 3;
+  if (won) q.wins++;
+  while (q.level < 10 && q.xp >= squadThreshold(q)) { q.xp -= squadThreshold(q); q.level++; }
+  if (q.specialty === kind && won) q.xp += 8;
+}
+export function squadBonus(s: Campaign, ids: string[]) {
+  const q = squadForTeam(s, ids);
+  return q ? 1 + (q.level - 1) * .015 + (s.hq?.warroom || 0) * .005 : 1 + (s.hq?.warroom || 0) * .005;
+}
+function processAcademy(s: Campaign) {
+  const slots = academySlots(s); if (!slots) return;
+  s.academy.trainees = s.academy.trainees.filter(id => s.heroes.some(h => h.id === id)).slice(0, slots);
+  const mentor = s.heroes.find(h => h.id === s.academy.mentorId);
+  const mentorBonus = mentor ? Math.min(18, mentor.level) : 0;
+  for (const id of s.academy.trainees) {
+    const h = s.heroes.find(hero => hero.id === id); if (!h || h.level >= MAX_HERO_LEVEL || heroOnExpedition(s, h.id) || activeJourney(s, h.id)) continue;
+    const xp = 8 + s.hq.academy * 7 + mentorBonus;
+    gainXp(h, xp);
+  }
+}
+function itemCount(s: Campaign, key: string) { return s.chest.filter(i => i.key === key && !i.equippedTo).length; }
+function consumeItems(s: Campaign, key: string, quantity: number) {
+  let left = quantity;
+  s.chest = s.chest.filter(i => { if (!i.equippedTo && i.key === key && left > 0) { left--; return false; } return true; });
+  return left === 0;
+}
+function randomLootKey(s: Campaign, rank: number, luck = 0, preferMaterial = false) {
+  const rarities = rank >= 5 ? ["legendary","epic","rare"] : rank >= 4 ? ["epic","rare","uncommon"] : rank >= 3 ? ["rare","uncommon","common"] : ["uncommon","common"];
+  const candidates = Object.entries(ITEMS).filter(([_, d]) => {
+    if (["quest"].includes(d.slot)) return false;
+    if (preferMaterial && d.slot !== "material") return false;
+    if (!preferMaterial && ["treasure","consumable","material","weapon","offhand","helmet","armor","gloves","boots","accessory"].includes(d.slot) === false) return false;
+    return rarities.includes(d.rarity) && (!d.levelReq || d.levelReq <= Math.max(1, rank * 10));
+  });
+  if (!candidates.length) return "gemstone";
+  const boost = Math.min(.45, luck);
+  const sorted = candidates.toSorted((a,b) => ["common","uncommon","rare","epic","legendary"].indexOf(b[1].rarity) - ["common","uncommon","rare","epic","legendary"].indexOf(a[1].rarity));
+  const window = Math.max(1, Math.ceil(sorted.length * (.35 + boost)));
+  return sorted[Math.floor(random(s) * window)][0];
+}
+function addScar(s: Campaign, h: Hero, source: "defeat" | "boss" = "defeat") {
+  h.scars ??= []; if (h.scars.length >= 3) return;
+  const available = HERO_SCARS.filter(scar => !h.scars!.includes(scar.id));
+  if (!available.length) return;
+  const pick = available[Math.floor(random(s) * available.length)];
+  if (source === "boss" || random(s) < .32) { h.scars.push(pick.id); note(s, h.name + " ganhou a marca \"" + pick.name + "\"."); }
+}
+function resolveGuildRaid(s: Campaign, teams: string[][], rivalId?: string) {
+  requireRule(!battleActive(s), "Conclua as expedições antes de iniciar uma raid.");
+  requireRule(teams.length === 3 && teams.every(team => team.length >= 3 && team.length <= 4), "A raid exige três equipes de 3 ou 4 heróis.");
+  const all = teams.flat(); requireRule(new Set(all).size === all.length, "Um herói não pode participar de duas frentes da mesma raid.");
+  requireRule(all.every(id => s.heroes.some(h => h.id === id && available(h, s))), "Todos os heróis da raid precisam estar disponíveis.");
+  const rival = rivalId ? s.rivals.find(r => r.id === rivalId) : undefined;
+  if (rivalId) requireRule(rival, "Guilda rival não encontrada.");
+  const names = ["Portão Principal", "Passagem Subterrânea", "Torre dos Magos"];
+  const fronts: GuildRaidResult["fronts"] = [];
+  let previousWin = false;
+  for (let i = 0; i < 3; i++) {
+    const playerPower = Math.round(teamPower(s, teams[i]) * squadBonus(s, teams[i]) * (1 + (s.hq.warroom || 0) * .025));
+    let enemyPower = rival ? Math.round(rivalPower(rival) * (.28 + i * .05)) : 24 + s.activeRegion * 16 + i * 9;
+    if (previousWin) enemyPower = Math.round(enemyPower * .88);
+    const chance = Math.max(.18, Math.min(.88, .5 + (playerPower - enemyPower) / Math.max(80, enemyPower * 2.8)));
+    const won = random(s) < chance; fronts.push({ name: names[i], won, playerPower, enemyPower }); previousWin = won;
+    for (const id of teams[i]) { const h = s.heroes.find(hero => hero.id === id)!; gainXp(h, won ? 65 : 35); h.energy = Math.max(0, h.energy - (won ? 22 : 30)); if (!won && random(s) < .18) addScar(s, h); }
+    awardSquadExperience(s, teams[i], i === 0 ? "defense" : i === 1 ? "dungeon" : "boss", won);
+  }
+  const wins = fronts.filter(f => f.won).length, won = wins >= 2, reward = won ? 260 + s.activeRegion * 45 + (rival ? 120 : 0) : 60;
+  entry(s, (rival ? "Guerra de guildas · " + rival!.name : "Raid · " + WORLD_REGIONS[s.activeRegion - 1].name), reward);
+  const loot: string[] = [];
+  if (won) {
+    const luck = Math.max(...all.map(id => heroLuck(s.heroes.find(h => h.id === id)!, s)), 0);
+    for (let i = 0; i < 2 + Math.floor(luck * 8); i++) { const key = randomLootKey(s, Math.min(5, 2 + Math.floor(s.activeRegion / 2)), luck, i === 0); addItem(s, key); loot.push(key); }
+    s.fame += rival ? 22 : 16;
+  } else s.fame = Math.max(0, s.fame - 8);
+  if (rival) raiseRivalry(s, rival.id, won ? 20 : 10, "Raid entre guildas");
+  const result: GuildRaidResult = { id: "raid-" + s.day + "-" + s.raidHistory.length, day: s.day, rivalId: rival?.id, title: rival ? "Cerco contra " + rival.name : "Raid em " + WORLD_REGIONS[s.activeRegion - 1].name, teams: teams.map(x => [...x]), fronts, won, reward, loot };
+  s.raidHistory.unshift(result); s.raidHistory = s.raidHistory.slice(0, 30);
+  note(s, result.title + ": " + wins + "/3 frentes vencidas. " + (won ? "Vitória da guilda." : "A ofensiva falhou."));
+  advance(s, all);
+}
+function resolveRivalBattle(s: Campaign, guildId: string, team: string[]) {
+  requireRule(!battleActive(s), "Conclua as expedições antes de desafiar outra guilda.");
+  const rival = s.rivals.find(r => r.id === guildId); requireRule(rival, "Guilda rival não encontrada.");
+  requireRule(team.length >= 3 && team.length <= 4 && new Set(team).size === team.length, "Escale 3 ou 4 heróis.");
+  requireRule(team.every(id => s.heroes.some(h => h.id === id && available(h, s))), "A equipe precisa estar disponível.");
+  const playerPower = Math.round(teamPower(s, team) * (1 + (s.hq.warroom || 0) * .02)), enemyPower = rivalPower(rival);
+  const chance = Math.max(.2, Math.min(.82, .5 + (playerPower - enemyPower) / Math.max(100, enemyPower * 3)));
+  const won = random(s) < chance, reward = won ? 90 + rival.strength * 25 : 0, before = s.fame;
+  if (reward) entry(s, "Vitória contra " + rival.name, reward);
+  s.fame = Math.max(0, s.fame + (won ? 8 : -4)); raiseRivalry(s, rival.id, won ? 12 : 6, "Batalha direta entre guildas");
+  for (const id of team) { const h = s.heroes.find(hero => hero.id === id)!; gainXp(h, won ? 48 : 26); h.energy = Math.max(0, h.energy - 20); }
+  const result: RivalBattleResult = { id: "guildbattle-" + s.day + "-" + s.rivalBattleHistory.length, day: s.day, rivalId: rival.id, rivalName: rival.name, playerPower, rivalPower: enemyPower, won, reward, fameChange: s.fame - before };
+  s.rivalBattleHistory.unshift(result); s.rivalBattleHistory = s.rivalBattleHistory.slice(0, 40);
+  note(s, s.name + " " + (won ? "venceu" : "perdeu para") + " " + rival.name + " em batalha direta.");
+  advance(s, team);
+}
+
 function entry(s: Campaign, label: string, amount: number) { s.transaction++; s.ledger.unshift({ id: s.transaction, day: s.day, label, amount }); s.ledger = s.ledger.slice(0, 80); s.gold += amount; }
 function note(s: Campaign, text: string) { s.journal.unshift({ day: s.day, text }); s.journal = s.journal.slice(0, 40); }
 function addItem(s: Campaign, key: string) { const item = { id: "item-" + (++s.itemSequence), key }; s.chest.push(item); return item; }
+function levelOneHero(id: string, name: string, heroClass: HeroClass, trait: string): Hero {
+  const b = V130_BASE_STATS[heroClass] || { attack: 4, defense: 4, magic: 2 };
+  const h: Hero = { id, name, class: heroClass, level: 1, attack: b.attack, defense: b.defense, magic: b.magic, energy: 100, xp: 0, salary: 8, value: 120, trait, injuredUntil: 0, scars: [] };
+  h.race = heroRace(h);
+  return h;
+}
 const initialHeroes: Hero[] = [
-  { id: "aric", name: "Aric Ferrabrava", class: "warrior", level: 3, attack: 29, defense: 26, magic: 4, energy: 100, xp: 35, salary: 24, value: 420, trait: "Protetor", injuredUntil: 0 },
-  { id: "lyra", name: "Lyra de Ashen", class: "mage", level: 3, attack: 10, defense: 12, magic: 35, energy: 100, xp: 70, salary: 26, value: 460, trait: "Arcana", injuredUntil: 0 },
-  { id: "elen", name: "Elen Luzverde", class: "healer", level: 2, attack: 9, defense: 14, magic: 31, energy: 100, xp: 40, salary: 20, value: 380, trait: "Restauradora", injuredUntil: 0 },
-  { id: "kael", name: "Kael Sombral", class: "rogue", level: 3, attack: 35, defense: 15, magic: 5, energy: 100, xp: 20, salary: 24, value: 430, trait: "Veloz", injuredUntil: 0 },
-  { id: "sora", name: "Sora Ventoleste", class: "ranger", level: 2, attack: 31, defense: 17, magic: 6, energy: 100, xp: 60, salary: 18, value: 350, trait: "Precisa", injuredUntil: 0 },
-  { id: "doran", name: "Doran Pedraluz", class: "paladin", level: 2, attack: 26, defense: 30, magic: 16, energy: 100, xp: 20, salary: 22, value: 400, trait: "Resiliente", injuredUntil: 0 },
+  levelOneHero("aric", "Aric Ferrabrava", "warrior", "Protetor"),
+  levelOneHero("lyra", "Lyra de Ashen", "mage", "Arcana"),
+  levelOneHero("elen", "Elen Luzverde", "healer", "Devoto"),
+  levelOneHero("kael", "Kael Sombral", "rogue", "Silencioso"),
+  levelOneHero("sora", "Sora Ventoleste", "ranger", "Preciso"),
+  levelOneHero("doran", "Doran Pedraluz", "paladin", "Resiliente"),
+  levelOneHero("mimo", "Mimo Seteluas", "bard", "Sortudo"),
 ];
 function createEvent(s: Campaign): GuildEvent {
   const n = s.eventSequence++, id = "event-" + s.day + "-" + n, kind = n % 4;
@@ -500,7 +662,7 @@ function createEvent(s: Campaign): GuildEvent {
     { id: "ignore", label: "Recusar o pedido", effect: "−8 renome" },
   ] };
 }
-type AddedFields = "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "bossSeasons" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads";
+type AddedFields = "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "activeRegion" | "bossSeasons" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads" | "balanceVersion" | "hq" | "academy" | "raidHistory" | "rivalBattleHistory";
 type StoredRival = Pick<RivalGuild, "id" | "name" | "points" | "victories"> & Partial<RivalGuild>;
 type StoredCampaign = Omit<Campaign, AddedFields | "rivals"> & Partial<Pick<Campaign, AddedFields>> & { rivals: StoredRival[] };
 function normalizedFormation(s: Pick<Campaign, "heroes" | "team"> & Partial<Pick<Campaign, "formation">>) {
@@ -515,8 +677,37 @@ function normalizedFormation(s: Pick<Campaign, "heroes" | "team"> & Partial<Pick
   }
   return map;
 }
+const CLASSIC_MIGRATION: Partial<Record<HeroClass, HeroClass>> = { monk: "warrior", necromancer: "mage", druid: "healer" };
+function resetClassicBalance(h: Hero) {
+  h.class = CLASSIC_MIGRATION[h.class] || h.class;
+  if (!CLASSIC_CLASSES.includes(h.class)) h.class = "warrior";
+  const b = V130_BASE_STATS[h.class] || V130_BASE_STATS.warrior;
+  h.level = 1; h.xp = 0; h.attack = b.attack; h.defense = b.defense; h.magic = b.magic;
+  h.energy = Math.max(60, Math.min(100, h.energy || 100)); h.injuredUntil = 0; h.salary = 8; h.value = 120;
+  h.scars = []; delete h.talent; delete h.racial; h.storyStage = 0; h.storyAbilityUnlocked = false;
+  h.race ??= heroRace(h);
+}
 export function normalizeCampaign(previous: StoredCampaign): Campaign {
   const s = structuredClone(previous) as Campaign;
+  s.balanceVersion ??= 0;
+  s.hq ??= { infirmary: 0, forge: 0, academy: 0, library: 0, stables: 0, warroom: 0 };
+  for (const key of Object.keys(HQ_BUILDINGS) as HQBuilding[]) s.hq[key] = Math.max(0, Math.min(HQ_BUILDINGS[key].max, s.hq[key] || 0));
+  s.academy ??= { trainees: [] }; s.academy.trainees ??= [];
+  s.raidHistory ??= []; s.rivalBattleHistory ??= [];
+  s.region ??= 1; s.region = Math.max(1, Math.min(WORLD_REGIONS.length, s.region));
+  s.activeRegion ??= Math.min(s.region, 1); s.activeRegion = Math.max(1, Math.min(s.region, s.activeRegion));
+  if (s.balanceVersion < 3) {
+    for (const h of s.heroes) resetClassicBalance(h);
+    for (let gi = 0; gi < (s.rivals || []).length; gi++) {
+      const rival = s.rivals[gi];
+      if (!rival.heroes) continue;
+      for (let hi = 0; hi < rival.heroes.length; hi++) {
+        const h = rival.heroes[hi]; resetClassicBalance(h); h.name = uniqueAdventurerName(gi * 32 + hi + 200); h.loyalty = h.loyalty || 50;
+      }
+    }
+    s.expeditions = []; s.lastBattle = null; s.journeys = [];
+    s.balanceVersion = 3;
+  }
   s.leagueTier ??= 3; s.leagueWins ??= 0; s.leagueDraws ??= 0; s.leagueLosses ??= 0; s.leagueHistory ??= []; s.rivalries ??= [];
   if (!s.cup) {
     const d = seasonDay(s), stage: CupStage = d <= 7 ? "oitavas" : d <= 14 ? "quartas" : d <= 21 ? "semifinal" : "final";
@@ -535,8 +726,8 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.expeditions ??= []; s.expeditionSequence ??= 0; s.hqActionDay ??= {};
   s.squads ??= ([
     ["escort", "Vanguarda da Estrada"], ["defense", "Muralha da Guilda"], ["dungeon", "Lâminas da Cripta"], ["hunt", "Caçadores da Bruma"], ["boss", "Companhia de Elite"],
-  ] as [MissionKind, string][]).map(([specialty, name]) => ({ id: "squad-" + specialty, name, specialty, team: [], formation: {}, tactic: specialty === "defense" || specialty === "boss" ? "defensive" : specialty === "hunt" ? "aggressive" : "balanced" }));
-  s.squads = s.squads.filter(q => q && SQUAD_SPECIALTIES[q.specialty]).map(q => ({ ...q, id: q.id || "squad-" + q.specialty, name: (q.name || SQUAD_SPECIALTIES[q.specialty].label).slice(0, 32), team: (q.team || []).filter(id => s.heroes.some(h => h.id === id)).slice(0, 4), formation: q.formation || {}, tactic: Object.hasOwn(TACTICS, q.tactic) ? q.tactic : "balanced" }));
+  ] as [MissionKind, string][]).map(([specialty, name]) => ({ id: "squad-" + specialty, name, specialty, team: [], formation: {}, tactic: specialty === "defense" || specialty === "boss" ? "defensive" : specialty === "hunt" ? "aggressive" : "balanced", level: 1, xp: 0, wins: 0 }));
+  s.squads = s.squads.filter(q => q && SQUAD_SPECIALTIES[q.specialty]).map(q => ({ ...q, id: q.id || "squad-" + q.specialty, name: (q.name || SQUAD_SPECIALTIES[q.specialty].label).slice(0, 32), team: (q.team || []).filter(id => s.heroes.some(h => h.id === id)).slice(0, 4), formation: q.formation || {}, tactic: Object.hasOwn(TACTICS, q.tactic) ? q.tactic : "balanced", level: Math.max(1, Math.min(10, q.level || 1)), xp: Math.max(0, q.xp || 0), wins: Math.max(0, q.wins || 0) }));
   if (!s.expeditions.length && s.lastBattle?.status === "active" && s.lastBattle.combat) {
     const legacyTeam = s.lastBattle.combat.fighters.filter(f => f.side === "hero").map(f => f.id);
     s.expeditions.push({ id: "expedition-" + (++s.expeditionSequence), slot: 1, team: legacyTeam, formation: { ...s.lastBattle.combat.formation }, tactic: s.lastBattle.combat.tactic, battle: s.lastBattle, startedDay: s.lastBattle.day, nextRoundAt: Date.now() + 2500 });
@@ -557,7 +748,8 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     } else if (!([1, 2, 3] as ExpeditionSlot[]).includes(expedition.slot as ExpeditionSlot)) expedition.slot = 1;
     if (expedition.battle?.combat) {
       const c = expedition.battle.combat;
-      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= { ...expedition.formation };
+      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= { ...expedition.formation }; c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
+      if (c.pendingPotion && !c.pendingConsumable) { c.pendingConsumable = { key: "healing_potion", targetId: c.pendingPotion.targetId }; delete c.pendingPotion; }
       for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
       if (expedition.battle.fighters) for (const f of expedition.battle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
     }
@@ -567,7 +759,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.team = (s.team || []).filter(id => !deployed.has(id) && s.heroes.some(h => h.id === id)).slice(0, 4);
   for (const h of s.heroes) if (s.team.length < 4 && !deployed.has(h.id) && !s.team.includes(h.id) && h.energy >= 25 && h.injuredUntil <= s.day && !activeJourney(s, h.id)) s.team.push(h.id);
   s.formation = normalizedFormation(s);
-  if (!s.chest) { s.chest = []; s.itemSequence = 0; addItem(s, "healing_potion"); addItem(s, "healing_potion"); }
+  if (!s.chest) { s.chest = []; s.itemSequence = 0; addItem(s, "healing_potion"); addItem(s, "healing_potion"); addItem(s, "antidote"); addItem(s, "stun_bomb"); }
   s.itemSequence ??= s.chest.length; s.region ??= 1; s.bossSeasons ??= []; s.shopPurchases ??= [];
   s.rivalAttempts ??= []; s.lastNegotiation ??= null;
   s.rivals = s.rivals.slice(0, LEAGUE_SIZE - 1).map((r, i) => r.heroes?.length && r.strength && r.recruitSequence !== undefined ? r : { ...createRival(i, s), ...r });
@@ -578,7 +770,8 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   if (s.event === undefined) s.event = createEvent(s);
   if (s.lastBattle?.combat) {
     const c = s.lastBattle.combat;
-    c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= normalizedFormation(s);
+    c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= normalizedFormation(s); c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
+    if (c.pendingPotion && !c.pendingConsumable) { c.pendingConsumable = { key: "healing_potion", targetId: c.pendingPotion.targetId }; delete c.pendingPotion; }
     for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
     if (s.lastBattle.fighters) for (const f of s.lastBattle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
   }
@@ -588,49 +781,75 @@ export function newCampaign(seed = 381077): Campaign {
   return normalizeCampaign({ schema: 1, name: "Guilda do Alvorecer", day: 1, season: 1, gold: 1500, fame: 0, points: 0, wins: 0, losses: 0, arsenal: 0, heroes: structuredClone(initialHeroes), team: ["aric", "lyra", "elen", "kael"], tactic: "balanced", hired: [], rivals: ["Lobos de Ferro", "Ordem da Aurora", "Corvos de Ashen", "Sentinelas do Norte", "Chama Eterna"].map((name, i) => ({ id: "rival-" + i, name, points: 0, victories: 0 })), ledger: [{ id: 0, day: 1, label: "Fundo inicial da guilda", amount: 1500 }], journal: [{ day: 1, text: "Sua guilda foi fundada. Resolva o pedido da aldeia e prepare sua primeira expedição." }], lastBattle: null, rng: seed >>> 0, transaction: 0 });
 }
 export function missions(s: Campaign): Mission[] {
-  const scaling = 1 + (s.season - 1) * .22 + ((s.region || 1) - 1) * .08 + Math.floor((seasonDay(s) - 1) / 7) * .03;
+  const regionIndex = Math.max(0, Math.min(WORLD_REGIONS.length - 1, (s.activeRegion || 1) - 1));
+  const region = WORLD_REGIONS[regionIndex], progression = Math.max(0, region.minLevel - 1);
+  const scaling = 1 + progression * .045 + (s.season - 1) * .055 + Math.floor((seasonDay(s) - 1) / 7) * .025;
+  const kinds: MissionKind[] = ["escort", "defense", "dungeon", "hunt", "dungeon"];
+  const descriptors = ["Rota de", "Defesa de", "Ruínas de", "Caçada em", "Tesouro perdido de"];
   return [1, 2, 3, 4, 5].map((difficulty, i) => {
-    const index = (s.day + i + 2) % templates.length, region = Math.min(4, s.region || 1), t = { ...templates[index] };
-    const titles = [
-      ["Caravana de Valen", "A defesa de Pedra Clara", "O despertar da cripta", "Caçada nas brumas"],
-      ["Escolta de Brumavale", "O posto da floresta", "As cavernas das raízes", "Predadores de Brumavale"],
-      ["Relíquias para Ashen", "O cerco à torre de Ashen", "Masmorra de Cinzabranca", "Caçada aos espectros"],
-      ["Caravana da Fronteira", "A muralha dos dragões", "O templo do dragão", "Caçada aos dracos"],
-    ];
-    t.title = titles[region - 1][index];
-    if (region > 1) { t.location = REGIONS[region - 1]; t.enemy = [["Bandido", "Saqueador", "Esqueleto", "Lobo sombrio"], ["Emboscador", "Troll", "Aranha ancestral", "Pantera das brumas"], ["Cultista", "Cavaleiro espectral", "Guardião antigo", "Espectro"], ["Salteador dracônico", "Guerreiro draco", "Guardião de obsidiana", "Draco selvagem"]][region - 1][index]; }
-    return { ...t, id: "mission-" + s.day + "-" + i, title: i === 3 ? "Passagem secreta de " + REGIONS[((s.region || 1) - 1) % 4] : i === 4 ? "O cofre dos antigos" : t.title, rank: difficulty, force: Math.round([100, 172, 205, 285, 380][i] * scaling), reward: Math.round([55, 90, 145, 230, 350][i] * (1 + (s.season - 1) * .07)), count: i === 0 ? 3 : 4, requiredFame: i === 3 ? 120 : i === 4 ? 260 : 0, requiredItem: i === 3 ? "secret_map" : i === 4 ? "ancient_key" : undefined };
+    const enemy = region.enemies[(s.day + i) % region.enemies.length];
+    const kind = kinds[i];
+    const title = i === 3 ? "Passagem secreta · " + region.name : i === 4 ? "O cofre de " + region.name : descriptors[i] + " " + region.name;
+    const forceBase = [30, 48, 68, 92, 125][i];
+    const rewardBase = [35, 58, 90, 135, 205][i];
+    return {
+      id: "mission-" + s.day + "-" + regionIndex + "-" + i,
+      title, location: region.name,
+      description: kind === "escort" ? "Escolte uma caravana pelas rotas de " + region.name + "."
+        : kind === "defense" ? "Segure a posição contra " + enemy + " e seus aliados."
+        : kind === "hunt" ? "Rastreie e elimine " + enemy + " antes que escape."
+        : "Explore uma área perigosa dominada por " + enemy + " e procure saque.",
+      rank: difficulty,
+      force: Math.round(forceBase * scaling),
+      reward: Math.round(rewardBase * (1 + regionIndex * .10 + (s.season - 1) * .04)),
+      enemy, count: i === 0 ? 3 : i >= 3 ? 4 : 3,
+      specialty: kind === "hunt" ? "ranger" : kind === "defense" ? "paladin" : kind === "dungeon" ? "rogue" : "warrior",
+      flavor: kind === "hunt" ? "Arqueiros e Assassinos se destacam na perseguição."
+        : kind === "defense" ? "Cavaleiros e Guerreiros seguram melhor a linha."
+        : kind === "dungeon" ? "Assassinos ajudam contra armadilhas; Magos lidam bem com ameaças arcanas."
+        : "Mobilidade e uma linha de frente estável reduzem os riscos.",
+      kind,
+      requiredFame: i === 3 ? 80 + regionIndex * 20 : i === 4 ? 180 + regionIndex * 30 : 0,
+      requiredItem: i === 3 ? "secret_map" : i === 4 ? "ancient_key" : undefined,
+    };
   });
 }
 export function seasonBoss(s: Campaign): Mission | null {
   if (seasonDay(s) < 21 || s.bossSeasons?.includes(s.season)) return null;
-  const idx = (s.season - 1) % 3;
-  return { id: "boss-" + s.season, title: ["O Vigia de Ashen", "A Matriarca das Brumas", "O Senhor da Fronteira"][idx], location: REGIONS[((s.region || 1) - 1) % 4], description: ["A cada três turnos, ataca todos os heróis.", "Recupera vida a cada três turnos. A ofensiva exige proteção.", "Seus golpes ficam mais fortes a cada turno. Prepare cura e defesa."][idx], rank: 3, force: Math.round(280 * (1 + (s.season - 1) * .24 + ((s.region || 1) - 1) * .06)), reward: Math.round(230 * (1 + (s.season - 1) * .07)), enemy: ["Vigia", "Matriarca", "Senhor da Fronteira"][idx], count: 3, specialty: idx === 0 ? "undead" : "ranger", flavor: "Vitória: +45 renome, equipamento épico e Chave Antiga." + (s.region < 4 ? " Libera uma nova região." : ""), kind: "boss", requiredFame: 0, boss: idx };
+  const regionIndex = Math.max(0, Math.min(WORLD_REGIONS.length - 1, (s.activeRegion || 1) - 1));
+  const region = WORLD_REGIONS[regionIndex], enemy = region.enemies[region.enemies.length - 1];
+  return {
+    id: "boss-" + s.season + "-" + regionIndex,
+    title: "Guardião de " + region.name,
+    location: region.name,
+    description: "Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
+    rank: 3,
+    force: Math.round((78 + regionIndex * 12) * (1 + (s.season - 1) * .06)),
+    reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
+    enemy, count: 3, specialty: "boss",
+    flavor: "Chefe regional: melhor chance de equipamento raro, materiais e cicatrizes memoráveis.",
+    kind: "boss", requiredFame: 0, boss: regionIndex,
+  };
 }
 export function trainingPlan(s: Campaign, h: Hero) {
   const gap = Math.max(0, Math.max(...s.heroes.map(hero => hero.level)) - h.level);
   return { cost: 90, xp: 90 + Math.min(4, gap) * 35, energy: 15, catchup: Math.min(4, gap) * 35 };
 }
-const extraHeroes: Hero[] = [
-  { id: "monk-base", name: "Finn do Norte", class: "monk", level: 2, attack: 31, defense: 22, magic: 10, energy: 100, xp: 0, salary: 22, value: 400, trait: "Disciplinado", injuredUntil: 0 },
-  { id: "necro-base", name: "Iris Fogoluz", class: "necromancer", level: 2, attack: 12, defense: 12, magic: 34, energy: 100, xp: 0, salary: 24, value: 420, trait: "Sombria", injuredUntil: 0 },
-  { id: "druid-base", name: "Vera da Bruma", class: "druid", level: 2, attack: 17, defense: 18, magic: 28, energy: 100, xp: 0, salary: 20, value: 400, trait: "Naturalista", injuredUntil: 0 },
-  { id: "bard-base", name: "Bryn Ventoazul", class: "bard", level: 2, attack: 20, defense: 16, magic: 24, energy: 100, xp: 0, salary: 21, value: 380, trait: "Inspirador", injuredUntil: 0 },
-];
 export function market(s: Campaign): Hero[] {
-  const week = Math.floor((s.day - 1) / 7), names = ["Mira da Lua", "Thane Martelo", "Neris de Valen", "Vera da Bruma", "Orin Runapálida", "Finn do Norte", "Iris Fogoluz", "Bryn Ventoazul"], classes: HeroClass[] = ["monk", "necromancer", "druid", "bard", "ranger", "warrior", "mage", "healer", "paladin", "rogue"];
+  const week = Math.floor((s.day - 1) / 7), classes = [...CLASSIC_CLASSES];
   return [0, 1, 2, 3].map(i => {
-    const c = classes[(week * 4 + i) % classes.length], lvl = 2 + ((week + i) % 4) + Math.floor((s.season - 1) / 2), b = [...initialHeroes, ...extraHeroes].find(h => h.class === c)!;
-    const hero: Hero = { ...b, class: c, id: "hire-" + week + "-" + i, name: week === 0 ? b.name : names[(week * 3 + i) % names.length], level: lvl, attack: b.attack + (lvl - b.level) * 3, defense: b.defense + (lvl - b.level) * 2, magic: b.magic + (lvl - b.level) * 3, energy: 100, xp: 0, salary: 12 + lvl * 5, value: 140 + lvl * 115 + i * 25, injuredUntil: 0 };
-    hero.race = heroRace(hero); return hero;
+    const c = classes[(week * 4 + i) % classes.length], id = "hire-" + week + "-" + i;
+    const hero = levelOneHero(id, uniqueAdventurerName(10000 + week * 4 + i), c, c === "bard" ? "Afortunado" : c === "healer" ? "Devoto" : c === "rogue" ? "Discreto" : "Aventureiro");
+    const targetLevel = Math.min(MAX_HERO_LEVEL, 1 + Math.floor((s.day - 1) / 14));
+    while (hero.level < targetLevel) gainXp(hero, threshold(hero));
+    hero.salary = 8 + Math.floor(hero.level * 2.5); hero.value = 120 + hero.level * 45 + i * 15;
+    return hero;
   }).filter(h => !s.hired.includes(h.id));
 }
 function stableNumber(text: string) { let n = 2166136261; for (const c of text) n = Math.imul(n ^ c.charCodeAt(0), 16777619); return n >>> 0; }
 const guildNames = ["Lobos de Ferro", "Ordem da Aurora", "Corvos de Ashen", "Sentinelas do Norte", "Chama Eterna"];
 const guildOrders = ["Guardiões", "Cavaleiros", "Vigias", "Filhos", "Dragões", "Escudos", "Andarilhos", "Arautos", "Caçadores", "Juramentados"];
 const guildPlaces = ["da Lua", "do Sol", "da Montanha", "do Abismo", "da Tempestade", "do Crepúsculo", "da Floresta", "da Fronteira", "da Torre", "do Vale"];
-const adventurerNames = ["Aerin", "Borin", "Celia", "Darius", "Eira", "Faelan", "Galen", "Helia", "Isen", "Jora", "Korin", "Liora", "Mael", "Nyra", "Oren", "Petra", "Quinn", "Riven", "Selene", "Tarin"];
-const adventurerTitles = ["da Alvorada", "Pedrafria", "da Lua", "Ventonegro", "de Valen", "Solbravo", "da Bruma", "Ferroazul", "Runaclara", "do Norte", "Coração de Aço", "das Cinzas", "Luzalta", "da Fronteira", "Tempestade", "do Vale", "Flecha de Prata", "da Torre", "Folha Dourada", "do Abismo", "da Floresta", "Maré Alta", "Lâmina Branca", "do Ocaso", "da Fortaleza", "Chama Viva", "da Colina", "Sombra Longa", "do Horizonte", "do Lago"];
 function developRival(h: RivalHero, index: number) {
   let points = talentPoints(h);
   while (points-- > 0) {
@@ -640,11 +859,12 @@ function developRival(h: RivalHero, index: number) {
   }
 }
 function rivalAdventurer(guild: Pick<RivalGuild, "id" | "strength">, sequence: number, season: number, rookie = false): RivalHero {
-  const index = Number(guild.id.split("-")[1]) || 0, n = index * 6 + sequence;
-  const c = (Object.keys(CLASSES) as HeroClass[])[(index * 3 + sequence) % 10], base = [...initialHeroes, ...extraHeroes].find(h => h.class === c)!;
-  const level = (rookie ? 1 : guild.strength + sequence % 2) + Math.floor((season - 1) / 2), magical = ["mage", "healer", "necromancer", "druid", "bard"].includes(c);
-  const h: RivalHero = { ...base, id: guild.id + "-hero-" + sequence, name: adventurerNames[n % adventurerNames.length] + " " + adventurerTitles[Math.floor(n / adventurerNames.length) % adventurerTitles.length], class: c, level, attack: Math.max(5, base.attack + (level - base.level) * (magical ? 1 : 3)), defense: Math.max(5, base.defense + (level - base.level) * 2), magic: Math.max(1, base.magic + (level - base.level) * (magical || c === "paladin" ? 3 : 1)), energy: 100, xp: 0, salary: 12 + level * 5, value: 140 + level * 115, injuredUntil: 0, loyalty: 35 + stableNumber(guild.id + ":" + sequence) % 56 };
-  h.race = heroRace(h); developRival(h, index + sequence); return h;
+  const index = Number(guild.id.split("-")[1]) || 0, c = CLASSIC_CLASSES[(index * 3 + sequence) % CLASSIC_CLASSES.length];
+  const base = levelOneHero(guild.id + "-hero-" + sequence, uniqueAdventurerName(index * 32 + sequence + 200), c, c === "bard" ? "Sortudo" : "Rival");
+  const targetLevel = Math.min(MAX_HERO_LEVEL, rookie ? 1 : 1 + Math.floor((season - 1) / 2) + Math.floor(guild.strength / 2));
+  while (base.level < targetLevel) gainXp(base, threshold(base));
+  const h: RivalHero = { ...base, salary: 8 + targetLevel * 3, value: 120 + targetLevel * 55, loyalty: 35 + stableNumber(guild.id + ":" + sequence) % 56 };
+  developRival(h, index + sequence); return h;
 }
 export function rivalPower(guild: RivalGuild) { return guild.heroes.map(h => rating(h)).sort((a, b) => b - a).slice(0, 4).reduce((n, p) => n + p, 0); }
 export function rivalWinChance(guild: RivalGuild, s: Campaign) {
@@ -768,20 +988,32 @@ function createRetaliationEvent(s: Campaign): GuildEvent | null {
 }
 
 export function shop(s: Campaign) {
-  const week = Math.floor((s.day - 1) / 7), races = Object.keys(RACES) as HeroRace[];
-  const primary = races[week % races.length], secondary = races[(week + 1) % races.length];
-  const racialKeys = [RACE_GEAR[primary].weapon, RACE_GEAR[primary].armor, RACE_GEAR[secondary].weapon, RACE_GEAR[secondary].armor];
-  return [
-    { key: "healing_potion", price: 35, requiredFame: 0, available: true },
-    { key: "iron_sword", price: 95, requiredFame: 0, available: !s.shopPurchases.includes(week + ":iron_sword") },
-    { key: "leather_armor", price: 90, requiredFame: 0, available: !s.shopPurchases.includes(week + ":leather_armor") },
-    ...racialKeys.map((key, i) => ({ key, price: ITEMS[key].value + 55 + i * 4, requiredFame: 25, available: !s.shopPurchases.includes(week + ":" + key) })),
-    { key: "secret_map", price: 180, requiredFame: 80, available: !s.shopPurchases.includes(week + ":secret_map") },
-  ];
+  const week = Math.floor((s.day - 1) / 7);
+  const purchasable = Object.entries(ITEMS).filter(([_, d]) =>
+    ["weapon","offhand","helmet","armor","gloves","boots","accessory","consumable","material"].includes(d.slot) &&
+    (!d.levelReq || d.levelReq <= Math.max(5, Math.max(...s.heroes.map(h => h.level)) + 5))
+  );
+  const rotating = Array.from({ length: 9 }, (_, i) => purchasable[(stableNumber("shop:" + week + ":" + i) + i * 17) % purchasable.length]?.[0]).filter(Boolean) as string[];
+  const keys = [...new Set(["healing_potion","minor_healing","iron_ore","lucky_clover",...rotating])].slice(0, 12);
+  return keys.map((key, i) => ({
+    key,
+    price: Math.max(8, Math.round(ITEMS[key].value * (key === "healing_potion" ? 2.2 : 1.45))),
+    requiredFame: ITEMS[key].rarity === "legendary" ? 260 : ITEMS[key].rarity === "epic" ? 120 : ITEMS[key].rarity === "rare" ? 35 : 0,
+    available: ["consumable","material"].includes(ITEMS[key].slot) || !s.shopPurchases.includes(week + ":" + key),
+  }));
 }
 function gainXp(h: Hero, value: number) {
-  h.xp += value; let levels = 0;
-  while (h.xp >= threshold(h)) { h.xp -= threshold(h); h.level++; h.attack += ["mage", "healer", "necromancer", "druid", "bard"].includes(h.class) ? 1 : 3; h.defense += 2; h.magic += ["mage", "healer", "paladin", "necromancer", "druid", "bard"].includes(h.class) ? 3 : 1; levels++; }
+  if (h.level >= MAX_HERO_LEVEL) { h.level = MAX_HERO_LEVEL; h.xp = 0; return 0; }
+  h.xp += Math.max(0, Math.round(value)); let levels = 0;
+  while (h.level < MAX_HERO_LEVEL && h.xp >= threshold(h)) {
+    h.xp -= threshold(h); h.level++; levels++;
+    if (["warrior", "ranger", "rogue"].includes(h.class)) h.attack += 1;
+    if (["paladin", "warrior"].includes(h.class) && h.level % 2 === 0) h.defense += 1;
+    if (["mage", "healer", "bard"].includes(h.class)) h.magic += 1;
+    if (h.class === "paladin" && h.level % 3 === 0) h.magic += 1;
+    if (h.class === "bard" && h.level % 4 === 0) h.attack += 1;
+  }
+  if (h.level >= MAX_HERO_LEVEL) { h.level = MAX_HERO_LEVEL; h.xp = 0; }
   return levels;
 }
 export const JOURNEY_OPTIONS: Record<JourneyDuration, { label: string; dailyXp: number; description: string }> = {
@@ -816,8 +1048,9 @@ function processJourneys(s: Campaign) {
   if (completed.length) s.journeys = s.journeys.filter(j => !completed.includes(j));
 }
 function advance(s: Campaign, used: string[]) {
-  s.heroes.forEach(h => { if (!used.includes(h.id) && !activeJourney(s, h.id)) h.energy = Math.min(100, h.energy + 18); });
-  processJourneys(s);
+  const recovery = 14 + (s.hq?.infirmary || 0) * 3 + (s.hq?.stables || 0) * 2;
+  s.heroes.forEach(h => { if (!used.includes(h.id) && !activeJourney(s, h.id)) h.energy = Math.min(100, h.energy + recovery); });
+  processJourneys(s); processAcademy(s);
   resolveLeagueDay(s); resolveCupDay(s);
   const upkeep = Math.min(8, s.gold); if (upkeep) entry(s, "Manutenção diária", -upkeep);
   s.rivalries.forEach(r => r.heat = Math.max(0, r.heat - 2)); s.rivalries = s.rivalries.filter(r => r.heat > 0);
@@ -859,10 +1092,10 @@ function selectTeam(s: Campaign, ids: string[], tactic: Tactic, formation?: Reco
   s.team = [...ids]; s.formation = chosen; s.tactic = tactic; return team as Hero[];
 }
 function startBattle(s: Campaign, m: Mission, team: Hero[]) {
-  const scaling = m.force / [90, 142, 190, 250, 310][m.rank - 1];
+  const scaling = m.force / [30, 48, 68, 92, 125][m.rank - 1], cohesion = squadBonus(s, team.map(h => h.id));
   const fighters: Combatant[] = team.map(h => {
     const base = heroStats(h, s), position = s.formation[h.id] || defaultFormationLine(h.class);
-    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1), attack: base.attack * (position === "back" ? 1.06 : 1), magic: base.magic * (position === "back" ? 1.06 : 1), speed: base.speed + (position === "back" ? 2 : 0) };
+    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion, attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion, magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion, speed: base.speed + (position === "back" ? 2 : 0) };
     const hp = Math.round(80 + n.defense * 3 + h.level * 15 + n.hp);
     return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy, guarding: h.talent?.path === "defense" && ["warrior", "paladin", "monk"].includes(h.class) ? h.talent.rank : 0 };
   });
@@ -870,27 +1103,36 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
     const boss = m.kind === "boss" && i === 0, hp = Math.round((65 + m.rank * 48) * scaling * (boss ? 2.1 : 1));
     fighters.push({ id: "enemy-" + i, name: boss ? m.title : m.enemy + " " + (i + 1), side: "enemy", hp, maxHp: hp, attack: (12 + m.rank * 9.5) * scaling * (boss ? 1.16 : 1), defense: 5 + m.rank * 4 + (boss ? 8 : 0), magic: 0, speed: boss ? 22 : 17, critical: .05, energy: 100, healing: 1, guarding: 0, statuses: [] });
   }
-  const agile = team.filter(h => ["rogue", "ranger", "monk"].includes(h.class)).length;
+  const agile = team.filter(h => ["rogue", "ranger"].includes(h.class)).length;
   const scout = team.some(h => h.class === "ranger" && h.talent?.path === "defense");
   const objectiveMax = m.kind === "escort" ? 170 + m.rank * 25 : m.kind === "defense" ? 200 + Math.round(fighters.filter(f => f.side === "hero").reduce((n, f) => n + f.defense, 0) * .6) : 0;
   const targetRounds = m.kind === "escort" ? Math.max(3, 6 - (agile >= 2 ? 1 : 0) - (scout ? 1 : 0)) : m.kind === "defense" ? 6 : m.kind === "hunt" ? 12 : 24;
-  return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, pendingAbilities: [], abilityCooldowns: {}, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
+  return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, consumablesUsed: 0, pendingAbilities: [], abilityCooldowns: {}, autoAbilities: true, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
 }
 function grantLoot(s: Campaign, m: Mission, deployedIds: string[] = s.team) {
-  const keys: string[] = [m.rank >= 4 ? "royal_relic" : m.rank >= 2 ? "ancient_idol" : "gemstone"];
-  const pools = [["iron_sword", "oak_staff", "leather_armor"], ["hunter_bow", "runic_staff", "sentinel_armor", "swift_boots"], ["hunter_bow", "runic_staff", "sentinel_armor", "amber_ring"], ["dawn_blade", "ash_staff", "ancient_armor"], ["dragon_fang", "star_pendant", "ancient_armor"]];
-  if (m.kind === "boss") { keys.push(pools[3][Math.floor(random(s) * 3)], "ancient_key"); }
-  else {
-    if (m.kind === "dungeon" || random(s) < [.55, .75, .9, 1, 1][m.rank - 1]) { const pool = pools[m.rank - 1]; keys.push(pool[Math.floor(random(s) * pool.length)]); }
-    if (!hasItem(s, "secret_map") && m.rank >= 2 && random(s) < .25) keys.push("secret_map");
-    if (!hasItem(s, "ancient_key") && m.rank >= 4 && random(s) < .35) keys.push("ancient_key");
-  }
   const deployed = s.heroes.filter(h => deployedIds.includes(h.id));
-  if (deployed.length && (m.kind === "boss" || random(s) < .48)) {
-    const race = heroRace(deployed[Math.floor(random(s) * deployed.length)]), gear = RACE_GEAR[race];
-    keys.push(random(s) < .5 ? gear.weapon : gear.armor);
+  const luck = deployed.reduce((best, h) => Math.max(best, heroLuck(h, s)), 0);
+  const keys: string[] = [];
+  const rank = Math.max(1, Math.min(5, m.rank));
+
+  // Toda vitória rende pelo menos um material/tesouro. O Pierrô aumenta quantidade e qualidade.
+  keys.push(randomLootKey(s, rank, luck, true));
+  keys.push(randomLootKey(s, rank, luck, false));
+
+  const extraChance = Math.min(.9, .18 + rank * .10 + luck * 1.65);
+  if (random(s) < extraChance) keys.push(randomLootKey(s, rank, luck, false));
+  if (random(s) < luck * 1.35) keys.push(randomLootKey(s, Math.min(5, rank + 1), luck, false));
+
+  if (m.kind === "dungeon") keys.push(randomLootKey(s, Math.min(5, rank + 1), luck, random(s) < .45));
+  if (m.kind === "boss") {
+    keys.push(randomLootKey(s, Math.min(5, rank + 2), Math.min(.45, luck + .12), false));
+    keys.push("ancient_key");
   }
-  keys.forEach(k => addItem(s, k)); return keys;
+  if (!hasItem(s, "secret_map") && m.rank >= 2 && random(s) < .16 + luck) keys.push("secret_map");
+  if (!hasItem(s, "ancient_key") && m.rank >= 4 && random(s) < .18 + luck) keys.push("ancient_key");
+
+  for (const key of keys) if (ITEMS[key]) addItem(s, key);
+  return keys.filter(key => !!ITEMS[key]);
 }
 function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreated") {
   const c = b.combat!, m = c.mission, won = status === "won";
@@ -900,13 +1142,21 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
     const h = s.heroes.find(h => h.id === f.id)!;
     h.energy = Math.max(0, h.energy - (status === "retreated" ? 12 : Math.round(c.fatigueTotal / Math.max(1, b.rounds))) - (f.hp === 0 ? 12 : 0));
     if (gainXp(h, b.xp)) b.levelUps.push(h.name);
-    if (f.hp === 0 && random(s) < .45) { h.injuredUntil = s.day + 3; b.wounded.push(h.name); }
+    if (f.hp === 0 && random(s) < .45) {
+      const injuryDays = Math.max(1, 3 - Math.floor((s.hq?.infirmary || 0) / 2));
+      h.injuredUntil = s.day + injuryDays; b.wounded.push(h.name); addScar(s, h, m.kind === "boss" ? "boss" : "defeat");
+    }
   }
   const before = s.fame;
+  const battleTeam = c.fighters.filter(f => f.side === "hero").map(f => f.id);
+  awardSquadExperience(s, battleTeam, m.kind, won);
   if (won) {
-    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 45 : 6 + m.rank * 5; b.loot = grantLoot(s, m, c.fighters.filter(f => f.side === "hero").map(f => f.id));
-    if (m.kind === "boss") { s.bossSeasons.push(s.season); if (s.region < 4) { s.region++; b.regionUnlocked = s.region; } }
-  } else { s.losses++; s.fame = Math.max(0, s.fame - (status === "retreated" ? 3 + m.rank * 2 : 6 + m.rank * 3)); }
+    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = grantLoot(s, m, battleTeam);
+    if (m.kind === "boss") {
+      s.bossSeasons.push(s.season);
+      if (s.activeRegion >= s.region && s.region < WORLD_REGIONS.length) { s.region++; b.regionUnlocked = s.region; }
+    }
+  } else { s.losses++; s.fame = Math.max(0, s.fame - (status === "retreated" ? 2 + m.rank : 4 + m.rank * 2)); }
   b.fameChange = s.fame - before;
   note(s, (won ? "Vitória" : status === "retreated" ? "Retirada ordenada" : "Missão fracassou") + " em " + m.title + ". " + (won ? "+" + m.reward + " ouro e +" + b.fameChange + " renome. Saque no baú." : b.fameChange + " renome. A equipe ganhou experiência."));
   delete b.combat;
@@ -943,7 +1193,24 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     log.push({ round, text: text + amount + " PV.", kind, actorId, targetId: target.id, targetHp: target.hp, amount }); return amount;
   };
   if (c.lastTactic !== c.tactic) { log.push({ round, text: "Nova ordem: tática " + TACTICS[c.tactic].name.toLowerCase() + ".", kind: "order" }); c.lastTactic = c.tactic; }
-  if (c.pendingPotion) { const f = heroes().find(f => f.id === c.pendingPotion!.targetId); if (f) heal(f, 70, "Poção recupera a vida de " + f.name + ": "); delete c.pendingPotion; }
+  if (c.pendingConsumable) {
+    const use = c.pendingConsumable;
+    if (use.key === "healing_potion") {
+      const f = heroes().find(f => f.id === use.targetId);
+      if (f) heal(f, 70, "Intervenção da guilda: Poção de Cura recupera " + f.name + " em ");
+    } else if (use.key === "antidote") {
+      const f = heroes().find(f => f.id === use.targetId);
+      if (f) {
+        const before = f.statuses.length;
+        f.statuses = f.statuses.filter(st => !["poison", "bleed", "vulnerable"].includes(st.kind));
+        log.push({ round, text: "Intervenção da guilda: Antídoto purifica " + f.name + (before === f.statuses.length ? ", mas não havia efeito nocivo ativo." : "."), kind: "status", targetId: f.id, targetHp: f.hp });
+      }
+    } else if (use.key === "stun_bomb") {
+      const f = enemies().find(f => f.id === use.targetId);
+      if (f) { addStatus(f, "stun", 1, undefined, "guild"); log.push({ round, text: "Intervenção da guilda: Bomba Atordoante atinge " + f.name + ". O inimigo perde a próxima ação.", kind: "status", targetId: f.id, targetHp: f.hp }); }
+    }
+    delete c.pendingConsumable;
+  }
 
   for (const f of c.fighters.filter(f => f.hp > 0)) {
     for (const status of [...f.statuses]) {
@@ -1117,7 +1384,8 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
         formation[id] = action.formation?.[id] || defaultFormationLine(hero.class);
       }
       if (!formationValid(action.team, formation)) { formation[action.team[0]] = "front"; formation[action.team[action.team.length - 1]] = "back"; }
-      const saved: SavedSquad = { id: "squad-" + action.specialty, name, specialty: action.specialty, team: [...action.team], formation, tactic: action.tactic };
+      const previousSquad = s.squads.find(q => q.specialty === action.specialty);
+      const saved: SavedSquad = { id: "squad-" + action.specialty, name, specialty: action.specialty, team: [...action.team], formation, tactic: action.tactic, level: previousSquad?.level || 1, xp: previousSquad?.xp || 0, wins: previousSquad?.wins || 0 };
       const index = s.squads.findIndex(q => q.specialty === action.specialty);
       if (index >= 0) s.squads[index] = saved; else s.squads.push(saved);
       note(s, "Equipe pronta salva: " + name + " · especialidade " + SQUAD_SPECIALTIES[action.specialty].label + ".");
@@ -1128,6 +1396,38 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const name = action.name.trim().slice(0, 32); requireRule(name.length >= 2, "Dê um nome com pelo menos 2 caracteres.");
       squad.name = name; break;
     }
+    case "upgrade-hq": {
+      const spec = HQ_BUILDINGS[action.building]; requireRule(spec, "Construção da sede inválida.");
+      const current = s.hq[action.building] || 0; requireRule(current < spec.max, spec.name + " já está no nível máximo.");
+      const cost = hqUpgradeCost(s, action.building); requireRule(s.gold >= cost, "Essa melhoria custa " + cost + " ouro.");
+      entry(s, "Sede · " + spec.name + " Nv." + (current + 1), -cost); s.hq[action.building] = current + 1;
+      note(s, spec.name + " evoluiu para o nível " + s.hq[action.building] + "."); break;
+    }
+    case "academy-trainees": {
+      const slots = academySlots(s); requireRule(slots > 0, "Construa a Academia antes de matricular aprendizes.");
+      requireRule(Array.isArray(action.heroIds) && action.heroIds.length <= slots && new Set(action.heroIds).size === action.heroIds.length, "A Academia comporta " + slots + " aprendiz(es).");
+      requireRule(action.heroIds.every(id => s.heroes.some(h => h.id === id && !heroOnExpedition(s, id) && !activeJourney(s, id))), "Todos os aprendizes precisam estar disponíveis na sede.");
+      s.academy.trainees = [...action.heroIds]; break;
+    }
+    case "academy-mentor": {
+      if (!action.heroId) { delete s.academy.mentorId; break; }
+      const mentor = s.heroes.find(h => h.id === action.heroId); requireRule(mentor && !heroOnExpedition(s, mentor.id) && !activeJourney(s, mentor.id), "O mentor precisa estar disponível na sede.");
+      requireRule(mentor.level >= 5, "O mentor precisa estar no nível 5 ou superior."); s.academy.mentorId = mentor.id; break;
+    }
+    case "travel-region": {
+      requireRule(Number.isInteger(action.region) && action.region >= 1 && action.region <= s.region && action.region <= WORLD_REGIONS.length, "Essa região ainda não foi desbloqueada.");
+      s.activeRegion = action.region; note(s, "A guilda estabeleceu operações em " + WORLD_REGIONS[action.region - 1].name + "."); break;
+    }
+    case "craft": {
+      const recipe = CRAFT_RECIPES.find(r => r.id === action.recipeId); requireRule(recipe, "Receita não encontrada.");
+      requireRule((s.hq.forge || 0) >= recipe.forge, "A receita exige Forja nível " + recipe.forge + ".");
+      const cost = Math.max(0, Math.round(recipe.cost * (1 - (s.hq.forge - 1) * .05))); requireRule(s.gold >= cost, "A fabricação custa " + cost + " ouro.");
+      for (const [key, qty] of Object.entries(recipe.materials)) requireRule(itemCount(s, key) >= qty, "Faltam " + qty + "x " + ITEMS[key].name + ".");
+      for (const [key, qty] of Object.entries(recipe.materials)) requireRule(consumeItems(s, key, qty), "Falha ao consumir materiais.");
+      entry(s, "Forja · " + ITEMS[recipe.result].name, -cost); addItem(s, recipe.result); note(s, ITEMS[recipe.result].name + " foi fabricado."); break;
+    }
+    case "guild-raid": resolveGuildRaid(s, action.teams, action.rivalId); break;
+    case "rival-battle": resolveRivalBattle(s, action.guildId, action.team); break;
     case "expedition-tick": {
       const now = Number.isFinite(action.now) ? action.now : Date.now();
       for (const expedition of activeExpeditions(s)) {
@@ -1160,9 +1460,27 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "battle-potion": {
       const targetBattle = expeditionBattle(s, action.expeditionId); requireRule(targetBattle, "Essa expedição não está mais em combate.");
       const c = targetBattle.battle.combat!, item = s.chest.find(i => i.key === "healing_potion"), target = c.fighters.find(f => f.id === action.heroId && f.side === "hero");
-      requireRule(item, "Não há poção de cura no baú."); requireRule(c.potionsUsed < 2 && !c.pendingPotion, "Use no máximo duas poções por combate e aguarde a cura pendente.");
+      requireRule(item, "Não há poção de cura no baú."); requireRule(!c.pendingConsumable, "Aguarde o consumível já preparado ser usado no próximo turno.");
       requireRule(target && target.hp > 0 && target.hp < target.maxHp, "Escolha um herói vivo e ferido para receber a poção.");
-      s.chest = s.chest.filter(i => i.id !== item.id); c.potionsUsed++; c.pendingPotion = { targetId: target.id }; s.lastBattle = targetBattle.battle; break;
+      s.chest = s.chest.filter(i => i.id !== item.id); c.potionsUsed++; c.consumablesUsed = (c.consumablesUsed || 0) + 1; c.pendingConsumable = { key: "healing_potion", targetId: target.id }; s.lastBattle = targetBattle.battle; break;
+    }
+    case "battle-consumable": {
+      const targetBattle = expeditionBattle(s, action.expeditionId); requireRule(targetBattle, "Essa expedição não está mais em combate.");
+      const c = targetBattle.battle.combat!, item = s.chest.find(i => i.key === action.key);
+      requireRule(item, "Você não possui " + (ITEMS[action.key]?.name || "esse consumível") + " no baú.");
+      requireRule(!c.pendingConsumable, "Aguarde o consumível já preparado ser usado no próximo turno.");
+      if (action.key === "healing_potion") {
+        const target = c.fighters.find(f => f.id === action.targetId && f.side === "hero");
+        requireRule(target && target.hp > 0 && target.hp < target.maxHp, "Escolha um herói vivo e ferido.");
+      } else if (action.key === "antidote") {
+        const target = c.fighters.find(f => f.id === action.targetId && f.side === "hero");
+        requireRule(target && target.hp > 0, "Escolha um herói vivo.");
+        requireRule(target.statuses.some(st => ["poison", "bleed", "vulnerable"].includes(st.kind)), "Esse herói não possui efeito nocivo removível.");
+      } else if (action.key === "stun_bomb") {
+        const target = c.fighters.find(f => f.id === action.targetId && f.side === "enemy");
+        requireRule(target && target.hp > 0, "Escolha um inimigo vivo.");
+      }
+      s.chest = s.chest.filter(i => i.id !== item.id); c.consumablesUsed = (c.consumablesUsed || 0) + 1; c.pendingConsumable = { key: action.key, targetId: action.targetId }; s.lastBattle = targetBattle.battle; break;
     }
     case "battle-ability": {
       const targetBattle = expeditionBattle(s, action.expeditionId); requireRule(targetBattle, "Essa expedição não está mais em combate.");
@@ -1179,8 +1497,10 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "equip": {
       const item = s.chest.find(i => i.id === action.itemId), hero = s.heroes.find(h => h.id === action.heroId);
       requireRule(item && hero, "Item ou herói não encontrado no baú da guilda."); requireRule(!heroOnExpedition(s, hero.id), "Esse herói está em expedição. Troque o equipamento quando ele retornar."); const def = ITEMS[item.key];
-      requireRule(["weapon", "armor", "accessory"].includes(def.slot), "Esse item não pode ser equipado.");
+      requireRule(["weapon", "offhand", "helmet", "armor", "gloves", "boots", "accessory"].includes(def.slot), "Esse item não pode ser equipado.");
       requireRule(!def.race || heroRace(hero) === def.race, def.race ? def.name + " é exclusivo para a raça " + RACES[def.race].name + "." : "Raça incompatível.");
+      requireRule(!def.classes || def.classes.includes(hero.class), def.name + " não pode ser equipado por " + CLASSES[hero.class].name + ".");
+      requireRule(!def.levelReq || hero.level >= def.levelReq, def.name + " exige nível " + def.levelReq + ".");
       s.chest.forEach(i => { if (i.equippedTo === hero.id && ITEMS[i.key].slot === def.slot) delete i.equippedTo; }); item.equippedTo = hero.id; break;
     }
     case "unequip": { const item = s.chest.find(i => i.id === action.itemId); requireRule(item, "Item não encontrado no baú."); requireRule(!item.equippedTo || !heroOnExpedition(s, item.equippedTo), "Esse equipamento está com um herói em expedição."); delete item.equippedTo; break; }

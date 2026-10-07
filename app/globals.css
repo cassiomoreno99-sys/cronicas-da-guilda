@@ -2078,3 +2078,1221 @@ body::before {
     grid-column:1 / -1;
   }
 }
+
+
+/* v1.3.0 PREVIEW — QUADRO DE CONTRATOS FANTASY MOBILE */
+.parchment-contract-board { display:none; }
+.parchment-contract {
+  position:relative;
+  overflow:hidden;
+  border:1px solid #7d6238;
+  border-radius:10px;
+  background:
+    linear-gradient(90deg,rgba(255,246,211,.96),rgba(226,205,157,.95)),
+    repeating-linear-gradient(0deg,rgba(102,71,35,.035) 0 1px,transparent 1px 4px);
+  box-shadow:0 8px 20px rgba(0,0,0,.30), inset 0 0 0 1px rgba(255,239,190,.30);
+  color:#2d1d12;
+}
+.parchment-contract[data-chosen="true"] {
+  border-color:#d0a14f;
+  box-shadow:0 0 0 2px rgba(218,171,83,.26),0 9px 23px rgba(0,0,0,.36);
+}
+.parchment-contract[data-locked="true"] { filter:saturate(.72); }
+.contract-art {
+  position:relative;
+  overflow:hidden;
+  min-height:170px;
+  background:#17130f;
+}
+.contract-art::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,transparent 45%,rgba(20,10,4,.72));
+  pointer-events:none;
+}
+.contract-art img {
+  width:100%;
+  height:100%;
+  min-height:170px;
+  object-fit:cover;
+  display:block;
+}
+.contract-art > span {
+  position:absolute;
+  z-index:2;
+  left:10px;
+  bottom:9px;
+  padding:4px 8px;
+  border:1px solid rgba(230,189,106,.7);
+  border-radius:999px;
+  background:rgba(15,16,17,.78);
+  color:#f0d28d;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.contract-copy { padding:12px 13px 13px; }
+.contract-title-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:8px;
+}
+.contract-title-row small {
+  display:block;
+  margin-bottom:2px;
+  color:#765b39;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+.contract-title-row h3 {
+  margin:0;
+  color:#3a1e14;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:23px;
+  line-height:1.02;
+}
+.contract-rank {
+  flex:0 0 auto;
+  padding:4px 7px;
+  border:1px solid #7f6947;
+  border-radius:6px;
+  background:#eee0bd;
+  color:#5a472d;
+  font-size:9px;
+  font-weight:900;
+}
+.contract-copy > p {
+  margin:7px 0 9px;
+  color:#4a3829;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:14px;
+  line-height:1.28;
+}
+.contract-difficulty {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:7px 0;
+  border-top:1px solid rgba(90,63,31,.18);
+  border-bottom:1px solid rgba(90,63,31,.18);
+}
+.contract-difficulty strong {
+  color:#4c3422;
+  font-size:12px;
+}
+.contract-difficulty em {
+  color:#7b382b;
+  font-style:normal;
+}
+.contract-difficulty > span {
+  display:flex;
+  gap:2px;
+  font-size:13px;
+}
+.contract-difficulty i {
+  color:#b9a98c;
+  font-style:normal;
+  text-shadow:0 1px #fff1c7;
+}
+.contract-difficulty i[data-on="true"] {
+  color:#8f3a28;
+  text-shadow:0 1px #f9d98d;
+}
+.contract-specialists {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px 0 5px;
+}
+.contract-specialists > small {
+  color:#6e5637;
+  font-size:10px;
+  font-weight:800;
+}
+.contract-specialists > div {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:4px;
+}
+.contract-specialists span {
+  padding:3px 6px;
+  border:1px solid #9c865c;
+  border-radius:999px;
+  background:#e8d8ae;
+  color:#4c3825;
+  font-size:9px;
+  font-weight:800;
+}
+.contract-bottom {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:10px;
+  margin-top:3px;
+}
+.contract-rewards {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px 8px;
+  min-width:0;
+}
+.contract-rewards > span {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  color:#4e3823;
+  font-size:11px;
+  font-weight:800;
+}
+.contract-rewards > span svg {
+  width:14px;
+  height:14px;
+  color:#a46b11;
+}
+.contract-rewards .xp-reward {
+  padding:3px 6px;
+  border-radius:5px;
+  background:#604389;
+  color:#f5eaff;
+}
+.contract-drop-hints {
+  display:flex;
+  width:100%;
+  gap:4px;
+  margin-top:2px;
+}
+.contract-drop-hints > span {
+  display:inline-flex;
+  width:30px;
+  height:30px;
+  border:1px solid #8c734d;
+  border-radius:6px;
+  background:#2b251d;
+}
+.contract-drop-hints .item-icon {
+  width:100% !important;
+  height:100% !important;
+  border:0 !important;
+}
+.contract-drop-hints .item-icon img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.contract-prepare {
+  min-width:126px;
+  min-height:46px;
+  border:1px solid #8c6d39 !important;
+  background:linear-gradient(180deg,#466c3a,#254622) !important;
+  color:#fff1ce !important;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:15px !important;
+  box-shadow:inset 0 0 0 2px rgba(248,220,153,.15),0 3px 0 #2c2419;
+}
+.parchment-contract[data-chosen="true"] .contract-prepare {
+  background:linear-gradient(180deg,#7e3b2d,#4e1f19) !important;
+}
+.contract-prepare svg { width:16px; height:16px; }
+.contract-lock-reason {
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  margin-top:8px;
+  padding:7px 8px;
+  border-radius:6px;
+  background:rgba(105,45,32,.11);
+  color:#763c31;
+  font-size:10px;
+  line-height:1.35;
+}
+.contract-lock-reason svg {
+  flex:0 0 14px;
+  width:14px;
+  height:14px;
+  margin-top:1px;
+}
+.parchment-team-preview {
+  margin-top:4px;
+  padding:10px 11px !important;
+  border:1px solid #755d3b !important;
+  border-radius:9px;
+  background:linear-gradient(180deg,#241d17,#171411) !important;
+  box-shadow:0 7px 16px rgba(0,0,0,.26);
+}
+.parchment-team-preview strong { color:#e8c884 !important; }
+
+@media (max-width:760px) {
+  .game {
+    background:
+      radial-gradient(circle at 50% 0,rgba(43,67,89,.28),transparent 30%),
+      linear-gradient(180deg,#0b1119,#11171d 40%,#0a1016);
+  }
+
+  .topbar {
+    background:
+      linear-gradient(180deg,rgba(5,10,16,.26),rgba(5,9,14,.88)),
+      url("/ui/guild-night.webp") center 38% / cover no-repeat !important;
+    border-bottom:1px solid #806133 !important;
+    box-shadow:0 5px 18px rgba(0,0,0,.42);
+  }
+  .topbar-inner {
+    min-height:66px !important;
+    padding:8px 10px !important;
+  }
+  .brand-title {
+    font-family:Georgia,"Times New Roman",serif !important;
+    font-size:22px !important;
+    color:#f0d29a !important;
+    text-shadow:0 2px 2px #000;
+  }
+
+  .mobile-subnav {
+    top:66px !important;
+    gap:3px !important;
+    margin:0 -2px 11px !important;
+    padding:4px !important;
+    border:1px solid #4e5d6b !important;
+    border-radius:6px !important;
+    background:linear-gradient(180deg,rgba(24,39,53,.98),rgba(11,23,34,.99)) !important;
+    box-shadow:0 7px 17px rgba(0,0,0,.30) !important;
+  }
+  .mobile-subnav [data-slot="toggle-group-item"] {
+    min-height:43px !important;
+    border:1px solid transparent !important;
+    border-radius:4px !important;
+    color:#c5ced4 !important;
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:12px !important;
+  }
+  .mobile-subnav [data-slot="toggle-group-item"][data-state="on"] {
+    color:#ffe6a7 !important;
+    border-color:#a78343 !important;
+    background:linear-gradient(180deg,#6e522d,#3e2e1d) !important;
+    box-shadow:inset 0 0 0 1px rgba(245,213,142,.24),0 0 10px rgba(205,159,73,.20) !important;
+  }
+
+  .mission-section .section-heading {
+    margin:2px 2px 9px !important;
+  }
+  .mission-section .section-heading h2 {
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:25px !important;
+    color:#ead5a7;
+  }
+  .mission-section .section-heading p {
+    margin:3px 0 0;
+    color:#9fb0bb;
+    font-size:12px !important;
+  }
+  .mission-section .section-heading .subtle-chip { display:none; }
+
+  .parchment-contract-board {
+    display:grid !important;
+    gap:9px;
+  }
+  .mobile-mission-picker.parchment-contract-board { display:grid !important; }
+  .parchment-contract {
+    display:grid;
+    grid-template-columns:35% 65%;
+    min-height:190px;
+  }
+  .contract-art {
+    min-height:100%;
+  }
+  .contract-art img {
+    min-height:100%;
+  }
+  .contract-copy {
+    padding:10px 10px 10px;
+  }
+  .contract-title-row h3 {
+    font-size:20px;
+  }
+  .contract-copy > p {
+    font-size:12px;
+  }
+  .contract-bottom {
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  .contract-prepare {
+    width:100%;
+    min-width:0;
+    min-height:42px;
+  }
+  .contract-specialists {
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px;
+  }
+  .contract-specialists > div {
+    justify-content:flex-start;
+  }
+
+  /* Contratos mostra só o quadro; a preparação fica em Equipes. */
+  .command-grid[data-mobile-view="mission"] .strategy-panel { display:none !important; }
+  .command-grid[data-mobile-view="team"] .saved-squads-panel { display:block !important; margin-bottom:16px; }
+
+  /* Expedições substitui a antiga aba de Liga dentro de Missões. */
+  .command-grid[data-mobile-view="league"] .league-panel,
+  .command-grid[data-mobile-view="league"] .journey-panel { display:none !important; }
+  .command-grid[data-mobile-view="league"] .expedition-dock {
+    display:block !important;
+    margin-bottom:16px;
+  }
+
+  .expedition-dock {
+    border-color:#72582f !important;
+    background:linear-gradient(180deg,#201914,#12151a) !important;
+  }
+
+  .game .main-tabs {
+    min-height:72px !important;
+    border-top:1px solid #72572f !important;
+    background:linear-gradient(180deg,#1d2025,#0a1016) !important;
+    box-shadow:0 -8px 22px rgba(0,0,0,.55) !important;
+  }
+  .game .main-tabs [data-slot="tabs-trigger"] {
+    color:#c7c5bd !important;
+    font-family:Georgia,"Times New Roman",serif;
+  }
+  .game .main-tabs [data-slot="tabs-trigger"][data-state="active"] {
+    color:#ffe091 !important;
+    border-top-color:#d3a653 !important;
+    background:linear-gradient(180deg,#3a2c1f,#191b1e) !important;
+    box-shadow:inset 0 0 0 1px rgba(213,165,80,.22),0 -6px 16px rgba(205,153,64,.12) !important;
+  }
+}
+
+@media (max-width:420px) {
+  .parchment-contract {
+    grid-template-columns:32% 68%;
+    min-height:184px;
+  }
+  .contract-title-row h3 { font-size:18px; }
+  .contract-copy > p {
+    font-size:11px;
+    line-height:1.24;
+  }
+  .contract-difficulty strong { font-size:10px; }
+  .contract-difficulty > span { font-size:11px; }
+  .contract-specialists > small { font-size:9px; }
+  .contract-specialists span { font-size:8px; padding:2px 5px; }
+  .contract-rewards > span { font-size:10px; }
+  .contract-drop-hints > span { width:26px; height:26px; }
+  .contract-prepare { font-size:13px !important; }
+}
+
+
+/* v1.3.0 PREVIEW — MOBILE COMPACT PASS */
+@media (max-width:760px) {
+  /* O primeiro contrato precisa aparecer quase imediatamente no celular. */
+  .topbar-inner { min-height:56px !important; padding:5px 10px !important; }
+  .brand-mark { width:25px !important; height:30px !important; flex-basis:25px !important; }
+  .brand-mark > svg:first-child { width:25px !important; height:30px !important; }
+  .brand-title { font-size:20px !important; }
+  .help-button { width:38px !important; height:38px !important; min-width:38px !important; }
+
+  .workspace { padding-top:7px !important; }
+  .guild-heading { margin:2px 0 7px !important; padding:0 2px !important; min-height:36px; }
+  .guild-heading h1 { font-size:22px !important; line-height:1.08 !important; }
+  .guild-heading .rank-badge { min-height:32px; padding:4px 8px; font-size:11px; }
+
+  .resources {
+    min-height:58px !important;
+    margin-bottom:7px !important;
+    border-radius:9px !important;
+  }
+  .resource { padding:5px 2px !important; }
+  .resource div > span { font-size:10px !important; }
+  .resource strong { font-size:16px !important; line-height:1.1 !important; }
+
+  .council-banner {
+    min-height:58px !important;
+    margin-bottom:8px !important;
+    padding:8px 10px !important;
+    border-radius:9px !important;
+  }
+  .council-banner .eyebrow { font-size:9px !important; }
+  .council-banner strong { font-size:13px !important; margin-top:1px !important; }
+  .council-banner > button { min-height:38px !important; padding:6px 10px !important; font-size:12px !important; }
+
+  .mobile-subnav {
+    top:56px !important;
+    margin-bottom:8px !important;
+  }
+  .mobile-subnav [data-slot="toggle-group-item"] {
+    min-height:38px !important;
+    padding:5px 3px !important;
+    font-size:11px !important;
+  }
+
+  .mission-section .section-heading {
+    margin:0 2px 7px !important;
+  }
+  .mission-section .section-heading .eyebrow { font-size:9px !important; }
+  .mission-section .section-heading h2 {
+    font-size:21px !important;
+    line-height:1.05 !important;
+    margin-top:2px !important;
+  }
+  .mission-section .section-heading p {
+    display:none !important;
+  }
+
+  .parchment-contract-board { gap:7px !important; }
+  .parchment-contract {
+    display:grid !important;
+    grid-template-columns:112px minmax(0,1fr) !important;
+    min-height:0 !important;
+    border-radius:8px !important;
+  }
+  .contract-art {
+    min-height:0 !important;
+    height:100% !important;
+  }
+  .contract-art img {
+    width:100% !important;
+    height:100% !important;
+    min-height:0 !important;
+    object-fit:cover !important;
+    object-position:center !important;
+  }
+  .contract-art > span {
+    left:6px !important;
+    bottom:7px !important;
+    padding:3px 5px !important;
+    font-size:8px !important;
+  }
+  .contract-art-rank {
+    position:absolute;
+    z-index:2;
+    top:7px;
+    left:7px;
+    width:27px;
+    height:27px;
+    display:grid;
+    place-items:center;
+    border:1px solid #d6ad62;
+    border-radius:50%;
+    background:rgba(20,15,10,.82);
+    color:#f4d795;
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:11px;
+  }
+
+  .contract-copy { padding:8px 9px !important; min-width:0; }
+  .contract-title-row small { font-size:8px !important; margin-bottom:1px !important; }
+  .contract-title-row h3 {
+    font-size:17px !important;
+    line-height:1.02 !important;
+  }
+  .contract-copy > p {
+    margin:4px 0 5px !important;
+    display:-webkit-box;
+    overflow:hidden;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    font-size:10px !important;
+    line-height:1.18 !important;
+  }
+  .contract-rank { display:none !important; }
+
+  .contract-difficulty {
+    padding:4px 0 !important;
+  }
+  .contract-difficulty strong { font-size:9px !important; }
+  .contract-difficulty > span { gap:1px !important; font-size:9px !important; }
+
+  .contract-specialists {
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    padding:4px 0 3px !important;
+    gap:5px !important;
+  }
+  .contract-specialists > small {
+    display:none !important;
+  }
+  .contract-specialists > div {
+    justify-content:flex-start !important;
+    gap:3px !important;
+  }
+  .contract-specialists span {
+    padding:2px 5px !important;
+    font-size:8px !important;
+  }
+
+  .contract-bottom {
+    grid-template-columns:minmax(0,1fr) 92px !important;
+    align-items:end !important;
+    gap:6px !important;
+    margin-top:0 !important;
+  }
+  .contract-rewards { gap:3px 5px !important; }
+  .contract-rewards > span { font-size:9px !important; }
+  .contract-rewards > span svg { width:11px !important; height:11px !important; }
+  .contract-rewards .xp-reward { padding:2px 4px !important; }
+  .contract-drop-hints {
+    width:auto !important;
+    gap:3px !important;
+    margin-top:1px !important;
+  }
+  .contract-drop-hints > span {
+    width:22px !important;
+    height:22px !important;
+    border-radius:4px !important;
+  }
+
+  .contract-prepare {
+    width:92px !important;
+    min-width:92px !important;
+    min-height:36px !important;
+    height:36px !important;
+    padding:4px 6px !important;
+    font-size:11px !important;
+    line-height:1.05 !important;
+  }
+  .contract-prepare svg { width:12px !important; height:12px !important; }
+  .contract-lock-reason {
+    margin-top:4px !important;
+    padding:4px 5px !important;
+    font-size:8px !important;
+  }
+
+  .parchment-team-preview {
+    min-height:46px !important;
+    margin-top:1px !important;
+    padding:7px 8px !important;
+  }
+
+  /* A barra fixa continua visível sem esconder o final da tela. */
+  .workspace,
+  .workspace:has(.command-grid[data-mobile-view="mission"]),
+  .workspace:has(.command-grid[data-mobile-view="team"]),
+  .workspace:has(.command-grid[data-mobile-view="league"]),
+  .workspace:has(.command-grid[data-mobile-view="camp"]) {
+    padding-bottom:calc(116px + env(safe-area-inset-bottom)) !important;
+  }
+}
+
+@media (max-width:390px) {
+  .parchment-contract { grid-template-columns:96px minmax(0,1fr) !important; }
+  .contract-title-row h3 { font-size:16px !important; }
+  .contract-bottom { grid-template-columns:minmax(0,1fr) 84px !important; }
+  .contract-prepare { width:84px !important; min-width:84px !important; font-size:10px !important; }
+}
+
+/* === FANTASY UI FINAL v1.3.0 === */
+:root{
+  --fantasy-ink:#2f1d10;
+  --fantasy-parchment:#ead7aa;
+  --fantasy-parchment-2:#d8bc82;
+  --fantasy-gold:#d7aa55;
+  --fantasy-gold-bright:#ffd67b;
+  --fantasy-navy:#0d1a28;
+  --fantasy-navy-2:#14283c;
+  --fantasy-wood:#28180f;
+  --fantasy-wood-2:#130d09;
+  --fantasy-red:#7d281f;
+  --fantasy-green:#285a2e;
+  --fantasy-blue:#174e7e;
+}
+.game{
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 50% -10%,rgba(61,93,126,.38),transparent 30rem),
+    linear-gradient(180deg,#07111c 0,#10151a 26rem,#110c08 100%) !important;
+  color:#efe6d2;
+  font-family:Georgia,"Times New Roman",serif;
+}
+.game button,.game input,.game select,.game textarea{font-family:inherit}
+.topbar{
+  position:sticky;top:0;z-index:60;
+  border-bottom:1px solid #73572f !important;
+  background:
+    linear-gradient(180deg,rgba(3,7,11,.12),rgba(4,9,15,.72)),
+    url("/ui/guild-night.webp") center 38%/cover no-repeat !important;
+  box-shadow:0 8px 24px rgba(0,0,0,.46);
+}
+.topbar::after{
+  content:"";position:absolute;inset:auto 0 0;height:3px;
+  background:linear-gradient(90deg,transparent,#6e542b 12%,#e0b25b 50%,#6e542b 88%,transparent)
+}
+.topbar-inner{max-width:1180px;min-height:92px;padding:10px 18px;gap:12px}
+.brand{min-width:0;align-items:center;gap:10px}
+.brand-mark{
+  width:48px;height:58px;border:1px solid #a98243;border-radius:4px;
+  background:linear-gradient(180deg,#183553,#091825);
+  color:#e6bb67;display:grid;place-items:center;box-shadow:inset 0 0 0 2px #0b1420,0 0 0 1px #301d0d
+}
+.brand-mark svg{width:31px;height:31px}
+.brand-title{
+  display:block;color:#f3d89e !important;font-size:clamp(25px,4.2vw,48px) !important;
+  font-weight:500;letter-spacing:.01em;text-shadow:0 2px 2px #000,0 0 18px rgba(222,177,88,.22)
+}
+.header-tools{display:flex;align-items:center;gap:8px}
+.header-currencies{display:grid;gap:4px}
+.header-currencies button{
+  height:34px;min-width:115px;padding:0 5px 0 8px;display:grid;grid-template-columns:20px 1fr 22px;gap:5px;align-items:center;
+  border:1px solid #775b31;border-radius:4px;background:linear-gradient(180deg,#1a2330,#090e14);color:#f2ead9;
+  box-shadow:inset 0 0 0 1px rgba(229,187,101,.08)
+}
+.header-currencies button:first-child svg{color:#f4ba35}
+.header-currencies button:nth-child(2) svg{color:#4ea9ff}
+.header-currencies button strong{font-size:16px;font-weight:500;text-align:right}
+.header-currencies button b{display:grid;place-items:center;height:22px;border-left:1px solid #72572f;color:#f1c567;font-size:20px;line-height:1}
+.help-button{width:38px;height:38px;border:1px solid #5e4b31 !important;border-radius:50%!important;background:#121b24!important;color:#d6bf8f!important}
+
+.workspace{max-width:1180px;padding:12px 18px 118px}
+.fantasy-command-nav{
+  position:sticky;top:92px;z-index:48;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;
+  margin:0 0 12px;padding:3px;border:1px solid #31485d;border-radius:4px;
+  background:linear-gradient(180deg,#142536,#07121e);box-shadow:0 5px 14px rgba(0,0,0,.35)
+}
+.fantasy-command-nav button{
+  min-height:50px;display:flex;align-items:center;justify-content:center;gap:7px;border:1px solid transparent;border-radius:3px;
+  background:linear-gradient(180deg,#15283a,#0a1723);color:#c3c8ca;font-size:17px
+}
+.fantasy-command-nav button svg{width:20px;height:20px}
+.fantasy-command-nav button[data-active="true"]{
+  color:#ffe8ad;border-color:#b9873e;background:linear-gradient(180deg,#795731,#3e2b19);
+  box-shadow:inset 0 0 0 1px rgba(255,224,159,.22),0 0 14px rgba(215,166,80,.25)
+}
+.guild-heading,.resources{border-color:#6d5634!important}
+.guild-heading h1,.section-heading h2,.panel-heading h2{font-family:Georgia,"Times New Roman",serif}
+.panel,.council-note,.merchant-intro,.empty-state{
+  border:1px solid #6f5737!important;border-radius:6px!important;
+  background:
+    linear-gradient(90deg,rgba(245,226,177,.96),rgba(225,199,143,.96))!important;
+  color:var(--fantasy-ink)!important;
+  box-shadow:0 6px 14px rgba(0,0,0,.25),inset 0 0 0 1px rgba(255,244,209,.28)!important
+}
+.panel p,.panel span,.panel small,.council-note p,.merchant-intro p,.empty-state p{color:#4b3827}
+.panel .muted,.muted{color:#79674d!important}
+.panel-heading{border-bottom-color:rgba(77,51,25,.22)!important}
+.panel-heading svg{color:#82551c}
+.section-heading{margin:8px 3px 10px}
+.section-heading .eyebrow{color:#c6a56a}
+.section-heading h2{color:#efd5a0;font-size:28px}
+.section-heading p{color:#aab7c0}
+.subtle-chip,.rank-badge{
+  border:1px solid #896e43!important;background:#ead6a6!important;color:#4f371f!important
+}
+
+/* Bottom navigation */
+.game .main-tabs{
+  position:fixed!important;z-index:70!important;bottom:0!important;left:0!important;right:0!important;width:100%!important;
+  min-height:82px!important;margin:0!important;padding:2px 4px env(safe-area-inset-bottom)!important;
+  display:grid!important;grid-template-columns:repeat(5,1fr)!important;
+  border:1px solid #6a512c!important;border-width:1px 0 0!important;border-radius:0!important;
+  background:linear-gradient(180deg,#15283a,#07111b)!important;box-shadow:0 -8px 24px rgba(0,0,0,.48)!important
+}
+.game .main-tabs [data-slot="tabs-trigger"]{
+  position:relative;min-width:0!important;min-height:76px!important;padding:5px 1px!important;display:flex!important;
+  flex-direction:column!important;gap:4px!important;justify-content:center!important;border:0!important;border-radius:0!important;
+  color:#d7d5cb!important;font-size:13px!important
+}
+.game .main-tabs [data-slot="tabs-trigger"]>svg{
+  width:34px!important;height:34px!important;padding:7px;border:1px solid #7a623d;border-radius:50%;
+  background:radial-gradient(circle,#26394b,#101d29 68%);color:#d9c18b
+}
+.game .main-tabs [data-slot="tabs-trigger"][data-state="active"]{
+  color:#fff0b8!important;background:linear-gradient(180deg,rgba(40,83,120,.28),rgba(9,24,37,.2))!important;
+  box-shadow:inset 0 -3px #45b9ff!important
+}
+.game .main-tabs [data-slot="tabs-trigger"][data-state="active"]>svg{
+  border-color:#8fd9ff;color:#fff0a3;box-shadow:0 0 12px #27aef2,0 0 20px rgba(44,167,232,.36)
+}
+.nav-notice{
+  position:absolute;top:7px;left:calc(50% + 12px);width:8px;height:8px;border-radius:50%;background:#ff3535;
+  box-shadow:0 0 7px #ff3535
+}
+
+/* Mission contracts */
+.mission-section{margin-top:4px}
+.parchment-contract-board{display:grid;gap:8px}
+.parchment-contract{
+  display:grid!important;grid-template-columns:minmax(130px,31%) minmax(0,69%)!important;overflow:hidden;
+  border:1px solid #80633a!important;border-radius:8px!important;background:#dfc58f!important;color:#321e10!important;
+  box-shadow:0 6px 12px rgba(0,0,0,.32),inset 0 0 0 1px rgba(255,242,202,.34)
+}
+.contract-art{min-height:166px!important;background:#1a120c!important}
+.contract-art img{height:100%!important;min-height:166px!important;width:100%;object-fit:cover!important}
+.contract-art>span{border-color:#d7a954!important;background:#19140fd9!important;color:#f6d486!important}
+.contract-copy{padding:9px 11px!important;background:
+  linear-gradient(90deg,rgba(245,226,176,.98),rgba(225,198,141,.98)),
+  repeating-linear-gradient(0deg,rgba(84,51,19,.04) 0 1px,transparent 1px 4px)!important}
+.contract-title-row h3{color:#4d1d16!important;font-size:22px!important}
+.contract-title-row small{color:#79562f!important}
+.contract-copy>p{color:#4b3725!important}
+.contract-difficulty,.contract-specialists{border-color:rgba(83,56,27,.2)!important}
+.contract-difficulty strong,.contract-specialists>small{color:#513820!important}
+.contract-specialists span{border-color:#9a7b49!important;background:#e6d19d!important;color:#3e2b1c!important}
+.contract-rewards>span{color:#4e371f!important}
+.contract-drop-hints>span{border-color:#6f5633!important;background:#241c14!important}
+.contract-prepare{
+  border:1px solid #ad8140!important;border-radius:5px!important;color:#fff2cf!important;
+  background:linear-gradient(180deg,#35673a,#16421f)!important;box-shadow:inset 0 0 0 2px rgba(255,219,143,.12),0 2px #25170b!important
+}
+.parchment-contract[data-chosen="true"] .contract-prepare{background:linear-gradient(180deg,#8c3b2c,#531d18)!important}
+.parchment-contract[data-chosen="true"]{outline:2px solid rgba(219,173,85,.42)}
+
+/* Expedition + teams */
+.expedition-dock{
+  padding:10px!important;border:1px solid #775c35!important;border-radius:6px!important;
+  background:linear-gradient(180deg,#302016,#17100c)!important;color:#ead6a5!important
+}
+.expedition-dock-heading strong{color:#f0d294!important}
+.expedition-dock-heading span,.expedition-dock-note{color:#ad9c82!important}
+.expedition-dock-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:7px!important}
+.expedition-mini-card{
+  min-height:148px!important;padding:8px!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:stretch!important;gap:5px!important;
+  border:1px solid #866a3e!important;border-radius:5px!important;background:
+    radial-gradient(circle at 50% 20%,rgba(64,101,114,.25),transparent 45%),
+    linear-gradient(180deg,#243143,#1a120e)!important;color:#efe2c5!important
+}
+.expedition-mini-card[data-status="active"]{border-color:#4f9161!important}
+.expedition-free-slot{border-style:dashed!important;opacity:.88}
+.expedition-slot-number{align-self:center!important;background:#1b1714!important;border:1px solid #745a36!important;color:#f0cf88!important}
+.expedition-mini-copy{text-align:center}
+.expedition-mini-copy strong{font-size:13px!important;color:#f2dfb7!important}
+.expedition-mini-copy small{font-size:10px!important;color:#b7aa91!important}
+.expedition-mini-team{justify-content:center}
+.expedition-mini-icon{align-self:center;color:#d9af60}
+.expedition-mini-card>svg{display:none}
+
+/* roster / heroes */
+.roster-panel,.saved-squads-panel{background:linear-gradient(90deg,#ecd8a8,#d8bd84)!important}
+.mobile-roster{display:grid;gap:7px}
+.mobile-hero{
+  min-height:88px!important;padding:7px!important;display:grid!important;grid-template-columns:auto minmax(0,1fr) 32px!important;gap:8px!important;
+  border:1px solid #7d6038!important;border-radius:5px!important;background:
+    linear-gradient(90deg,#ecd6a4,#d8bb80)!important;color:#3a2717!important
+}
+.mobile-hero[data-selected="true"]{box-shadow:inset 0 0 0 2px #d5a54d!important}
+.mobile-hero .hero-portrait{width:62px!important;height:62px!important;border:2px solid #6b4a25!important;border-radius:5px!important}
+.mobile-hero-info strong{color:#4a2116!important;font-size:16px!important}
+.mobile-hero-info>span,.mobile-hero-info small{color:#63492e!important}
+.mobile-hero .energy span{color:#4f3822!important}
+.mobile-hero button{color:#6e4a1e!important}
+.hero-guidance{
+  border:1px solid #76603d!important;background:linear-gradient(90deg,#e7cf9d,#caaa71)!important;color:#4f3520!important
+}
+.hero-dialog{
+  border:2px solid #7a5b33!important;background:
+    linear-gradient(90deg,#ead5a5,#d4b67d)!important;color:#351f12!important;
+  box-shadow:0 18px 60px #000a!important
+}
+.hero-dialog [data-slot="dialog-title"]{color:#4a1d16!important;font-family:Georgia,"Times New Roman",serif;font-size:28px!important}
+.hero-dialog [data-slot="dialog-description"]{color:#5b422d!important}
+.hero-detail-heading .hero-portrait{border:3px solid #a27b38!important;box-shadow:0 0 0 2px #3a2614!important}
+.hero-dialog .detail-stats>div,.hero-dialog .detail-progress,.hero-scars,.hero-equipment{
+  border-color:#8a6c42!important;background:rgba(255,242,200,.22)!important;color:#3c2919!important
+}
+.hero-dialog h3,.hero-dialog strong{color:#4a2719}
+.hero-equipment .equipment-slot{border-color:#8c6c3d!important;background:#d9bd82!important}
+.hero-chest-link{border-color:#496889!important;background:#183d60!important;color:#fff!important}
+
+/* inventory */
+.inventory-tabs>[data-slot="tabs-list"],.inventory-filter{
+  border:1px solid #695334!important;border-radius:5px!important;background:#142333!important
+}
+.inventory-tabs [data-slot="tabs-trigger"],.inventory-filter [data-slot="toggle-group-item"]{
+  color:#c7c4b8!important;border-color:#3f4a54!important
+}
+.inventory-tabs [data-slot="tabs-trigger"][data-state="active"],.inventory-filter [data-slot="toggle-group-item"][data-state="on"]{
+  color:#ffe0a0!important;background:linear-gradient(180deg,#694a27,#322115)!important;border-color:#b88843!important
+}
+.chest-summary{
+  border:1px solid #6a5436!important;background:linear-gradient(90deg,#261a12,#111922)!important;color:#dbc18f!important
+}
+.item-grid.chest-grid{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:6px!important}
+.item-card{
+  min-width:0!important;padding:6px!important;border-radius:4px!important;background:linear-gradient(180deg,#1d1b1a,#0f1215)!important;color:#f0e4cd!important
+}
+.item-card .item-card-top{display:grid!important;justify-items:center!important;gap:2px!important}
+.item-card .item-icon{width:100%!important;aspect-ratio:1!important;height:auto!important;max-width:86px!important;border-radius:4px!important;background:#141414!important}
+.item-card .item-card-top>span:not(.item-icon){font-size:8px!important;text-align:center!important;color:#c2ad87!important}
+.item-card h3{margin:3px 0!important;font-size:11px!important;line-height:1.15!important;text-align:center!important;color:#f0d8a8!important}
+.item-card>p{display:none!important}
+.item-card .item-owner{font-size:8px!important}
+.item-card .item-actions{display:grid!important;gap:3px!important}
+.item-card .item-actions button{min-height:28px!important;height:auto!important;padding:3px!important;font-size:9px!important}
+.merchant-intro{background:linear-gradient(90deg,#e7cf9b,#ceb078)!important;color:#392416!important}
+.inventory-pagination{color:#d8c299}
+
+/* Tavern */
+.recruit-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
+.recruit-card{
+  padding:8px!important;background:linear-gradient(180deg,#ead5a3,#d5b77e)!important;color:#3c2516!important
+}
+.recruit-card .recruit-top{margin:-8px -8px 6px!important;min-height:128px;overflow:hidden;border-bottom:1px solid #755936;background:#251a13}
+.recruit-card .portrait-large{width:100%!important;height:132px!important;border:0!important;border-radius:0!important;background-size:auto 132px!important}
+.recruit-card .location{color:#765532!important}
+.recruit-card h3{color:#4d2115!important;font-size:19px!important}
+.recruit-card p{display:none}
+.recruit-card .recruit-stats{border-color:#927449!important}
+.recruit-card .recruit-stats span,.recruit-card .recruit-salary{color:#4b3623!important}
+.recruit-card>button{background:linear-gradient(180deg,#8a3628,#521c18)!important;border:1px solid #a77538!important;color:#fff0ce!important}
+.market-switch{border-color:#6f5737!important;background:#121f2b!important}
+.market-switch [data-slot="toggle-group-item"][data-state="on"]{background:#59401f!important;color:#f5d998!important}
+.classes-guide-trigger{border-color:#795d33!important;color:#e9ca8e!important;background:#1b2630!important}
+
+/* guild */
+.guild-grid{gap:8px!important}
+.guild-grid .panel,.guild-base-panels>.panel,.guild-world-panels>.panel,.guild-war-panels>.panel{
+  background:linear-gradient(90deg,#ebd6a6,#d5b87f)!important;color:#3b2517!important
+}
+.guild-identity{position:relative}
+.guild-identity::before{
+  content:"";float:left;width:92px;height:118px;margin:0 12px 8px 0;border:1px solid #8c6a36;border-radius:4px;
+  background:linear-gradient(180deg,#17385a,#0c2136);box-shadow:inset 0 0 0 3px #0c1721
+}
+.guild-record>div{background:#d2b47a!important;border-color:#8d6c40!important;color:#402816!important}
+.treasury-panel table,.league-panel table{background:#ead4a2!important;color:#3a2619!important}
+.treasury-panel th,.treasury-panel td,.league-panel th,.league-panel td{border-color:#a88a5d!important;color:#3f2b1b!important}
+.guild-base-panels,.guild-world-panels,.guild-war-panels{gap:8px!important}
+.hq-building,.forge-recipe,.world-region,.war-card,.squad-progress-card{
+  border:1px solid #8a6c40!important;background:linear-gradient(90deg,#e9d3a1,#cfaf74)!important;color:#3a2415!important
+}
+.guild-subnav{border-color:#745b38!important;background:#132232!important}
+.guild-subnav [data-slot="toggle-group-item"][data-state="on"]{background:#624522!important;color:#ffe0a0!important}
+
+/* league */
+.fantasy-league-page{display:grid;gap:10px}
+.fantasy-league-page .league-panel,.fantasy-league-page .panel{
+  border:1px solid #765a36!important;background:linear-gradient(90deg,#ead4a0,#d2b276)!important;color:#3b2719!important
+}
+.fantasy-league-page .league-panel h2,.fantasy-league-page .league-panel h3{color:#4d2115!important}
+.league-position strong,.league-caption,.league-shortcuts{color:#4a3321!important}
+.league-panel .league-guild-link{color:#4b2a1b!important}
+.league-panel .league-guild-link:hover{color:#7f2c20!important}
+
+/* council */
+.council-banner{
+  margin-bottom:9px!important;background:linear-gradient(90deg,#ead3a0,#cfad72)!important;color:#3b2618!important
+}
+.council-banner .eyebrow{color:#7e5a2f!important}
+.council-banner strong{color:#4b2017!important}
+
+/* rest / sanctuary */
+.camp-panel{
+  position:relative;overflow:hidden;background:
+    linear-gradient(90deg,rgba(235,214,169,.96),rgba(213,183,126,.96))!important
+}
+.camp-panel::before{
+  content:"";display:block;height:150px;margin:-14px -14px 12px;
+  background:
+    linear-gradient(180deg,transparent,rgba(31,18,9,.25)),
+    url("/ui/guild-night.webp") center 55%/cover no-repeat;
+  border-bottom:1px solid #7a603b
+}
+.camp-panel>button{border-color:#825f30!important;background:linear-gradient(180deg,#356738,#1f4724)!important;color:#fff0c9!important}
+
+/* buttons */
+.game [data-slot="button"]{border-radius:5px}
+.game [data-slot="button"]:not([data-variant="ghost"]):not(.help-button):not(.contract-prepare){
+  border-color:#82663e
+}
+
+/* battle */
+[data-slot="dialog-content"].live-battle-dialog{
+  border:2px solid #74552f!important;background:#0b1016!important;color:#efe5cf!important;
+  box-shadow:0 20px 80px #000!important
+}
+.battle-fixed-header{
+  border-bottom:1px solid #74552f!important;background:
+    linear-gradient(180deg,rgba(6,12,19,.72),rgba(10,17,24,.96)),
+    url("/ui/guild-night.webp") center 34%/cover no-repeat!important
+}
+.battle-fixed-header [data-slot="dialog-title"]{color:#f0d39a!important;font-family:Georgia,"Times New Roman",serif}
+.battle-clock-bar,.playback-controls{
+  border-color:#624b2f!important;background:#111b26!important
+}
+.battle-scroll-area{
+  background:
+    linear-gradient(180deg,rgba(13,14,15,.06),rgba(18,12,8,.48)),
+    url("/ui/battle-night.webp") center/cover fixed no-repeat!important
+}
+.battle-combat-pane,.battle-log-pane,.battle-command-pane{min-width:0}
+.battle-arena{
+  padding:8px;border:1px solid rgba(186,143,71,.58);border-radius:6px;background:rgba(23,15,10,.46)!important;
+  box-shadow:inset 0 0 22px rgba(0,0,0,.45)
+}
+.battle-side{background:transparent!important;border:0!important}
+.battle-side-heading{color:#efd49d!important;border-bottom-color:#755835!important}
+.combatant{
+  border:1px solid #755a35!important;border-radius:5px!important;background:linear-gradient(90deg,rgba(26,18,13,.94),rgba(11,16,21,.94))!important;color:#f1dfbd!important
+}
+.combatant[data-side="enemy"]{border-color:#7b342d!important}
+.combatant-top strong{color:#f3dfb8!important}
+.combatant-top div>span{color:#baa98b!important}
+.combatant-life>span{color:#ead5ab!important}
+.combatant .hero-portrait,.enemy-portrait{border:1px solid #b48a44!important}
+.battle-objective,.live-log-heading,.battle-result-pane{
+  border-color:#775b35!important;background:linear-gradient(90deg,#e7cf9c,#cfae73)!important;color:#3b2517!important
+}
+.battle-objective strong,.live-log-heading h3{color:#4e2318!important}
+.battle-objective span,.live-log-heading span{color:#62472d!important}
+.live-battle-log{
+  border:1px solid #765b37!important;background:rgba(235,211,162,.96)!important;color:#392315!important
+}
+.log-line{border-bottom-color:#aa8a59!important}
+.log-line p{color:#422b1b!important}
+.log-line time{color:#7f5d34!important}
+.log-critical p,.log-fall p{color:#9a241e!important}
+.log-heal p{color:#286b31!important}
+.battle-subnav{display:none!important}
+.battle-actions{border-color:#765a35!important;background:#101a24!important}
+.mobile-auto-battle{display:none!important}
+
+/* consumables: exactly three clickable slots, no "usar" buttons */
+.narrative-consumables{
+  padding:8px!important;border:1px solid #745a36!important;border-radius:6px!important;
+  background:linear-gradient(180deg,rgba(14,23,31,.96),rgba(18,12,9,.96))!important;color:#ecd8aa!important
+}
+.battle-consumables-heading{display:flex;justify-content:space-between;gap:8px;align-items:end;margin-bottom:7px}
+.battle-consumables-heading .eyebrow{color:#b89557!important}
+.battle-consumables-heading h3{margin:1px 0;color:#f1d39a!important;font-size:20px}
+.battle-consumables-heading p{margin:0;color:#aa9a83!important;font-size:11px}
+.consumable-pending{max-width:130px;padding:4px 6px;border:1px solid #7f6a43;border-radius:4px;color:#f0d49a;font-size:9px;text-align:center}
+.combat-consumables-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.combat-consumable{
+  position:relative;min-width:0;min-height:74px;padding:7px 5px;display:grid;grid-template-columns:40px minmax(0,1fr);gap:6px;align-items:center;
+  border:2px solid #8b6734;border-radius:7px;color:#fff2d2;box-shadow:inset 0 0 0 1px rgba(255,231,173,.18),0 4px 8px rgba(0,0,0,.34)
+}
+.combat-consumable-red{background:linear-gradient(180deg,#8e3327,#531912)}
+.combat-consumable-green{background:linear-gradient(180deg,#39723c,#174620)}
+.combat-consumable-blue{background:linear-gradient(180deg,#24659a,#123c68)}
+.combat-consumable .item-icon{width:40px!important;height:40px!important;border:0!important;background:transparent!important}
+.combat-consumable .item-icon img{width:100%;height:100%;object-fit:contain}
+.combat-consumable span{display:grid;text-align:left}
+.combat-consumable strong{font-size:12px;line-height:1.05}
+.combat-consumable small{font-size:9px;color:#f0dfc0}
+.combat-consumable>b{position:absolute;top:4px;right:5px;padding:1px 4px;border-radius:4px;background:#0c0d0ecc;color:#fff;font-size:10px}
+.combat-consumable:disabled{filter:grayscale(.65);opacity:.48}
+.retreat-order{margin-top:6px!important;color:#b9a88d!important}
+.consumable-target-dialog{border:2px solid #80603a!important;background:#e4ca94!important;color:#321e11!important}
+.consumable-target-dialog [data-slot="dialog-title"]{color:#4d2116!important}
+.consumable-target-dialog [data-slot="dialog-description"]{color:#5b422b!important}
+.consumable-target-dialog .ability-target{border-color:#8b6b40!important;background:#d8ba7e!important;color:#3d2919!important}
+
+/* desktop polish */
+@media (min-width:761px){
+  .fantasy-command-nav{max-width:760px;margin-left:auto;margin-right:auto}
+  .parchment-contract-board{display:none!important}
+  .game .main-tabs{position:static!important;display:flex!important;min-height:54px!important;padding:0!important;border:1px solid #604b31!important;border-radius:5px!important;margin-bottom:12px!important}
+  .game .main-tabs [data-slot="tabs-trigger"]{min-height:52px!important;flex-direction:row!important}
+  .game .main-tabs [data-slot="tabs-trigger"]>svg{width:24px!important;height:24px!important;padding:4px!important}
+}
+
+/* mobile is the primary target */
+@media (max-width:760px){
+  body{background:#07111b}
+  .topbar-inner{min-height:84px!important;padding:7px 10px!important}
+  .brand-mark{width:38px!important;height:48px!important}
+  .brand-mark svg{width:25px!important;height:25px!important}
+  .brand-title{font-size:25px!important;line-height:1!important;white-space:nowrap}
+  .header-currencies button{height:28px;min-width:88px;grid-template-columns:16px 1fr 18px;font-size:11px}
+  .header-currencies button svg{width:15px;height:15px}
+  .header-currencies button strong{font-size:12px}
+  .header-currencies button b{height:18px;font-size:16px}
+  .help-button{display:none!important}
+
+  .workspace{padding:0 8px calc(98px + env(safe-area-inset-bottom))!important}
+  .fantasy-command-nav{top:84px;margin:0 -8px 8px;border-left:0;border-right:0;border-radius:0;padding:2px;gap:1px}
+  .fantasy-command-nav button{min-height:49px;padding:4px 2px;font-size:13px;gap:4px}
+  .fantasy-command-nav button svg{width:17px;height:17px}
+  .guild-heading,.resources{display:none!important}
+  .mobile-subnav:not(.guild-subnav){display:none!important}
+  .section-heading{margin:6px 2px 8px}
+  .section-heading .eyebrow{font-size:9px!important}
+  .section-heading h2{font-size:23px!important;margin:1px 0!important}
+  .section-heading p{display:none}
+  .subtle-chip{font-size:9px}
+
+  .parchment-contract-board{display:grid!important}
+  .desktop-mission-grid,.desktop-readiness{display:none!important}
+  .parchment-contract{grid-template-columns:104px minmax(0,1fr)!important}
+  .contract-art,.contract-art img{min-height:145px!important}
+  .contract-copy{padding:7px 8px!important}
+  .contract-title-row h3{font-size:18px!important}
+  .contract-copy>p{font-size:10px!important;margin:3px 0 4px!important;line-height:1.2!important;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+  .contract-difficulty{padding:3px 0!important}
+  .contract-difficulty strong{font-size:9px!important}
+  .contract-difficulty>span{font-size:9px!important}
+  .contract-specialists{padding:3px 0!important;display:block!important}
+  .contract-specialists>small{display:none!important}
+  .contract-specialists>div{justify-content:flex-start!important;gap:3px!important}
+  .contract-specialists span{font-size:8px!important;padding:2px 4px!important}
+  .contract-bottom{grid-template-columns:minmax(0,1fr) 90px!important;gap:5px!important}
+  .contract-rewards>span{font-size:9px!important}
+  .contract-drop-hints>span{width:22px!important;height:22px!important}
+  .contract-prepare{min-width:90px!important;width:90px!important;min-height:36px!important;padding:4px!important;font-size:10px!important}
+  .parchment-team-preview{min-height:46px!important}
+
+  .command-grid{display:block!important}
+  .command-grid>.main-column,.command-grid>aside{display:block!important}
+  .command-grid[data-mobile-view="mission"] .expedition-dock,
+  .command-grid[data-mobile-view="mission"] .roster-panel,
+  .command-grid[data-mobile-view="mission"] .saved-squads-panel,
+  .command-grid[data-mobile-view="mission"] .strategy-panel,
+  .command-grid[data-mobile-view="mission"] aside{display:none!important}
+  .command-grid[data-mobile-view="team"] .mission-section,
+  .command-grid[data-mobile-view="team"] .strategy-panel,
+  .command-grid[data-mobile-view="team"] aside{display:none!important}
+  .command-grid[data-mobile-view="team"] .expedition-dock,
+  .command-grid[data-mobile-view="team"] .roster-panel,
+  .command-grid[data-mobile-view="team"] .saved-squads-panel{display:block!important}
+  .command-grid[data-mobile-view="league"] .mission-section,
+  .command-grid[data-mobile-view="league"] .roster-panel,
+  .command-grid[data-mobile-view="league"] .saved-squads-panel,
+  .command-grid[data-mobile-view="league"] .strategy-panel,
+  .command-grid[data-mobile-view="league"] aside{display:none!important}
+  .command-grid[data-mobile-view="league"] .expedition-dock{display:block!important}
+  .command-grid[data-mobile-view="camp"]>.main-column>*{display:none!important}
+  .command-grid[data-mobile-view="camp"]>aside{display:block!important}
+  .command-grid[data-mobile-view="camp"]>aside>*:not(.camp-panel){display:none!important}
+
+  .expedition-dock{padding:7px!important}
+  .expedition-dock-heading{margin-bottom:6px}
+  .expedition-dock-heading>span,.expedition-dock-note{display:none}
+  .expedition-dock-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:4px!important}
+  .expedition-mini-card{min-height:126px!important;padding:5px!important}
+  .expedition-slot-number{font-size:8px!important;padding:2px 4px!important}
+  .expedition-mini-copy strong{font-size:10px!important}
+  .expedition-mini-copy small{font-size:8px!important}
+  .expedition-mini-team .hero-portrait{width:20px!important;height:20px!important}
+
+  .roster-panel,.saved-squads-panel{padding:8px!important}
+  .roster-panel .panel-heading h2{font-size:18px!important}
+  .mobile-roster{grid-template-columns:1fr!important}
+  .mobile-hero{min-height:78px!important}
+  .mobile-hero .hero-portrait{width:54px!important;height:54px!important}
+  .mobile-hero-info strong{font-size:14px!important}
+  .mobile-hero-info>span{font-size:10px!important}
+  .energy span{font-size:10px!important}
+  .saved-squads-grid{grid-template-columns:1fr!important}
+
+  .item-grid.chest-grid{grid-template-columns:repeat(4,minmax(0,1fr))!important}
+  .item-card{padding:4px!important}
+  .item-card .item-icon{max-width:none!important}
+  .item-card h3{font-size:9px!important}
+  .item-card .item-actions button{font-size:8px!important}
+  .chest-summary{display:grid!important;grid-template-columns:repeat(3,1fr)!important;gap:0!important;padding:4px!important}
+  .chest-summary span{font-size:9px!important}
+  .inventory-filter{display:grid!important;grid-template-columns:repeat(3,1fr)!important}
+  .inventory-filter [data-slot="toggle-group-item"]{min-height:34px!important;font-size:9px!important;padding:3px!important}
+  .inventory-tabs>[data-slot="tabs-list"] [data-slot="tabs-trigger"]{font-size:11px!important;min-height:40px!important}
+
+  .recruit-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .recruit-card .recruit-top{min-height:112px!important}
+  .recruit-card .portrait-large{height:116px!important;background-size:auto 116px!important}
+  .recruit-card h3{font-size:15px!important}
+  .recruit-card .location{font-size:9px!important}
+  .recruit-card .recruit-stats{font-size:9px!important}
+  .recruit-card .recruit-salary{font-size:9px!important}
+  .recruit-card>button{min-height:38px!important;font-size:10px!important;padding:4px!important}
+
+  .guild-subnav{display:flex!important;position:static!important;overflow-x:auto!important;gap:2px!important;margin-bottom:6px!important}
+  .guild-subnav [data-slot="toggle-group-item"]{min-width:max-content!important;font-size:9px!important;padding:4px 7px!important}
+  .guild-grid[data-mobile-view]>*{display:none!important}
+  .guild-grid[data-mobile-view="summary"] .guild-identity,
+  .guild-grid[data-mobile-view="summary"] .guild-base-panels,
+  .guild-grid[data-mobile-view="base"] .guild-base-panels,
+  .guild-grid[data-mobile-view="world"] .guild-world-panels,
+  .guild-grid[data-mobile-view="war"] .guild-war-panels,
+  .guild-grid[data-mobile-view="treasury"] .treasury-panel,
+  .guild-grid[data-mobile-view="chronicles"] .council-note{display:block!important}
+  .guild-grid[data-mobile-view="summary"] .guild-base-panels{display:grid!important}
+  .guild-base-panels,.guild-world-panels,.guild-war-panels{display:grid!important;grid-template-columns:1fr!important}
+  .guild-grid .panel{padding:9px!important}
+  .guild-record{grid-template-columns:repeat(3,1fr)!important}
+  .guild-record strong{font-size:18px!important}
+  .guild-record span{font-size:8px!important}
+
+  .fantasy-league-page{padding-top:4px}
+  .fantasy-league-page .league-panel{overflow-x:auto!important}
+  .fantasy-league-page table{min-width:520px}
+  .fantasy-league-page .guild-war-panel{margin-top:8px}
+
+  .camp-panel{padding:9px!important}
+  .camp-panel::before{height:128px;margin:-9px -9px 8px}
+  .camp-panel .panel-heading h2{font-size:22px!important}
+
+  /* full-screen battle in one continuous screen */
+  [data-slot="dialog-content"].live-battle-dialog{
+    position:fixed!important;inset:0!important;width:100vw!important;max-width:100vw!important;height:100dvh!important;max-height:100dvh!important;
+    margin:0!important;border-radius:0!important;transform:none!important;translate:0 0!important;animation:none!important;
+    display:flex!important;flex-direction:column!important
+  }
+  .battle-fixed-header{flex:0 0 auto;padding:6px 8px!important}
+  .battle-fixed-header [data-slot="dialog-description"]{display:none!important}
+  .battle-title [data-slot="dialog-title"]{font-size:18px!important}
+  .battle-clock-bar{padding:5px 7px!important}
+  .battle-clock output{font-size:13px!important}
+  .battle-clock-status span{display:none!important}
+  .battle-clock-status strong{font-size:10px!important}
+  .playback-controls{padding:4px 7px!important;min-height:34px!important}
+  .playback-controls>button{min-height:32px!important;height:32px!important;font-size:9px!important}
+  .speed-picker [data-slot="toggle-group-item"]{min-width:32px!important;min-height:32px!important;font-size:9px!important}
+  .battle-scroll-area{
+    flex:1!important;min-height:0!important;overflow-y:auto!important;padding:6px!important;display:flex!important;flex-direction:column!important;gap:6px!important
+  }
+  .battle-scroll-area>div{display:grid!important}
+  .battle-combat-pane{order:1!important}
+  .battle-log-pane{order:2!important}
+  .battle-command-pane{order:3!important}
+  .battle-result-pane{order:4!important}
+  .battle-objective{padding:6px!important}
+  .battle-objective span{font-size:9px!important}
+  .battle-live-note{font-size:9px!important}
+  .battle-arena{grid-template-columns:1fr 1fr!important;gap:5px!important;padding:5px!important}
+  .battle-side-heading{padding:2px 0!important}
+  .battle-side-heading h3{font-size:11px!important}
+  .combatants-grid{gap:4px!important}
+  .combatant{padding:5px!important}
+  .combatant-top{gap:4px!important}
+  .combatant .hero-portrait,.combatant .enemy-portrait{width:30px!important;height:30px!important}
+  .combatant-top strong{font-size:10px!important}
+  .combatant-top div>span{display:block!important;font-size:7px!important}
+  .combatant-life>span{font-size:8px!important;margin-bottom:2px!important}
+  .combatant-life [data-slot="progress"]{height:7px!important}
+  .live-log-heading{padding:5px 7px!important}
+  .live-log-heading h3{font-size:12px!important}
+  .live-battle-log{min-height:86px!important;max-height:130px!important;padding:4px 6px!important}
+  .live-battle-log .log-line{grid-template-columns:33px 1fr!important;font-size:9px!important;padding:3px 0!important}
+  .battle-command-pane{display:block!important}
+  .narrative-consumables{padding:6px!important}
+  .battle-consumables-heading{margin-bottom:5px!important}
+  .battle-consumables-heading .eyebrow,.battle-consumables-heading p{display:none!important}
+  .battle-consumables-heading h3{font-size:15px!important}
+  .combat-consumables-grid{gap:4px!important}
+  .combat-consumable{min-height:58px!important;padding:4px!important;grid-template-columns:32px minmax(0,1fr)!important;gap:3px!important}
+  .combat-consumable .item-icon{width:32px!important;height:32px!important}
+  .combat-consumable strong{font-size:9px!important}
+  .combat-consumable small{display:none!important}
+  .combat-consumable>b{font-size:8px!important}
+  .retreat-order{min-height:28px!important;font-size:8px!important}
+  .battle-actions{display:none!important}
+}
+@media (max-width:390px){
+  .brand-title{font-size:22px!important}
+  .header-currencies button{min-width:78px}
+  .parchment-contract{grid-template-columns:92px minmax(0,1fr)!important}
+  .contract-title-row h3{font-size:16px!important}
+  .contract-bottom{grid-template-columns:minmax(0,1fr) 80px!important}
+  .contract-prepare{width:80px!important;min-width:80px!important;font-size:9px!important}
+  .expedition-mini-card{min-height:118px!important}
+  .item-grid.chest-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+}

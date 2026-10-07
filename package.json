@@ -1,6 +1,6 @@
 {
   "name": "cronicas-da-guilda-standalone",
-  "version": "1.2.5",
+  "version": "1.3.0",
   "private": true,
   "engines": {
     "node": ">=22.13.0"
@@ -11,7 +11,7 @@
     "preview": "vite preview --host 0.0.0.0",
     "deploy": "npm run build && wrangler deploy",
     "typecheck": "tsc --noEmit",
-    "smoke": "node --experimental-strip-types scripts/test-multi-expeditions.ts"
+    "smoke": "node --experimental-strip-types scripts/test-multi-expeditions.ts && node --experimental-strip-types scripts/test-v130-world.ts && node --experimental-strip-types scripts/test-battle-consumables.ts"
   },
   "dependencies": {
     "class-variance-authority": "0.7.1",

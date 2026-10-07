@@ -1,43 +1,75 @@
-"use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Coins, Swords, Shield, Sparkles, Heart, Target, Sword, Trophy, Users, Tent, BookOpen, CircleHelp, LoaderCircle, HardDrive, Hammer, Crown, Check, X, Pencil, ScrollText, Flag, Skull, Trees, Pause, Play, Clock3, Archive, LockKeyhole, ChevronLeft, ChevronRight, Download, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from "@/components/ui/alert-dialog";
-import { Progress } from "@/components/ui/progress";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Input } from "@/components/ui/input";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Toaster, toast } from "sonner";
-import { CLASSES, RACES, heroRace, TACTICS, ITEMS, REGIONS, SPECIALIZATIONS, KIND_NAMES, missions, missionLocks, seasonBoss, battleActive, activeExpeditions, freeExpeditionSlots, heroOnExpedition, SQUAD_SPECIALTIES, suggestSpecialistTeam, heroStats, talentPoints, market, teamPower, rating, threshold, available, standings, payroll, rank, seasonDay, missionReadiness, trainingPlan, defaultFormationLine, formationValid, SCAR_DEFINITIONS, type Action, type BattleFighter, type Campaign, type Hero, type HeroClass, type HeroRace, type Tactic, type FormationLine, type MissionKind, type ExpeditionSlot } from "@/lib/game";
-import { battleFrame, battleTimeline, advanceBattleClock, formatBattleClock, type PlaybackSpeed, type BattleEvent } from "@/lib/battle-playback";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import {
+  Archive, BookOpen, Check, ChevronRight, CircleHelp, Coins, Crown, Download,
+  Flag, Hammer, Heart, LockKeyhole, ScrollText, Shield, Sparkles, Swords,
+  Target, Tent, Trophy, Upload, Users, X
+} from "lucide-react";
+import {
+  CLASSES, RACES, TACTICS, ITEMS, KIND_NAMES, PATH_NAMES, RACIAL_PATH_NAMES,
+  SPECIALIZATIONS, SPECIALIZATION_BRANCHES, RACE_TREES, HERO_STORIES,
+  HQ_DEFINITIONS, WORLD_MAP, CRAFTING_RECIPES, NEGOTIATION_MODES, JOURNEY_CHOICES,
+  activeExpeditions, freeExpeditionSlots, available, activeJourney, heroOnExpedition,
+  heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, seasonBoss,
+  teamPower, standings, leaguePrize, market, shop, talentPoints, racialPoints,
+  trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
+  hqUpgradeCost, academySlots, negotiationQuote, rank,
+  type Action, type Battle, type BattleConsumableKey, type Campaign, type ChestItem,
+  type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
+  type Hero, type HQBuilding, type JourneyChoice, type JourneyDuration,
+  type Mission, type NegotiationMode, type RacialPath, type TalentPath, type Tactic
+} from "@/lib/game";
+import {
+  exportLocalCampaign, importLocalCampaign, readLocalCampaign, updateLocalCampaign,
+  type LocalSave
+} from "@/lib/local-save";
 import { portraitPosition } from "@/lib/portraits";
-import { EventPanel, SeasonJourney, ChestAndShop, SpecializationPanel, RaceEvolutionPanel, HeroStoryPanel, JourneyPanel, HeroEquipment, BattleOrders, ItemIcon, IndividualTraining, ClassesGuide } from "./game-dynamics";
-import { LeagueTable, RivalRecruitment } from "./guild-market";
-import { WorldMapPanel, HeadquartersPanel, ForgePanel, GuildWarPanel, SquadProgressPanel } from "./v130-panels";
-import { exportLocalCampaign, importLocalCampaign, readLocalCampaign, updateLocalCampaign, type LocalSave } from "@/lib/local-save";
+
+type Save = Pick<LocalSave, "state" | "revision">;
+type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "chest" | "tavern" | "guild";
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
-function Energy({ hero }: { hero: Hero }) {
-  return <div className={"energy " + (hero.energy < 40 ? "energy-low" : "")}><span>{hero.energy}%</span><Progress value={hero.energy} aria-label={"Energia de " + hero.name} /></div>;
+const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp"];
+const itemSlots = new Set(["weapon","offhand","helmet","armor","gloves","boots","accessory"]);
+
+function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" | "class" | "race">; large?: boolean }) {
+  return <span
+    className={"hero-portrait" + (large ? " hero-portrait-large" : "")}
+    style={{ backgroundPosition: portraitPosition(hero.name, hero.id, hero.class, heroRace(hero)) }}
+    role="img"
+    aria-label={"Retrato de " + hero.name}
+  />;
 }
-function Portrait({ hero, large = false }: { hero: { id?: string; name: string; class?: HeroClass; race?: HeroRace }; large?: boolean }) {
-  const race = hero.class ? heroRace({ id: hero.id || hero.name, name: hero.name, class: hero.class, race: hero.race }) : undefined;
-  return <span role="img" aria-label={"Retrato de " + hero.name} className={"hero-portrait " + (large ? "portrait-large" : "")} style={{ backgroundPosition: portraitPosition(hero.name, hero.id, hero.class, race) }} />;
+
+function ItemArt({ itemKey }: { itemKey: string }) {
+  const def = ITEMS[itemKey];
+  return <span className={"item-art rarity-" + (def?.rarity || "common")}>
+    <Archive className="item-fallback" />
+    <img
+      src={"/items/" + itemKey + ".svg"}
+      alt={def?.name || itemKey}
+      onError={e => { e.currentTarget.style.display = "none"; }}
+    />
+  </span>;
 }
-function enemyPortraitKey(name: string) {
+
+function ProgressBar({ value, tone = "green" }: { value: number; tone?: "green" | "red" | "blue" | "gold" }) {
+  return <span className={"progress progress-" + tone}><i style={{ width: Math.max(0, Math.min(100, value)) + "%" }} /></span>;
+}
+
+function ParchmentTitle({ icon, title, side }: { icon?: ReactNode; title: string; side?: ReactNode }) {
+  return <div className="parchment-title"><span>{icon}</span><h2>{title}</h2>{side && <div className="title-side">{side}</div>}</div>;
+}
+
+function enemyArtKey(name: string) {
   const n = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   if (n.includes("matriarca")) return "matriarch";
-  if (n.includes("senhor da fronteira")) return "border_lord";
+  if (n.includes("senhor")) return "border_lord";
   if (n.includes("vigia")) return "watcher";
-  if (n.includes("cavaleiro espectral")) return "spectral_knight";
-  if (n.includes("guardiao de obsidiana")) return "obsidian_guardian";
-  if (n.includes("guardiao antigo")) return "ancient_guardian";
+  if (n.includes("cavaleiro")) return "spectral_knight";
+  if (n.includes("obsidiana")) return "obsidian_guardian";
+  if (n.includes("guardiao") || n.includes("guardião")) return "ancient_guardian";
   if (n.includes("guerreiro draco")) return "drake_warrior";
-  if (n.includes("salteador draconico")) return "draconic_raider";
+  if (n.includes("salteador dracon")) return "draconic_raider";
   if (n.includes("draco")) return "wild_drake";
   if (n.includes("cultista")) return "cultist";
   if (n.includes("goblin")) return "goblin";
@@ -52,498 +84,552 @@ function enemyPortraitKey(name: string) {
   if (n.includes("saqueador")) return "raider";
   return "bandit";
 }
-const CONTRACT_DIFFICULTY = ["", "Muito baixa", "Baixa", "Média", "Alta", "Muito alta"];
-function contractSpecialists(kind: MissionKind) {
-  const map: Record<MissionKind, HeroClass[]> = {
-    escort: ["ranger", "warrior"],
-    defense: ["paladin", "healer"],
-    dungeon: ["rogue", "mage"],
-    hunt: ["ranger", "rogue"],
-    boss: ["warrior", "healer"],
-  };
-  return map[kind] || ["warrior", "healer"];
-}
-function contractDropHints(rank: number, kind: MissionKind) {
-  const base = rank <= 1 ? ["healing_potion", "iron_sword", "leather_armor"]
-    : rank === 2 ? ["swift_boots", "amber_ring", "hunter_bow"]
-    : rank === 3 ? ["star_pendant", "sentinel_armor", "runic_staff"]
-    : rank === 4 ? ["ancient_armor", "dawn_blade", "dragon_fang"]
-    : ["royal_relic", "ancient_idol", "ash_staff"];
-  return kind === "dungeon" ? [...base.slice(0, 2), "secret_map"] : base;
-}
-function contractWinXp(rank: number) { return 30 + rank * 23; }
 
-function EnemyPortrait({ name }: { name: string }) {
-  const key = enemyPortraitKey(name);
-  return <span className="enemy-portrait" role="img" aria-label={"Retrato de " + name}><img src={"/enemies/" + key + ".webp"} alt="" onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = "/enemies/fallback.webp"; }} /></span>;
+function TopBar({ state, goGuild }: { state: Campaign; goGuild: () => void }) {
+  return <header className="game-header">
+    <div className="header-banner"><Crown /></div>
+    <div className="header-title">CRÔNICAS DA GUILDA</div>
+    <div className="header-resources">
+      <button onClick={goGuild}><Coins /><strong>{fmt(state.gold)}</strong><b>+</b></button>
+      <button onClick={goGuild}><Sparkles /><strong>{fmt(state.fame)}</strong><b>+</b></button>
+    </div>
+    <button className="header-settings" onClick={goGuild} aria-label="Configurações">⚙</button>
+  </header>;
 }
-function FighterCard({ fighter, impact, elapsed }: { fighter: BattleFighter; impact?: BattleEvent; elapsed: number }) {
-  const hit = impact?.log.targetId === fighter.id && elapsed - impact.at < 1.2;
-  const healing = hit && impact?.log.kind === "heal";
-  return <div className={"combatant " + (fighter.hp === 0 ? "combatant-fallen " : "") + (hit ? healing ? "combatant-healing" : "combatant-hit" : "")} data-side={fighter.side}>
-    <div className="combatant-top">{fighter.side === "hero" ? <Portrait hero={fighter} /> : <EnemyPortrait name={fighter.name} />}<div><strong title={fighter.name}>{fighter.name}</strong><span>{fighter.hp === 0 ? fighter.side === "hero" ? "Fora de combate" : "Derrotado" : fighter.class ? CLASSES[fighter.class].name + (fighter.position ? " · " + (fighter.position === "front" ? "Frente" : "Retaguarda") : "") : "Inimigo"}</span></div>{hit && typeof impact?.log.amount === "number" && <span className={"combatant-impact " + (healing ? "impact-heal" : "")}>{healing ? "+" : "−"}{impact.log.amount}</span>}</div>
-    <div className="combatant-life"><span>{fighter.hp} / {fighter.maxHp} PV</span><Progress value={fighter.hp / fighter.maxHp * 100} aria-label={"Vida de " + fighter.name} aria-valuetext={fighter.hp + " de " + fighter.maxHp + " pontos de vida"} /></div>
+
+function TopNav({ screen, go }: { screen: Screen; go: (s: Screen) => void }) {
+  const tabs: Array<[Screen,string,ReactNode]> = [
+    ["mission","Missão",<Swords key="m" />],
+    ["team","Equipe",<Users key="e" />],
+    ["league","Liga",<Trophy key="l" />],
+    ["rest","Descanso",<Tent key="d" />],
+  ];
+  return <nav className="top-nav">{tabs.map(([id,label,icon]) =>
+    <button key={id} data-active={screen === id} onClick={() => go(id)}>{icon}<span>{label}</span></button>
+  )}</nav>;
+}
+
+function BottomNav({ screen, go }: { screen: Screen; go: (s: Screen) => void }) {
+  const missionActive = ["mission","team","league","rest"].includes(screen);
+  const tabs: Array<[Screen,string,ReactNode,boolean]> = [
+    ["mission","Missões",<Target key="m" />,missionActive],
+    ["heroes","Heróis",<Shield key="h" />,screen === "heroes"],
+    ["chest","Baú",<Archive key="b" />,screen === "chest"],
+    ["tavern","Taverna",<span className="beer-icon" key="t">🍺</span>,screen === "tavern"],
+    ["guild","Guilda",<Crown key="g" />,screen === "guild"],
+  ];
+  return <nav className="bottom-nav">{tabs.map(([id,label,icon,active]) =>
+    <button key={id} data-active={active} onClick={() => go(id)}>{icon}<span>{label}</span></button>
+  )}</nav>;
+}
+
+function MissionPage({
+  state, selectedId, selectMission, goTeam
+}: {
+  state: Campaign; selectedId: string; selectMission: (id: string) => void; goTeam: () => void;
+}) {
+  const board = missions(state);
+  const boss = seasonBoss(state);
+  const cards = [...board, ...(boss ? [boss] : [])].slice(0,5);
+  return <section className="screen mission-screen">
+    <div className="mission-list">
+      {cards.map((m, index) => {
+        const locks = missionLocks(state, m);
+        const selected = m.id === selectedId;
+        return <article className="mission-card" data-selected={selected} data-locked={!!locks.length} key={m.id}>
+          <div className="mission-art"><img src={missionArt[index % missionArt.length]} alt="" /><span>{KIND_NAMES[m.kind]}</span></div>
+          <div className="mission-copy">
+            <h2>{m.title}</h2>
+            <p>{m.description}</p>
+            <div className="difficulty"><b>Dificuldade:</b>{[0,1,2,3,4].map(i => <i key={i} data-on={i < m.rank}>◆</i>)}</div>
+            <div className="specialist"><Target /><span>Especialistas: {m.specialty}</span></div>
+            {!!locks.length && <small className="locked-copy"><LockKeyhole /> {locks[0]}</small>}
+          </div>
+          <div className="mission-rewards">
+            <span><Coins /> {m.reward} Ouro</span>
+            <span><Sparkles /> +{20 + m.rank * 15} XP</span>
+            <span><Archive /> Saque Nv. {m.rank}</span>
+            <button
+              className={"action-button " + (index % 3 === 0 ? "red" : index % 3 === 1 ? "green" : "blue")}
+              disabled={!!locks.length}
+              onClick={() => { selectMission(m.id); goTeam(); }}
+            >{locks.length ? "Bloqueada" : selected ? "Preparar" : "Aceitar"}</button>
+          </div>
+        </article>;
+      })}
+    </div>
+  </section>;
+}
+
+function TeamPage({
+  state, selectedMission, team, formation, tactic, slot, busy,
+  setTeam, setFormation, setTactic, setSlot, act, openBattle
+}: {
+  state: Campaign; selectedMission: Mission; team: string[]; formation: Record<string, FormationLine>;
+  tactic: Tactic; slot: ExpeditionSlot; busy: boolean;
+  setTeam: (ids: string[]) => void; setFormation: (map: Record<string, FormationLine>) => void;
+  setTactic: (t: Tactic) => void; setSlot: (s: ExpeditionSlot) => void;
+  act: (a: Action) => void; openBattle: (id: string) => void;
+}) {
+  const running = activeExpeditions(state);
+  const free = freeExpeditionSlots(state);
+  const power = teamPower(state, team);
+  const readiness = missionReadiness(state, selectedMission, team);
+  const selectedHeroes = state.heroes.filter(h => team.includes(h.id));
+  const toggle = (h: Hero) => {
+    if (team.includes(h.id)) {
+      if (team.length <= 3) return;
+      setTeam(team.filter(id => id !== h.id));
+      return;
+    }
+    if (team.length >= 4 || !available(h, state)) return;
+    const next = [...team, h.id];
+    const map = { ...formation, [h.id]: defaultFormationLine(h.class) };
+    if (!formationValid(next, map)) map[next[0]] = "front";
+    setTeam(next); setFormation(map);
+  };
+  const canSend = free.includes(slot) && !missionLocks(state, selectedMission).length && team.length >= 3 && team.length <= 4 && team.every(id => {
+    const h = state.heroes.find(x => x.id === id); return !!h && available(h, state);
+  });
+  return <section className="screen team-screen">
+    <ParchmentTitle icon={<Target />} title="Expedições da Guilda" side={<small>Organize suas equipes e envie heróis.</small>} />
+    <div className="expedition-grid">
+      {([1,2,3] as ExpeditionSlot[]).map(s => {
+        const exp = running.find(e => e.slot === s);
+        return <article key={s} className={"expedition-card " + (exp ? "active" : "")}>
+          <b>Expedição {s}</b>
+          {exp ? <>
+            <img src={s === 1 ? "/reference/expedition-1.webp" : "/reference/expedition-2.webp"} alt="" />
+            <h3>{exp.battle.title}</h3><span><Target /> Em andamento · rodada {exp.battle.rounds}</span>
+            <button className="action-button blue" onClick={() => openBattle(exp.id)}>Detalhes</button>
+          </> : <>
+            <div className="empty-expedition"><Target /></div>
+            <h3>Espaço Disponível</h3><span>Monte uma equipe para uma nova expedição.</span>
+            <button className={"action-button " + (slot === s ? "green" : "dark")} onClick={() => setSlot(s)}>Preparar</button>
+          </>}
+        </article>;
+      })}
+    </div>
+    <ParchmentTitle icon={<Users />} title="Formação da Equipe" side={
+      <button className="small-button" onClick={() => {
+        const ids = suggestSpecialistTeam(state, selectedMission.kind);
+        setTeam(ids);
+        setFormation(Object.fromEntries(ids.map(id => {
+          const h = state.heroes.find(x => x.id === id)!;
+          return [id, defaultFormationLine(h.class)];
+        })));
+      }}>Montar especialista</button>
+    } />
+    <div className="hero-picker">
+      {state.heroes.map(h => {
+        const selected = team.includes(h.id);
+        const disabled = !selected && (!available(h, state) || team.length >= 4);
+        return <button key={h.id} data-selected={selected} disabled={disabled} onClick={() => toggle(h)}>
+          <HeroPortrait hero={h} />
+          <strong>{h.name.split(" ")[0]}</strong><small>Nv. {h.level}</small>
+          <ProgressBar value={h.energy} tone={h.energy < 40 ? "red" : "blue"} />
+          {selected && <Check className="picker-check" />}
+        </button>;
+      })}
+    </div>
+    <div className="formation-panel">
+      <div className="formation-list">{selectedHeroes.map(h => <div key={h.id} className="formation-row">
+        <HeroPortrait hero={h} /><span><strong>{h.name}</strong><small>{CLASSES[h.class].name}</small></span>
+        <div className="line-toggle">
+          <button data-active={(formation[h.id] || defaultFormationLine(h.class)) === "front"} onClick={() => setFormation({ ...formation, [h.id]: "front" })}>Frente</button>
+          <button data-active={(formation[h.id] || defaultFormationLine(h.class)) === "back"} onClick={() => setFormation({ ...formation, [h.id]: "back" })}>Retaguarda</button>
+        </div>
+      </div>)}</div>
+      <div className="team-bonus">
+        <h3>Bônus de Equipe</h3>
+        <p>{readiness.label}</p><small>{readiness.hint}</small>
+        <div className="tactic-row">{(Object.keys(TACTICS) as Tactic[]).map(t => <button key={t} data-active={tactic === t} onClick={() => setTactic(t)}>{TACTICS[t].name}</button>)}</div>
+        <div className="team-power"><Swords /><span>Poder da Equipe</span><strong>{fmt(power)}</strong></div>
+      </div>
+    </div>
+    <div className="send-row">
+      <div><strong>Pronto para a Expedição?</strong><span>{selectedMission.title} · vaga {slot}</span></div>
+      <button className="action-button green huge" disabled={!canSend || busy} onClick={() => act({
+        type:"mission", missionId:selectedMission.id, team, tactic, formation, expeditionSlot:slot, startedAt:Date.now()
+      })}><Swords /> Enviar</button>
+    </div>
+  </section>;
+}
+
+function LeaguePage({ state, team, act, busy }: { state: Campaign; team: string[]; act: (a: Action) => void; busy: boolean }) {
+  const table = standings(state);
+  const place = table.findIndex(g => g.id === "player") + 1;
+  const rival = table.find(g => g.id !== "player");
+  const rivalData = rival ? state.rivals.find(r => r.id === rival.id) : undefined;
+  return <section className="screen league-screen">
+    <div className="league-summary parchment">
+      <div><span>Nossa Posição</span><strong>{place}º</strong></div>
+      <div className="big-crest"><Crown /></div>
+      <div><h2>{state.name}</h2><p><Trophy /> {state.points} Pontos da Liga</p><small>Prestígio: {state.fame} · Divisão {rank(state)}</small></div>
+    </div>
+    <ParchmentTitle icon={<Trophy />} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
+    <div className="league-table parchment">
+      <div className="league-head"><b>#</b><b>Guilda</b><b>Pontos</b><b>Recompensa</b></div>
+      {table.slice(0,5).map((g,i) => <div key={g.id} className="league-row" data-player={g.id === "player"}>
+        <strong>{i+1}</strong><span><i className={"mini-banner b" + (i%5)} />{g.name}</span><b><Trophy /> {g.points}</b><small><Coins /> {leaguePrize(i+1, state.leagueTier)} ouro</small>
+      </div>)}
+    </div>
+    <ParchmentTitle icon={<Swords />} title="Desafio de Guilda" side={<span>Equipe: {team.length}/4</span>} />
+    <div className="guild-challenge parchment">
+      <img src="/reference/league-challenge.webp" alt="" />
+      <div><h2>{rivalData?.name || "Guilda Rival"}</h2><p>Uma guilda rival disputa influência e prestígio. Derrote-a para fortalecer sua posição.</p>
+        <span><Trophy /> {rivalData?.points || 0} pontos</span><span><Flag /> Força {rivalData?.strength || 0}</span>
+      </div>
+      <button className="action-button red huge" disabled={busy || !rivalData || team.length < 3 || activeExpeditions(state).length > 0}
+        onClick={() => rivalData && act({ type:"rival-battle", guildId:rivalData.id, team })}>Desafiar</button>
+    </div>
+  </section>;
+}
+
+function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
+  const recover = state.heroes.filter(h => h.energy < 100 || h.injuredUntil > state.day);
+  const shown = (recover.length ? recover : state.heroes).slice(0,4);
+  const counts = (key: string) => state.chest.filter(i => i.key === key && !i.equippedTo).length;
+  return <section className="screen rest-screen">
+    <div className="sanctuary-head parchment">
+      <img src="/reference/sanctuary.webp" alt="" />
+      <div><h2>Santuário da Guilda</h2><p>Aqui seus heróis feridos podem repousar e se recuperar para novas aventuras.</p>
+        <strong>Capacidade</strong><div className="beds">▰ ▰ ▰ ▱ ▱</div><span>{recover.length} heróis precisam de recuperação</span>
+      </div>
+    </div>
+    <ParchmentTitle icon={<Shield />} title="Heróis em Recuperação" />
+    <div className="recovery-list parchment">{shown.map(h => {
+      const injured = h.injuredUntil > state.day;
+      const plan = trainingPlan(state,h);
+      return <article key={h.id}><HeroPortrait hero={h} />
+        <div><h3>{h.name}</h3><span className={injured ? "danger-text" : "ok-text"}>{injured ? "Ferido" : h.energy < 100 ? "Recuperando" : "Pronto"}</span>
+          <ProgressBar value={h.energy} tone={injured ? "red" : "green"} /><small>Energia {h.energy}% · Nv. {h.level}</small>
+        </div>
+        <button className="action-button blue" disabled={busy || injured || h.energy < 15} onClick={() => act({ type:"train-hero", heroId:h.id })}>Treinar +{plan.xp} XP</button>
+      </article>;
+    })}</div>
+    <ParchmentTitle icon={<Archive />} title="Itens de Recuperação" />
+    <div className="recovery-items parchment">
+      {[["healing_potion","Poção de Cura"],["minor_healing","Poção Menor"],["greater_healing","Poção Maior"]].map(([key,label]) => <article key={key}>
+        <ItemArt itemKey={key} /><strong>{label}</strong><span>Possui: {counts(key)}</span><small>Usado diretamente durante o combate.</small>
+      </article>)}
+    </div>
+    <button className="action-button green rest-all" disabled={busy} onClick={() => act({ type:"rest" })}><Tent /> Descansar toda a guilda</button>
+  </section>;
+}
+
+function HeroPage({ state, selectedId, selectHero, act, busy }: {
+  state: Campaign; selectedId: string; selectHero: (id: string) => void; act: (a: Action) => void; busy: boolean;
+}) {
+  const hero = state.heroes.find(h => h.id === selectedId) || state.heroes[0];
+  const stats = heroStats(hero,state);
+  const equipped = state.chest.filter(i => i.equippedTo === hero.id);
+  const points = talentPoints(hero), racePts = racialPoints(hero);
+  const journey = activeJourney(state, hero.id);
+  const story = HERO_STORIES[hero.class];
+  const canAct = !heroOnExpedition(state,hero.id);
+  const path = hero.talent?.path;
+  const branchSpec = path && hero.talent?.branch ? SPECIALIZATION_BRANCHES[hero.class][path][hero.talent.branch] : undefined;
+  return <section className="screen heroes-screen">
+    <div className="heroes-layout">
+      <aside className="hero-list">
+        <ParchmentTitle icon={<Users />} title="Meus Heróis" side={<span>{state.heroes.length}/12</span>} />
+        {state.heroes.map(h => <button key={h.id} data-active={h.id === hero.id} onClick={() => selectHero(h.id)}>
+          <HeroPortrait hero={h} /><span><strong>{h.name}</strong><small>{CLASSES[h.class].name} · {RACES[heroRace(h)].name}</small><em>⚔ {fmt(teamPower(state,[h.id]))}</em><ProgressBar value={h.energy} tone={h.energy < 40 ? "red" : "blue"} /></span><b>Nv. {h.level}</b>
+        </button>)}
+      </aside>
+      <article className="hero-sheet parchment">
+        <div className="hero-feature"><div className="feature-portrait"><HeroPortrait hero={hero} large /></div><div><h2>{hero.name}</h2><p>{hero.trait}</p></div></div>
+        <div className="hero-level"><strong>Nv. {hero.level}</strong><ProgressBar value={hero.level >= 50 ? 100 : hero.xp / threshold(hero) * 100} tone="gold" /><span>{hero.xp}/{hero.level >= 50 ? "MAX" : threshold(hero)} XP</span></div>
+        <div className="hero-core"><div><span>Classe</span><strong>{CLASSES[hero.class].name}</strong></div><div><span>Raça</span><strong>{RACES[heroRace(hero)].name}</strong></div><div><span>Força</span><strong>{fmt(teamPower(state,[hero.id]))}</strong></div></div>
+        <section className="sheet-section"><label>Atributos</label><div className="stat-grid">
+          <b>❤ Vida <em>{stats.hp}</em></b><b>⚔ Ataque <em>{stats.attack}</em></b><b>🛡 Defesa <em>{stats.defense}</em></b><b>✦ Magia <em>{stats.magic}</em></b><b>★ Crítico <em>{Math.round(stats.critical*100)}%</em></b><b>➤ Velocidade <em>{stats.speed}</em></b>
+        </div></section>
+        <section className="sheet-section"><label>Especialidade</label>
+          {!hero.talent && <div className="choice-grid">{(Object.keys(PATH_NAMES) as TalentPath[]).map(p => <button disabled={busy || !canAct || points < 1} key={p} onClick={() => act({type:"specialize",heroId:hero.id,path:p})}><strong>{PATH_NAMES[p]}</strong><small>{SPECIALIZATIONS[hero.class][p].name}</small></button>)}</div>}
+          {hero.talent && <div className="talent-box"><h3>{SPECIALIZATIONS[hero.class][hero.talent.path].name} · Grau {hero.talent.rank}</h3><p>{branchSpec?.description || SPECIALIZATIONS[hero.class][hero.talent.path].description}</p>
+            {hero.talent.rank === 1 && points > 0 && <div className="choice-grid">{(["a","b"] as EvolutionBranch[]).map(b => <button key={b} disabled={busy || !canAct} onClick={() => act({type:"specialize",heroId:hero.id,path:hero.talent!.path,branch:b})}><strong>{SPECIALIZATION_BRANCHES[hero.class][hero.talent!.path][b].name}</strong><small>Escolha permanente</small></button>)}</div>}
+            {hero.talent.rank === 2 && points > 0 && <button className="small-button gold" disabled={busy || !canAct} onClick={() => act({type:"specialize",heroId:hero.id,path:hero.talent!.path,branch:hero.talent!.branch})}>Desbloquear Ultimate</button>}
+          </div>}
+        </section>
+        <section className="sheet-section"><label>Evolução Racial</label>
+          {!hero.racial ? <div className="choice-grid">{(Object.keys(RACIAL_PATH_NAMES) as RacialPath[]).map(p => <button key={p} disabled={busy || !canAct || racePts < 1} onClick={() => act({type:"racial-specialize",heroId:hero.id,path:p})}><strong>{RACIAL_PATH_NAMES[p]}</strong><small>{RACE_TREES[heroRace(hero)][p].name}</small></button>)}</div>
+          : <div className="talent-box"><h3>{RACE_TREES[heroRace(hero)][hero.racial.path].name} · Grau {hero.racial.rank}</h3><p>{RACE_TREES[heroRace(hero)][hero.racial.path].description}</p>{racePts > 0 && hero.racial.rank < 3 && <button className="small-button gold" disabled={busy || !canAct} onClick={() => act({type:"racial-specialize",heroId:hero.id,path:hero.racial!.path})}>Avançar árvore racial</button>}</div>}
+        </section>
+        <section className="sheet-section"><label>História Pessoal</label><h3>{story.title}</h3><p>{story.stages[Math.min(2, hero.storyStage || 0)]}</p>
+          <button className="small-button" disabled={busy || !canAct || (hero.storyStage || 0) >= 3} onClick={() => act({type:"story-step",heroId:hero.id})}>{(hero.storyStage || 0) >= 3 ? "História concluída" : "Avançar história"}</button>
+        </section>
+        <section className="sheet-section"><label>Viagem</label>
+          {journey ? <div className="journey-box"><strong>{journey.remaining} dia(s) restantes · +{journey.xpEarned} XP</strong><div className="choice-grid">{(Object.keys(JOURNEY_CHOICES) as JourneyChoice[]).map(c => <button data-active={journey.choice === c} key={c} onClick={() => act({type:"journey-choice",journeyId:journey.id,choice:c})}>{JOURNEY_CHOICES[c].name}</button>)}</div></div>
+          : <div className="choice-grid">{([3,5,7] as JourneyDuration[]).map(d => <button key={d} disabled={busy || !canAct} onClick={() => act({type:"start-journey",heroId:hero.id,duration:d})}><strong>{d} dias</strong><small>Desenvolvimento individual</small></button>)}</div>}
+        </section>
+        <section className="sheet-section"><label>Equipamentos</label><div className="equipment-row">{equipped.length ? equipped.map(i => <ItemArt key={i.id} itemKey={i.key} />) : <small>Nenhum equipamento.</small>}</div></section>
+        <button className="action-button blue huge" disabled={busy || !canAct || hero.energy < 15} onClick={() => act({type:"train-hero",heroId:hero.id})}>Treino Individual · +{trainingPlan(state,hero).xp} XP</button>
+      </article>
+    </div>
+  </section>;
+}
+
+function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
+  const [filter,setFilter] = useState("all");
+  const [selectedId,setSelectedId] = useState(state.chest[0]?.id || "");
+  const [recipient,setRecipient] = useState(state.heroes[0]?.id || "");
+  const filtered = state.chest.filter(i => {
+    const slot = ITEMS[i.key]?.slot;
+    if (filter === "all") return slot !== "material";
+    if (filter === "equipment") return itemSlots.has(slot);
+    return slot === filter;
+  });
+  const selected = filtered.find(i => i.id === selectedId) || filtered[0];
+  const def = selected ? ITEMS[selected.key] : undefined;
+  const owner = selected?.equippedTo ? state.heroes.find(h => h.id === selected.equippedTo) : undefined;
+  const compatible = def ? state.heroes.filter(h => itemSlots.has(def.slot) && !heroOnExpedition(state,h.id) && (!def.race || heroRace(h) === def.race) && (!def.classes || def.classes.includes(h.class)) && (!def.levelReq || h.level >= def.levelReq)) : [];
+  const target = compatible.some(h => h.id === recipient) ? recipient : compatible[0]?.id || "";
+  return <section className="screen chest-screen">
+    <div className="inventory-top"><button data-active>▣ Inventário</button><button onClick={() => setFilter("material")} data-active={filter === "material"}>◆ Materiais</button><span>🎒 {state.chest.length}/80</span></div>
+    <div className="inventory-filters">{[["all","Todos"],["equipment","Equipamentos"],["accessory","Acessórios"],["consumable","Consumíveis"],["quest","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>
+    <div className="inventory-layout">
+      <div className="item-grid">{filtered.slice(0,40).map(item => <button key={item.id} data-active={selected?.id === item.id} className={"item-tile rarity-" + ITEMS[item.key].rarity} onClick={() => setSelectedId(item.id)}>
+        <ItemArt itemKey={item.key} /><span>{ITEMS[item.key].name}</span>{item.equippedTo && <b>✓</b>}
+      </button>)}</div>
+      {selected && def ? <article className="item-detail parchment">
+        <span className="rarity-label">{def.rarity.toUpperCase()}</span><h2>{def.name}</h2>
+        <div className="selected-item-art"><ItemArt itemKey={selected.key} /></div>
+        <p>{def.description}</p>
+        <div className="item-stats">{([["Ataque",def.attack],["Defesa",def.defense],["Magia",def.magic],["Vida",def.hp],["Velocidade",def.speed]] as Array<[string,number|undefined]>).filter(([,v]) => v).map(([k,v]) => <span key={k}><b>{k}</b><em>+{v}</em></span>)}</div>
+        {def.levelReq && <small>Nível necessário: {def.levelReq}</small>}
+        {owner && <small>Equipado por {owner.name}</small>}
+        {!owner && compatible.length > 0 && <select value={target} onChange={e => setRecipient(e.target.value)}>{compatible.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select>}
+        <div className="item-actions">
+          {itemSlots.has(def.slot) && (owner ? <button className="action-button blue" disabled={busy} onClick={() => act({type:"unequip",itemId:selected.id})}>Desequipar</button> : <button className="action-button green" disabled={busy || !target} onClick={() => target && act({type:"equip",itemId:selected.id,heroId:target})}>Equipar</button>)}
+          {!owner && <button className="action-button blue" disabled={busy} onClick={() => act({type:"sell",itemId:selected.id})}><Coins /> Vender · {def.value}</button>}
+          {def.slot === "consumable" && <div className="combat-only-note">Consumível de combate</div>}
+        </div>
+      </article> : <div className="item-detail parchment empty-detail">Nenhum item nesta categoria.</div>}
+    </div>
+  </section>;
+}
+
+function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (a: Action) => void; busy: boolean; openMission: (id:string) => void }) {
+  const recruits = market(state);
+  const rumors = missions(state).slice(0,3);
+  const offers = shop(state).slice(0,6);
+  return <section className="screen tavern-screen">
+    <div className="tavern-hero"><img src="/reference/tavern-hero.webp" alt="" /><div>Boas histórias<br/>sempre encontram<br/>um lugar aqui.</div></div>
+    <ParchmentTitle icon={<Users />} title="Heróis para Recrutar" side={<span>Renova semanalmente</span>} />
+    <div className="recruit-grid parchment">{recruits.map(h => <article key={h.id}><HeroPortrait hero={h} large /><h3>{h.name}</h3><span>{CLASSES[h.class].name}</span><small><Coins /> {h.value} Ouro</small><button className="action-button red" disabled={busy || state.gold < h.value} onClick={() => act({type:"hire",heroId:h.id})}>Recrutar</button></article>)}</div>
+    <div className="tavern-lower">
+      <section className="rumors parchment"><ParchmentTitle icon={<ScrollText />} title="Rumores da Taverna" />{rumors.map(m => <button key={m.id} onClick={() => openMission(m.id)}><span><strong>{m.title}</strong><small>{m.description}</small></span><em><Coins /> {m.reward}</em></button>)}</section>
+      <aside className="tavern-side">
+        <section className="parchment drinks"><div className="mug">🍺</div><h3>Bebidas da Casa</h3><p>Brinde com a guilda para recuperar o moral e a energia.</p><button className="action-button green" disabled={busy || state.gold < 8} onClick={() => act({type:"rest"})}>Descansar</button></section>
+        <section className="parchment shop"><h3>Mercador</h3>{offers.map(o => <button key={o.key} disabled={busy || !o.available || state.gold < o.price || state.fame < o.requiredFame} onClick={() => act({type:"buy",key:o.key})}><ItemArt itemKey={o.key} /><span>{ITEMS[o.key].name}<small>{o.price} ouro</small></span></button>)}</section>
+      </aside>
+    </div>
+  </section>;
+}
+
+function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
+  const slots = academySlots(state);
+  const [draft,setDraft] = useState<string[]>(state.academy.trainees);
+  useEffect(() => setDraft(state.academy.trainees), [state.academy.trainees.join(",")]);
+  if (!slots) return <div className="guild-mini parchment"><h3>Academia</h3><p>Melhore a Academia para liberar aprendizes.</p></div>;
+  const toggle = (id:string) => setDraft(old => old.includes(id) ? old.filter(x => x !== id) : old.length < slots ? [...old,id] : old);
+  return <div className="guild-mini parchment"><h3>Academia · {draft.length}/{slots}</h3><div className="academy-heroes">{state.heroes.slice(0,8).map(h => <button key={h.id} data-active={draft.includes(h.id)} onClick={() => toggle(h.id)}><HeroPortrait hero={h}/><span>{h.name.split(" ")[0]}</span></button>)}</div><button className="small-button" disabled={busy} onClick={() => act({type:"academy-trainees",heroIds:draft})}>Salvar aprendizes</button>
+    <select value={state.academy.mentorId || ""} onChange={e => act({type:"academy-mentor",heroId:e.target.value || undefined})}><option value="">Sem mentor</option>{state.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select>
   </div>;
 }
-type Save = Pick<LocalSave, "state" | "revision">;
-type Confirm = { type: "release"; hero: Hero } | { type: "reset" } | null;
+
+function RivalRecruitPanel({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
+  const [guildId,setGuildId] = useState(state.rivals[0]?.id || "");
+  const guild = state.rivals.find(g => g.id === guildId) || state.rivals[0];
+  const [heroId,setHeroId] = useState(guild?.heroes[0]?.id || "");
+  useEffect(() => { if (guild && !guild.heroes.some(h => h.id === heroId)) setHeroId(guild.heroes[0]?.id || ""); }, [guildId, guild?.heroes.length]);
+  const hero = guild?.heroes.find(h => h.id === heroId) || guild?.heroes[0];
+  return <div className="rival-recruit parchment"><h3>Recrutar de outra Guilda</h3><select value={guild?.id || ""} onChange={e => setGuildId(e.target.value)}>{state.rivals.slice(0,12).map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
+    {guild && hero && <><div className="rival-hero"><HeroPortrait hero={hero}/><span><strong>{hero.name}</strong><small>{CLASSES[hero.class].name} · Nv. {hero.level}</small></span><select value={hero.id} onChange={e => setHeroId(e.target.value)}>{guild.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select></div>
+      <div className="negotiation-grid">{(Object.keys(NEGOTIATION_MODES) as NegotiationMode[]).map(mode => {
+        const q = negotiationQuote(state,guild,hero,mode);
+        return <button key={mode} disabled={busy || !q.eligible} onClick={() => act({type:"negotiate-rival",guildId:guild.id,heroId:hero.id,mode})}><strong>{NEGOTIATION_MODES[mode].title}</strong><small>{q.price} ouro · {q.chance}%</small>{q.reason && <em>{q.reason}</em>}</button>;
+      })}</div>
+    </>}
+  </div>;
+}
+
+function GuildPage({
+  state, act, busy, onExport, onImport, onReset
+}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void }) {
+  const buildings = Object.entries(HQ_DEFINITIONS) as Array<[HQBuilding,(typeof HQ_DEFINITIONS)[HQBuilding]]>;
+  const availableRaidHeroes = state.heroes.filter(h => available(h,state)).slice(0,9);
+  const raidTeams = availableRaidHeroes.length >= 9 ? [availableRaidHeroes.slice(0,3).map(h=>h.id),availableRaidHeroes.slice(3,6).map(h=>h.id),availableRaidHeroes.slice(6,9).map(h=>h.id)] : [];
+  return <section className="screen guild-screen">
+    <div className="guild-identity parchment">
+      <div className="guild-banner"><Crown /></div>
+      <div><h2>{state.name}</h2><p>Força na união, glória em cada jornada.</p><span><Users /> Membros: {state.heroes.length}/12</span><span><Shield /> Nível da Guilda: {Math.max(1,Math.ceil(state.fame/120))}</span></div>
+      <aside><strong><Coins /> Tesouro {fmt(state.gold)}</strong><strong><Flag /> Renome {state.fame}</strong><strong><Trophy /> Liga {rank(state)}</strong></aside>
+    </div>
+    {state.event && <div className="council parchment"><img src="/reference/guild-council.webp" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
+    <ParchmentTitle icon={<Crown />} title="Sede da Guilda" />
+    <div className="building-list parchment">{buildings.map(([key,spec],index) => {
+      const lvl = state.hq[key] || 0, max = spec.max, cost = hqUpgradeCost(state,key);
+      const arts = ["/reference/guild-training.webp","/reference/guild-market.webp","/reference/guild-sanctuary.webp","/reference/guild-workshop.webp"];
+      return <article key={key}><img src={arts[index%arts.length]} alt="" /><div><h3>{spec.name} <small>Nv. {lvl}</small></h3><p>{spec.description}</p></div><div><span><Coins /> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
+    })}</div>
+    <div className="guild-grid">
+      <section className="guild-mini parchment"><h3>Mapa do Mundo</h3><div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}><strong>{i+1}. {r.name}</strong><small>{r.theme}</small></button>)}</div></section>
+      <section className="guild-mini parchment"><h3>Forja</h3><div className="forge-list">{CRAFTING_RECIPES.slice(0,6).map(r => <button key={r.id} disabled={busy || state.hq.forge < r.forge || state.gold < r.cost} onClick={() => act({type:"craft",recipeId:r.id})}><ItemArt itemKey={r.result}/><span><strong>{ITEMS[r.result].name}</strong><small>{r.cost} ouro · Forja {r.forge}</small></span></button>)}</div></section>
+      <AcademyPanel state={state} act={act} busy={busy} />
+      <section className="guild-mini parchment"><h3>Guerra de Guildas</h3><p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
+    </div>
+    <RivalRecruitPanel state={state} act={act} busy={busy} />
+    <ParchmentTitle icon={<CircleHelp />} title="Save e Configurações" />
+    <div className="settings-panel parchment"><button onClick={onExport}><Download /> Baixar backup</button><button onClick={onImport}><Upload /> Importar backup</button><button className="danger" onClick={onReset}><X /> Reiniciar campanha</button></div>
+  </section>;
+}
+
+function BattleOverlay({ state, expedition, act, close, busy }: {
+  state: Campaign; expedition: Expedition; act: (a: Action) => void; close: () => void; busy: boolean;
+}) {
+  const battle = expedition.battle;
+  const fighters = battle.combat?.fighters || battle.fighters || [];
+  const heroes = fighters.filter(f => f.side === "hero");
+  const enemies = fighters.filter(f => f.side === "enemy");
+  const active = battle.status === "active" && !!battle.combat;
+  const count = (key: BattleConsumableKey) => state.chest.filter(i => i.key === key && !i.equippedTo).length;
+  const lowestHero = heroes.filter(f => f.hp > 0 && f.hp < f.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+  const debuffedHero = heroes.find(f => f.hp > 0 && f.statuses?.some(s => ["poison","bleed","vulnerable"].includes(s.kind))) || lowestHero || heroes.find(f=>f.hp>0);
+  const enemyTarget = enemies.filter(f=>f.hp>0).sort((a,b)=>b.hp-a.hp)[0];
+  const useConsumable = (key: BattleConsumableKey) => {
+    const targetId = key === "healing_potion" ? lowestHero?.id : key === "antidote" ? debuffedHero?.id : enemyTarget?.id;
+    if (targetId) act({type:"battle-consumable",key,targetId,expeditionId:expedition.id});
+  };
+  return <div className="battle-overlay">
+    <section className="battle-sheet">
+      <div className="battle-top"><div><strong>{battle.title}</strong><span>Rodada {battle.rounds}{battle.objective?.targetRounds ? "/" + battle.objective.targetRounds : ""}</span></div><button onClick={close}><X /></button></div>
+      <div className="battle-objective"><span>{battle.objective?.name || "Objetivo"}</span><strong>{battle.status === "active" ? "Combate automático" : battle.won ? "Vitória" : "Confronto encerrado"}</strong></div>
+      <div className="battle-stage">
+        <div className="fighters allies">{heroes.map(f => <article key={f.id}><HeroPortrait hero={{id:f.id,name:f.name,class:f.class || "warrior"}}/><div><strong>{f.name}</strong><small>{f.class ? CLASSES[f.class].name : "Herói"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
+        <div className="battle-center-mark"><Swords /></div>
+        <div className="fighters enemies">{enemies.map(f => <article key={f.id}><img src={"/enemies/" + enemyArtKey(f.name) + ".webp"} alt="" /><div><strong>{f.name}</strong><small>{f.statuses?.map(s=>s.kind).join(" · ") || "Inimigo"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
+      </div>
+      <div className="battle-log parchment">{battle.log.slice(-5).map((l,i) => <p key={i} data-kind={l.kind}>{l.text}</p>)}{!battle.log.length && <p>Os combatentes tomam posição.</p>}</div>
+      <div className="consumable-title"><Archive /> Consumíveis</div>
+      <div className="battle-consumables">
+        {([
+          ["healing_potion","Poção de Cura","Restaura vida do aliado mais ferido."],
+          ["antidote","Antídoto","Remove veneno e efeitos negativos."],
+          ["stun_bomb","Bomba Atordoante","Atordoa um inimigo por 1 rodada."]
+        ] as Array<[BattleConsumableKey,string,string]>).map(([key,label,desc]) => <button key={key} disabled={!active || busy || count(key) < 1 || (key==="healing_potion" && !lowestHero)} onClick={() => useConsumable(key)}>
+          <ItemArt itemKey={key}/><b>x{count(key)}</b><strong>{label}</strong><small>{desc}</small>
+        </button>)}
+      </div>
+      <div className="battle-actions">
+        {active ? <><button className="action-button blue" disabled={busy} onClick={() => act({type:"battle-auto",expeditionId:expedition.id})}>Concluir combate</button><button className="action-button red" disabled={busy} onClick={() => act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button></> : <button className="action-button green huge" onClick={close}>Voltar à guilda</button>}
+      </div>
+    </section>
+  </div>;
+}
 
 export default function Game() {
-  const [save, setSave] = useState<Save | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [view, setView] = useState("expeditions");
-  const [mobileView, setMobileView] = useState("mission");
-  const [guildView, setGuildView] = useState("summary");
-  const [heroFilter, setHeroFilter] = useState("all");
-  const [marketView, setMarketView] = useState("free");
-  const [rivalGuildId, setRivalGuildId] = useState<string | null>(null);
-  const [ledgerPage, setLedgerPage] = useState(0);
-  const [battleView, setBattleView] = useState("combat");
-  const [detailView, setDetailView] = useState("stats");
-  const [team, setTeam] = useState<string[]>([]);
-  const [formation, setFormation] = useState<Record<string, FormationLine>>({});
-  const [tactic, setTactic] = useState<Tactic>("balanced");
-  const [missionId, setMissionId] = useState("");
-  const [heroId, setHeroId] = useState<string | null>(null);
-  const [help, setHelp] = useState(false);
-  const [confirm, setConfirm] = useState<Confirm>(null);
-  const [battleOpen, setBattleOpen] = useState(false);
-  const [activeExpeditionId, setActiveExpeditionId] = useState<string | null>(null);
-  const [selectedExpeditionSlot, setSelectedExpeditionSlot] = useState<ExpeditionSlot>(1);
-  const [squadNameDrafts, setSquadNameDrafts] = useState<Record<string, string>>({});
-  const [elapsed, setElapsed] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [battleSpeed, setBattleSpeed] = useState<PlaybackSpeed>(1);
-  const [watchingBattle, setWatchingBattle] = useState(false);
-  const [guildName, setGuildName] = useState("");
-  const saveRef = useRef(save);
-  const lock = useRef(false);
-  const battleScroll = useRef<HTMLDivElement>(null);
-  const backupInput = useRef<HTMLInputElement>(null);
-  saveRef.current = save;
+  const [save,setSave] = useState<Save | null>(null);
+  const [busy,setBusy] = useState(false);
+  const [error,setError] = useState("");
+  const [flash,setFlash] = useState("");
+  const [screen,setScreen] = useState<Screen>("mission");
+  const [selectedMissionId,setSelectedMissionId] = useState("");
+  const [team,setTeam] = useState<string[]>([]);
+  const [formation,setFormation] = useState<Record<string,FormationLine>>({});
+  const [tactic,setTactic] = useState<Tactic>("balanced");
+  const [slot,setSlot] = useState<ExpeditionSlot>(1);
+  const [selectedHeroId,setSelectedHeroId] = useState("");
+  const [battleExpeditionId,setBattleExpeditionId] = useState<string | null>(null);
+  const saveRef = useRef<Save | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  const hydrateSave = useCallback((body: Save) => {
-    setSave(body); saveRef.current = body; setTeam(body.state.team); setFormation(body.state.formation || {}); setTactic(body.state.tactic); setGuildName(body.state.name);
-    const firstActive = activeExpeditions(body.state)[0];
-    const firstFree = freeExpeditionSlots(body.state)[0];
-    setSelectedExpeditionSlot(firstFree || 1);
-    setSquadNameDrafts(Object.fromEntries((body.state.squads || []).map(q => [q.specialty, q.name])));
-    if (firstActive) { setActiveExpeditionId(firstActive.id); setElapsed(battleTimeline(firstActive.battle).availableUntil); setWatchingBattle(true); }
-  }, []);
+  const hydrate = useCallback((body: Save) => {
+    setSave(body); saveRef.current = body;
+    setTeam(body.state.team); setFormation(body.state.formation || {}); setTactic(body.state.tactic);
+    setSelectedHeroId(old => body.state.heroes.some(h=>h.id===old) ? old : body.state.heroes[0]?.id || "");
+    const free = freeExpeditionSlots(body.state); setSlot(old => free.includes(old) ? old : free[0] || 1);
+    const all = [...missions(body.state), seasonBoss(body.state)].filter(Boolean) as Mission[];
+    setSelectedMissionId(old => all.some(m=>m.id===old && !missionLocks(body.state,m).length) ? old : all.find(m=>!missionLocks(body.state,m).length)?.id || all[0]?.id || "");
+  },[]);
 
-  const load = useCallback(async () => {
-    setLoading(true); setError("");
-    try {
-      hydrateSave(readLocalCampaign());
-    } catch (e) { setError(e instanceof Error ? e.message : "Não foi possível abrir o save local."); }
-    finally { setLoading(false); }
-  }, [hydrateSave]);
-  useEffect(() => { void load(); }, [load]);
-  const state = save?.state;
-  const runningExpeditions = state ? activeExpeditions(state) : [];
-  const freeSlots = state ? freeExpeditionSlots(state) : [];
-  const expeditionSlots = ([1, 2, 3] as ExpeditionSlot[]).map(slot => ({ slot, expedition: runningExpeditions.find(e => e.slot === slot) }));
-  const selectedExpedition = state ? state.expeditions.find(e => e.id === activeExpeditionId) || runningExpeditions[0] || state.expeditions[state.expeditions.length - 1] : undefined;
-  const active = selectedExpedition?.battle.status === "active" && !!selectedExpedition.battle.combat;
-  const blocked = busy;
-  const board = state ? missions(state) : [];
-  const boss = state ? seasonBoss(state) : null;
-  const selectedMission = [...board, ...(boss ? [boss] : [])].find(m => m.id === missionId) || board[0];
-  const selectedLocks = state && selectedMission ? missionLocks(state, selectedMission) : [];
-  const detail = state?.heroes.find(h => h.id === heroId);
-  const detailStats = detail && state ? heroStats(detail, state) : null;
-  const battle = selectedExpedition?.battle || state?.lastBattle;
-  const frame = useMemo(() => battleFrame(battle, elapsed), [battle, elapsed]);
-  const resultReady = frame.ready;
-  const shown = frame.shown;
-  useEffect(() => { if (resultReady) setBattleView("result"); }, [resultReady]);
   useEffect(() => {
-    if (state) setMissionId(old => [...missions(state), seasonBoss(state)].some(m => m?.id === old && !missionLocks(state, m).length) ? old : missions(state)[0].id);
-  }, [state?.day, state?.season, state?.fame, state?.chest.length]);
+    try { const current = readLocalCampaign(); hydrate({state:current.state,revision:current.revision}); }
+    catch (e) { setError(e instanceof Error ? e.message : "Não foi possível abrir a campanha."); }
+  },[hydrate]);
 
-  const perform = useCallback(async (action: Action): Promise<Save> => {
-    const current = saveRef.current;
-    if (!current || lock.current) throw new Error("Aguarde a ação em andamento.");
-    lock.current = true; setBusy(true); setError("");
+  const perform = useCallback((action: Action) => {
+    const current = saveRef.current; if (!current || busy) return;
+    setBusy(true); setError("");
     try {
-      const result = updateLocalCampaign(current.revision, action);
-      const body: Save = { state: result.state, revision: result.revision };
-      if (result.conflict) {
-        setSave(body); saveRef.current = body; setTeam(body.state.team); setFormation(body.state.formation || {}); setTactic(body.state.tactic); setWatchingBattle(false); setBattleOpen(false); setElapsed(0); setPaused(false);
-        throw new Error("A campanha foi atualizada em outra aba. Confira a equipe e tente novamente.");
+      const result = updateLocalCampaign(current.revision,action);
+      const next: Save = {state:result.state,revision:result.revision};
+      hydrate(next);
+      if (result.conflict) setFlash("A campanha mudou em outra aba. Estado atualizado.");
+      else {
+        const names: Partial<Record<Action["type"],string>> = {
+          mission:"Expedição enviada.", rest:"Guilda descansada.", "train-hero":"Treino concluído.",
+          hire:"Novo herói recrutado.", buy:"Item comprado.", sell:"Item vendido.", equip:"Item equipado.",
+          unequip:"Item guardado.", "upgrade-hq":"Construção melhorada.", craft:"Item fabricado.",
+          "rival-battle":"Desafio resolvido.", "guild-raid":"Raid resolvida.", "negotiate-rival":"Negociação concluída.",
+          specialize:"Evolução aplicada.", "racial-specialize":"Evolução racial aplicada.", "story-step":"História avançou."
+        };
+        setFlash(names[action.type] || "Ação concluída.");
       }
-      setSave(body); saveRef.current = body;
-      if (["mission", "train", "release", "reset", "event"].includes(action.type)) { setTeam(body.state.team); setFormation(body.state.formation || {}); setTactic(body.state.tactic); }
       if (action.type === "mission") {
-        const newest = body.state.expeditions[body.state.expeditions.length - 1];
-        if (newest) setActiveExpeditionId(newest.id);
-        const nextFree = freeExpeditionSlots(body.state)[0]; if (nextFree) setSelectedExpeditionSlot(nextFree);
-        setElapsed(0); setPaused(false); setBattleSpeed(1); setWatchingBattle(true); setBattleOpen(false); setBattleView("combat");
-        toast.success("Expedição " + (newest?.slot || action.expeditionSlot || "") + " enviada. A vaga continua visível e a guilda segue funcionando.");
+        const newest = next.state.expeditions[next.state.expeditions.length-1];
+        if (newest) setBattleExpeditionId(newest.id);
       }
-      else if (action.type === "rest") toast.success("Equipe descansada. Um novo dia começou.");
-      else if (action.type === "train-hero") { const h = current.state.heroes.find(h => h.id === action.heroId)!; toast.success(h.name + " treinou: +" + trainingPlan(current.state, h).xp + " XP."); }
-      else if (action.type === "train") toast.success("Treino concluído: +65 XP para cada herói escalado.");
-      else if (action.type === "hire") toast.success("Herói recrutado para a guilda.");
-      else if (action.type === "negotiate-rival") { const report = body.state.lastNegotiation!; if (report.success) toast.success(report.heroName + " entrou para sua guilda."); else toast(report.heroName + " recusou a proposta."); }
-      else if (action.type === "upgrade") toast.success("Arsenal ampliado. Toda a guilda ficou mais forte.");
-      else if (action.type === "rename") toast.success("Nome da guilda atualizado.");
-      else if (action.type === "reset") { setWatchingBattle(false); setBattleOpen(false); setElapsed(0); setPaused(false); setGuildName(body.state.name); setView("expeditions"); toast.success("Sua nova campanha começou."); }
-      else if (action.type === "battle-auto") {
-        const exp = body.state.expeditions.find(e => e.id === action.expeditionId);
-        setElapsed(battleTimeline(exp?.battle || body.state.lastBattle).duration); setPaused(false);
-      }
-      else if (action.type === "battle-retreat") {
-        const exp = body.state.expeditions.find(e => e.id === action.expeditionId);
-        setElapsed(battleTimeline(exp?.battle || body.state.lastBattle).duration); setPaused(false); toast("A equipe foi retirada. Confira o relatório.");
-      }
-      else if (action.type === "battle-tactic") toast.success("A nova tática será usada no próximo turno.");
-      else if (action.type === "battle-potion") toast.success("Poção reservada para o próximo turno.");
-      else if (action.type === "battle-consumable") toast.success((ITEMS[action.key]?.name || "Consumível") + " preparado para o próximo turno.");
-      else if (action.type === "event") toast.success("Decisão registrada no conselho.");
-      else if (action.type === "equip") toast.success("Equipamento entregue ao herói.");
-      else if (action.type === "unequip") toast.success("Item guardado no baú.");
-      else if (action.type === "sell") toast.success("Item vendido. Ouro adicionado ao tesouro.");
-      else if (action.type === "buy") toast.success("Item comprado e guardado no baú.");
-      else if (action.type === "specialize") toast.success("Especialização desenvolvida.");
-      else if (action.type === "release") toast.success("Contrato transferido.");
-      return body;
-    } catch (e) {
-      const message = e instanceof Error ? e.message : "Não foi possível salvar. Tente novamente.";
-      setError(message); toast.error(message); throw e;
-    } finally { lock.current = false; setBusy(false); }
-  }, []);
-  const act = (action: Action) => { void perform(action).catch(() => {}); };
-  const performRef = useRef(perform); performRef.current = perform;
+    } catch(e) {
+      setError(e instanceof Error ? e.message : "A ação não pôde ser concluída.");
+    } finally { setBusy(false); }
+  },[busy,hydrate]);
 
+  const state = save?.state;
+  const running = state ? activeExpeditions(state) : [];
   useEffect(() => {
-    if (!battleOpen || !battle || paused || resultReady) return;
-    let previous = performance.now();
-    const duration = frame.clockLimit;
-    const timer = window.setInterval(() => {
-      const now = performance.now(), delta = (now - previous) / 1000;
-      previous = now;
-      setElapsed(seconds => advanceBattleClock(seconds, delta, battleSpeed, duration));
-    }, 200);
-    return () => clearInterval(timer);
-  }, [battleOpen, battle, paused, battleSpeed, resultReady, frame.clockLimit]);
-
-  useEffect(() => {
-    if (!state || !runningExpeditions.length || busy || lock.current) return;
-    const nextAt = Math.min(...runningExpeditions.map(e => e.nextRoundAt));
-    const wait = Math.max(100, Math.min(5000, nextAt - Date.now() + 40));
-    const timer = window.setTimeout(() => {
-      if (!lock.current) void perform({ type: "expedition-tick", now: Date.now() }).catch(() => {});
-    }, wait);
+    if (!state || !running.length || busy) return;
+    const nextAt = Math.min(...running.map(e=>e.nextRoundAt));
+    const wait = Math.max(100,Math.min(5000,nextAt-Date.now()+50));
+    const timer = window.setTimeout(() => perform({type:"expedition-tick",now:Date.now()}),wait);
     return () => window.clearTimeout(timer);
-  }, [save?.revision, busy, perform, runningExpeditions.length, runningExpeditions.map(e => e.nextRoundAt).join(",")]);
+  },[save?.revision,busy,running.map(e=>e.nextRoundAt).join(","),perform]);
 
-  useEffect(() => {
-    if (!battleOpen || !battle) return;
-    const limit = battleTimeline(battle).availableUntil;
-    if (limit > elapsed && !paused) setElapsed(limit);
-  }, [battle?.rounds, battle?.status, battleOpen]);
+  if (!state) return <main className="boot-screen"><Crown /><h1>Crônicas da Guilda</h1><p>{error || "Abrindo sua campanha…"}</p></main>;
 
-  useEffect(() => { if (battleScroll.current) battleScroll.current.scrollTop = battleScroll.current.scrollHeight; }, [shown]);
-  useEffect(() => {
-    type Tool = { name: string; title: string; description: string; inputSchema: object; annotations: { readOnlyHint: boolean; untrustedContentHint: boolean }; execute: (input: unknown) => unknown };
-    const context = (document as Document & { modelContext?: { registerTool: (tool: Tool, options: { signal: AbortSignal }) => void | Promise<void> } }).modelContext;
-    if (!context?.registerTool) return;
-    const lifecycle = new AbortController();
-    const tools: Tool[] = [
-      { name: "read_guild_campaign", title: "Ler a campanha da guilda", description: "Retorna a guilda, heróis disponíveis e missões do dia. Não altera a campanha.", inputSchema: { type: "object", properties: {}, additionalProperties: false }, annotations: { readOnlyHint: true, untrustedContentHint: false }, execute: () => {
-        const s = saveRef.current?.state; if (!s) throw new Error("A campanha ainda não carregou.");
-        return { name: s.name, day: s.day, gold: s.gold, fame: s.fame, team: s.team, tactic: s.tactic, event: s.event, chest: s.chest, activeBattle: battleActive(s), battle: s.lastBattle ? { status: s.lastBattle.status, rounds: s.lastBattle.rounds, fighters: s.lastBattle.combat?.fighters, potionsUsed: s.lastBattle.combat?.potionsUsed } : null, heroes: s.heroes.map(h => ({ id: h.id, name: h.name, class: h.class, energy: h.energy, available: available(h, s) })), missions: missions(s).map(m => ({ ...m, locks: missionLocks(s, m) })), boss: seasonBoss(s) };
-      } },
-      { name: "resolve_guild_event", title: "Resolver evento da guilda", description: "Aplica uma escolha do conselho, salva seus efeitos e libera o avanço do dia. Use os IDs retornados pela leitura da campanha.", inputSchema: { type: "object", properties: { eventId: { type: "string" }, choiceId: { type: "string" } }, required: ["eventId", "choiceId"], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: async input => {
-        const a = input as { eventId: string; choiceId: string };
-        if (!a || typeof a.eventId !== "string" || typeof a.choiceId !== "string") throw new Error("Informe o evento e a escolha.");
-        const result = await performRef.current({ type: "event", eventId: a.eventId, choiceId: a.choiceId });
-        return { gold: result.state.gold, fame: result.state.fame, heroes: result.state.heroes.map(h => ({ id: h.id, salary: h.salary, energy: h.energy })), chest: result.state.chest };
-      } },
-      { name: "command_guild_battle", title: "Dar uma ordem na batalha", description: "Muda a tática do próximo turno, reserva uma poção ou ordena retirada e salva a decisão na batalha em andamento.", inputSchema: { type: "object", properties: { order: { type: "string", enum: ["tactic", "potion", "retreat"] }, tactic: { type: "string", enum: ["balanced", "aggressive", "defensive"] }, heroId: { type: "string" } }, required: ["order"], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: async input => {
-        const a = input as { order: string; tactic?: Tactic; heroId?: string };
-        let command: Action;
-        if (a?.order === "tactic" && a.tactic && Object.hasOwn(TACTICS, a.tactic)) command = { type: "battle-tactic", tactic: a.tactic };
-        else if (a?.order === "potion" && typeof a.heroId === "string") command = { type: "battle-potion", heroId: a.heroId };
-        else if (a?.order === "retreat") command = { type: "battle-retreat" };
-        else throw new Error("Informe uma ordem e seus dados.");
-        const result = await performRef.current(command);
-        return { status: result.state.lastBattle?.status, tactic: result.state.tactic, gold: result.state.gold, fame: result.state.fame };
-      } },
-      { name: "simulate_guild_expedition", title: "Simular expedição", description: "Envia 3 ou 4 heróis a uma missão disponível. A guilda pode manter até três expedições simultâneas.", inputSchema: { type: "object", properties: { missionId: { type: "string" }, team: { type: "array", items: { type: "string" }, minItems: 3, maxItems: 4, uniqueItems: true }, tactic: { type: "string", enum: ["balanced", "aggressive", "defensive"] } }, required: ["missionId", "team", "tactic"], additionalProperties: false }, annotations: { readOnlyHint: false, untrustedContentHint: false }, execute: async input => {
-        const a = input as { missionId: string; team: string[]; tactic: Tactic };
-        if (!a || typeof a.missionId !== "string" || !Array.isArray(a.team) || a.team.length < 3 || a.team.length > 4 || new Set(a.team).size !== a.team.length || !Object.hasOwn(TACTICS, a.tactic)) throw new Error("Informe uma missão, 3 ou 4 heróis e uma tática válida.");
-        const launched = await performRef.current({ type: "mission", missionId: a.missionId, team: a.team, tactic: a.tactic, startedAt: Date.now() });
-        const expeditionId = launched.state.expeditions[launched.state.expeditions.length - 1]?.id;
-        const result = await performRef.current({ type: "battle-auto", expeditionId });
-        return { day: result.state.day, gold: result.state.gold, battle: { title: result.state.lastBattle?.title, won: result.state.lastBattle?.won, reward: result.state.lastBattle?.reward } };
-      } },
-    ];
-    for (const tool of tools) {
-      try { void Promise.resolve(context.registerTool(tool, { signal: lifecycle.signal })).catch(() => {}); } catch {}
-    }
-    return () => lifecycle.abort();
-  }, []);
+  const allMissions = [...missions(state), seasonBoss(state)].filter(Boolean) as Mission[];
+  const selectedMission = allMissions.find(m=>m.id===selectedMissionId) || allMissions[0];
+  const battleExpedition = battleExpeditionId ? state.expeditions.find(e=>e.id===battleExpeditionId) : undefined;
 
-  function setPreparedTeam(ids: string[], savedFormation?: Record<string, FormationLine>, savedTactic?: Tactic) {
-    if (!state) return;
-    const valid = ids.filter(id => state.heroes.some(h => h.id === id && available(h, state))).slice(0, 4);
-    if (valid.length < 3) { toast.error("Não há pelo menos 3 heróis disponíveis para montar essa equipe."); return; }
-    const nextFormation: Record<string, FormationLine> = {};
-    for (const id of valid) {
-      const hero = state.heroes.find(h => h.id === id)!;
-      nextFormation[id] = savedFormation?.[id] || defaultFormationLine(hero.class);
-    }
-    if (!formationValid(valid, nextFormation)) { nextFormation[valid[0]] = "front"; nextFormation[valid.length - 1] = "back"; }
-    setTeam(valid); setFormation(nextFormation); if (savedTactic) setTactic(savedTactic);
-    setMobileView("team");
-  }
-  function loadSavedSquad(kind: MissionKind) {
-    if (!state) return;
-    const squad = state.squads.find(q => q.specialty === kind);
-    const saved = (squad?.team || []).filter(id => state.heroes.some(h => h.id === id && available(h, state)));
-    if (saved.length >= 3) setPreparedTeam(saved, squad?.formation, squad?.tactic);
-    else {
-      const suggested = suggestSpecialistTeam(state, kind);
-      setPreparedTeam(suggested, undefined, squad?.tactic);
-      toast("Parte da equipe estava ocupada. Montei uma versão disponível para " + SQUAD_SPECIALTIES[kind].label + ".");
-    }
-  }
-  function buildSpecialistSquad(kind: MissionKind) {
-    if (!state) return;
-    const ids = suggestSpecialistTeam(state, kind);
-    setPreparedTeam(ids, undefined, kind === "defense" || kind === "boss" ? "defensive" : kind === "hunt" ? "aggressive" : "balanced");
-  }
-  function saveCurrentSquad(kind: MissionKind) {
-    if (!state) return;
-    const current = state.squads.find(q => q.specialty === kind);
-    const name = (squadNameDrafts[kind] || current?.name || SQUAD_SPECIALTIES[kind].label).trim();
-    act({ type: "save-squad", specialty: kind, name, team, tactic, formation });
-  }
+  const go = (s: Screen) => { setScreen(s); window.scrollTo({top:0,behavior:"smooth"}); };
+  const downloadBackup = () => {
+    const blob = new Blob([exportLocalCampaign()],{type:"application/json"});
+    const url = URL.createObjectURL(blob), a = document.createElement("a");
+    a.href=url; a.download="cronicas-da-guilda-backup.json"; a.click(); URL.revokeObjectURL(url);
+  };
+  const restore = async (file: File) => {
+    try { const next = importLocalCampaign(await file.text()); hydrate({state:next.state,revision:next.revision}); setFlash("Backup restaurado."); }
+    catch(e){ setError(e instanceof Error ? e.message : "Backup inválido."); }
+  };
 
-  function toggleTeamHero(h: Hero) {
-    if (!state) return;
-    if (team.includes(h.id)) { setTeam(team.filter(id => id !== h.id)); setFormation(old => { const next = { ...old }; delete next[h.id]; return next; }); return; }
-    if (team.length >= 4 || !available(h, state)) return;
-    const nextTeam = [...team, h.id], nextFormation: Record<string, FormationLine> = { ...formation, [h.id]: state.formation?.[h.id] || defaultFormationLine(h.class) };
-    for (const id of nextTeam) { const hero = state.heroes.find(x => x.id === id); if (hero && !nextFormation[id]) nextFormation[id] = state.formation?.[id] || defaultFormationLine(hero.class); }
-    if (nextTeam.length >= 3 && !formationValid(nextTeam, nextFormation)) { nextFormation[nextTeam[0]] = "front"; nextFormation[nextTeam[nextTeam.length - 1]] = "back"; }
-    setTeam(nextTeam); setFormation(nextFormation);
-  }
-  function changeFormation(heroId: string, line: FormationLine) {
-    const next = { ...formation, [heroId]: line };
-    if (team.length >= 3 && !formationValid(team, next)) { toast("Mantenha pelo menos um herói na frente e um na retaguarda."); return; }
-    setFormation(next);
-  }
-
-  function roster(full = false) {
-    if (!state) return null;
-    const mobileHeroes = state.heroes.filter(h => !full || heroFilter === "all" || (heroFilter === "team" ? team.includes(h.id) : !team.includes(h.id)));
-    return <><div className="desktop-roster"><Table className="hero-table">
-      <TableHeader><TableRow><TableHead className="select-col"><span className="sr-only">Escalar</span></TableHead><TableHead>Aventureiro</TableHead><TableHead className="number-col">Nível</TableHead><TableHead className="number-col">Força</TableHead><TableHead>Energia</TableHead>{full && <TableHead className="mobile-hide">Salário / semana</TableHead>}<TableHead><span className="sr-only">Detalhes</span></TableHead></TableRow></TableHeader>
-      <TableBody>{state.heroes.map(h => {
-        const selected = team.includes(h.id), ready = available(h, state), deployed = heroOnExpedition(state, h.id);
-        return <TableRow key={h.id} data-selected={selected} data-deployed={deployed}>
-          <TableCell className="select-col"><Checkbox id={"hero-" + h.id} checked={selected} disabled={blocked || (!selected && (!ready || team.length >= 4))} aria-label={(selected ? "Retirar " : "Escalar ") + h.name} onCheckedChange={() => toggleTeamHero(h)} /></TableCell>
-          <TableCell><div className="hero-name"><Portrait hero={h} /><div><label htmlFor={"hero-" + h.id}>{h.name}</label><span>{CLASSES[h.class].name} · {RACES[heroRace(h)].name}{deployed ? " · Em expedição" : h.injuredUntil > state.day ? " · Ferido por " + (h.injuredUntil - state.day) + " dia(s)" : selected ? " · Escalado" : " · Reserva"}</span></div></div></TableCell>
-          <TableCell className="number-col">{h.level}{talentPoints(h) > 0 && <span className="talent-available" title="Ponto de especialização disponível">✦</span>}</TableCell><TableCell className="number-col rating">{rating(h, state.arsenal, state)}</TableCell><TableCell><Energy hero={h} /></TableCell>
-          {full && <TableCell className="mobile-hide">{h.salary} <span className="muted">ouro</span></TableCell>}
-          <TableCell><Button variant="ghost" size="sm" className="details-button" onClick={() => { setHeroId(h.id); setDetailView("stats"); }} aria-label={"Ver detalhes de " + h.name}>Ver</Button></TableCell>
-        </TableRow>;
-      })}</TableBody>
-    </Table></div><div className="mobile-roster">{full && <ToggleGroup className="compact-nav" type="single" value={heroFilter} onValueChange={v => { if (v) setHeroFilter(v); }} aria-label="Filtrar heróis"><ToggleGroupItem value="all">Todos</ToggleGroupItem><ToggleGroupItem value="team">Equipe</ToggleGroupItem><ToggleGroupItem value="reserves">Reservas</ToggleGroupItem></ToggleGroup>}{mobileHeroes.map(h => {
-      const selected = team.includes(h.id), ready = available(h, state), deployed = heroOnExpedition(state, h.id);
-      return <div className="mobile-hero" data-selected={selected} data-deployed={deployed} key={h.id}><label className="mobile-hero-select"><Checkbox checked={selected} disabled={blocked || (!selected && (!ready || team.length >= 4))} aria-label={(selected ? "Retirar " : "Escalar ") + h.name} onCheckedChange={() => toggleTeamHero(h)} /><Portrait hero={h} /></label><div className="mobile-hero-info"><strong>{h.name}{talentPoints(h) > 0 && <span className="talent-available"> ✦</span>}</strong><span>{CLASSES[h.class].name} · {RACES[heroRace(h)].name} · Nv. {h.level} · Força {rating(h, state.arsenal, state)}</span><Energy hero={h} />{deployed ? <small className="expedition-status">⚔ Em expedição</small> : h.injuredUntil > state.day && <small className="negative">Ferido: {h.injuredUntil - state.day} dia(s)</small>}</div><Button variant="ghost" aria-label={"Detalhes de " + h.name} onClick={() => { setHeroId(h.id); setDetailView("stats"); }}><ChevronRight /></Button></div>;
-    })}{!mobileHeroes.length && <p className="roster-empty">Nenhum herói nesta categoria.</p>}</div></>;
-  }
-  const teamReady = !!state && team.length >= 3 && team.length <= 4 && team.every(id => state.heroes.some(h => h.id === id && available(h, state)));
-  const formationReady = teamReady && formationValid(team, formation);
-  const frontCount = team.filter(id => formation[id] === "front").length, backCount = team.filter(id => formation[id] === "back").length;
-  const power = state ? teamPower(state, team) : 0;
-  const lackHealer = state && !state.heroes.some(h => team.includes(h.id) && (["healer", "druid"].includes(h.class) || h.talent?.path === "healing" || h.class === "paladin" && h.talent?.path === "defense"));
-  const ranking = state ? standings(state) : [];
-  const leaguePlace = ranking.findIndex(r => r.id === "player") + 1;
-  const readiness = state && selectedMission ? missionReadiness(state, selectedMission, team) : null;
-  const ledgerPages = Math.max(1, Math.ceil((state?.ledger.length || 0) / 10));
-  const currentLedgerPage = Math.min(ledgerPage, ledgerPages - 1);
-
-  function downloadBackup() {
-    const current = saveRef.current;
-    if (!current) return;
-    const payload = exportLocalCampaign({ ...current, updatedAt: new Date().toISOString(), format: 1 });
-    const blob = new Blob([payload], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `cronicas-da-guilda-backup-dia-${current.state.day}.json`;
-    document.body.appendChild(anchor); anchor.click(); anchor.remove(); URL.revokeObjectURL(url);
-    toast.success("Backup baixado. Guarde esse arquivo fora do navegador.");
-  }
-
-  async function restoreBackup(file: File) {
-    try {
-      if (file.size > 2_000_000) throw new Error("O arquivo é grande demais para ser um save do jogo.");
-      const restored = importLocalCampaign(await file.text());
-      hydrateSave(restored);
-      setWatchingBattle(false); setBattleOpen(false); setElapsed(0); setPaused(false); setView("guild");
-      toast.success("Backup importado. Sua campanha foi restaurada neste aparelho.");
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Não foi possível importar o backup."); }
-    finally { if (backupInput.current) backupInput.current.value = ""; }
-  }
-
-  function navigate(value: string) {
-    setView(value);
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 760px)").matches) window.scrollTo({ top: 0, behavior: "instant" });
-  }
-  function openBattle(expeditionId?: string) {
-    const expedition = expeditionId && state ? state.expeditions.find(e => e.id === expeditionId) : selectedExpedition;
-    const targetBattle = expedition?.battle || battle;
-    if (!targetBattle) return;
-    if (expedition) setActiveExpeditionId(expedition.id);
-    setElapsed(targetBattle.status === "active" ? battleTimeline(targetBattle).availableUntil : battleTimeline(targetBattle).duration);
-    setWatchingBattle(true); setPaused(false); setBattleOpen(true); setBattleView(targetBattle.status === "active" ? "combat" : "result");
-  }
-  function battleAct(action: Action) {
-    if (selectedExpedition && action.type.startsWith("battle-")) act({ ...action, expeditionId: selectedExpedition.id } as Action);
-    else act(action);
-  }
-
-  return <div className="game">
-    <Toaster theme="dark" position="bottom-right" richColors />
-    <header className="topbar"><div className="topbar-inner">
-      <div className="brand"><div className="brand-mark"><Crown strokeWidth={1.35} /></div><div><span className="brand-title">Crônicas da Guilda</span></div></div>
-      <div className="header-tools">{state && <div className="header-currencies"><button type="button" onClick={() => navigate("guild")} aria-label="Abrir tesouro da guilda"><Coins /><strong>{fmt(state.gold)}</strong><b>+</b></button><button type="button" onClick={() => navigate("guild")} aria-label="Abrir renome da guilda"><Sparkles /><strong>{state.fame}</strong><b>+</b></button></div>}<Button variant="ghost" size="sm" className="help-button" aria-label="Como jogar" onClick={() => setHelp(true)}><CircleHelp /></Button></div>
-    </div></header>
-    {!state ? <main className="loading-screen"><Shield size={42} /><h1>{loading ? "Abrindo o salão da guilda…" : "Não foi possível abrir o save"}</h1><p role="status">{loading ? "Carregando sua campanha deste aparelho." : error}</p>{!loading && <Button onClick={() => void load()}>Tentar novamente</Button>}</main> : <main className="workspace">
-      <nav className="fantasy-command-nav" aria-label="Comandos principais">
-        <button type="button" data-active={view === "expeditions" && mobileView === "mission"} onClick={() => { setView("expeditions"); setMobileView("mission"); window.scrollTo({ top: 0, behavior: "instant" }); }}><Swords /><span>Missão</span></button>
-        <button type="button" data-active={view === "heroes" || view === "expeditions" && mobileView === "team"} onClick={() => { setView("expeditions"); setMobileView("team"); window.scrollTo({ top: 0, behavior: "instant" }); }}><Users /><span>Equipe</span></button>
-        <button type="button" data-active={view === "league"} onClick={() => { setView("league"); window.scrollTo({ top: 0, behavior: "instant" }); }}><Trophy /><span>Liga</span></button>
-        <button type="button" data-active={view === "expeditions" && mobileView === "camp"} onClick={() => { setView("expeditions"); setMobileView("camp"); window.scrollTo({ top: 0, behavior: "instant" }); }}><Tent /><span>Descanso</span></button>
-      </nav>
-      <div className="guild-heading"><div><span className="eyebrow">SALÃO DO COMANDANTE</span><h1>{state.name}</h1></div><span className="save-status" role="status">{busy ? <><LoaderCircle className="spin" /> Salvando…</> : <><HardDrive /> Salvo neste aparelho</>}</span></div>
-      <div className="resources">
-        <div className="resource"><Coins /><div><span>Tesouro</span><strong>{fmt(state.gold)} <small>ouro</small></strong></div></div>
-        <div className="resource"><Flag /><div><span>Renome</span><strong>{state.fame} <small>renome</small></strong></div></div>
-        <div className="resource"><Trophy /><div><span>Liga</span><strong>{leaguePlace}º <small>de {ranking.length} guildas</small></strong></div></div>
-        <div className="resource"><Tent /><div><span><span className="desktop-label">Temporada {state.season}</span><span className="mobile-label">T{state.season}</span></span><strong>Dia {seasonDay(state)} <small>/ 28</small></strong></div></div>
-      </div>
-      {error && <div className="error-banner" role="alert"><span>{error}</span><Button variant="ghost" size="icon" onClick={() => setError("")} aria-label="Fechar aviso"><X /></Button></div>}
-      <Tabs value={view} onValueChange={navigate} className="game-tabs">
-        <TabsList variant="line" className="main-tabs" aria-label="Navegação da guilda"><TabsTrigger value="expeditions"><Swords /><span>Missões</span></TabsTrigger><TabsTrigger value="heroes"><Users /><span>Heróis</span>{state.heroes.some(h => talentPoints(h) > 0) && <i className="nav-notice" />}</TabsTrigger><TabsTrigger value="inventory"><Archive /><span>Baú</span></TabsTrigger><TabsTrigger value="market"><ScrollText /><span>Taverna</span></TabsTrigger><TabsTrigger value="guild"><Crown /><span>Guilda</span>{state.event && <i className="nav-notice" />}</TabsTrigger></TabsList>
-        <TabsContent value="expeditions">
-          <ToggleGroup className="compact-nav mobile-subnav" type="single" value={mobileView} onValueChange={v => { if (v) { setMobileView(v); window.scrollTo({ top: 0, behavior: "instant" }); } }} aria-label="Painéis de missões"><ToggleGroupItem value="mission"><ScrollText />Contratos</ToggleGroupItem><ToggleGroupItem value="league"><Swords />Expedições</ToggleGroupItem><ToggleGroupItem value="team"><Users />Equipes</ToggleGroupItem><ToggleGroupItem value="camp"><Tent />Descanso</ToggleGroupItem></ToggleGroup>
-          <div className="command-grid" data-mobile-view={mobileView}><div className="main-column">
-      <section className="expedition-dock" aria-label="Expedições da guilda"><div className="expedition-dock-heading"><div><span className="eyebrow">CENTRAL DE EXPEDIÇÕES</span><strong>{runningExpeditions.length} / 3 equipes em campo</strong></div><span>As três vagas ficam sempre visíveis</span></div><div className="expedition-dock-grid">{expeditionSlots.map(({ slot, expedition }) => expedition ? <button key={slot} className="expedition-mini-card" data-status="active" onClick={() => openBattle(expedition.id)}><span className="expedition-slot-number">EXPEDIÇÃO {slot}</span><span className="expedition-mini-icon"><Swords /></span><span className="expedition-mini-copy"><strong>{expedition.battle.title}</strong><small>Turno {expedition.battle.rounds} · em andamento · tocar para abrir</small></span><span className="expedition-mini-team">{expedition.team.map(id => { const h = state.heroes.find(hero => hero.id === id); return h ? <Portrait key={id} hero={h} /> : null; })}</span><ChevronRight /></button> : <button key={slot} className="expedition-mini-card expedition-free-slot" data-selected={selectedExpeditionSlot === slot} onClick={() => { setSelectedExpeditionSlot(slot); setView("expeditions"); setMobileView("mission"); }}><span className="expedition-slot-number">EXPEDIÇÃO {slot}</span><span className="expedition-mini-icon"><Tent /></span><span className="expedition-mini-copy"><strong>Vaga livre</strong><small>{selectedExpeditionSlot === slot ? "Selecionada para a próxima equipe" : "Tocar para preparar esta expedição"}</small></span><ChevronRight /></button>)}</div><p className="expedition-dock-note">Uma vaga ocupada não some. Você verá Expedição 1, 2 e 3 o tempo todo; as livres ficam prontas para receber outra equipe.</p></section>
-
-            <section className="mission-section"><div className="section-heading"><div><span className="eyebrow">QUADRO DE CONTRATOS · {selectedMission?.location || REGIONS[state.activeRegion - 1]}</span><h2>Missões disponíveis</h2><p>Escolha um contrato, confira perigo, recompensa e possíveis saques.</p></div><span className="subtle-chip">{board.filter(m => !missionLocks(state, m).length).length} liberadas / 5</span></div>
-              <div className="mobile-mission-picker parchment-contract-board">
-                {board.map(m => {
-                  const locks = missionLocks(state, m), chosen = selectedMission?.id === m.id;
-                  const specialists = contractSpecialists(m.kind), drops = contractDropHints(m.rank, m.kind);
-                  return <article key={m.id} className="parchment-contract" data-chosen={chosen} data-locked={locks.length > 0} role="button" tabIndex={0} onClick={() => { if (!locks.length) setMissionId(m.id); }} onKeyDown={e => { if (!locks.length && (e.key === "Enter" || e.key === " ")) setMissionId(m.id); }}>
-                    <div className="contract-art">
-                      <img src={"/enemies/" + enemyPortraitKey(m.enemy) + ".webp"} alt={"Ameaça da missão " + m.title} onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = "/enemies/fallback.webp"; }} />
-                      <span>{KIND_NAMES[m.kind]}</span><b className="contract-art-rank">{"0" + m.rank}</b>
-                    </div>
-                    <div className="contract-copy">
-                      <div className="contract-title-row"><div><small>{m.location}</small><h3>{m.title}</h3></div></div>
-                      <p>{m.description}</p>
-                      <div className="contract-difficulty"><strong>Dificuldade: <em>{CONTRACT_DIFFICULTY[m.rank]}</em></strong><span aria-label={m.rank + " de 5 de dificuldade"}>{[1,2,3,4,5].map(n => <i key={n} data-on={n <= m.rank}>◆</i>)}</span></div>
-                      <div className="contract-specialists"><small>Especialistas recomendados</small><div>{specialists.map(id => <span key={id}>{CLASSES[id].name}</span>)}</div></div>
-                      <div className="contract-bottom">
-                        <div className="contract-rewards"><span><Coins />{fmt(m.reward)} ouro</span><span className="xp-reward">XP +{contractWinXp(m.rank)}</span><div className="contract-drop-hints" aria-label="Possíveis saques">{drops.map(key => <span key={key} title={ITEMS[key]?.name || key}><ItemIcon itemKey={key} /></span>)}</div></div>
-                        <Button className="contract-prepare" disabled={blocked || locks.length > 0} onClick={e => { e.stopPropagation(); setMissionId(m.id); if (!locks.length) setMobileView("team"); }}>{locks.length ? <><LockKeyhole />Bloqueada</> : <>Preparar equipe<ChevronRight /></>}</Button>
-                      </div>
-                      {locks.length > 0 && <div className="contract-lock-reason"><LockKeyhole />Exige {locks.join(" + ")}</div>}
-                    </div>
-                  </article>;
-                })}
-                <button className="team-preview parchment-team-preview" onClick={() => setMobileView("team")}><span className="team-portraits">{state.heroes.filter(h => team.includes(h.id)).map(h => <Portrait key={h.id} hero={h} />)}</span><span><strong>Equipe atual {team.length}/3–4 · Força {power}</strong><small>{runningExpeditions.length}/3 expedições ativas · tocar para organizar</small></span><ChevronRight /></button>
-              </div>
-              <RadioGroup value={selectedMission?.id} onValueChange={setMissionId} className="mission-grid desktop-mission-grid" aria-label="Missão da expedição" disabled={blocked}>
-                {board.map(m => { const Icon = m.enemy === "Esqueleto" ? Skull : m.enemy === "Lobo sombrio" ? Trees : m.kind === "defense" ? Shield : Swords, locks = missionLocks(state, m); return <label key={m.id} htmlFor={m.id} className="mission-card" data-chosen={selectedMission?.id === m.id} data-locked={locks.length > 0}>
-                  <div className="mission-top"><span className={"difficulty difficulty-" + m.rank}>{["", "ROTINA", "DESAFIO", "ÉPICA", "SECRETA", "LENDÁRIA"][m.rank]}</span>{locks.length > 0 && <LockKeyhole size={16} />}<RadioGroupItem value={m.id} id={m.id} aria-label={m.title} disabled={blocked || locks.length > 0} /></div>
-                  <div className="mission-emblem"><Icon strokeWidth={1.2} /><span>{"0" + m.rank}</span></div><span className="location">{KIND_NAMES[m.kind]} · {m.location}</span><h3>{m.title}</h3><p>{m.description}</p>
-                  <div className="mission-footer"><span><Swords />{m.force} <small>força</small></span><strong><Coins />{fmt(m.reward)}</strong></div>
-                  {m.requiredItem && <div className="mission-requirements"><span><Flag />{m.requiredFame} renome</span><span><ItemIcon itemKey={m.requiredItem} />{ITEMS[m.requiredItem].name}</span><small>{locks.length ? "Bloqueada: " + locks.join(" + ") : "Requisitos cumpridos · item permanece no baú"}</small></div>}
-                </label>; })}
-              </RadioGroup>
-              {readiness && <p className={"desktop-readiness readiness readiness-" + readiness.level}><Shield size={16} />{readiness.label}<span>{readiness.hint}</span></p>}
-            </section>
-            <section className="panel roster-panel"><div className="panel-heading"><div><h2>Equipe da Expedição {selectedExpeditionSlot}</h2><p>Escolha 3 ou 4 heróis. Quem estiver em outra expedição fica indisponível.</p></div><span className={"team-count " + (team.length >= 3 ? "complete" : "")}>{team.length} / 3–4</span></div>{roster()}
-              <div className="roster-footer"><span><Shield />Força da equipe <strong>{power}</strong></span><span className="muted">Energia mínima: 25%</span></div>
-            </section>
-            <section className="panel saved-squads-panel"><div className="panel-heading"><div><h2>Equipes especialistas</h2><p>Salve formações prontas por tipo de missão e dê o nome que quiser.</p></div><Users /></div><div className="saved-squads-grid">{(Object.keys(SQUAD_SPECIALTIES) as MissionKind[]).map(kind => { const squad = state.squads.find(q => q.specialty === kind); const members = (squad?.team || []).map(id => state.heroes.find(h => h.id === id)).filter(Boolean) as Hero[]; return <article className="saved-squad-card" key={kind}><div className="saved-squad-head"><span className="specialty-badge">{SQUAD_SPECIALTIES[kind].label}</span><Input value={squadNameDrafts[kind] ?? squad?.name ?? SQUAD_SPECIALTIES[kind].label} onChange={e => setSquadNameDrafts(old => ({ ...old, [kind]: e.target.value }))} maxLength={32} aria-label={"Nome da equipe de " + SQUAD_SPECIALTIES[kind].label} /></div><p>{SQUAD_SPECIALTIES[kind].description}</p><div className="saved-squad-members">{members.length ? members.map(h => <span key={h.id}><Portrait hero={h} /><small>{h.name.split(" ")[0]}</small></span>) : <small>Nenhuma formação salva ainda.</small>}</div><div className="squad-level-line"><span>Equipe Nv. {squad?.level || 1}</span><small>{squad?.wins || 0} vitórias · {squad?.xp || 0} XP</small></div><div className="saved-squad-actions"><Button variant="outline" size="sm" onClick={() => buildSpecialistSquad(kind)} disabled={blocked}>Montar especialista</Button><Button variant="outline" size="sm" onClick={() => loadSavedSquad(kind)} disabled={blocked}>{members.length ? "Usar equipe" : "Usar sugestão"}</Button><Button size="sm" onClick={() => saveCurrentSquad(kind)} disabled={blocked || team.length < 3}>Salvar atual</Button></div></article>; })}</div></section>
-            <section className="panel strategy-panel"><div className="panel-heading"><div><h2>Plano de batalha</h2><p>{selectedMission?.flavor}</p></div><span className="subtle-chip">Combate 2.0</span></div>
-              <div className="formation-editor"><div className="formation-heading"><div><h3>Formação</h3><p>A frente recebe +10% de defesa e segura a maior parte dos ataques. A retaguarda recebe +6% de ataque/magia, mas flanqueadores podem alcançá-la.</p></div><span>{frontCount} frente · {backCount} retaguarda</span></div><div className="formation-list">{state.heroes.filter(h => team.includes(h.id)).map(h => <div className="formation-hero" key={h.id}><div className="formation-hero-name"><Portrait hero={h} /><span><strong>{h.name}</strong><small>{CLASSES[h.class].name} · {RACES[heroRace(h)].name}</small></span></div><ToggleGroup type="single" value={formation[h.id] || defaultFormationLine(h.class)} onValueChange={v => { if (v) changeFormation(h.id, v as FormationLine); }} variant="outline" disabled={blocked} aria-label={"Posição de " + h.name}><ToggleGroupItem value="front"><Shield />Frente</ToggleGroupItem><ToggleGroupItem value="back"><Target />Retaguarda</ToggleGroupItem></ToggleGroup></div>)}</div>{team.length < 3 && <p className="formation-note">Escale pelo menos três heróis para formar uma equipe.</p>}{team.length >= 3 && !formationReady && <p className="team-warning">A formação precisa ter ao menos um herói em cada linha.</p>}</div>
-              <RadioGroup value={tactic} onValueChange={v => setTactic(v as Tactic)} className="tactic-grid" aria-label="Tática da equipe" disabled={blocked}>
-                {(Object.keys(TACTICS) as Tactic[]).map(t => <label key={t} htmlFor={"tactic-" + t} className="tactic-card" data-chosen={tactic === t}><RadioGroupItem value={t} id={"tactic-" + t} /><div><strong>{TACTICS[t].name}</strong><span>{TACTICS[t].description}</span></div></label>)}
-              </RadioGroup>
-              {(!teamReady || lackHealer) && <p className="team-warning">{!teamReady ? "Escale 3 ou 4 heróis disponíveis para partir." : "Sem cura: inclua uma curandeira, druida ou herói com caminho de cura."}</p>}
-              <p className="mobile-tactic-description">{TACTICS[tactic].description}</p>
-              {state.event && <p className="team-warning">Resolva a decisão do conselho para partir.</p>}
-              <div className="launch-row"><div><span className="eyebrow">DESTINO SELECIONADO</span><strong>{selectedMission?.title}</strong><span className="muted">{selectedLocks.length ? "Contrato bloqueado" : state.event ? "Conselho pendente" : !formationReady ? "Complete a equipe e a formação" : "Derrota: −" + (selectedMission ? 6 + selectedMission.rank * 3 : 0) + " renome"}</span></div><Button className="primary-launch" size="lg" disabled={blocked || !freeSlots.includes(selectedExpeditionSlot) || !formationReady || !!state.event || selectedLocks.length > 0} onClick={() => selectedMission && act({ type: "mission", missionId: selectedMission.id, team, tactic, formation, startedAt: Date.now(), expeditionSlot: selectedExpeditionSlot })}>{busy ? <LoaderCircle className="spin" /> : <Swords />}<span className="desktop-label">Iniciar expedição</span><span className="mobile-label">Partir</span></Button></div>
-            </section>
-          </div>
-          <aside className="side-column">
-            <SeasonJourney state={state} disabled={blocked} selectBoss={id => { setMissionId(id); setMobileView("mission"); if (window.matchMedia("(max-width: 760px)").matches) window.scrollTo({ top: 0 }); else document.querySelector(".strategy-panel")?.scrollIntoView({ block: "start" }); }} selected={selectedMission?.id || ""} />
-            <JourneyPanel state={state} disabled={blocked} act={act} />
-            <LeagueTable state={state} openGuild={id => { setMarketView("rivals"); setRivalGuildId(id); navigate("market"); }} />
-            <section className="panel camp-panel"><div className="panel-heading"><h2>Santuário da Guilda</h2><Tent /></div><p>Heróis feridos e exaustos repousam aqui antes de voltar às expedições.</p>
-              <Button variant="outline" disabled={blocked || !!state.event} onClick={() => act({ type: "rest" })}><Tent />Descansar a guilda<span>+40 energia</span></Button><Button variant="outline" disabled={blocked || !!state.event || !teamReady || state.gold < 200} onClick={() => act({ type: "train", team, tactic })}><Target />Treinar equipe<span>200 ouro</span></Button><IndividualTraining state={state} disabled={blocked} act={act} /><p className="camp-note">Cada ação avança 1 dia. Treino em equipe: +65 XP por herói. Treino individual: 90 XP mais bônus para heróis de nível baixo.</p>
-            </section>
-            <section className="council-note"><BookOpen /><div><span className="eyebrow">ÚLTIMA NOTÍCIA</span><p>{state.journal[0]?.text}</p>{battle && <Button variant="link" onClick={() => openBattle()}>{active || watchingBattle && !resultReady ? "Continuar batalha" : "Ver última batalha"}</Button>}</div></section>
-          </aside></div>
-        </TabsContent>
-        <TabsContent value="league"><div className="fantasy-league-page"><div className="section-heading"><div><span className="eyebrow">CLASSIFICAÇÃO DA LIGA</span><h2>Temporada {state.season}</h2><p>Dispute posições, desafie rivais e fortaleça a reputação da guilda.</p></div><span className="rank-badge"><Trophy />{leaguePlace}º lugar</span></div><LeagueTable state={state} openGuild={id => { setMarketView("rivals"); setRivalGuildId(id); navigate("market"); }} /><GuildWarPanel state={state} disabled={blocked} act={act} /></div></TabsContent>
-        <TabsContent value="inventory"><ChestAndShop state={state} disabled={blocked} act={act} /></TabsContent>
-        <TabsContent value="heroes"><div className="section-heading"><div><span className="eyebrow">ELENCO DA GUILDA</span><h2>Seus aventureiros</h2><p>Consulte atributos, acompanhe a evolução e ajuste sua equipe.</p></div><span className="subtle-chip">{state.heroes.length} / 12 contratos</span></div>
-          <section className="panel roster-panel">{roster(true)}<div className="roster-footer"><span><Users />{team.length} heróis escalados · Força {power}</span><Button variant="outline" onClick={() => navigate("expeditions")}>Preparar expedição</Button></div></section>
-          <div className="hero-guidance"><Heart /><p>A cura acontece durante a batalha. Fora dela, vida é restaurada automaticamente; energia e ferimentos exigem descanso ou rotação da equipe.</p></div>
-        </TabsContent>
-        <TabsContent value="market"><div className="section-heading"><div><span className="eyebrow">TAVERNA DE VALEN</span><h2>Recrute novos talentos</h2><p>{marketView === "free" ? "Novos contratos a cada sete dias. Cada herói recebe um salário semanal." : "Dispute aventureiros com as outras 99 guildas."}</p></div><span className="subtle-chip">Renovação em {7 - ((state.day - 1) % 7)} dias</span></div>
-          <ToggleGroup className="compact-nav market-switch" type="single" value={marketView} onValueChange={v => { if (v) setMarketView(v); }} aria-label="Mercado de aventureiros"><ToggleGroupItem value="free"><ScrollText />Sem contrato</ToggleGroupItem><ToggleGroupItem value="rivals"><Flag />Guildas rivais</ToggleGroupItem></ToggleGroup>
-          {marketView === "rivals" ? <RivalRecruitment state={state} disabled={blocked} act={act} selectedGuildId={rivalGuildId} selectGuild={setRivalGuildId} /> : <><ClassesGuide /><div className="recruit-grid">{market(state).map(h => <section key={h.id} className="panel recruit-card"><div className="recruit-top"><Portrait hero={h} large /><span className="subtle-chip">NÍVEL {h.level}</span></div><span className="location">{CLASSES[h.class].name} · {RACES[heroRace(h)].name} · {h.trait}</span><h3>{h.name}</h3><p>{CLASSES[h.class].description}</p><div className="recruit-stats"><span><Sword />{h.attack}<small>Ataque</small></span><span><Shield />{h.defense}<small>Defesa</small></span><span><Sparkles />{h.magic}<small>Magia</small></span></div><div className="recruit-salary"><span>Salário semanal</span><strong>{h.salary} ouro</strong></div><Button disabled={blocked || state.gold < h.value || state.heroes.length >= 12} onClick={() => act({ type: "hire", heroId: h.id })}><Check />Recrutar<span>{fmt(h.value)} ouro</span></Button>{state.gold < h.value && <small className="muted">Ouro insuficiente para o contrato.</small>}</section>)}</div>
-          {market(state).length === 0 && <div className="empty-state"><Users /><h3>Todos os contratos desta semana foram assinados.</h3><p>Avance os dias em expedições, descanso ou treino para encontrar novos heróis.</p><Button variant="outline" onClick={() => navigate("expeditions")}>Voltar às expedições</Button></div>}</>}
-        </TabsContent>
-        <TabsContent value="guild"><EventPanel state={state} disabled={blocked} act={act} /><div className="section-heading"><div><span className="eyebrow">CONSELHO DA GUILDA</span><h2>Construa seu legado</h2></div><span className="rank-badge"><Shield />Patente {rank(state)}</span></div><ToggleGroup className="compact-nav mobile-subnav guild-subnav" type="single" value={guildView} onValueChange={v => { if (v) setGuildView(v); }} aria-label="Painéis da guilda"><ToggleGroupItem value="summary">Resumo</ToggleGroupItem><ToggleGroupItem value="base">Base</ToggleGroupItem><ToggleGroupItem value="world">Mundo</ToggleGroupItem><ToggleGroupItem value="war">Guerra</ToggleGroupItem><ToggleGroupItem value="treasury">Tesouro</ToggleGroupItem><ToggleGroupItem value="chronicles">Crônicas</ToggleGroupItem></ToggleGroup><div className="guild-grid" data-mobile-view={guildView}>
-          <div className="main-column"><section className="panel guild-identity"><div className="panel-heading"><h2>Identidade da guilda</h2><Crown /></div><form onSubmit={e => { e.preventDefault(); act({ type: "rename", name: guildName }); }}><label htmlFor="guild-name">Nome da guilda</label><div className="name-form"><Input id="guild-name" value={guildName} onChange={e => setGuildName(e.target.value)} minLength={3} maxLength={32} required disabled={blocked} /><Button variant="outline" disabled={blocked || guildName.trim() === state.name || guildName.trim().length < 3}><Pencil />Salvar</Button></div></form><div className="guild-record"><div><strong>{state.wins}</strong><span>Vitórias na temporada</span></div><div><strong>{state.losses}</strong><span>Retiradas na temporada</span></div><div><strong>{state.fame}</strong><span>Renome acumulado</span></div></div></section>
-          <section className="panel treasury-panel"><div className="panel-heading"><div><h2>Livro do tesouro</h2><p>Manutenção: 8 ouro/dia · Salários: {payroll(state)} ouro/semana</p></div><Coins /></div><div className="payroll-note">Próximo pagamento de salários em {7 - ((state.day - 1) % 7)} dias.</div><Table><TableHeader><TableRow><TableHead>Dia</TableHead><TableHead>Movimentação</TableHead><TableHead className="number-col">Ouro</TableHead></TableRow></TableHeader><TableBody>{state.ledger.slice(currentLedgerPage * 10, currentLedgerPage * 10 + 10).map(e => <TableRow key={e.id}><TableCell className="muted">{e.day}</TableCell><TableCell>{e.label}</TableCell><TableCell className={"number-col " + (e.amount > 0 ? "positive" : "negative")}>{e.amount > 0 ? "+" : "−"}{fmt(Math.abs(e.amount))}</TableCell></TableRow>)}</TableBody></Table><nav className="list-pagination" aria-label="Páginas do tesouro"><Button variant="outline" aria-label="Página anterior do tesouro" disabled={currentLedgerPage === 0} onClick={() => setLedgerPage(currentLedgerPage - 1)}><ChevronLeft /></Button><span>{currentLedgerPage + 1} / {ledgerPages}</span><Button variant="outline" aria-label="Próxima página do tesouro" disabled={currentLedgerPage >= ledgerPages - 1} onClick={() => setLedgerPage(currentLedgerPage + 1)}><ChevronRight /></Button></nav></section>
-          <div className="guild-base-panels"><HeadquartersPanel state={state} disabled={blocked} act={act} /><ForgePanel state={state} disabled={blocked} act={act} /></div>
-          <div className="guild-world-panels"><WorldMapPanel state={state} disabled={blocked} act={act} /></div>
-          <div className="guild-war-panels"><GuildWarPanel state={state} disabled={blocked} act={act} /><SquadProgressPanel state={state} /></div></div>
-          <div className="side-column"><section className="panel arsenal-panel"><div className="panel-heading"><h2>Arsenal da guilda</h2><Hammer /></div><span className="arsenal-level">Nível {state.arsenal}<small> / 3</small></span><p>Cada nível adiciona +2 de ataque e +1 de defesa a todos os heróis em batalha.</p><div className="arsenal-track">{[1, 2, 3].map(n => <span key={n} data-built={state.arsenal >= n} />)}</div><Button disabled={blocked || state.arsenal >= 3 || state.gold < 350 + state.arsenal * 350} onClick={() => act({ type: "upgrade" })}><Hammer />{state.arsenal >= 3 ? "Arsenal completo" : "Ampliar arsenal"}{state.arsenal < 3 && <span>{fmt(350 + state.arsenal * 350)} ouro</span>}</Button></section>
-          <section className="panel backup-panel"><div className="panel-heading"><div><h2>Save e backup</h2><p>Esta edição salva a campanha no navegador, sem login e sem ChatGPT.</p></div><HardDrive /></div><div className="backup-actions"><Button variant="outline" disabled={busy} onClick={downloadBackup}><Download />Baixar backup</Button><Button variant="outline" disabled={busy} onClick={() => backupInput.current?.click()}><Upload />Importar backup</Button><input ref={backupInput} className="backup-file-input" type="file" accept="application/json,.json" onChange={e => { const file = e.target.files?.[0]; if (file) void restoreBackup(file); }} /><p>Faça backup antes de limpar dados do navegador, formatar o aparelho ou trocar de celular/computador.</p></div></section>
-          <section className="panel chronicles-panel"><div className="panel-heading"><h2>Crônicas</h2><BookOpen /></div><ol>{state.journal.slice(0, 8).map((j, i) => <li key={i}><span>DIA {j.day}</span><p>{j.text}</p></li>)}</ol></section><Button variant="ghost" className="reset-button" disabled={blocked} onClick={() => setConfirm({ type: "reset" })}>Iniciar uma nova campanha</Button></div>
-        </div></TabsContent>
-      </Tabs>
-      <footer className="game-footer"><span>Crônicas da Guilda</span><span>Uma missão. Uma decisão. Um novo capítulo.</span></footer>
-    </main>}
-    <Dialog open={help} onOpenChange={setHelp}><DialogContent className="help-dialog"><DialogHeader><DialogTitle>Comande sua guilda</DialogTitle><DialogDescription>Escolhas, equipe e recursos definem sua campanha.</DialogDescription></DialogHeader><ol className="help-steps"><li><strong>Resolva o conselho.</strong><p>A cada quatro dias surge um evento. Ganhe ouro, construa renome ou negocie a permanência de um herói.</p></li><li><strong>Escolha entre cinco contratos.</strong><p>Escolta protege uma caravana; defesa mantém a barricada por seis turnos; masmorra tem armadilhas; caça exige vitória em até 12 turnos.</p></li><li><strong>Abra os contratos secretos.</strong><p>Quarta missão: 120 renome e Mapa Secreto. Quinta: 260 renome e Chave Antiga. Os itens permanecem no baú; perder renome pode bloquear o acesso novamente.</p></li><li><strong>Escale e acompanhe.</strong><p>Escale 3 ou 4 heróis com pelo menos 25% de energia. Você pode manter até três expedições simultâneas e minimizar cada batalha para continuar administrando a guilda. Organize frente e retaguarda, mude a tática, use as habilidades próprias de cada classe, reserve até duas poções ou ordene retirada. As ordens valem no próximo turno. O combate é salvo a cada turno.</p></li><li><strong>Cuide do baú.</strong><p>Vitórias dão tesouros e chances de equipamento. Equipe uma arma, uma armadura e um acessório por herói. Venda itens ao mercador para pagar salários ou comprar suprimentos.</p></li><li><strong>Evolua as 7 classes clássicas até o nível 50.</strong><p>Arqueiro, Mago, Sacerdote, Cavaleiro, Guerreiro, Assassino e Pierrô. Novas habilidades aparecem nos níveis 1, 5, 12, 22, 35 e 50. O Pierrô manipula a sorte e melhora o saque.</p></li><li><strong>Treine um herói.</strong><p>Em Descanso ou nos atributos do herói, faça um treino individual por 90 ouro: +90 XP e até +140 XP de bônus para quem está abaixo do nível dos companheiros. Gasta 15 de energia e avança um dia.</p></li><li><strong>Desenvolva raça e história.</strong><p>Cada uma das seis raças tem uma árvore própria com três caminhos. Nos atributos do herói também há uma história pessoal em três etapas; concluir o desafio final libera uma habilidade especial.</p></li><li><strong>Envie heróis em viagem.</strong><p>Viagens de 3, 5 ou 7 dias rendem XP enquanto a sede segue funcionando. Acampamento recupera energia, Exploração aumenta XP e saque, e Atalho encurta a rota com menos experiência.</p></li><li><strong>Expanda a guilda.</strong><p>Explore 12 regiões, construa Enfermaria, Forja, Academia, Biblioteca, Estábulos e Sala de Guerra. Crie equipamentos com materiais e desenvolva aprendizes na sede.</p></li><li><strong>Entre em guerra.</strong><p>Desafie guildas rivais em batalha direta ou forme três equipes para uma raid simultânea em Portão, Passagem Subterrânea e Torre dos Magos.</p></li></ol><p className="help-costs">Liga: um confronto direto por dia concede 3 pontos por vitória e 1 por empate. Missão derrotada: perda de renome. Descanso: até +40 energia. Reservas: +18 por dia. Manutenção: até 8 ouro/dia; salários a cada sete dias. A campanha é salva após cada ação neste aparelho. Use o backup na aba Guilda para proteger seu progresso.</p><DialogClose asChild><Button>Voltar à campanha</Button></DialogClose></DialogContent></Dialog>
-    <Dialog open={!!detail} onOpenChange={open => { if (!open) setHeroId(null); }}><DialogContent className="hero-dialog" data-mobile-view={detailView}>{detail && state && detailStats && <><DialogHeader><div className="hero-detail-heading"><Portrait hero={detail} large /><div><span className="location">{CLASSES[detail.class].name} · {RACES[heroRace(detail)].name} · {detail.talent ? SPECIALIZATIONS[detail.class][detail.talent.path].name : detail.trait}</span><DialogTitle>{detail.name}</DialogTitle></div></div><DialogDescription>{CLASSES[detail.class].description}</DialogDescription></DialogHeader><ToggleGroup className="compact-nav mobile-subnav" type="single" value={detailView} onValueChange={v => { if (v) setDetailView(v); }} aria-label="Detalhes do herói"><ToggleGroupItem value="stats">Atributos</ToggleGroupItem><ToggleGroupItem value="talents">Talentos</ToggleGroupItem><ToggleGroupItem value="equipment">Equipamento</ToggleGroupItem></ToggleGroup><div className="hero-overview"><div className="detail-stats"><div><strong>{detail.level}</strong><span>Nível</span></div><div><strong>{detailStats.attack}</strong><span>Ataque</span></div><div><strong>{detailStats.defense}</strong><span>Defesa</span></div><div><strong>{detailStats.magic}</strong><span>Magia</span></div></div><div className="detail-progress"><label>Experiência <span>{detail.xp} / {threshold(detail)} XP</span></label><Progress value={detail.xp / threshold(detail) * 100} aria-label="Experiência do herói" /><label>Energia <span>{detail.energy}%</span></label><Progress value={detail.energy} aria-label="Energia do herói" /></div>{detail.injuredUntil > state.day && <p className="team-warning">Ferido. Disponível no dia {detail.injuredUntil}.</p>}{detail.scars?.length ? <div className="hero-scars"><strong>Marcas de batalha</strong>{detail.scars.map(id => { const scar = SCAR_DEFINITIONS.find(s => s.id === id); return scar ? <span key={id}><b>{scar.name}</b><small>{scar.description}</small></span> : null; })}</div> : null}<IndividualTraining state={state} hero={detail} disabled={blocked} act={act} /></div><SpecializationPanel hero={detail} disabled={blocked} act={act} /><RaceEvolutionPanel hero={detail} disabled={blocked} act={act} /><HeroStoryPanel state={state} hero={detail} disabled={blocked || heroOnExpedition(state, detail.id)} act={act} /><HeroEquipment state={state} hero={detail} disabled={blocked || heroOnExpedition(state, detail.id)} act={act} /><Button className="hero-chest-link" variant="outline" onClick={() => { setHeroId(null); navigate("inventory"); }}><Archive />Abrir baú para equipar</Button><p className="muted">Salário: {detail.salary} ouro/semana. Transferência de contrato: {Math.round(detail.value * .35)} ouro.</p><Button className="hero-transfer" variant="outline" disabled={blocked || heroOnExpedition(state, detail.id) || state.heroes.length <= 4 || state.event?.heroId === detail.id} onClick={() => { setHeroId(null); setConfirm({ type: "release", hero: detail }); }}>Transferir contrato para outra guilda</Button></>}</DialogContent></Dialog>
-    <Dialog open={battleOpen} onOpenChange={open => { setBattleOpen(open); if (!open) setPaused(false); }}>
-      <DialogContent className="battle-dialog live-battle-dialog" showCloseButton={false} onInteractOutside={event => { if (!resultReady) event.preventDefault(); }}>
-        {battle && <><div className="battle-fixed-header"><DialogHeader><div className="battle-title"><div><span className="eyebrow">{resultReady ? "RELATÓRIO DA EXPEDIÇÃO" : paused ? "ANIMAÇÃO PAUSADA · COMBATE CONTINUA" : "ACOMPANHANDO A BATALHA"}</span><DialogTitle>{battle?.title || "Expedição"}</DialogTitle></div><DialogClose asChild><Button variant="ghost" size="icon" aria-label={resultReady ? "Fechar relatório" : "Minimizar batalha e voltar à guilda"}><X /></Button></DialogClose></div><DialogDescription>{battle ? "Expedição do dia " + battle.day + " · " + (resultReady ? battle.rounds + " turnos de combate" : "Acompanhe os heróis, os golpes e as curas") : ""}</DialogDescription></DialogHeader>
-          <div className="battle-clock-bar"><div className="battle-clock"><Clock3 /><div><span>TEMPO DE COMBATE</span><output role="timer" aria-live="off">{formatBattleClock(elapsed)}</output></div></div><div className="battle-clock-status"><strong>{resultReady ? "Confronto encerrado" : paused ? "Pausado" : frame.preparing ? "Preparando formação" : active && frame.needsRound ? busy ? "Calculando próximo turno" : "Aguardando próximo turno" : shown === frame.events.length && !active ? "Preparando relatório" : "Turno " + frame.currentRound}</strong><span>{resultReady ? battle.won ? "Missão cumprida" : battle.status === "retreated" ? "Retirada ordenada" : "Missão fracassou" : frame.preparing ? "Os heróis estão se posicionando" : active ? "Você pode dar ordens para o próximo turno" : "Confronto encerrado · preparando relatório"}</span></div><Progress className="battle-time-progress" value={active ? Math.min(95, battle.rounds / (battle.objective?.targetRounds || 24) * 100) : frame.duration ? elapsed / frame.duration * 100 : 0} aria-label="Progresso do combate" /></div>
-          <div className="playback-controls"><Button variant="outline" disabled={resultReady} onClick={() => setPaused(p => !p)}>{paused ? <Play /> : <Pause />}{paused ? "Retomar animação" : "Pausar animação"}</Button><div className="speed-picker"><span>Velocidade</span><ToggleGroup type="single" value={String(battleSpeed)} onValueChange={value => { if (value) setBattleSpeed(Number(value) as PlaybackSpeed); }} variant="outline" aria-label="Velocidade da simulação" disabled={resultReady}>{[1, 2, 4].map(speed => <ToggleGroupItem key={speed} value={String(speed)} aria-label={"Velocidade " + speed + " vezes"}>{speed}×</ToggleGroupItem>)}</ToggleGroup></div>{!resultReady && <Button variant="ghost" className="skip-battle" disabled={busy} onClick={() => { if (active) battleAct({ type: "battle-auto" }); else { setElapsed(frame.duration); setPaused(false); } }}>{active ? "Concluir automaticamente" : "Pular para resultado"}</Button>}</div><ToggleGroup className="compact-nav mobile-subnav battle-subnav" type="single" value={battleView} onValueChange={v => { if (v) setBattleView(v); }} aria-label="Painéis da batalha"><ToggleGroupItem value="combat">Combate</ToggleGroupItem>{active && <ToggleGroupItem value="orders">Ordens</ToggleGroupItem>}<ToggleGroupItem value="log">Narração</ToggleGroupItem>{resultReady && <ToggleGroupItem value="result">Resultado</ToggleGroupItem>}</ToggleGroup></div><div className="battle-scroll-area" data-mobile-view={battleView}>
-          {active && state && <div className="battle-command-pane"><BattleOrders battle={battle} state={state} visibleFighters={frame.fighters} disabled={busy} act={battleAct} /><Button variant="outline" className="mobile-auto-battle" disabled={busy} onClick={() => battleAct({ type: "battle-auto" })}>Concluir automaticamente</Button></div>}<div className="battle-combat-pane">
-          {battle.objective && battle.objective.maxHp > 0 && <section className="battle-objective"><div><strong>{battle.objective.name}</strong><span>{frame.objectiveHp} / {battle.objective.maxHp} PV · objetivo: resistir até o turno {battle.objective.targetRounds}</span></div><Progress value={frame.objectiveHp / battle.objective.maxHp * 100} aria-label={"Vida da " + battle.objective.name} /></section>}
-          {battle.objective && battle.objective.name === "Limite da caçada" && <p className="battle-live-note">Derrote os monstros até o turno {battle.objective.targetRounds}.</p>}
-          {frame.fighters.length > 0 && <div className="battle-arena"><section className="battle-side heroes-side"><div className="battle-side-heading"><Shield /><h3>Seus heróis</h3><span>{frame.fighters.filter(f => f.side === "hero" && f.hp > 0).length} / {frame.fighters.filter(f => f.side === "hero").length}</span></div><div className="combatants-grid">{frame.fighters.filter(f => f.side === "hero").map(f => <FighterCard key={f.id} fighter={f} impact={frame.last} elapsed={elapsed} />)}</div></section><section className="battle-side enemies-side"><div className="battle-side-heading"><Swords /><h3>Inimigos</h3><span>{frame.fighters.filter(f => f.side === "enemy" && f.hp > 0).length} / {frame.fighters.filter(f => f.side === "enemy").length}</span></div><div className="combatants-grid">{frame.fighters.filter(f => f.side === "enemy").map(f => <FighterCard key={f.id} fighter={f} impact={frame.last} elapsed={elapsed} />)}</div></section></div>}
-          </div><div className="battle-log-pane"><div className="live-log-heading"><ScrollText /><h3>Acontecimentos da batalha</h3><span>{paused && !resultReady ? "PAUSADO" : resultReady ? "ENCERRADO" : "EM ANDAMENTO"}</span></div>
-          <div className="battle-log live-battle-log" ref={battleScroll} aria-label="Registro da batalha">
-            {frame.visible.length === 0 && <p className="battle-waiting">Sua equipe avança para o confronto. A narração começará em instantes.</p>}
-            {frame.visible.map((event, i) => <div key={i} className={"log-line log-" + event.log.kind}><time>{formatBattleClock(event.at)}</time><p>{event.log.text}</p></div>)}
-          </div></div>
-          {resultReady && <div className="battle-result-pane"><div className={"battle-outcome " + (battle.won ? "victory" : "defeat")} role="status">{battle.won ? <Trophy /> : <Shield />}<div><h3>{battle.won ? "Vitória da guilda" : battle.status === "retreated" ? "Retirada ordenada" : "A missão fracassou"}</h3><p>{battle.won ? "+" + battle.reward + " ouro · +" + battle.xp + " XP por herói" : "+" + battle.xp + " XP por herói · Descanse e ajuste a equipe"}{typeof battle.fameChange === "number" && " · " + (battle.fameChange >= 0 ? "+" : "") + battle.fameChange + " renome"}</p></div></div><div className="battle-summary">{battle.levelUps.length > 0 && <p><Sparkles />Subiram de nível: {battle.levelUps.join(", ")}. Consulte as especializações nos detalhes do herói.</p>}{battle.wounded.length > 0 && <p className="negative"><Heart />Feridos: {battle.wounded.join(", ")}. Precisam de dois dias para recuperação.</p>}{battle.regionUnlocked && <p className="positive"><Crown />Nova região: {REGIONS[battle.regionUnlocked - 1]}.</p>}{!!battle.loot?.length && <div className="battle-loot"><h3>Saque enviado ao baú</h3>{battle.loot.map((key, i) => <span key={key + i}><ItemIcon itemKey={key} />{ITEMS[key].name}</span>)}<Button variant="outline" onClick={() => { setBattleOpen(false); navigate("inventory"); }}>Abrir baú</Button></div>}<p className="muted">{battle.remaining} de {battle.fighters?.filter(f => f.side === "hero").length || 0} heróis encerraram o combate em pé. O dia só avança quando todas as expedições em andamento forem resolvidas.</p></div></div>}
-          </div><div className="battle-actions">{resultReady ? <><Button variant="outline" onClick={() => { setElapsed(0); setPaused(false); setWatchingBattle(true); setBattleView("combat"); }}>Rever batalha</Button><Button onClick={() => setBattleOpen(false)}>Continuar campanha</Button></> : <p className="battle-live-note">{paused ? "Só a animação está pausada. A expedição continua em segundo plano." : "Você pode fechar esta tela: a expedição continuará enquanto usa a guilda."}</p>}</div>
-        </>}
-      </DialogContent>
-    </Dialog>
-    <AlertDialog open={!!confirm} onOpenChange={open => { if (!open) setConfirm(null); }}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{confirm?.type === "reset" ? "Começar uma nova campanha?" : "Transferir este contrato?"}</AlertDialogTitle><AlertDialogDescription>{confirm?.type === "reset" ? "Sua campanha atual será substituída. Ouro, heróis, reputação e histórico serão reiniciados." : confirm?.type === "release" ? confirm.hero.name + " deixará a guilda. Você receberá " + Math.round(confirm.hero.value * 0.35) + " de ouro e deixará de pagar seu salário." : ""}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => { if (confirm?.type === "reset") act({ type: "reset" }); else if (confirm?.type === "release") act({ type: "release", heroId: confirm.hero.id }); }}>{confirm?.type === "reset" ? "Reiniciar campanha" : "Transferir contrato"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+  return <div className="app-shell">
+    <TopBar state={state} goGuild={() => go("guild")} />
+    <TopNav screen={screen} go={go} />
+    {flash && <button className="flash" onClick={() => setFlash("")}><Check /> {flash}</button>}
+    {error && <button className="error" onClick={() => setError("")}><X /> {error}</button>}
+    <main className="game-content">
+      {screen === "mission" && <MissionPage state={state} selectedId={selectedMission.id} selectMission={setSelectedMissionId} goTeam={() => go("team")} />}
+      {screen === "team" && <TeamPage state={state} selectedMission={selectedMission} team={team} formation={formation} tactic={tactic} slot={slot} busy={busy} setTeam={setTeam} setFormation={setFormation} setTactic={setTactic} setSlot={setSlot} act={perform} openBattle={setBattleExpeditionId} />}
+      {screen === "league" && <LeaguePage state={state} team={team} act={perform} busy={busy} />}
+      {screen === "rest" && <RestPage state={state} act={perform} busy={busy} />}
+      {screen === "heroes" && <HeroPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} act={perform} busy={busy} />}
+      {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
+      {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
+      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} />}
+    </main>
+    <BottomNav screen={screen} go={go} />
+    <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />
+    {battleExpedition && <BattleOverlay state={state} expedition={battleExpedition} act={perform} close={() => setBattleExpeditionId(null)} busy={busy} />}
   </div>;
 }

@@ -65,3 +65,5 @@ if (await missionAction.count()) {
 if (errors.length) throw new Error(errors.join("\n"));
 await browser.close();
 console.log("VISUAL_OK");
+
+// sync trigger

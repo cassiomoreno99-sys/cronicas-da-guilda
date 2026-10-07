@@ -2078,3 +2078,416 @@ body::before {
     grid-column:1 / -1;
   }
 }
+
+
+/* v1.3.0 PREVIEW — QUADRO DE CONTRATOS FANTASY MOBILE */
+.parchment-contract-board { display:none; }
+.parchment-contract {
+  position:relative;
+  overflow:hidden;
+  border:1px solid #7d6238;
+  border-radius:10px;
+  background:
+    linear-gradient(90deg,rgba(255,246,211,.96),rgba(226,205,157,.95)),
+    repeating-linear-gradient(0deg,rgba(102,71,35,.035) 0 1px,transparent 1px 4px);
+  box-shadow:0 8px 20px rgba(0,0,0,.30), inset 0 0 0 1px rgba(255,239,190,.30);
+  color:#2d1d12;
+}
+.parchment-contract[data-chosen="true"] {
+  border-color:#d0a14f;
+  box-shadow:0 0 0 2px rgba(218,171,83,.26),0 9px 23px rgba(0,0,0,.36);
+}
+.parchment-contract[data-locked="true"] { filter:saturate(.72); }
+.contract-art {
+  position:relative;
+  overflow:hidden;
+  min-height:170px;
+  background:#17130f;
+}
+.contract-art::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg,transparent 45%,rgba(20,10,4,.72));
+  pointer-events:none;
+}
+.contract-art img {
+  width:100%;
+  height:100%;
+  min-height:170px;
+  object-fit:cover;
+  display:block;
+}
+.contract-art > span {
+  position:absolute;
+  z-index:2;
+  left:10px;
+  bottom:9px;
+  padding:4px 8px;
+  border:1px solid rgba(230,189,106,.7);
+  border-radius:999px;
+  background:rgba(15,16,17,.78);
+  color:#f0d28d;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+.contract-copy { padding:12px 13px 13px; }
+.contract-title-row {
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:8px;
+}
+.contract-title-row small {
+  display:block;
+  margin-bottom:2px;
+  color:#765b39;
+  font-size:10px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.07em;
+}
+.contract-title-row h3 {
+  margin:0;
+  color:#3a1e14;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:23px;
+  line-height:1.02;
+}
+.contract-rank {
+  flex:0 0 auto;
+  padding:4px 7px;
+  border:1px solid #7f6947;
+  border-radius:6px;
+  background:#eee0bd;
+  color:#5a472d;
+  font-size:9px;
+  font-weight:900;
+}
+.contract-copy > p {
+  margin:7px 0 9px;
+  color:#4a3829;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:14px;
+  line-height:1.28;
+}
+.contract-difficulty {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:7px 0;
+  border-top:1px solid rgba(90,63,31,.18);
+  border-bottom:1px solid rgba(90,63,31,.18);
+}
+.contract-difficulty strong {
+  color:#4c3422;
+  font-size:12px;
+}
+.contract-difficulty em {
+  color:#7b382b;
+  font-style:normal;
+}
+.contract-difficulty > span {
+  display:flex;
+  gap:2px;
+  font-size:13px;
+}
+.contract-difficulty i {
+  color:#b9a98c;
+  font-style:normal;
+  text-shadow:0 1px #fff1c7;
+}
+.contract-difficulty i[data-on="true"] {
+  color:#8f3a28;
+  text-shadow:0 1px #f9d98d;
+}
+.contract-specialists {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:8px 0 5px;
+}
+.contract-specialists > small {
+  color:#6e5637;
+  font-size:10px;
+  font-weight:800;
+}
+.contract-specialists > div {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:4px;
+}
+.contract-specialists span {
+  padding:3px 6px;
+  border:1px solid #9c865c;
+  border-radius:999px;
+  background:#e8d8ae;
+  color:#4c3825;
+  font-size:9px;
+  font-weight:800;
+}
+.contract-bottom {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:end;
+  gap:10px;
+  margin-top:3px;
+}
+.contract-rewards {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:5px 8px;
+  min-width:0;
+}
+.contract-rewards > span {
+  display:flex;
+  align-items:center;
+  gap:4px;
+  color:#4e3823;
+  font-size:11px;
+  font-weight:800;
+}
+.contract-rewards > span svg {
+  width:14px;
+  height:14px;
+  color:#a46b11;
+}
+.contract-rewards .xp-reward {
+  padding:3px 6px;
+  border-radius:5px;
+  background:#604389;
+  color:#f5eaff;
+}
+.contract-drop-hints {
+  display:flex;
+  width:100%;
+  gap:4px;
+  margin-top:2px;
+}
+.contract-drop-hints > span {
+  display:inline-flex;
+  width:30px;
+  height:30px;
+  border:1px solid #8c734d;
+  border-radius:6px;
+  background:#2b251d;
+}
+.contract-drop-hints .item-icon {
+  width:100% !important;
+  height:100% !important;
+  border:0 !important;
+}
+.contract-drop-hints .item-icon img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+.contract-prepare {
+  min-width:126px;
+  min-height:46px;
+  border:1px solid #8c6d39 !important;
+  background:linear-gradient(180deg,#466c3a,#254622) !important;
+  color:#fff1ce !important;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:15px !important;
+  box-shadow:inset 0 0 0 2px rgba(248,220,153,.15),0 3px 0 #2c2419;
+}
+.parchment-contract[data-chosen="true"] .contract-prepare {
+  background:linear-gradient(180deg,#7e3b2d,#4e1f19) !important;
+}
+.contract-prepare svg { width:16px; height:16px; }
+.contract-lock-reason {
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  margin-top:8px;
+  padding:7px 8px;
+  border-radius:6px;
+  background:rgba(105,45,32,.11);
+  color:#763c31;
+  font-size:10px;
+  line-height:1.35;
+}
+.contract-lock-reason svg {
+  flex:0 0 14px;
+  width:14px;
+  height:14px;
+  margin-top:1px;
+}
+.parchment-team-preview {
+  margin-top:4px;
+  padding:10px 11px !important;
+  border:1px solid #755d3b !important;
+  border-radius:9px;
+  background:linear-gradient(180deg,#241d17,#171411) !important;
+  box-shadow:0 7px 16px rgba(0,0,0,.26);
+}
+.parchment-team-preview strong { color:#e8c884 !important; }
+
+@media (max-width:760px) {
+  .game {
+    background:
+      radial-gradient(circle at 50% 0,rgba(43,67,89,.28),transparent 30%),
+      linear-gradient(180deg,#0b1119,#11171d 40%,#0a1016);
+  }
+
+  .topbar {
+    background:
+      linear-gradient(180deg,rgba(5,10,16,.26),rgba(5,9,14,.88)),
+      url("/ui/guild-night.webp") center 38% / cover no-repeat !important;
+    border-bottom:1px solid #806133 !important;
+    box-shadow:0 5px 18px rgba(0,0,0,.42);
+  }
+  .topbar-inner {
+    min-height:66px !important;
+    padding:8px 10px !important;
+  }
+  .brand-title {
+    font-family:Georgia,"Times New Roman",serif !important;
+    font-size:22px !important;
+    color:#f0d29a !important;
+    text-shadow:0 2px 2px #000;
+  }
+
+  .mobile-subnav {
+    top:66px !important;
+    gap:3px !important;
+    margin:0 -2px 11px !important;
+    padding:4px !important;
+    border:1px solid #4e5d6b !important;
+    border-radius:6px !important;
+    background:linear-gradient(180deg,rgba(24,39,53,.98),rgba(11,23,34,.99)) !important;
+    box-shadow:0 7px 17px rgba(0,0,0,.30) !important;
+  }
+  .mobile-subnav [data-slot="toggle-group-item"] {
+    min-height:43px !important;
+    border:1px solid transparent !important;
+    border-radius:4px !important;
+    color:#c5ced4 !important;
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:12px !important;
+  }
+  .mobile-subnav [data-slot="toggle-group-item"][data-state="on"] {
+    color:#ffe6a7 !important;
+    border-color:#a78343 !important;
+    background:linear-gradient(180deg,#6e522d,#3e2e1d) !important;
+    box-shadow:inset 0 0 0 1px rgba(245,213,142,.24),0 0 10px rgba(205,159,73,.20) !important;
+  }
+
+  .mission-section .section-heading {
+    margin:2px 2px 9px !important;
+  }
+  .mission-section .section-heading h2 {
+    font-family:Georgia,"Times New Roman",serif;
+    font-size:25px !important;
+    color:#ead5a7;
+  }
+  .mission-section .section-heading p {
+    margin:3px 0 0;
+    color:#9fb0bb;
+    font-size:12px !important;
+  }
+  .mission-section .section-heading .subtle-chip { display:none; }
+
+  .parchment-contract-board {
+    display:grid !important;
+    gap:9px;
+  }
+  .mobile-mission-picker.parchment-contract-board { display:grid !important; }
+  .parchment-contract {
+    display:grid;
+    grid-template-columns:35% 65%;
+    min-height:190px;
+  }
+  .contract-art {
+    min-height:100%;
+  }
+  .contract-art img {
+    min-height:100%;
+  }
+  .contract-copy {
+    padding:10px 10px 10px;
+  }
+  .contract-title-row h3 {
+    font-size:20px;
+  }
+  .contract-copy > p {
+    font-size:12px;
+  }
+  .contract-bottom {
+    grid-template-columns:1fr;
+    gap:6px;
+  }
+  .contract-prepare {
+    width:100%;
+    min-width:0;
+    min-height:42px;
+  }
+  .contract-specialists {
+    align-items:flex-start;
+    flex-direction:column;
+    gap:4px;
+  }
+  .contract-specialists > div {
+    justify-content:flex-start;
+  }
+
+  /* Contratos mostra só o quadro; a preparação fica em Equipes. */
+  .command-grid[data-mobile-view="mission"] .strategy-panel { display:none !important; }
+  .command-grid[data-mobile-view="team"] .saved-squads-panel { display:block !important; margin-bottom:16px; }
+
+  /* Expedições substitui a antiga aba de Liga dentro de Missões. */
+  .command-grid[data-mobile-view="league"] .league-panel,
+  .command-grid[data-mobile-view="league"] .journey-panel { display:none !important; }
+  .command-grid[data-mobile-view="league"] .expedition-dock {
+    display:block !important;
+    margin-bottom:16px;
+  }
+
+  .expedition-dock {
+    border-color:#72582f !important;
+    background:linear-gradient(180deg,#201914,#12151a) !important;
+  }
+
+  .game .main-tabs {
+    min-height:72px !important;
+    border-top:1px solid #72572f !important;
+    background:linear-gradient(180deg,#1d2025,#0a1016) !important;
+    box-shadow:0 -8px 22px rgba(0,0,0,.55) !important;
+  }
+  .game .main-tabs [data-slot="tabs-trigger"] {
+    color:#c7c5bd !important;
+    font-family:Georgia,"Times New Roman",serif;
+  }
+  .game .main-tabs [data-slot="tabs-trigger"][data-state="active"] {
+    color:#ffe091 !important;
+    border-top-color:#d3a653 !important;
+    background:linear-gradient(180deg,#3a2c1f,#191b1e) !important;
+    box-shadow:inset 0 0 0 1px rgba(213,165,80,.22),0 -6px 16px rgba(205,153,64,.12) !important;
+  }
+}
+
+@media (max-width:420px) {
+  .parchment-contract {
+    grid-template-columns:32% 68%;
+    min-height:184px;
+  }
+  .contract-title-row h3 { font-size:18px; }
+  .contract-copy > p {
+    font-size:11px;
+    line-height:1.24;
+  }
+  .contract-difficulty strong { font-size:10px; }
+  .contract-difficulty > span { font-size:11px; }
+  .contract-specialists > small { font-size:9px; }
+  .contract-specialists span { font-size:8px; padding:2px 5px; }
+  .contract-rewards > span { font-size:10px; }
+  .contract-drop-hints > span { width:26px; height:26px; }
+  .contract-prepare { font-size:13px !important; }
+}

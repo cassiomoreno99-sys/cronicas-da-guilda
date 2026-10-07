@@ -759,7 +759,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.team = (s.team || []).filter(id => !deployed.has(id) && s.heroes.some(h => h.id === id)).slice(0, 4);
   for (const h of s.heroes) if (s.team.length < 4 && !deployed.has(h.id) && !s.team.includes(h.id) && h.energy >= 25 && h.injuredUntil <= s.day && !activeJourney(s, h.id)) s.team.push(h.id);
   s.formation = normalizedFormation(s);
-  if (!s.chest) { s.chest = []; s.itemSequence = 0; addItem(s, "healing_potion"); addItem(s, "healing_potion"); }
+  if (!s.chest) { s.chest = []; s.itemSequence = 0; addItem(s, "healing_potion"); addItem(s, "healing_potion"); addItem(s, "antidote"); addItem(s, "stun_bomb"); }
   s.itemSequence ??= s.chest.length; s.region ??= 1; s.bossSeasons ??= []; s.shopPurchases ??= [];
   s.rivalAttempts ??= []; s.lastNegotiation ??= null;
   s.rivals = s.rivals.slice(0, LEAGUE_SIZE - 1).map((r, i) => r.heroes?.length && r.strength && r.recruitSequence !== undefined ? r : { ...createRival(i, s), ...r });

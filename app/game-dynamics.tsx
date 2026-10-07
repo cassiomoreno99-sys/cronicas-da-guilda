@@ -99,21 +99,55 @@ export function ChestAndShop({ state, disabled, act }: Controls) {
   </>;
 }
 export function BattleOrders({ battle, state, visibleFighters, disabled, act }: { battle: Battle; state: Campaign; visibleFighters: BattleFighter[]; disabled: boolean; act: (action: Action) => void }) {
-  const [targeting, setTargeting] = useState<{ heroId: string; ability: AbilitySpec } | null>(null), [targetId, setTargetId] = useState("");
+  const [targeting, setTargeting] = useState<"healing_potion" | "antidote" | "stun_bomb" | null>(null);
+  const [targetId, setTargetId] = useState("");
   const c = battle.combat; if (!c) return null;
-  const wounded = c.fighters.filter(f => f.side === "hero" && f.hp > 0 && f.hp < f.maxHp && visibleFighters.some(v => v.id === f.id && v.hp > 0 && v.hp < v.maxHp)), potions = state.chest.filter(i => i.key === "healing_potion").length;
-  const livingHeroes = c.fighters.filter(f => f.side === "hero" && f.hp > 0), livingEnemies = c.fighters.filter(f => f.side === "enemy" && f.hp > 0);
-  const targetOptions = targeting?.ability.target === "enemy" ? livingEnemies : livingHeroes;
-  function orderAbility(heroId: string, ability: AbilitySpec) {
-    if (ability.target === "self" || ability.target === "all-allies" || ability.target === "all-enemies") act({ type: "battle-ability", heroId, abilityId: ability.id });
-    else { const options = ability.target === "enemy" ? livingEnemies : livingHeroes; setTargetId(options[0]?.id || ""); setTargeting({ heroId, ability }); }
+
+  const livingHeroes = c.fighters.filter(f => f.side === "hero" && f.hp > 0 && visibleFighters.some(v => v.id === f.id && v.hp > 0));
+  const livingEnemies = c.fighters.filter(f => f.side === "enemy" && f.hp > 0 && visibleFighters.some(v => v.id === f.id && v.hp > 0));
+  const wounded = livingHeroes.filter(f => f.hp < f.maxHp);
+  const afflicted = livingHeroes.filter(f => (f.statuses || []).some(st => ["poison", "bleed", "vulnerable"].includes(st.kind)));
+  const counts = {
+    healing_potion: state.chest.filter(i => i.key === "healing_potion").length,
+    antidote: state.chest.filter(i => i.key === "antidote").length,
+    stun_bomb: state.chest.filter(i => i.key === "stun_bomb").length,
+  };
+  const targetOptions = targeting === "stun_bomb" ? livingEnemies : targeting === "antidote" ? afflicted : wounded;
+  const descriptions = {
+    healing_potion: "Recupera 70 PV de um herói ferido.",
+    antidote: "Remove veneno, sangramento e vulnerabilidade.",
+    stun_bomb: "Atordoa um inimigo e faz ele perder a próxima ação.",
+  };
+  function choose(key: "healing_potion" | "antidote" | "stun_bomb") {
+    const options = key === "stun_bomb" ? livingEnemies : key === "antidote" ? afflicted : wounded;
+    if (!counts[key] || c.pendingConsumable) return;
+    setTargetId(options[0]?.id || "");
+    setTargeting(key);
   }
-  return <section className="battle-orders"><div><h3>Ordens para o próximo turno</h3><span>Formação, tática e habilidades alteram o combate</span></div>
-    <div className="battle-formation-summary"><span><Shield />Frente: {livingHeroes.filter(f => f.position === "front").map(f => f.name.split(" ")[0]).join(", ") || "—"}</span><span><Target />Retaguarda: {livingHeroes.filter(f => f.position === "back").map(f => f.name.split(" ")[0]).join(", ") || "—"}</span></div>
-    <ToggleGroup type="single" value={c.tactic} variant="outline" onValueChange={t => { if (t) act({ type: "battle-tactic", tactic: t as Tactic }); }} disabled={disabled} aria-label="Tática para o próximo turno">{Object.entries(TACTICS).map(([id, t]) => <ToggleGroupItem value={id} key={id}>{t.name}</ToggleGroupItem>)}</ToggleGroup>
-    <div className="ability-orders"><div className="ability-orders-heading"><Sparkles /><div><strong>Habilidades ativas</strong><span>Cada classe tem uma habilidade própria. Evoluções do nível 7 liberam uma segunda.</span></div></div>{livingHeroes.map(f => { const hero = state.heroes.find(h => h.id === f.id); if (!hero) return null; const queued = c.pendingAbilities.find(o => o.heroId === hero.id); return <section className="ability-hero" key={hero.id}><div className="ability-hero-heading"><span><strong>{hero.name}</strong><small>{CLASSES[hero.class].name} · {f.position === "front" ? "Frente" : "Retaguarda"}</small></span>{queued && <small className="positive">Ordem preparada</small>}</div><div className="ability-buttons">{availableAbilities(hero).map(ability => { const cooldown = abilityCooldownRemaining(battle, hero.id, ability.id), selected = queued?.abilityId === ability.id; return <Button key={ability.id} size="sm" variant={ability.evolved ? "default" : "outline"} className="ability-button" disabled={disabled || !!queued || cooldown > 0} onClick={() => orderAbility(hero.id, ability)} title={ability.description}><Sparkles /><span><strong>{ability.name}</strong><small>{selected ? "Preparada" : cooldown ? "Recarga: " + cooldown + " turno" + (cooldown > 1 ? "s" : "") : ability.evolved ? "Evoluída · pronta" : "Pronta"}</small></span></Button>; })}</div></section>; })}</div>
-    <div className="potion-orders"><span><FlaskConical />Poções: {potions} no baú · {c.potionsUsed}/2 usadas</span>{c.pendingPotion ? <p className="positive">Cura reservada para o próximo turno.</p> : <div>{wounded.map(h => <Button key={h.id} size="sm" variant="outline" disabled={disabled || !potions || c.potionsUsed >= 2} onClick={() => act({ type: "battle-potion", heroId: h.id })}><FlaskConical />Curar {h.name.split(" ")[0]}</Button>)}{!wounded.length && <p className="muted">Nenhum herói disponível para cura neste momento.</p>}</div>}</div>
+
+  return <section className="battle-orders narrative-consumables">
+    <div className="battle-consumables-heading"><div><span className="eyebrow">INTERVENÇÃO DA GUILDA</span><h3>Consumíveis</h3><p>Os heróis escolhem habilidades automaticamente. Durante a batalha você interfere apenas com itens.</p></div>{c.pendingConsumable && <span className="consumable-pending">Preparado para o próximo turno</span>}</div>
+    <div className="combat-consumables-grid">
+      <button type="button" className="combat-consumable combat-consumable-red" disabled={disabled || !counts.healing_potion || !!c.pendingConsumable || !wounded.length} onClick={() => choose("healing_potion")}>
+        <ItemIcon itemKey="healing_potion" /><span><strong>Poção de Cura</strong><small>Recupera vida</small></span><b>×{counts.healing_potion}</b>
+      </button>
+      <button type="button" className="combat-consumable combat-consumable-green" disabled={disabled || !counts.antidote || !!c.pendingConsumable || !afflicted.length} onClick={() => choose("antidote")}>
+        <ItemIcon itemKey="antidote" /><span><strong>Antídoto</strong><small>Remove efeitos nocivos</small></span><b>×{counts.antidote}</b>
+      </button>
+      <button type="button" className="combat-consumable combat-consumable-blue" disabled={disabled || !counts.stun_bomb || !!c.pendingConsumable || !livingEnemies.length} onClick={() => choose("stun_bomb")}>
+        <ItemIcon itemKey="stun_bomb" /><span><strong>Bomba Atordoante</strong><small>Inimigo perde 1 ação</small></span><b>×{counts.stun_bomb}</b>
+      </button>
+    </div>
     <Button className="retreat-order" variant="ghost" disabled={disabled} onClick={() => act({ type: "battle-retreat" })}><Tent />Ordenar retirada · −{Math.min(state.fame, 3 + c.mission.rank * 2)} renome</Button>
-    <Dialog open={!!targeting} onOpenChange={open => { if (!open) setTargeting(null); }}><DialogContent className="ability-target-dialog"><DialogHeader><DialogTitle>{targeting?.ability.name}</DialogTitle><DialogDescription>{targeting?.ability.description} Escolha o alvo para o próximo turno.</DialogDescription></DialogHeader><RadioGroup value={targetId} onValueChange={setTargetId} className="ability-target-list">{targetOptions.map(target => <label key={target.id} htmlFor={"ability-target-" + target.id} className="ability-target"><RadioGroupItem id={"ability-target-" + target.id} value={target.id} /><span><strong>{target.name}</strong><small>{target.hp}/{target.maxHp} PV{target.side === "hero" ? " · " + (target.position === "front" ? "Frente" : "Retaguarda") : ""}</small></span></label>)}</RadioGroup><Button disabled={!targeting || !targetId || disabled} onClick={() => { if (targeting) act({ type: "battle-ability", heroId: targeting.heroId, abilityId: targeting.ability.id, targetId }); setTargeting(null); }}>Confirmar habilidade</Button></DialogContent></Dialog>
+    <Dialog open={!!targeting} onOpenChange={open => { if (!open) { setTargeting(null); setTargetId(""); } }}>
+      <DialogContent className="ability-target-dialog consumable-target-dialog">
+        <DialogHeader><DialogTitle>{targeting ? ITEMS[targeting].name : "Consumível"}</DialogTitle><DialogDescription>{targeting ? descriptions[targeting] : ""} Escolha o alvo.</DialogDescription></DialogHeader>
+        <RadioGroup value={targetId} onValueChange={setTargetId} className="ability-target-list">
+          {targetOptions.map(target => <label key={target.id} htmlFor={"consumable-target-" + target.id} className="ability-target"><RadioGroupItem id={"consumable-target-" + target.id} value={target.id} /><span><strong>{target.name}</strong><small>{target.hp}/{target.maxHp} PV{target.side === "hero" && target.statuses?.length ? " · " + target.statuses.map(st => st.kind).join(", ") : ""}</small></span></label>)}
+        </RadioGroup>
+        {!targetOptions.length && <p className="muted">Nenhum alvo válido neste momento.</p>}
+        <Button disabled={!targeting || !targetId || disabled} onClick={() => { if (targeting && targetId) act({ type: "battle-consumable", key: targeting, targetId }); setTargeting(null); setTargetId(""); }}>Confirmar consumível</Button>
+      </DialogContent>
+    </Dialog>
   </section>;
 }

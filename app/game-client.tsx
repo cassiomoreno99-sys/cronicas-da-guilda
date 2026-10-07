@@ -309,7 +309,7 @@ function TeamPage({
     if (!formationValid(next, map)) map[next[0]] = "front";
     setTeam(next); setFormation(map);
   };
-  const canSend = free.includes(slot) && !missionLocks(state, selectedMission).length && team.length >= 3 && team.length <= 4 && team.every(id => {
+  const canSend = !state.event && free.includes(slot) && !missionLocks(state, selectedMission).length && team.length >= 3 && team.length <= 4 && team.every(id => {
     const h = state.heroes.find(x => x.id === id); return !!h && available(h, state);
   });
   return <section className="screen team-screen">
@@ -369,7 +369,7 @@ function TeamPage({
       </div>
     </div>
     <div className="send-row">
-      <div><strong>Pronto para a Expedição?</strong><span>{selectedMission.title} · vaga {slot}</span></div>
+      <div><strong>{state.event ? "Conselho pendente" : "Pronto para a Expedição?"}</strong><span>{state.event ? "Resolva a decisão do conselho na Guilda antes de partir." : selectedMission.title + " · vaga " + slot}</span></div>
       <button className="action-button green huge" disabled={!canSend || busy} onClick={() => act({
         type:"mission", missionId:selectedMission.id, team, tactic, formation, expeditionSlot:slot, startedAt:Date.now()
       })}><Swords /> Enviar</button>

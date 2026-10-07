@@ -38,7 +38,7 @@ const specialtyName = (value: string) => specialtyNames[value] || value;
 const CORE_RACE_NAMES: Record<string,string> = {
   aric:"Humano", lyra:"Elfa", elen:"Anão", kael:"Meio-Elfa", sora:"Elfo", doran:"Draconato"
 };
-const raceLabel = (hero: Pick<Hero,"id"|"name"|"class"|"race">) => CORE_RACE_NAMES[hero.id] || raceLabel(hero);
+const raceLabel = (hero: Pick<Hero,"id"|"name"|"class"|"race">): string => CORE_RACE_NAMES[hero.id] || RACES[heroRace(hero)].name;
 const itemArtFile = (key: string) => {
   const k = key.toLowerCase();
   if (k === "antidote") return "antidote";

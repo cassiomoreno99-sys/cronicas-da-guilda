@@ -94,7 +94,8 @@ console.log("v1.3.0: iniciando bateria ampla...");
     ok(!names.has(h.name), "Nome rival repetido: " + h.name);
     names.add(h.name);
   }
-  ok(s.rivals.length === 100, "Liga precisa manter 100 guildas.");
+  ok(s.rivals.length === 99, "Liga de 100 deve manter 99 rivais + a guilda do jogador.");
+  ok((s.rivals.length + 1) === 100, "Liga precisa ter exatamente 100 guildas no total.");
   for (let week=0;week<200;week++) {
     const t = structuredClone(s); t.day = week*7 + 1;
     for (const h of market(t)) {

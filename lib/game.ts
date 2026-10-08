@@ -116,7 +116,7 @@ export const CLASSES: Record<HeroClass, { name: string; role: string; short: str
   rogue: { name: "Assassino", role: "Crítico e velocidade", short: "AS", color: "#d1b476", description: "Ataques rápidos, veneno e execução de alvos." },
   ranger: { name: "Arqueiro", role: "Dano à distância", short: "AR", color: "#9bc2d3", description: "Precisão, caça e controle à distância." },
   paladin: { name: "Cavaleiro", role: "Defesa e fé", short: "CV", color: "#bfc7d8", description: "Armadura pesada, proteção e golpes sagrados." },
-  bard: { name: "Pierrô", role: "Sorte e saque", short: "PI", color: "#dec394", description: "Manipula a sorte, aumenta chances de drop e cria efeitos imprevisíveis." },
+  bard: { name: "Pierrô", role: "Sorte e suporte", short: "PI", color: "#dec394", description: "Manipula a sorte e cria efeitos imprevisíveis em combate." },
   monk: { name: "Monge (legado)", role: "Classe aposentada", short: "MN", color: "#e1b181", description: "Convertido para Guerreiro nos saves da v1.3." },
   necromancer: { name: "Necromante (legado)", role: "Classe aposentada", short: "NC", color: "#c4a3d9", description: "Convertido para Mago nos saves da v1.3." },
   druid: { name: "Druida (legado)", role: "Classe aposentada", short: "DR", color: "#a1cda0", description: "Convertido para Sacerdote nos saves da v1.3." },
@@ -540,12 +540,10 @@ function resolveGuildRaid(s: Campaign, teams: string[][], rivalId?: string) {
   }
   const wins = fronts.filter(f => f.won).length, won = wins >= 2, reward = won ? 260 + s.activeRegion * 45 + (rival ? 120 : 0) : 60;
   entry(s, (rival ? "Guerra de guildas · " + rival!.name : "Raid · " + WORLD_REGIONS[s.activeRegion - 1].name), reward);
-  const loot: string[] = [];
-  if (won) {
-    s.fame += rival ? 22 : 16;
-  } else s.fame = Math.max(0, s.fame - 8);
+  if (won) s.fame += rival ? 22 : 16;
+  else s.fame = Math.max(0, s.fame - 8);
   if (rival) raiseRivalry(s, rival.id, won ? 20 : 10, "Raid entre guildas");
-  const result: GuildRaidResult = { id: "raid-" + s.day + "-" + s.raidHistory.length, day: s.day, rivalId: rival?.id, title: rival ? "Cerco contra " + rival.name : "Raid em " + WORLD_REGIONS[s.activeRegion - 1].name, teams: teams.map(x => [...x]), fronts, won, reward, loot };
+  const result: GuildRaidResult = { id: "raid-" + s.day + "-" + s.raidHistory.length, day: s.day, rivalId: rival?.id, title: rival ? "Cerco contra " + rival.name : "Raid em " + WORLD_REGIONS[s.activeRegion - 1].name, teams: teams.map(x => [...x]), fronts, won, reward, loot: [] };
   s.raidHistory.unshift(result); s.raidHistory = s.raidHistory.slice(0, 30);
   note(s, result.title + ": " + wins + "/3 frentes vencidas. " + (won ? "Vitória da guilda." : "A ofensiva falhou."));
   advance(s, all);
@@ -589,6 +587,13 @@ const initialHeroes: Hero[] = [
   levelOneHero("sora", "Eldrin Silvestre", "ranger", "Olhos da Floresta", "elf"),
   levelOneHero("doran", "Rhokar Brasavil", "warrior", "Sangue Dracônico", "beastkin"),
 ];
+function villageEvent(id: string): GuildEvent {
+  return { id, kind: "village", title: "Aldeia pede ajuda", text: "Pedra Clara precisa reconstruir sua barricada. A aldeia pode pagar, mas o inverno está chegando.", choices: [
+    { id: "charge", label: "Cobrar pelo serviço", effect: "+85 ouro · +2 renome" },
+    { id: "free", label: "Ajudar gratuitamente", effect: "+20 renome · +8 energia de todos" },
+    { id: "ignore", label: "Recusar o pedido", effect: "−8 renome" },
+  ] };
+}
 function createEvent(s: Campaign): GuildEvent {
   const n = s.eventSequence++, id = "event-" + s.day + "-" + n, kind = n % 4;
   if (kind === 1 && s.heroes.length > 4) {
@@ -600,21 +605,8 @@ function createEvent(s: Campaign): GuildEvent {
       { id: "refuse", label: "Recusar sem negociar", effect: "Herói fica · −15 energia · −5 renome" },
     ] };
   }
-  if (kind === 2) return { id, kind: "map", title: "O cartógrafo viajante", text: "Um cartógrafo encontrou uma passagem esquecida. Seu mapa permite explorar contratos secretos.", choices: [
-    { id: "buy", label: "Comprar o Mapa Secreto", effect: "−120 ouro · mapa adicionado ao baú", cost: 120 },
-    { id: "guide", label: "Ajudar a levantar as rotas", effect: "−10 energia de todos · +8 renome · recebe o mapa" },
-    { id: "decline", label: "Dispensar a oferta", effect: "Sem custo ou recompensa" },
-  ] };
-  if (kind === 3 || kind === 1) return { id, kind: "caravan", title: "Carga encontrada na estrada", text: "Uma caravana abandonou uma caixa de suprimentos. O dono procura quem a encontrou.", choices: [
-    { id: "return", label: "Devolver a carga", effect: "+12 renome · recebe uma poção de cura" },
-    { id: "sell", label: "Vender os suprimentos", effect: "+70 ouro · −10 renome" },
-    { id: "share", label: "Dividir com os povoados", effect: "+18 renome · +10 energia de todos" },
-  ] };
-  return { id, kind: "village", title: "Aldeia pede ajuda", text: "Pedra Clara precisa reconstruir sua barricada. A aldeia pode pagar, mas o inverno está chegando.", choices: [
-    { id: "charge", label: "Cobrar pelo serviço", effect: "+85 ouro · +2 renome" },
-    { id: "free", label: "Ajudar gratuitamente", effect: "+20 renome · +8 energia de todos" },
-    { id: "ignore", label: "Recusar o pedido", effect: "−8 renome" },
-  ] };
+  // Eventos antigos de mapa/poção foram retirados; nenhum oferece itens.
+  return villageEvent(id);
 }
 type AddedFields = "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "activeRegion" | "bossSeasons" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads" | "balanceVersion" | "hq" | "academy" | "raidHistory" | "rivalBattleHistory";
 type StoredRival = Pick<RivalGuild, "id" | "name" | "points" | "victories"> & Partial<RivalGuild>;
@@ -717,7 +709,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     if (expedition.battle?.combat) {
       const c = expedition.battle.combat;
       c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= { ...expedition.formation }; c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
-      if (c.pendingPotion && !c.pendingConsumable) { c.pendingConsumable = { key: "healing_potion", targetId: c.pendingPotion.targetId }; delete c.pendingPotion; }
+      delete c.pendingPotion; delete c.pendingConsumable;
       for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
       if (expedition.battle.fighters) for (const f of expedition.battle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
     }
@@ -741,10 +733,12 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   for (const rival of s.rivals) for (const h of rival.heroes) { h.race ??= heroRace(h); if (h.talent && h.talent.rank >= 2 && !h.talent.branch) h.talent.branch = (stableNumber(h.id + ":branch") % 2 ? "b" : "a"); }
   s.nextEventDay ??= s.day + 4; s.eventSequence ??= 0;
   if (s.event === undefined) s.event = createEvent(s);
+  // Saves de versões antigas podem conter eventos que prometiam mapas ou poções.
+  if (s.event?.kind === "map" || s.event?.kind === "caravan") s.event = villageEvent(s.event.id);
   if (s.lastBattle?.combat) {
     const c = s.lastBattle.combat;
     c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= normalizedFormation(s); c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
-    if (c.pendingPotion && !c.pendingConsumable) { c.pendingConsumable = { key: "healing_potion", targetId: c.pendingPotion.targetId }; delete c.pendingPotion; }
+    delete c.pendingPotion; delete c.pendingConsumable;
     for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
     if (s.lastBattle.fighters) for (const f of s.lastBattle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
   }
@@ -771,7 +765,7 @@ export function missions(s: Campaign): Mission[] {
       description: kind === "escort" ? "Escolte uma caravana pelas rotas de " + region.name + "."
         : kind === "defense" ? "Segure a posição contra " + enemy + " e seus aliados."
         : kind === "hunt" ? "Rastreie e elimine " + enemy + " antes que escape."
-        : "Explore uma área perigosa dominada por " + enemy + " e procure saque.",
+        : "Explore uma área perigosa dominada por " + enemy + " e enfrente seus guardiões.",
       rank: difficulty,
       force: Math.round(forceBase * scaling),
       reward: Math.round(rewardBase * (1 + regionIndex * .10 + (s.season - 1) * .04)),
@@ -799,7 +793,7 @@ export function seasonBoss(s: Campaign): Mission | null {
     force: Math.round((78 + regionIndex * 12) * (1 + (s.season - 1) * .06)),
     reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
     enemy, count: 3, specialty: "boss",
-    flavor: "Chefe regional: melhor chance de equipamento raro, materiais e cicatrizes memoráveis.",
+    flavor: "Chefe regional: batalha de elite, renome e cicatrizes memoráveis.",
     kind: "boss", requiredFame: 0, boss: regionIndex,
   };
 }
@@ -976,12 +970,12 @@ function gainXp(h: Hero, value: number) {
 }
 export const JOURNEY_OPTIONS: Record<JourneyDuration, { label: string; dailyXp: number; description: string }> = {
   3: { label: "Rota curta · 3 dias", dailyXp: 28, description: "Viagem rápida para desenvolver um herói sem afastá-lo por muito tempo." },
-  5: { label: "Rota média · 5 dias", dailyXp: 34, description: "Mais experiência e chance maior de encontrar saque." },
-  7: { label: "Rota longa · 7 dias", dailyXp: 40, description: "Maior desenvolvimento, com recompensa extra ao concluir." },
+  5: { label: "Rota média · 5 dias", dailyXp: 34, description: "Experiência adicional durante a viagem." },
+  7: { label: "Rota longa · 7 dias", dailyXp: 40, description: "Maior desenvolvimento e renome ao concluir." },
 };
 export const JOURNEY_CHOICES: Record<JourneyChoice, { name: string; description: string }> = {
   camp: { name: "Acampamento", description: "Segue com segurança e recupera energia durante a viagem." },
-  explore: { name: "Exploração", description: "Ganha mais XP e pode encontrar saque, mas consome energia." },
+  explore: { name: "Exploração", description: "Ganha mais XP, mas consome energia." },
   shortcut: { name: "Atalho", description: "Avança mais rápido, com um pouco menos de XP diário." },
 };
 function processJourneys(s: Campaign) {
@@ -1000,7 +994,7 @@ function processJourneys(s: Campaign) {
     if (journey.remaining <= 0) {
       journey.remaining = 0; completed.push(journey); s.fame += 3 + journey.duration;
       
-      note(s, h.name + " voltou de uma viagem de " + journey.duration + " dias com +" + journey.xpEarned + " XP" + (journey.loot.length ? " e " + journey.loot.length + " item(ns)" : "") + ".");
+      note(s, h.name + " voltou de uma viagem de " + journey.duration + " dias com +" + journey.xpEarned + " XP e +" + (3 + journey.duration) + " renome.");
     }
   }
   if (completed.length) s.journeys = s.journeys.filter(j => !completed.includes(j));
@@ -1067,7 +1061,6 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   const targetRounds = m.kind === "escort" ? Math.max(3, 6 - (agile >= 2 ? 1 : 0) - (scout ? 1 : 0)) : m.kind === "defense" ? 6 : m.kind === "hunt" ? 12 : 24;
   return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, consumablesUsed: 0, pendingAbilities: [], abilityCooldowns: {}, autoAbilities: true, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
 }
-function grantLoot(_s: Campaign, _m: Mission, _deployedIds: string[] = _s.team): string[] { return []; }
 function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreated") {
   const c = b.combat!, m = c.mission, won = status === "won";
   b.status = status; b.won = won; b.reward = won ? m.reward : 0; b.xp = status === "retreated" && !b.rounds ? 0 : (won ? 30 : status === "retreated" ? 8 : 12) + m.rank * (won ? 23 : 12);
@@ -1085,14 +1078,14 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   const battleTeam = c.fighters.filter(f => f.side === "hero").map(f => f.id);
   awardSquadExperience(s, battleTeam, m.kind, won);
   if (won) {
-    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = grantLoot(s, m, battleTeam);
+    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = [];
     if (m.kind === "boss") {
       s.bossSeasons.push(s.season);
       if (s.activeRegion >= s.region && s.region < WORLD_REGIONS.length) { s.region++; b.regionUnlocked = s.region; }
     }
   } else { s.losses++; s.fame = Math.max(0, s.fame - (status === "retreated" ? 2 + m.rank : 4 + m.rank * 2)); }
   b.fameChange = s.fame - before;
-  note(s, (won ? "Vitória" : status === "retreated" ? "Retirada ordenada" : "Missão fracassou") + " em " + m.title + ". " + (won ? "+" + m.reward + " ouro e +" + b.fameChange + " renome. Saque no baú." : b.fameChange + " renome. A equipe ganhou experiência."));
+  note(s, (won ? "Vitória" : status === "retreated" ? "Retirada ordenada" : "Missão fracassou") + " em " + m.title + ". " + (won ? "+" + m.reward + " ouro e +" + b.fameChange + " renome. A equipe ganhou experiência." : b.fameChange + " renome. A equipe ganhou experiência."));
   delete b.combat;
   s.lastBattle = b;
   if (!activeExpeditions(s).length) {
@@ -1127,25 +1120,6 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     log.push({ round, text: text + amount + " PV.", kind, actorId, targetId: target.id, targetHp: target.hp, amount }); return amount;
   };
   if (c.lastTactic !== c.tactic) { log.push({ round, text: "Nova ordem: tática " + TACTICS[c.tactic].name.toLowerCase() + ".", kind: "order" }); c.lastTactic = c.tactic; }
-  if (c.pendingConsumable) {
-    const use = c.pendingConsumable;
-    if (use.key === "healing_potion") {
-      const f = heroes().find(f => f.id === use.targetId);
-      if (f) heal(f, 70, "Intervenção da guilda: Poção de Cura recupera " + f.name + " em ");
-    } else if (use.key === "antidote") {
-      const f = heroes().find(f => f.id === use.targetId);
-      if (f) {
-        const before = f.statuses.length;
-        f.statuses = f.statuses.filter(st => !["poison", "bleed", "vulnerable"].includes(st.kind));
-        log.push({ round, text: "Intervenção da guilda: Antídoto purifica " + f.name + (before === f.statuses.length ? ", mas não havia efeito nocivo ativo." : "."), kind: "status", targetId: f.id, targetHp: f.hp });
-      }
-    } else if (use.key === "stun_bomb") {
-      const f = enemies().find(f => f.id === use.targetId);
-      if (f) { addStatus(f, "stun", 1, undefined, "guild"); log.push({ round, text: "Intervenção da guilda: Bomba Atordoante atinge " + f.name + ". O inimigo perde a próxima ação.", kind: "status", targetId: f.id, targetHp: f.hp }); }
-    }
-    delete c.pendingConsumable;
-  }
-
   for (const f of c.fighters.filter(f => f.hp > 0)) {
     for (const status of [...f.statuses]) {
       if (status.kind === "bleed" || status.kind === "poison") hit(f, status.amount || 6, (status.kind === "bleed" ? "Sangramento" : "Veneno") + " afeta " + f.name + ": ", status.sourceId, false, true, "status");
@@ -1273,8 +1247,6 @@ function resolveEvent(s: Campaign, action: Extract<Action, { type: "event" }>) {
     if (id === "leave") { requireRule(s.heroes.length > 4, "Mantenha pelo menos quatro heróis na guilda."); releaseHero(s, h, Math.round(h.value * .55), e.rivalId || "rival-0"); }
     if (id === "refuse") { h.energy = Math.max(0, h.energy - 15); s.fame = Math.max(0, s.fame - 5); }
   }
-  if (e.kind === "map") { if (id === "guide") { s.fame += 8; s.heroes.forEach(h => h.energy = Math.max(0, h.energy - 10)); } }
-  if (e.kind === "caravan") { if (id === "return") { s.fame += 12; } if (id === "sell") { entry(s, "Venda de suprimentos encontrados", 70); s.fame = Math.max(0, s.fame - 10); } if (id === "share") { s.fame += 18; s.heroes.forEach(h => h.energy = Math.min(100, h.energy + 10)); } }
   if (e.kind === "retaliation") {
     const h = s.heroes.find(h => h.id === e.heroId), rival = s.rivals.find(r => r.id === e.rivalId); requireRule(h && rival, "A retaliação não está mais disponível.");
     if (id === "counter") { h.salary += 2; raiseRivalry(s, rival.id, -12, "Proposta rival bloqueada"); }
@@ -1332,6 +1304,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     }
     case "upgrade-hq": {
       const spec = HQ_BUILDINGS[action.building]; requireRule(spec, "Construção da sede inválida.");
+      requireRule(action.building !== "forge", "A Forja está desativada enquanto não houver itens.");
       const current = s.hq[action.building] || 0; requireRule(current < spec.max, spec.name + " já está no nível máximo.");
       const cost = hqUpgradeCost(s, action.building); requireRule(s.gold >= cost, "Essa melhoria custa " + cost + " ouro.");
       entry(s, "Sede · " + spec.name + " Nv." + (current + 1), -cost); s.hq[action.building] = current + 1;
@@ -1352,14 +1325,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       requireRule(Number.isInteger(action.region) && action.region >= 1 && action.region <= s.region && action.region <= WORLD_REGIONS.length, "Essa região ainda não foi desbloqueada.");
       s.activeRegion = action.region; note(s, "A guilda estabeleceu operações em " + WORLD_REGIONS[action.region - 1].name + "."); break;
     }
-    case "craft": {
-      const recipe = CRAFT_RECIPES.find(r => r.id === action.recipeId); requireRule(recipe, "Receita não encontrada.");
-      requireRule((s.hq.forge || 0) >= recipe.forge, "A receita exige Forja nível " + recipe.forge + ".");
-      const cost = Math.max(0, Math.round(recipe.cost * (1 - (s.hq.forge - 1) * .05))); requireRule(s.gold >= cost, "A fabricação custa " + cost + " ouro.");
-      for (const [key, qty] of Object.entries(recipe.materials)) requireRule(itemCount(s, key) >= qty, "Faltam " + qty + "x " + ITEMS[key].name + ".");
-      for (const [key, qty] of Object.entries(recipe.materials)) requireRule(consumeItems(s, key, qty), "Falha ao consumir materiais.");
-      entry(s, "Forja · " + ITEMS[recipe.result].name, -cost); addItem(s, recipe.result); note(s, ITEMS[recipe.result].name + " foi fabricado."); break;
-    }
+    case "craft": requireRule(false, "A Forja não possui receitas enquanto o catálogo estiver vazio."); break;
     case "guild-raid": resolveGuildRaid(s, action.teams, action.rivalId); break;
     case "rival-battle": resolveRivalBattle(s, action.guildId, action.team); break;
     case "expedition-tick": {
@@ -1391,31 +1357,8 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       requireRule(Object.hasOwn(TACTICS, action.tactic), "Escolha uma tática válida."); target.battle.combat!.tactic = action.tactic;
       if (target.expedition) target.expedition.tactic = action.tactic; s.lastBattle = target.battle; break;
     }
-    case "battle-potion": {
-      const targetBattle = expeditionBattle(s, action.expeditionId); requireRule(targetBattle, "Essa expedição não está mais em combate.");
-      const c = targetBattle.battle.combat!, item = s.chest.find(i => i.key === "healing_potion"), target = c.fighters.find(f => f.id === action.heroId && f.side === "hero");
-      requireRule(item, "Não há poção de cura no baú."); requireRule(!c.pendingConsumable, "Aguarde o consumível já preparado ser usado no próximo turno.");
-      requireRule(target && target.hp > 0 && target.hp < target.maxHp, "Escolha um herói vivo e ferido para receber a poção.");
-      s.chest = s.chest.filter(i => i.id !== item.id); c.potionsUsed++; c.consumablesUsed = (c.consumablesUsed || 0) + 1; c.pendingConsumable = { key: "healing_potion", targetId: target.id }; s.lastBattle = targetBattle.battle; break;
-    }
-    case "battle-consumable": {
-      const targetBattle = expeditionBattle(s, action.expeditionId); requireRule(targetBattle, "Essa expedição não está mais em combate.");
-      const c = targetBattle.battle.combat!, item = s.chest.find(i => i.key === action.key);
-      requireRule(item, "Você não possui " + (ITEMS[action.key]?.name || "esse consumível") + " no baú.");
-      requireRule(!c.pendingConsumable, "Aguarde o consumível já preparado ser usado no próximo turno.");
-      if (action.key === "healing_potion") {
-        const target = c.fighters.find(f => f.id === action.targetId && f.side === "hero");
-        requireRule(target && target.hp > 0 && target.hp < target.maxHp, "Escolha um herói vivo e ferido.");
-      } else if (action.key === "antidote") {
-        const target = c.fighters.find(f => f.id === action.targetId && f.side === "hero");
-        requireRule(target && target.hp > 0, "Escolha um herói vivo.");
-        requireRule(target.statuses.some(st => ["poison", "bleed", "vulnerable"].includes(st.kind)), "Esse herói não possui efeito nocivo removível.");
-      } else if (action.key === "stun_bomb") {
-        const target = c.fighters.find(f => f.id === action.targetId && f.side === "enemy");
-        requireRule(target && target.hp > 0, "Escolha um inimigo vivo.");
-      }
-      s.chest = s.chest.filter(i => i.id !== item.id); c.consumablesUsed = (c.consumablesUsed || 0) + 1; c.pendingConsumable = { key: action.key, targetId: action.targetId }; s.lastBattle = targetBattle.battle; break;
-    }
+    case "battle-potion":
+    case "battle-consumable": requireRule(false, "Poções e consumíveis foram removidos do jogo."); break;
     case "battle-ability": {
       const targetBattle = expeditionBattle(s, action.expeditionId); requireRule(targetBattle, "Essa expedição não está mais em combate.");
       const battle = targetBattle.battle, c = battle.combat!, fighter = c.fighters.find(f => f.id === action.heroId && f.side === "hero"), h = s.heroes.find(h => h.id === action.heroId);
@@ -1428,26 +1371,10 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       c.pendingAbilities.push({ heroId: h.id, abilityId: ability.id, ...(action.targetId ? { targetId: action.targetId } : {}) }); s.lastBattle = battle; break;
     }
     case "event": resolveEvent(s, action); break;
-    case "equip": {
-      const item = s.chest.find(i => i.id === action.itemId), hero = s.heroes.find(h => h.id === action.heroId);
-      requireRule(item && hero, "Item ou herói não encontrado no baú da guilda."); requireRule(!heroOnExpedition(s, hero.id), "Esse herói está em expedição. Troque o equipamento quando ele retornar."); const def = ITEMS[item.key];
-      requireRule(["weapon", "offhand", "helmet", "armor", "gloves", "boots", "accessory"].includes(def.slot), "Esse item não pode ser equipado.");
-      requireRule(!def.race || heroRace(hero) === def.race, def.race ? def.name + " é exclusivo para a raça " + RACES[def.race].name + "." : "Raça incompatível.");
-      requireRule(!def.classes || def.classes.includes(hero.class), def.name + " não pode ser equipado por " + CLASSES[hero.class].name + ".");
-      requireRule(!def.levelReq || hero.level >= def.levelReq, def.name + " exige nível " + def.levelReq + ".");
-      s.chest.forEach(i => { if (i.equippedTo === hero.id && ITEMS[i.key].slot === def.slot) delete i.equippedTo; }); item.equippedTo = hero.id; break;
-    }
-    case "unequip": { const item = s.chest.find(i => i.id === action.itemId); requireRule(item, "Item não encontrado no baú."); requireRule(!item.equippedTo || !heroOnExpedition(s, item.equippedTo), "Esse equipamento está com um herói em expedição."); delete item.equippedTo; break; }
-    case "sell": {
-      const item = s.chest.find(i => i.id === action.itemId); requireRule(item, "Item não encontrado no baú."); requireRule(!item.equippedTo, "Desequipe o item antes de vendê-lo.");
-      entry(s, "Venda · " + ITEMS[item.key].name, ITEMS[item.key].value); s.chest = s.chest.filter(i => i.id !== item.id); break;
-    }
-    case "buy": {
-      const offer = shop(s).find(i => i.key === action.key); requireRule(offer && offer.available, "Esse item não está disponível no mercador.");
-      requireRule(s.fame >= offer.requiredFame, "O mercador exige " + offer.requiredFame + " de renome para esse item.");
-      requireRule(s.gold >= offer.price, "Não há ouro suficiente para esse item."); entry(s, "Compra · " + ITEMS[offer.key].name, -offer.price); addItem(s, offer.key);
-      if (offer.key !== "healing_potion") s.shopPurchases.push(Math.floor((s.day - 1) / 7) + ":" + offer.key); break;
-    }
+    case "equip":
+    case "unequip":
+    case "sell":
+    case "buy": requireRule(false, "O catálogo de itens foi removido do jogo."); break;
     case "specialize": {
       const h = s.heroes.find(h => h.id === action.heroId); requireRule(h && ["offense", "healing", "defense"].includes(action.path), "Escolha uma especialização válida para o herói."); requireRule(!heroOnExpedition(s, h.id), "Esse herói está em expedição.");
       requireRule(talentPoints(h) > 0, "Esse herói precisa alcançar os níveis 4, 7 ou 10 para ganhar um ponto de evolução.");

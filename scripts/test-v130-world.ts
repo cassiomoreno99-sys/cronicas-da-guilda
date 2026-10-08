@@ -119,6 +119,31 @@ console.log("v1.3.0: iniciando bateria ampla...");
   ok(cleaned.chest.length === 0, "O save antigo manteve os itens após a atualização.");
 }
 
+// Auditoria das missões, eventos persistidos e sistemas de itens aposentados.
+{
+  let s = prep(newCampaign(1106));
+  ok(missions(s).every(m => !m.requiredItem && !/poção|recebe (?:item|mapa)|encontrar saque|saque no baú|equipamento raro|materiais raros/i.test(m.description + " " + m.flavor)), "Uma missão ainda promete ou exige itens antigos.");
+  ok(!/poção|saque|material|equipamento/i.test(missions(s)[0].description), "Existe recompensa antiga no texto da missão.");
+  for (const kind of ["map", "caravan"] as const) {
+    const old = structuredClone(s);
+    old.event = { id: "evento-antigo-" + kind, kind, title: "Promessa antiga", text: "Recebe poção ou mapa", choices: [{ id:"buy", label:"Comprar item", effect:"recebe poção" }] };
+    const migrated = normalizeCampaign(old);
+    ok(migrated.event?.kind === "village", "Evento antigo com item não foi substituído: " + kind);
+    ok(!JSON.stringify(migrated.event).includes("poção"), "Texto de poção permaneceu no Conselho.");
+    s = migrated;
+  }
+  for (const eventSequence of [1,2,3,4,5,6,7]) {
+    const next = structuredClone(s);
+    next.eventSequence = eventSequence;
+    delete (next as Partial<Campaign>).event;
+    const spawned = normalizeCampaign(next);
+    ok(spawned.event?.kind !== "map" && spawned.event?.kind !== "caravan", "Evento novo ainda pode oferecer itens.");
+  }
+  expectRule(() => applyAction(s, {type:"upgrade-hq",building:"forge"}), "O jogador ainda pode gastar ouro na Forja vazia.");
+  expectRule(() => applyAction(s, {type:"buy",key:"healing_potion"}), "O mercador ainda aceita compra de poção.");
+  expectRule(() => applyAction(s, {type:"battle-potion",heroId:s.heroes[0].id}), "Comando de poção antiga ainda está disponível.");
+}
+
 // 8) Sede até nível máximo e bloqueio de upgrade extra.
 {
   let s = prep(newCampaign(1007));

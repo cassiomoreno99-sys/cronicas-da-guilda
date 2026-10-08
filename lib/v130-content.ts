@@ -144,4 +144,3 @@ export const ITEM_SETS = {
 } as const;
 
 export const CRAFT_RECIPES: { id: string; result: string; cost: number; forge: number; materials: Record<string, number> }[] = [];
-] as const;

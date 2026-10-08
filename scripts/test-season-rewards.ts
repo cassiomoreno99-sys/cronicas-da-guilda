@@ -1,5 +1,5 @@
 import {
-  ITEMS, CRAFTING_RECIPES, applyAction, available, missions, newCampaign,
+  ITEMS, CRAFTING_RECIPES, WORLD_MAP, applyAction, available, missions, newCampaign,
   seasonBoss, shop, type Campaign, type Mission
 } from "../lib/game.ts";
 
@@ -7,6 +7,8 @@ const campaignSeeds = [81201, 81202, 81203, 81204];
 const seasonsPerCampaign = 10;
 const forbidden = /poção|pocao|\bmapa\b|\bitens?\b|\bequipamentos?\b|\bsaque\b|\bconsum[ií]ve(?:l|is)\b/i;
 let checkedMissionOffers = 0;
+let crossRegionMissionOffers = 0;
+let crossRegionBossOffers = 0;
 let checkedBossOffers = 0;
 let checkedCouncilEvents = 0;
 let battles = 0;
@@ -56,6 +58,21 @@ for (const seed of campaignSeeds) {
     }
     const boss = seasonBoss(s);
     if (boss) { checkMission(boss, loc + " chefe"); checkedBossOffers++; }
+
+    // Confere também as tabelas de missões de TODAS as regiões, inclusive as
+    // ainda não desbloqueadas nestes saves, sem alterar a campanha simulada.
+    for (let regionIndex = 0; regionIndex < WORLD_MAP.length; regionIndex++) {
+      const regionView = { ...s, activeRegion: regionIndex + 1, region: WORLD_MAP.length, bossSeasons: [] };
+      for (const mission of missions(regionView)) {
+        checkMission(mission, loc + " / regiao " + WORLD_MAP[regionIndex].name);
+        crossRegionMissionOffers++;
+      }
+      const regionalBoss = seasonBoss(regionView);
+      if (regionalBoss) {
+        checkMission(regionalBoss, loc + " / chefe " + WORLD_MAP[regionIndex].name);
+        crossRegionBossOffers++;
+      }
+    }
 
     // Resolve cada evento realmente produzido pelo Conselho, sem ignorá-lo.
     if (s.event) {
@@ -108,6 +125,8 @@ check(["escort", "defense", "dungeon", "hunt", "boss"].every(k => missionKinds.h
 console.log("AUDITORIA_DE_TEMPORADAS_RESULTADO " + JSON.stringify({
   campanhas: campaignSeeds.length, temporadasConcluidas: finishedSeasons,
   diasAvancados: daysAdvanced, ofertasDeMissoesConferidas: checkedMissionOffers,
+  regioesDoMapaConferidas: WORLD_MAP.length, ofertasRegionaisConferidas: crossRegionMissionOffers,
+  chefesRegionaisConferidos: crossRegionBossOffers,
   ofertasDeChefesConferidas: checkedBossOffers, eventosConselho: checkedCouncilEvents,
   batalhasExecutadas: battles, vitorias: victories, derrotas: defeats,
   tiposDeMissao: [...missionKinds].sort(), itensOuPocoesEncontrados: 0

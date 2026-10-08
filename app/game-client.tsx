@@ -222,17 +222,7 @@ function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" 
   />;
 }
 
-function ItemArt({ itemKey }: { itemKey: string }) {
-  const def = ITEMS[itemKey];
-  return <span className={"item-art rarity-" + (def?.rarity || "common")}>
-    <Archive className="item-fallback" />
-    <img
-      src={"/items/" + itemKey + ".svg"}
-      alt={def?.name || itemKey}
-      onError={e => { e.currentTarget.style.display = "none"; }}
-    />
-  </span>;
-}
+function ItemArt({ itemKey: _itemKey }: { itemKey: string }) { return null; }
 
 function ProgressBar({ value, tone = "green" }: { value: number; tone?: "green" | "red" | "blue" | "gold" }) {
   return <span className={"progress progress-" + tone}><i style={{ width: Math.max(0, Math.min(100, value)) + "%" }} /></span>;
@@ -491,13 +481,7 @@ function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => v
         <button className="action-button blue" disabled={busy || injured || h.energy < 15} onClick={() => act({ type:"train-hero", heroId:h.id })}>Treinar +{plan.xp} XP</button>
       </article>;
     })}</div>
-    <ParchmentTitle icon={<Archive />} title="Itens de Recuperação" />
-    <div className="recovery-items parchment">
-      {[["healing_potion","Poção de Cura"],["antidote","Antídoto"],["stun_bomb","Bomba Atordoante"]].map(([key,label]) => <article key={key}>
-        <ItemArt itemKey={key} /><strong>{label}</strong><span>Possui: {counts(key)}</span><small>Usado diretamente durante o combate.</small>
-      </article>)}
-    </div>
-    <button className="action-button green rest-all" disabled={busy} onClick={() => act({ type:"rest" })}><Tent /> Descansar toda a guilda</button>
+        <button className="action-button green rest-all" disabled={busy} onClick={() => act({ type:"rest" })}><Tent /> Descansar toda a guilda</button>
   </section>;
 }
 
@@ -592,7 +576,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
           {!owner && <button className="action-button blue" disabled={busy} onClick={() => act({type:"sell",itemId:selected.id})}><Coins /> Vender · {def.value}</button>}
           {def.slot === "consumable" && <div className="combat-only-note">Consumível de combate</div>}
         </div>
-      </article> : <div className="item-detail parchment empty-detail">Nenhum item nesta categoria.</div>}
+      </article> : <div className="item-detail parchment empty-detail">O catálogo de itens foi removido.</div>}
     </div>
   </section>;
 }
@@ -609,7 +593,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
       <section className="rumors parchment"><ParchmentTitle icon={<ScrollText />} title="Rumores da Taverna" />{rumors.map(m => <button key={m.id} onClick={() => openMission(m.id)}><span><strong>{m.title}</strong><small>{m.description}</small></span><em><Coins /> {m.reward}</em></button>)}</section>
       <aside className="tavern-side">
         <section className="parchment drinks"><div className="mug">🍺</div><h3>Bebidas da Casa</h3><p>Brinde com a guilda para recuperar o moral e a energia.</p><button className="action-button green" disabled={busy || state.gold < 8} onClick={() => act({type:"rest"})}>Descansar</button></section>
-        <section className="parchment shop"><div className="merchant-head"><div className="merchant-portrait" role="img" aria-label="Mercador da taverna" /><span><h3>Mercador</h3><small>Suprimentos e achados da estrada</small></span></div>{offers.map(o => <button key={o.key} disabled={busy || !o.available || state.gold < o.price || state.fame < o.requiredFame} onClick={() => act({type:"buy",key:o.key})}><ItemArt itemKey={o.key} /><span>{ITEMS[o.key].name}<small>{o.price} ouro</small></span></button>)}</section>
+        <section className="parchment shop"><div className="merchant-head"><div className="merchant-portrait" role="img" aria-label="Mercador da taverna" /><span><h3>Mercador</h3><small>Suprimentos e achados da estrada</small></span></div><small>Sem itens disponíveis.</small></section>
       </aside>
     </div>
   </section>;
@@ -663,7 +647,7 @@ function GuildPage({
     })}</div>
     <div className="guild-grid">
       <section className="guild-mini parchment"><h3>Mapa do Mundo</h3><div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}><strong>{i+1}. {r.name}</strong><small>{r.theme}</small></button>)}</div></section>
-      <section className="guild-mini parchment"><h3>Forja</h3><div className="forge-list">{CRAFTING_RECIPES.slice(0,6).map(r => <button key={r.id} disabled={busy || state.hq.forge < r.forge || state.gold < r.cost} onClick={() => act({type:"craft",recipeId:r.id})}><ItemArt itemKey={r.result}/><span><strong>{ITEMS[r.result].name}</strong><small>{r.cost} ouro · Forja {r.forge}</small></span></button>)}</div></section>
+      <section className="guild-mini parchment"><h3>Forja</h3><div className="forge-list"><small>Sem itens ou receitas.</small></div></section>
       <AcademyPanel state={state} act={act} busy={busy} />
       <section className="guild-mini parchment"><h3>Guerra de Guildas</h3><p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
     </div>
@@ -699,16 +683,6 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
         <div className="fighters enemies">{enemies.map(f => <article key={f.id}><img src={"/enemies/" + enemyArtKey(f.name) + ".webp"} alt="" /><div><strong>{f.name}</strong><small>{f.statuses?.map(s=>s.kind).join(" · ") || "Inimigo"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
       </div>
       <div className="battle-log parchment">{battle.log.slice(-5).map((l,i) => <p key={i} data-kind={l.kind}>{l.text}</p>)}{!battle.log.length && <p>Os combatentes tomam posição.</p>}</div>
-      <div className="consumable-title"><Archive /> Consumíveis</div>
-      <div className="battle-consumables">
-        {([
-          ["healing_potion","Poção de Cura","Restaura vida do aliado mais ferido."],
-          ["antidote","Antídoto","Remove veneno e efeitos negativos."],
-          ["stun_bomb","Bomba Atordoante","Atordoa um inimigo por 1 rodada."]
-        ] as Array<[BattleConsumableKey,string,string]>).map(([key,label,desc]) => <button key={key} disabled={!active || busy || count(key) < 1 || (key==="healing_potion" && !lowestHero)} onClick={() => useConsumable(key)}>
-          <ItemArt itemKey={key}/><b>x{count(key)}</b><strong>{label}</strong><small>{desc}</small>
-        </button>)}
-      </div>
       <div className="battle-actions">
         {active ? <><button className="action-button blue" disabled={busy} onClick={() => act({type:"battle-auto",expeditionId:expedition.id})}>Concluir combate</button><button className="action-button red" disabled={busy} onClick={() => act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button></> : <button className="action-button green huge" onClick={close}>Voltar à guilda</button>}
       </div>

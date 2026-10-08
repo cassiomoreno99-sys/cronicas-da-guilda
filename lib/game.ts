@@ -127,40 +127,8 @@ export const TACTICS: Record<Tactic, { name: string; description: string; damage
   aggressive: { name: "Ofensiva", description: "+25% de dano, +20% de dano recebido. Gasta 30 de energia.", damage: 1.25, incoming: 1.2, fatigue: 30 },
   defensive: { name: "Defensiva", description: "−25% de dano, −20% de dano recebido. Gasta 16 de energia.", damage: .75, incoming: .8, fatigue: 16 },
 };
-export const ITEMS: Record<string, ItemDef> = {
-  iron_sword: { name: "Espada de ferro", slot: "weapon", rarity: "common", value: 24, attack: 5, description: "+5 ataque." },
-  oak_staff: { name: "Cajado de carvalho", slot: "weapon", rarity: "common", value: 24, magic: 6, description: "+6 magia." },
-  leather_armor: { name: "Armadura de couro", slot: "armor", rarity: "common", value: 22, defense: 5, description: "+5 defesa." },
-  hunter_bow: { name: "Arco do caçador", slot: "weapon", rarity: "uncommon", value: 58, attack: 10, critical: .05, description: "+10 ataque e +5% de chance de crítico." },
-  runic_staff: { name: "Cajado rúnico", slot: "weapon", rarity: "uncommon", value: 62, magic: 12, description: "+12 magia." },
-  sentinel_armor: { name: "Armadura da sentinela", slot: "armor", rarity: "uncommon", value: 58, defense: 10, hp: 15, description: "+10 defesa e +15 vida." },
-  swift_boots: { name: "Botas do explorador", slot: "accessory", rarity: "uncommon", value: 48, speed: 7, defense: 3, description: "+7 velocidade e +3 defesa." },
-  amber_ring: { name: "Anel de âmbar", slot: "accessory", rarity: "rare", value: 82, magic: 9, defense: 5, description: "+9 magia e +5 defesa." },
-  dawn_blade: { name: "Lâmina da aurora", slot: "weapon", rarity: "epic", value: 145, attack: 19, magic: 7, description: "+19 ataque e +7 magia." },
-  ash_staff: { name: "Cajado de Ashen", slot: "weapon", rarity: "epic", value: 145, magic: 23, description: "+23 magia." },
-  ancient_armor: { name: "Couraça ancestral", slot: "armor", rarity: "epic", value: 140, defense: 17, hp: 40, description: "+17 defesa e +40 vida." },
-  dragon_fang: { name: "Presa do dragão", slot: "weapon", rarity: "legendary", value: 240, attack: 29, critical: .08, description: "+29 ataque e +8% de chance de crítico." },
-  star_pendant: { name: "Pingente estelar", slot: "accessory", rarity: "legendary", value: 230, magic: 19, hp: 45, description: "+19 magia e +45 vida." },
-  human_vanguard_blade: { name: "Espada da Vanguarda", slot: "weapon", race: "human", rarity: "rare", value: 105, attack: 14, critical: .03, description: "Humano · +14 ataque e +3% crítico." },
-  human_royal_guard: { name: "Couraça Real", slot: "armor", race: "human", rarity: "rare", value: 105, defense: 12, hp: 24, description: "Humano · +12 defesa e +24 vida." },
-  elf_moonbow: { name: "Arco Lunar Élfico", slot: "weapon", race: "elf", rarity: "rare", value: 108, attack: 10, magic: 8, critical: .04, description: "Elfo · +10 ataque, +8 magia e +4% crítico." },
-  elf_leafmail: { name: "Malha de Folhas", slot: "armor", race: "elf", rarity: "rare", value: 104, defense: 9, speed: 8, description: "Elfo · +9 defesa e +8 velocidade." },
-  dwarf_runic_hammer: { name: "Martelo Rúnico Anão", slot: "weapon", race: "dwarf", rarity: "rare", value: 110, attack: 16, defense: 2, description: "Anão · +16 ataque e +2 defesa." },
-  dwarf_stoneplate: { name: "Placa de Pedra Anã", slot: "armor", race: "dwarf", rarity: "rare", value: 112, defense: 15, hp: 34, description: "Anão · +15 defesa e +34 vida." },
-  orc_warcleaver: { name: "Cutelo de Guerra Orc", slot: "weapon", race: "orc", rarity: "rare", value: 112, attack: 18, description: "Orc · +18 ataque." },
-  orc_boneguard: { name: "Guarda de Osso Orc", slot: "armor", race: "orc", rarity: "rare", value: 108, defense: 13, hp: 30, description: "Orc · +13 defesa e +30 vida." },
-  beast_hunter_claws: { name: "Garras do Caçador Bestial", slot: "weapon", race: "beastkin", rarity: "rare", value: 108, attack: 13, speed: 8, critical: .03, description: "Bestial · +13 ataque, +8 velocidade e +3% crítico." },
-  beast_hideguard: { name: "Couro Totêmico Bestial", slot: "armor", race: "beastkin", rarity: "rare", value: 104, defense: 10, speed: 6, hp: 15, description: "Bestial · +10 defesa, +6 velocidade e +15 vida." },
-  umbral_soul_scythe: { name: "Foice da Alma Sombria", slot: "weapon", race: "umbral", rarity: "rare", value: 112, attack: 7, magic: 17, critical: .03, description: "Sombrio · +7 ataque, +17 magia e +3% crítico." },
-  umbral_nightshroud: { name: "Manto da Noite Sombria", slot: "armor", race: "umbral", rarity: "rare", value: 108, defense: 10, magic: 10, hp: 18, description: "Sombrio · +10 defesa, +10 magia e +18 vida." },
-  healing_potion: { name: "Poção de cura", slot: "consumable", rarity: "common", value: 12, description: "Recupera 70 PV de um herói vivo no próximo turno. Máximo de duas por combate." },
-  secret_map: { name: "Mapa Secreto", slot: "quest", rarity: "rare", value: 60, description: "Com 120 de renome, libera a quarta missão. Permanece no baú após a expedição." },
-  ancient_key: { name: "Chave Antiga", slot: "quest", rarity: "epic", value: 95, description: "Com 260 de renome, libera a quinta missão. Obtida em chefes e expedições secretas." },
-  gemstone: { name: "Pedra preciosa", slot: "treasure", rarity: "common", value: 25, description: "Tesouro para vender ao mercador." },
-  ancient_idol: { name: "Ídolo antigo", slot: "treasure", rarity: "rare", value: 55, description: "Relíquia de coleção. Pode ser vendida por ouro." },
-  royal_relic: { name: "Relíquia real", slot: "treasure", rarity: "epic", value: 120, description: "Tesouro valioso encontrado nas expedições mais perigosas." },
-  ...(V130_ITEMS as unknown as Record<string, ItemDef>),
-};
+// Itens removidos; catálogo deliberadamente vazio.
+export const ITEMS: Record<string, ItemDef> = {};
 export const SLOT_NAMES: Record<ItemSlot, string> = { weapon: "Arma", offhand: "Mão secundária", helmet: "Elmo", armor: "Armadura", gloves: "Luvas", boots: "Botas", accessory: "Acessório", consumable: "Consumível", material: "Material", quest: "Acesso", treasure: "Tesouro" };
 export const RARITY_NAMES = { common: "Comum", uncommon: "Incomum", rare: "Raro", epic: "Épico", legendary: "Lendário" };
 export const REGIONS = WORLD_REGIONS.map(region => region.name);
@@ -450,7 +418,6 @@ export function hasItem(s: Campaign, key: string) { return s.chest.some(i => i.k
 export function missionLocks(s: Campaign, m: Mission) {
   const locks: string[] = [];
   if (s.fame < m.requiredFame) locks.push(m.requiredFame + " de renome (atual: " + s.fame + ")");
-  if (m.requiredItem && !hasItem(s, m.requiredItem)) locks.push(ITEMS[m.requiredItem].name + " no baú");
   if (activeExpeditions(s).some(e => e.battle.combat?.mission.id === m.id)) locks.push("essa expedição já está em andamento");
   if (activeExpeditions(s).length >= 3) locks.push("limite de 3 expedições simultâneas");
   return locks;
@@ -458,11 +425,10 @@ export function missionLocks(s: Campaign, m: Mission) {
 export function missionReadiness(s: Campaign, m: Mission, ids = s.team) {
   const team = s.heroes.filter(h => ids.includes(h.id));
   const recommended = (m.kind === "boss" ? 5 : [2, 3, 5, 7, 9][m.rank - 1]) + Math.floor((s.season - 1) / 2);
-  const reference = "Referência: nível " + recommended + ", energia 60%+" + (m.rank >= 2 ? " e equipamentos." : ".");
+  const reference = "Referência: nível " + recommended + " e energia 60%+.";
   if (team.length < 3 || team.length > 4 || team.some(h => !available(h, s))) return { level: "risk", label: "Equipe incompleta ou indisponível", hint: "Escale 3 ou 4 heróis disponíveis, com pelo menos 25% de energia e sem ferimentos." };
   const average = team.reduce((n, h) => n + h.level, 0) / team.length;
-  const geared = team.filter(h => s.chest.some(i => i.equippedTo === h.id)).length;
-  const ready = average >= recommended && team.every(h => h.energy >= 60) && (m.rank === 1 || geared >= 3);
+  const ready = average >= recommended && team.every(h => h.energy >= 60);
   const highRisk = average < recommended - .75 || team.some(h => h.energy < 40);
   return { level: ready ? "ready" : highRisk ? "risk" : "prepare", label: ready ? "Boa preparação" : highRisk ? "Alto risco para esta equipe" : "Reforce sua preparação", hint: reference + " O objetivo e a composição também influenciam o resultado." };
 }
@@ -546,20 +512,6 @@ function consumeItems(s: Campaign, key: string, quantity: number) {
   s.chest = s.chest.filter(i => { if (!i.equippedTo && i.key === key && left > 0) { left--; return false; } return true; });
   return left === 0;
 }
-function randomLootKey(s: Campaign, rank: number, luck = 0, preferMaterial = false) {
-  const rarities = rank >= 5 ? ["legendary","epic","rare"] : rank >= 4 ? ["epic","rare","uncommon"] : rank >= 3 ? ["rare","uncommon","common"] : ["uncommon","common"];
-  const candidates = Object.entries(ITEMS).filter(([_, d]) => {
-    if (["quest"].includes(d.slot)) return false;
-    if (preferMaterial && d.slot !== "material") return false;
-    if (!preferMaterial && ["treasure","consumable","material","weapon","offhand","helmet","armor","gloves","boots","accessory"].includes(d.slot) === false) return false;
-    return rarities.includes(d.rarity) && (!d.levelReq || d.levelReq <= Math.max(1, rank * 10));
-  });
-  if (!candidates.length) return "gemstone";
-  const boost = Math.min(.45, luck);
-  const sorted = candidates.toSorted((a,b) => ["common","uncommon","rare","epic","legendary"].indexOf(b[1].rarity) - ["common","uncommon","rare","epic","legendary"].indexOf(a[1].rarity));
-  const window = Math.max(1, Math.ceil(sorted.length * (.35 + boost)));
-  return sorted[Math.floor(random(s) * window)][0];
-}
 function addScar(s: Campaign, h: Hero, source: "defeat" | "boss" = "defeat") {
   h.scars ??= []; if (h.scars.length >= 3) return;
   const available = HERO_SCARS.filter(scar => !h.scars!.includes(scar.id));
@@ -590,8 +542,6 @@ function resolveGuildRaid(s: Campaign, teams: string[][], rivalId?: string) {
   entry(s, (rival ? "Guerra de guildas · " + rival!.name : "Raid · " + WORLD_REGIONS[s.activeRegion - 1].name), reward);
   const loot: string[] = [];
   if (won) {
-    const luck = Math.max(...all.map(id => heroLuck(s.heroes.find(h => h.id === id)!, s)), 0);
-    for (let i = 0; i < 2 + Math.floor(luck * 8); i++) { const key = randomLootKey(s, Math.min(5, 2 + Math.floor(s.activeRegion / 2)), luck, i === 0); addItem(s, key); loot.push(key); }
     s.fame += rival ? 22 : 16;
   } else s.fame = Math.max(0, s.fame - 8);
   if (rival) raiseRivalry(s, rival.id, won ? 20 : 10, "Raid entre guildas");
@@ -619,7 +569,7 @@ function resolveRivalBattle(s: Campaign, guildId: string, team: string[]) {
 
 function entry(s: Campaign, label: string, amount: number) { s.transaction++; s.ledger.unshift({ id: s.transaction, day: s.day, label, amount }); s.ledger = s.ledger.slice(0, 80); s.gold += amount; }
 function note(s: Campaign, text: string) { s.journal.unshift({ day: s.day, text }); s.journal = s.journal.slice(0, 40); }
-function addItem(s: Campaign, key: string) { const item = { id: "item-" + (++s.itemSequence), key }; s.chest.push(item); return item; }
+function addItem(_s: Campaign, _key: string) { /* Catálogo desativado: nenhum item pode ser criado. */ }
 function levelOneHero(id: string, name: string, heroClass: HeroClass, trait: string, race?: HeroRace): Hero {
   const b = V130_BASE_STATS[heroClass] || { attack: 4, defense: 4, magic: 2 };
   const h: Hero = { id, name, class: heroClass, level: 1, attack: b.attack, defense: b.defense, magic: b.magic, energy: 100, xp: 0, salary: 8, value: 120, trait, injuredUntil: 0, scars: [] };
@@ -724,7 +674,6 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     s.academy = { trainees: [] };
     s.chest = [];
     s.itemSequence = 0;
-    ["iron_sword","oak_staff","hunter_bow","leather_armor","healing_potion","healing_potion","healing_potion","antidote","stun_bomb"].forEach(key => addItem(s,key));
     s.balanceVersion = 4;
   }
   s.leagueTier ??= 3; s.leagueWins ??= 0; s.leagueDraws ??= 0; s.leagueLosses ??= 0; s.leagueHistory ??= []; s.rivalries ??= [];
@@ -778,8 +727,13 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.team = (s.team || []).filter(id => !deployed.has(id) && s.heroes.some(h => h.id === id)).slice(0, 4);
   for (const h of s.heroes) if (s.team.length < 4 && !deployed.has(h.id) && !s.team.includes(h.id) && h.energy >= 25 && h.injuredUntil <= s.day && !activeJourney(s, h.id)) s.team.push(h.id);
   s.formation = normalizedFormation(s);
-  if (!s.chest) { s.chest = []; s.itemSequence = 0; addItem(s, "healing_potion"); addItem(s, "healing_potion"); addItem(s, "antidote"); addItem(s, "stun_bomb"); }
-  s.itemSequence ??= s.chest.length; s.region ??= 1; s.bossSeasons ??= []; s.shopPurchases ??= [];
+  // Limpeza dos itens inclusive em saves antigos, para não reaparecerem ao atualizar.
+  s.chest = []; s.itemSequence = 0;
+  s.journeys.forEach(j => { j.loot = []; });
+  s.raidHistory.forEach(r => { r.loot = []; });
+  if (s.lastBattle) { s.lastBattle.loot = []; if (s.lastBattle.combat) delete s.lastBattle.combat.pendingConsumable; }
+  s.expeditions.forEach(e => { e.battle.loot = []; if (e.battle.combat) delete e.battle.combat.pendingConsumable; });
+  s.region ??= 1; s.bossSeasons ??= []; s.shopPurchases = [];
   s.rivalAttempts ??= []; s.lastNegotiation ??= null;
   s.rivals = s.rivals.slice(0, LEAGUE_SIZE - 1).map((r, i) => r.heroes?.length && r.strength && r.recruitSequence !== undefined ? r : { ...createRival(i, s), ...r });
   const ids = new Set(s.rivals.map(r => r.id));
@@ -829,7 +783,6 @@ export function missions(s: Campaign): Mission[] {
         : "Mobilidade e uma linha de frente estável reduzem os riscos.",
       kind,
       requiredFame: i === 3 ? 80 + regionIndex * 20 : i === 4 ? 180 + regionIndex * 30 : 0,
-      requiredItem: i === 3 ? "secret_map" : i === 4 ? "ancient_key" : undefined,
     };
   });
 }
@@ -1006,21 +959,7 @@ function createRetaliationEvent(s: Campaign): GuildEvent | null {
   ] };
 }
 
-export function shop(s: Campaign) {
-  const week = Math.floor((s.day - 1) / 7);
-  const purchasable = Object.entries(ITEMS).filter(([_, d]) =>
-    ["weapon","offhand","helmet","armor","gloves","boots","accessory","consumable","material"].includes(d.slot) &&
-    (!d.levelReq || d.levelReq <= Math.max(5, Math.max(...s.heroes.map(h => h.level)) + 5))
-  );
-  const rotating = Array.from({ length: 9 }, (_, i) => purchasable[(stableNumber("shop:" + week + ":" + i) + i * 17) % purchasable.length]?.[0]).filter(Boolean) as string[];
-  const keys = [...new Set(["healing_potion","minor_healing","iron_ore","lucky_clover",...rotating])].slice(0, 12);
-  return keys.map((key, i) => ({
-    key,
-    price: Math.max(8, Math.round(ITEMS[key].value * (key === "healing_potion" ? 2.2 : 1.45))),
-    requiredFame: ITEMS[key].rarity === "legendary" ? 260 : ITEMS[key].rarity === "epic" ? 120 : ITEMS[key].rarity === "rare" ? 35 : 0,
-    available: ["consumable","material"].includes(ITEMS[key].slot) || !s.shopPurchases.includes(week + ":" + key),
-  }));
-}
+export function shop(_s: Campaign): {key:string;price:number;requiredFame:number;available:boolean}[] { return []; }
 function gainXp(h: Hero, value: number) {
   if (h.level >= MAX_HERO_LEVEL) { h.level = MAX_HERO_LEVEL; h.xp = 0; return 0; }
   h.xp += Math.max(0, Math.round(value)); let levels = 0;
@@ -1053,14 +992,14 @@ function processJourneys(s: Campaign) {
     const h = s.heroes.find(hero => hero.id === journey.heroId); if (!h) { completed.push(journey); continue; }
     const catchup = Math.min(30, Math.max(0, highest - h.level) * 6);
     let xp = JOURNEY_OPTIONS[journey.duration].dailyXp + catchup;
-    if (journey.choice === "explore") { xp = Math.round(xp * 1.35); h.energy = Math.max(0, h.energy - 4); if (random(s) < .28) { const loot = random(s) < .6 ? "gemstone" : RACE_GEAR[heroRace(h)][random(s) < .5 ? "weapon" : "armor"]; addItem(s, loot); journey.loot.push(loot); } }
+    if (journey.choice === "explore") { xp = Math.round(xp * 1.35); h.energy = Math.max(0, h.energy - 4);  }
     else if (journey.choice === "camp") h.energy = Math.min(100, h.energy + 8);
     else xp = Math.round(xp * .82);
     gainXp(h, xp); journey.xpEarned += xp;
     journey.remaining -= journey.choice === "shortcut" ? 2 : 1;
     if (journey.remaining <= 0) {
       journey.remaining = 0; completed.push(journey); s.fame += 3 + journey.duration;
-      if (journey.duration === 7) { const reward = RACE_GEAR[heroRace(h)][random(s) < .5 ? "weapon" : "armor"]; addItem(s, reward); journey.loot.push(reward); }
+      
       note(s, h.name + " voltou de uma viagem de " + journey.duration + " dias com +" + journey.xpEarned + " XP" + (journey.loot.length ? " e " + journey.loot.length + " item(ns)" : "") + ".");
     }
   }
@@ -1128,31 +1067,7 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   const targetRounds = m.kind === "escort" ? Math.max(3, 6 - (agile >= 2 ? 1 : 0) - (scout ? 1 : 0)) : m.kind === "defense" ? 6 : m.kind === "hunt" ? 12 : 24;
   return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, consumablesUsed: 0, pendingAbilities: [], abilityCooldowns: {}, autoAbilities: true, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
 }
-function grantLoot(s: Campaign, m: Mission, deployedIds: string[] = s.team) {
-  const deployed = s.heroes.filter(h => deployedIds.includes(h.id));
-  const luck = deployed.reduce((best, h) => Math.max(best, heroLuck(h, s)), 0);
-  const keys: string[] = [];
-  const rank = Math.max(1, Math.min(5, m.rank));
-
-  // Toda vitória rende pelo menos um material/tesouro. O Pierrô aumenta quantidade e qualidade.
-  keys.push(randomLootKey(s, rank, luck, true));
-  keys.push(randomLootKey(s, rank, luck, false));
-
-  const extraChance = Math.min(.9, .18 + rank * .10 + luck * 1.65);
-  if (random(s) < extraChance) keys.push(randomLootKey(s, rank, luck, false));
-  if (random(s) < luck * 1.35) keys.push(randomLootKey(s, Math.min(5, rank + 1), luck, false));
-
-  if (m.kind === "dungeon") keys.push(randomLootKey(s, Math.min(5, rank + 1), luck, random(s) < .45));
-  if (m.kind === "boss") {
-    keys.push(randomLootKey(s, Math.min(5, rank + 2), Math.min(.45, luck + .12), false));
-    keys.push("ancient_key");
-  }
-  if (!hasItem(s, "secret_map") && m.rank >= 2 && random(s) < .16 + luck) keys.push("secret_map");
-  if (!hasItem(s, "ancient_key") && m.rank >= 4 && random(s) < .18 + luck) keys.push("ancient_key");
-
-  for (const key of keys) if (ITEMS[key]) addItem(s, key);
-  return keys.filter(key => !!ITEMS[key]);
-}
+function grantLoot(_s: Campaign, _m: Mission, _deployedIds: string[] = _s.team): string[] { return []; }
 function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreated") {
   const c = b.combat!, m = c.mission, won = status === "won";
   b.status = status; b.won = won; b.reward = won ? m.reward : 0; b.xp = status === "retreated" && !b.rounds ? 0 : (won ? 30 : status === "retreated" ? 8 : 12) + m.rank * (won ? 23 : 12);
@@ -1358,8 +1273,8 @@ function resolveEvent(s: Campaign, action: Extract<Action, { type: "event" }>) {
     if (id === "leave") { requireRule(s.heroes.length > 4, "Mantenha pelo menos quatro heróis na guilda."); releaseHero(s, h, Math.round(h.value * .55), e.rivalId || "rival-0"); }
     if (id === "refuse") { h.energy = Math.max(0, h.energy - 15); s.fame = Math.max(0, s.fame - 5); }
   }
-  if (e.kind === "map") { if (id === "buy" || id === "guide") addItem(s, "secret_map"); if (id === "guide") { s.fame += 8; s.heroes.forEach(h => h.energy = Math.max(0, h.energy - 10)); } }
-  if (e.kind === "caravan") { if (id === "return") { s.fame += 12; addItem(s, "healing_potion"); } if (id === "sell") { entry(s, "Venda de suprimentos encontrados", 70); s.fame = Math.max(0, s.fame - 10); } if (id === "share") { s.fame += 18; s.heroes.forEach(h => h.energy = Math.min(100, h.energy + 10)); } }
+  if (e.kind === "map") { if (id === "guide") { s.fame += 8; s.heroes.forEach(h => h.energy = Math.max(0, h.energy - 10)); } }
+  if (e.kind === "caravan") { if (id === "return") { s.fame += 12; } if (id === "sell") { entry(s, "Venda de suprimentos encontrados", 70); s.fame = Math.max(0, s.fame - 10); } if (id === "share") { s.fame += 18; s.heroes.forEach(h => h.energy = Math.min(100, h.energy + 10)); } }
   if (e.kind === "retaliation") {
     const h = s.heroes.find(h => h.id === e.heroId), rival = s.rivals.find(r => r.id === e.rivalId); requireRule(h && rival, "A retaliação não está mais disponível.");
     if (id === "counter") { h.salary += 2; raiseRivalry(s, rival.id, -12, "Proposta rival bloqueada"); }

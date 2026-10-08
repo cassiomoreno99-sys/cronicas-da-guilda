@@ -108,35 +108,15 @@ console.log("v1.3.0: iniciando bateria ampla...");
   ok(names.size >= 1200, "Gerador de nomes não produziu variedade suficiente.");
 }
 
-// 6) Catálogo de itens amplo, slots, sets e crafting.
+// 6-7) Catálogo removido e saves limpos.
 {
-  const keys = Object.keys(ITEMS);
-  ok(keys.length >= 70, "Catálogo de itens ainda está pequeno: " + keys.length);
-  const requiredSlots = ["weapon","offhand","helmet","armor","gloves","boots","accessory","consumable","material","treasure"];
-  for (const slot of requiredSlots) ok(Object.values(ITEMS).some(i => i.slot === slot), "Falta item do slot/tipo " + slot);
-  ok(Object.keys(ITEM_SET_DEFINITIONS).length >= 4, "Poucos conjuntos de equipamento.");
-  ok(CRAFTING_RECIPES.length >= 8, "Poucas receitas de fabricação.");
-  ok(SCAR_DEFINITIONS.length >= 8, "Poucas cicatrizes/traços de batalha.");
-  for (const [key, def] of Object.entries(ITEMS)) {
-    ok(!!def.name && !!SLOT_NAMES[def.slot], "Item inválido: " + key);
-    ok(def.value >= 0, "Item com valor negativo: " + key);
-  }
-}
-
-// 7) Restrições de equipamento por classe e nível.
-{
-  let s = prep(newCampaign(1006));
-  const pierrot = structuredClone(s.rivals.flatMap(r => r.heroes).find(h => h.class === "bard")!);
-  ok(!!pierrot, "O teste de equipamento precisa encontrar um Pierrô no mundo.");
-  pierrot.id = "test-pierrot"; pierrot.level = 1; pierrot.energy = 100; pierrot.injuredUntil = 0;
-  s.heroes.push(pierrot);
-  const warrior = s.heroes.find(h => h.class === "warrior")!;
-  s.chest.push({ id:"test-mask", key:"jester_mask" }, { id:"test-die", key:"seven_sided_die" });
-  s = applyAction(s, { type:"equip", itemId:"test-mask", heroId:pierrot.id });
-  ok(s.chest.find(i => i.id === "test-mask")?.equippedTo === pierrot.id, "Pierrô não conseguiu equipar item próprio.");
-  const s2 = structuredClone(s); delete s2.chest.find(i => i.id === "test-mask")!.equippedTo;
-  expectRule(() => applyAction(s2, { type:"equip", itemId:"test-mask", heroId:warrior.id }), "Guerreiro equipou item exclusivo de Pierrô.");
-  expectRule(() => applyAction(s, { type:"equip", itemId:"test-die", heroId:pierrot.id }), "Pierrô nível 1 equipou item de nível 45.");
+  ok(Object.keys(ITEMS).length === 0, "O catálogo antigo não foi removido.");
+  ok(CRAFTING_RECIPES.length === 0, "As receitas antigas ainda existem.");
+  const s = prep(newCampaign(1006));
+  ok(s.chest.length === 0, "O novo jogo não deve entregar itens.");
+  const old = structuredClone(s); old.chest = [{id:"old-item",key:"iron_sword",equippedTo:old.heroes[0].id}];
+  const cleaned = applyAction(old,{type:"rest"});
+  ok(cleaned.chest.length === 0, "O save antigo manteve os itens após a atualização.");
 }
 
 // 8) Sede até nível máximo e bloqueio de upgrade extra.
@@ -160,19 +140,10 @@ console.log("v1.3.0: iniciando bateria ampla...");
   ok(afterHero.xp > before || afterHero.level > 1, "Academia não concedeu XP ao aprendiz.");
 }
 
-// 10) Forja consome materiais e fabrica item.
+// 10) Nenhuma receita antiga permanece disponível.
 {
-  let s = prep(newCampaign(1009));
-  s = applyAction(s, { type:"upgrade-hq", building:"forge" });
-  s.chest.push(
-    { id:"ore-a", key:"iron_ore" }, { id:"ore-b", key:"iron_ore" }, { id:"ore-c", key:"iron_ore" }
-  );
-  const before = s.chest.filter(i => i.key === "iron_ore").length;
-  s = applyAction(s, { type:"craft", recipeId:"craft-iron-shield" });
-  ok(s.chest.some(i => i.key === "iron_shield"), "Forja não criou o item.");
-  ok(s.chest.filter(i => i.key === "iron_ore").length === before - 3, "Forja não consumiu materiais corretamente.");
-  const noMat = prep(newCampaign(1010)); noMat.hq.forge = 5;
-  expectRule(() => applyAction(noMat, { type:"craft", recipeId:"craft-seven-die" }), "Forja criou lendário sem materiais.");
+  const s = prep(newCampaign(1009));
+  expectRule(() => applyAction(s, { type:"craft", recipeId:"craft-iron-shield" }), "Uma receita removida ainda foi aceita.");
 }
 
 // 11) Equipe salva ganha experiência de entrosamento em missão.

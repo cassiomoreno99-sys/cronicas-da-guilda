@@ -26,54 +26,14 @@ function prepare(seed: number) {
   return { state, expeditionId: expedition.id };
 }
 
-console.log("Combate narrativo: iniciando testes de consumíveis...");
-
-// Poção: clique manual escolhe alvo, o item é consumido e a cura acontece no turno narrado.
+console.log("Combate narrativo: verificando remoção de todos os consumíveis...");
 {
-  let { state, expeditionId } = prepare(31001);
-  let expedition = state.expeditions.find(e => e.id === expeditionId)!;
-  const hero = expedition.battle.combat!.fighters.find(f => f.side === "hero")!;
-  hero.hp = Math.max(1, hero.maxHp - 80);
-  const beforeItems = state.chest.filter(i => i.key === "healing_potion").length;
-  const beforeHp = hero.hp;
-  state = applyAction(state, { type: "battle-consumable", key: "healing_potion", targetId: hero.id, expeditionId });
-  ok(state.chest.filter(i => i.key === "healing_potion").length === beforeItems - 1, "Poção de Cura não foi consumida.");
-  ok(state.expeditions.find(e => e.id === expeditionId)!.battle.combat!.pendingConsumable?.key === "healing_potion", "Poção não foi preparada.");
-  state = applyAction(state, { type: "battle-round", expeditionId });
-  expedition = state.expeditions.find(e => e.id === expeditionId)!;
-  const after = expedition.battle.combat?.fighters.find(f => f.id === hero.id);
-  ok(!after || after.hp > beforeHp, "Poção de Cura não recuperou PV.");
-  ok(expedition.battle.log.some(l => l.text.includes("Intervenção da guilda: Poção de Cura")), "Narração não registrou uso da poção.");
-}
-
-// Antídoto: remove status nocivos antes do dano periódico.
-{
-  let { state, expeditionId } = prepare(31002);
-  let expedition = state.expeditions.find(e => e.id === expeditionId)!;
-  const hero = expedition.battle.combat!.fighters.find(f => f.side === "hero")!;
-  hero.statuses.push({ kind: "poison", rounds: 3, amount: 12, sourceId: "teste" });
-  const beforeItems = state.chest.filter(i => i.key === "antidote").length;
-  state = applyAction(state, { type: "battle-consumable", key: "antidote", targetId: hero.id, expeditionId });
-  ok(state.chest.filter(i => i.key === "antidote").length === beforeItems - 1, "Antídoto não foi consumido.");
-  state = applyAction(state, { type: "battle-round", expeditionId });
-  expedition = state.expeditions.find(e => e.id === expeditionId)!;
-  const after = expedition.battle.combat?.fighters.find(f => f.id === hero.id);
-  ok(!after || !after.statuses.some(st => st.kind === "poison"), "Antídoto não removeu veneno.");
-  ok(expedition.battle.log.some(l => l.text.includes("Intervenção da guilda: Antídoto")), "Narração não registrou antídoto.");
-}
-
-// Bomba: inimigo perde a próxima ação.
-{
-  let { state, expeditionId } = prepare(31003);
-  let expedition = state.expeditions.find(e => e.id === expeditionId)!;
-  const enemy = expedition.battle.combat!.fighters.find(f => f.side === "enemy")!;
-  const beforeItems = state.chest.filter(i => i.key === "stun_bomb").length;
-  state = applyAction(state, { type: "battle-consumable", key: "stun_bomb", targetId: enemy.id, expeditionId });
-  ok(state.chest.filter(i => i.key === "stun_bomb").length === beforeItems - 1, "Bomba Atordoante não foi consumida.");
-  state = applyAction(state, { type: "battle-round", expeditionId });
-  expedition = state.expeditions.find(e => e.id === expeditionId)!;
-  ok(expedition.battle.log.some(l => l.text.includes("Bomba Atordoante") && l.text.includes(enemy.name)), "Narração não registrou a bomba.");
-  ok(expedition.battle.log.some(l => l.text.includes(enemy.name + " está atordoado e perde a ação")), "Inimigo atingido não perdeu a ação.");
+  const {state,expeditionId}=prepare(31001);
+  ok(state.chest.length===0,"O catálogo excluído deixou consumíveis no save.");
+  const hero=state.expeditions.find(e=>e.id===expeditionId)!.battle.combat!.fighters.find(f=>f.side==="hero")!;
+  let rejected=false;
+  try { applyAction(state,{type:"battle-consumable",key:"healing_potion",targetId:hero.id,expeditionId}); } catch { rejected=true; }
+  ok(rejected,"Um item removido ainda foi aceito em combate.");
 }
 
 // Habilidades seguem automáticas e narradas, sem comando manual.
@@ -84,4 +44,4 @@ console.log("Combate narrativo: iniciando testes de consumíveis...");
   ok(battle.log.some(l => l.kind === "ability" && l.text.includes(" usa ")), "Nenhuma habilidade automática foi narrada.");
 }
 
-console.log("Combate narrativo: consumíveis e habilidades automáticas OK.");
+console.log("Combate narrativo: catálogo vazio e habilidades automáticas OK.");

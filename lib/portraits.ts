@@ -9,7 +9,7 @@ import pierro from "./portrait-art/pierro";
 
 const art = {aric,lyra,doran,kael,elen,sora,pierro};
 type Key = keyof typeof art;
-const core:Record<string,Key> = {aric:"aric",lyra:"lyra",doran:"doran",kael:"kael",elen:"elen",sora:"sora"};
+const core:Record<string,Key> = {aric:"aric",lyra:"lyra",doran:"elen",kael:"kael",elen:"doran",sora:"sora"};
 const classes:Record<HeroClass,Key> = {warrior:"aric",mage:"lyra",healer:"doran",rogue:"kael",ranger:"elen",paladin:"aric",bard:"pierro",monk:"aric",necromancer:"lyra",druid:"doran"};
 const races:Record<HeroRace,Key> = {human:"aric",elf:"elen",dwarf:"doran",orc:"sora",beastkin:"elen",umbral:"kael"};
 

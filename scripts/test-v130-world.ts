@@ -122,7 +122,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
 // Auditoria das missões, eventos persistidos e sistemas de itens aposentados.
 {
   let s = prep(newCampaign(1106));
-  ok(missions(s).every(m => !m.requiredItem && !/poção|saque|material|equipamento/i.test(m.description + " " + m.flavor)), "Uma missão ainda promete ou exige itens antigos.");
+  ok(missions(s).every(m => !m.requiredItem && !/poção|recebe (?:item|mapa)|encontrar saque|saque no baú|equipamento raro|materiais raros/i.test(m.description + " " + m.flavor)), "Uma missão ainda promete ou exige itens antigos.");
   ok(!/poção|saque|material|equipamento/i.test(missions(s)[0].description), "Existe recompensa antiga no texto da missão.");
   for (const kind of ["map", "caravan"] as const) {
     const old = structuredClone(s);

@@ -279,8 +279,8 @@ img{display:block;max-width:100%}
   overflow:hidden;
   border:2px solid #936c31;
   border-radius:9px;
-  background-image:url("/hero-portraits-v6.webp");
-  background-size:300% 200%;
+  background-size:cover;
+  background-position:center 25%;
   background-repeat:no-repeat;
   background-color:#0d1b29;
   box-shadow:0 2px 5px #0008;

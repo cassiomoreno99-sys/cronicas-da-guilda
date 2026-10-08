@@ -1,32 +1,19 @@
 import type { HeroClass, HeroRace } from "./game";
+import aric from "./portrait-art/aric";
+import lyra from "./portrait-art/lyra";
+import doran from "./portrait-art/doran";
+import kael from "./portrait-art/kael";
+import elen from "./portrait-art/elen";
+import sora from "./portrait-art/sora";
+import pierro from "./portrait-art/pierro";
 
-const coreSlots: Record<string, number> = {
-  aric: 0,
-  lyra: 1,
-  elen: 2,
-  kael: 3,
-  sora: 4,
-  doran: 5,
-};
+const art = {aric,lyra,doran,kael,elen,sora,pierro};
+type Key = keyof typeof art;
+const core:Record<string,Key> = {aric:"aric",lyra:"lyra",doran:"sora",kael:"kael",elen:"doran",sora:"elen"};
+const classes:Record<HeroClass,Key> = {warrior:"aric",mage:"lyra",healer:"doran",rogue:"kael",ranger:"elen",paladin:"aric",bard:"pierro",monk:"aric",necromancer:"lyra",druid:"doran"};
+const races:Record<HeroRace,Key> = {human:"aric",elf:"elen",dwarf:"doran",orc:"sora",beastkin:"elen",umbral:"kael"};
 
-const raceSlots: Record<HeroRace, number> = {
-  human: 0,
-  elf: 4,
-  dwarf: 2,
-  orc: 5,
-  beastkin: 5,
-  umbral: 3,
-};
-
-const classRaceFallback: Record<HeroClass, HeroRace> = {
-  warrior:"human", mage:"elf", healer:"dwarf", rogue:"umbral", ranger:"elf",
-  paladin:"human", monk:"dwarf", necromancer:"umbral", druid:"elf", bard:"human",
-};
-
-export function portraitPosition(name:string,id?:string,heroClass?:HeroClass,race?:HeroRace) {
-  const resolvedRace = race || (heroClass ? classRaceFallback[heroClass] : "human");
-  const slot = (id ? coreSlots[id] : undefined) ?? raceSlots[resolvedRace];
-  const col = slot % 3;
-  const row = Math.floor(slot / 3);
-  return (col / 2 * 100) + "% " + (row * 100) + "%";
+export function portraitSource(_name:string,id?:string,heroClass?:HeroClass,race?:HeroRace):string {
+  const key = (id && core[id]) || (heroClass && classes[heroClass]) || (race && races[race]) || "aric";
+  return art[key];
 }

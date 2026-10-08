@@ -22,7 +22,7 @@ import {
   exportLocalCampaign, importLocalCampaign, readLocalCampaign, updateLocalCampaign,
   type LocalSave
 } from "@/lib/local-save";
-import { portraitPosition } from "@/lib/portraits";
+import { portraitSource } from "@/lib/portraits";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 
 type Save = Pick<LocalSave, "state" | "revision">;
@@ -217,7 +217,7 @@ function useAmbientRpgMusic() {
 function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" | "class" | "race">; large?: boolean }) {
   return <span
     className={"hero-portrait" + (large ? " hero-portrait-large" : "")}
-    style={{ backgroundPosition: portraitPosition(hero.name, hero.id, hero.class, heroRace(hero)) }}
+    style={{ backgroundImage: `url("${portraitSource(hero.name, hero.id, hero.class, heroRace(hero))}")` }}
     role="img"
     aria-label={"Retrato de " + hero.name}
   />;

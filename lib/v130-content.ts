@@ -27,7 +27,7 @@ export const WORLD_REGIONS = [
 
 export const HQ_BUILDINGS = {
   infirmary: { name: "Enfermaria", max: 5, baseCost: 220, description: "Reduz duração de ferimentos e melhora recuperação de energia." },
-  forge: { name: "Forja", max: 5, baseCost: 260, description: "Libera receitas melhores e reduz custo de fabricação." },
+  forge: { name: "Forja", max: 5, baseCost: 260, description: "Indisponível enquanto não houver itens." },
   academy: { name: "Academia", max: 5, baseCost: 240, description: "Aumenta XP diário dos aprendizes e número de vagas." },
   library: { name: "Biblioteca Arcana", max: 5, baseCost: 250, description: "Aumenta magia, cura e evolução de habilidades." },
   stables: { name: "Estábulos", max: 5, baseCost: 200, description: "Melhora escoltas, viagens e recuperação entre expedições." },
@@ -42,7 +42,7 @@ export const HERO_SCARS = [
   { id: "silver_eye", name: "Olho de Prata", description: "+3% crítico em caçadas.", critical: 0.03, positive: true },
   { id: "old_wound", name: "Ferida Antiga", description: "−5 PV, mas +1 defesa.", hp: -5, defense: 1, positive: false },
   { id: "faith_mark", name: "Marca da Fé", description: "+2 magia e +5 PV.", magic: 2, hp: 5, positive: true },
-  { id: "lucky_scar", name: "Cicatriz da Sorte", description: "+4% de sorte para saque.", luck: 0.04, positive: true },
+  { id: "lucky_scar", name: "Cicatriz da Sorte", description: "+4% de sorte.", luck: 0.04, positive: true },
 ] as const;
 
 const firstNames = [
@@ -136,11 +136,6 @@ const item = (name: string, slot: string, rarity: string, value: number, descrip
 
 export const V130_ITEMS: Record<string, RawItem> = {};
 
-export const ITEM_SETS = {
-  fortress: { name: "Bastião Antigo", two: "+3 defesa", three: "+10 PV e +3 defesa" },
-  astral: { name: "Observatório Astral", two: "+4 magia", three: "+6 magia e +2% crítico" },
-  shadow: { name: "Eclipse Silencioso", two: "+3 velocidade", three: "+4 ataque e +3% crítico" },
-  fortune: { name: "Fortuna do Pierrô", two: "+5% sorte de saque", three: "+10% sorte e +3% crítico" },
-} as const;
+export const ITEM_SETS: Record<string, { name: string; two: string; three: string }> = {};
 
 export const CRAFT_RECIPES: { id: string; result: string; cost: number; forge: number; materials: Record<string, number> }[] = [];

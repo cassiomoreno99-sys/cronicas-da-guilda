@@ -7,13 +7,13 @@ import {
 import {
   CLASSES, RACES, TACTICS, ITEMS, KIND_NAMES, PATH_NAMES, RACIAL_PATH_NAMES,
   SPECIALIZATIONS, SPECIALIZATION_BRANCHES, RACE_TREES, HERO_STORIES,
-  HQ_DEFINITIONS, WORLD_MAP, CRAFTING_RECIPES, NEGOTIATION_MODES, JOURNEY_CHOICES,
+  HQ_DEFINITIONS, WORLD_MAP, NEGOTIATION_MODES, JOURNEY_CHOICES,
   activeExpeditions, freeExpeditionSlots, available, activeJourney, heroOnExpedition,
   heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, seasonBoss,
-  teamPower, standings, leaguePrize, market, shop, talentPoints, racialPoints,
+  teamPower, standings, leaguePrize, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
   hqUpgradeCost, academySlots, negotiationQuote, rank,
-  type Action, type Battle, type BattleConsumableKey, type Campaign, type ChestItem,
+  type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
   type Hero, type HQBuilding, type JourneyChoice, type JourneyDuration,
   type Mission, type NegotiationMode, type RacialPath, type TalentPath, type Tactic
@@ -321,7 +321,7 @@ function MissionPage({
           <div className="mission-rewards">
             <span><Coins /> {m.reward} Ouro</span>
             <span><Sparkles /> +{20 + m.rank * 15} XP</span>
-            <span><Archive /> Saque Nv. {m.rank}</span>
+            
             <button
               className={"action-button " + (index % 3 === 0 ? "red" : index % 3 === 1 ? "green" : "blue")}
               disabled={!!locks.length}
@@ -462,7 +462,6 @@ function LeaguePage({ state, team, act, busy }: { state: Campaign; team: string[
 function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
   const recover = state.heroes.filter(h => h.energy < 100 || h.injuredUntil > state.day);
   const shown = (recover.length ? recover : state.heroes).slice(0,4);
-  const counts = (key: string) => state.chest.filter(i => i.key === key && !i.equippedTo).length;
   return <section className="screen rest-screen">
     <div className="sanctuary-head parchment">
       <img src="/reference/sanctuary.webp" alt="" />
@@ -584,7 +583,6 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
 function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (a: Action) => void; busy: boolean; openMission: (id:string) => void }) {
   const recruits = market(state).slice(0,4);
   const rumors = missions(state).slice(0,3);
-  const offers = shop(state).slice(0,6);
   return <section className="screen tavern-screen">
     <div className="tavern-hero"><img src="/reference/tavern-hero.webp" alt="" /><div>Boas histórias<br/>sempre encontram<br/>um lugar aqui.</div></div>
     <ParchmentTitle icon={<Users />} title="Heróis para Recrutar" side={<span>Renova semanalmente</span>} />
@@ -640,14 +638,13 @@ function GuildPage({
     </div>
     {state.event && <div className="council parchment"><img src="/reference/guild-council.webp" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
     <ParchmentTitle icon={<Crown />} title="Sede da Guilda" />
-    <div className="building-list parchment">{buildings.map(([key,spec],index) => {
+    <div className="building-list parchment">{buildings.filter(([key]) => key !== "forge").map(([key,spec],index) => {
       const lvl = state.hq[key] || 0, max = spec.max, cost = hqUpgradeCost(state,key);
       const arts = ["/reference/guild-training.webp","/reference/guild-market.webp","/reference/guild-sanctuary.webp","/reference/guild-workshop.webp"];
       return <article key={key}><img src={arts[index%arts.length]} alt="" /><div><h3>{spec.name} <small>Nv. {lvl}</small></h3><p>{spec.description}</p></div><div><span><Coins /> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
     <div className="guild-grid">
       <section className="guild-mini parchment"><h3>Mapa do Mundo</h3><div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}><strong>{i+1}. {r.name}</strong><small>{r.theme}</small></button>)}</div></section>
-      <section className="guild-mini parchment"><h3>Forja</h3><div className="forge-list"><small>Sem itens ou receitas.</small></div></section>
       <AcademyPanel state={state} act={act} busy={busy} />
       <section className="guild-mini parchment"><h3>Guerra de Guildas</h3><p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
     </div>
@@ -665,14 +662,6 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
   const heroes = fighters.filter(f => f.side === "hero");
   const enemies = fighters.filter(f => f.side === "enemy");
   const active = battle.status === "active" && !!battle.combat;
-  const count = (key: BattleConsumableKey) => state.chest.filter(i => i.key === key && !i.equippedTo).length;
-  const lowestHero = heroes.filter(f => f.hp > 0 && f.hp < f.maxHp).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
-  const debuffedHero = heroes.find(f => f.hp > 0 && f.statuses?.some(s => ["poison","bleed","vulnerable"].includes(s.kind))) || lowestHero || heroes.find(f=>f.hp>0);
-  const enemyTarget = enemies.filter(f=>f.hp>0).sort((a,b)=>b.hp-a.hp)[0];
-  const useConsumable = (key: BattleConsumableKey) => {
-    const targetId = key === "healing_potion" ? lowestHero?.id : key === "antidote" ? debuffedHero?.id : enemyTarget?.id;
-    if (targetId) act({type:"battle-consumable",key,targetId,expeditionId:expedition.id});
-  };
   return <div className="battle-overlay">
     <section className="battle-sheet">
       <div className="battle-top"><div><strong>{battle.title}</strong><span>Rodada {battle.rounds}{battle.objective?.targetRounds ? "/" + battle.objective.targetRounds : ""}</span></div><button onClick={close}><X /></button></div>

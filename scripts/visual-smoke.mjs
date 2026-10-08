@@ -45,6 +45,26 @@ await top("Equipe","02-equipe");
 await top("Liga","03-liga");
 await top("Descanso","04-descanso");
 await bottom("Heróis","05-herois");
+const equipmentLink = page.getByRole("button",{name:/Ver equipamentos · 12 espaços/});
+if (await equipmentLink.count() !== 1) throw new Error("Botão da nova tela de equipamentos ausente.");
+await equipmentLink.click();
+if (await page.locator(".equipment-screen").count() !== 1) throw new Error("Tela de equipamentos não abriu.");
+if (await page.locator(".equipment-slot").count() !== 12) throw new Error("A tela não exibe os 12 espaços.");
+await sanity("05a-equipamentos-12-espacos");
+await page.locator('[data-slot="shoulders"]').click();
+if (!(await page.locator(".equipment-slot-detail").innerText()).includes("Ombreiras")) throw new Error("Detalhes das ombreiras não abriram.");
+await page.locator('[data-slot="ring2"]').click();
+if (!(await page.locator(".equipment-slot-detail").innerText()).includes("Anel 2")) throw new Error("Segundo anel não é independente.");
+const selectedBefore = await page.locator(".equipment-hero-name strong").innerText();
+const heroes = await page.locator(".equipment-hero-chooser select option").count();
+if(heroes > 1) {
+  await page.locator(".equipment-hero-chooser select").selectOption({index:1});
+  if ((await page.locator(".equipment-hero-name strong").innerText()) === selectedBefore) throw new Error("Não é possível trocar o herói.");
+}
+await page.getByRole("button",{name:"Voltar aos Heróis",exact:true}).click();
+if(await page.locator(".heroes-screen").count() !== 1) throw new Error("Voltar não restaurou a ficha do herói.");
+await sanity("05b-herois-volta-equipamentos");
+
 await bottom("Baú","06-bau");
 await bottom("Taverna","07-taverna");
 await bottom("Guilda","08-guilda");

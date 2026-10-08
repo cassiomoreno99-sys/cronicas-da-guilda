@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
-  Archive, BookOpen, Check, ChevronRight, CircleHelp, Coins, Crown, Download,
-  Flag, Hammer, Heart, LockKeyhole, ScrollText, Shield, Sparkles, Swords,
+  Archive, BookOpen, Check, ChevronLeft, ChevronRight, CircleHelp, Coins, Crown, Download,
+  Flag, Footprints, Gem, Hammer, Hand, Heart, LockKeyhole, ScrollText, Shield, Shirt, Sparkles, Swords,
   Target, Tent, Trophy, Upload, Users, Volume2, VolumeX, Beer, X
 } from "lucide-react";
 import {
@@ -23,9 +23,10 @@ import {
   type LocalSave
 } from "@/lib/local-save";
 import { portraitPosition } from "@/lib/portraits";
+import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 
 type Save = Pick<LocalSave, "state" | "revision">;
-type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "chest" | "tavern" | "guild";
+type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp"];
@@ -286,7 +287,7 @@ function BottomNav({ screen, go }: { screen: Screen; go: (s: Screen) => void }) 
   const missionActive = ["mission","team","league","rest"].includes(screen);
   const tabs: Array<[Screen,string,ReactNode,boolean]> = [
     ["mission","Missões",<Target key="m" />,missionActive],
-    ["heroes","Heróis",<Shield key="h" />,screen === "heroes"],
+    ["heroes","Heróis",<Shield key="h" />,screen === "heroes" || screen === "equipment"],
     ["chest","Baú",<Archive key="b" />,screen === "chest"],
     ["tavern","Taverna",<Beer key="t" />,screen === "tavern"],
     ["guild","Guilda",<Crown key="g" />,screen === "guild"],
@@ -484,8 +485,8 @@ function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => v
   </section>;
 }
 
-function HeroPage({ state, selectedId, selectHero, act, busy }: {
-  state: Campaign; selectedId: string; selectHero: (id: string) => void; act: (a: Action) => void; busy: boolean;
+function HeroPage({ state, selectedId, selectHero, openEquipment, act, busy }: {
+  state: Campaign; selectedId: string; selectHero: (id: string) => void; openEquipment: () => void; act: (a: Action) => void; busy: boolean;
 }) {
   const hero = state.heroes.find(h => h.id === selectedId) || state.heroes[0];
   const stats = heroStats(hero,state);
@@ -529,10 +530,69 @@ function HeroPage({ state, selectedId, selectHero, act, busy }: {
           {journey ? <div className="journey-box"><strong>{journey.remaining} dia(s) restantes · +{journey.xpEarned} XP</strong><div className="choice-grid">{(Object.keys(JOURNEY_CHOICES) as JourneyChoice[]).map(c => <button data-active={journey.choice === c} key={c} onClick={() => act({type:"journey-choice",journeyId:journey.id,choice:c})}>{JOURNEY_CHOICES[c].name}</button>)}</div></div>
           : <div className="choice-grid">{([3,5,7] as JourneyDuration[]).map(d => <button key={d} disabled={busy || !canAct} onClick={() => act({type:"start-journey",heroId:hero.id,duration:d})}><strong>{d} dias</strong><small>Desenvolvimento individual</small></button>)}</div>}
         </section>
-        <section className="sheet-section"><label>Equipamentos</label><div className="equipment-row">{equipped.length ? equipped.map(i => <ItemArt key={i.id} itemKey={i.key} />) : <small>Nenhum equipamento.</small>}</div></section>
+        <section className="sheet-section"><label>Equipamentos</label><div className="equipment-row">{equipped.length ? equipped.map(i => <ItemArt key={i.id} itemKey={i.key} />) : <small>Nenhum equipamento.</small>}</div><button type="button" className="hero-equipment-link" onClick={openEquipment}><Shield aria-hidden="true" /> Ver equipamentos · 12 espaços <ChevronRight aria-hidden="true" /></button></section>
         <button className="action-button blue huge" disabled={busy || !canAct || hero.energy < 15} onClick={() => act({type:"train-hero",heroId:hero.id})}>Treino Individual · +{trainingPlan(state,hero).xp} XP</button>
       </article>
     </div>
+  </section>;
+}
+
+
+const EQUIPMENT_ICONS = {
+  weapon:Swords, offhand:Shield, helmet:Crown, shoulders:Shield,
+  armor:Shirt, gloves:Hand, belt:Archive, boots:Footprints,
+  cloak:Flag, ring1:Gem, ring2:Gem, amulet:Sparkles,
+} satisfies Record<EquipmentSlotId, typeof Swords>;
+
+function EquipmentPage({ state, selectedId, selectHero, back }: {
+  state: Campaign; selectedId: string; selectHero: (id: string) => void; back: () => void;
+}) {
+  const hero = state.heroes.find(h => h.id === selectedId) || state.heroes[0];
+  const [selectedSlot, setSelectedSlot] = useState<EquipmentSlotId>("weapon");
+  const activeSlot = EQUIPMENT_SLOTS.find(s => s.id === selectedSlot) || EQUIPMENT_SLOTS[0];
+  const equippedCount = state.chest.filter(i => i.equippedTo === hero.id && ITEMS[i.key]).length;
+
+  return <section className="screen equipment-screen" aria-label="Equipamentos de 12 espaços">
+    <header className="equipment-page-header">
+      <button type="button" className="equipment-back" onClick={back}>
+        <ChevronLeft aria-hidden="true"/> Voltar aos Heróis
+      </button>
+      <div className="equipment-page-title"><Shield aria-hidden="true"/><div>
+        <h2>Equipamentos</h2><p>12 espaços por personagem</p>
+      </div></div>
+    </header>
+
+    <section className="equipment-hero-card parchment" aria-label="Personagem selecionado">
+      <HeroPortrait hero={hero} />
+      <div className="equipment-hero-name"><strong>{hero.name}</strong>
+        <span>{CLASSES[hero.class].name} · Nv. {hero.level}</span>
+        <small>{equippedCount}/12 equipados</small>
+      </div>
+      <label className="equipment-hero-chooser">Trocar herói
+        <select value={hero.id} onChange={e => selectHero(e.target.value)} aria-label="Escolher herói para visualizar equipamentos">
+          {state.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}
+        </select>
+      </label>
+    </section>
+
+    <p className="equipment-intro">Toque em um espaço para conhecer sua função. Os itens serão habilitados após a aprovação do novo catálogo.</p>
+    <div className="equipment-slot-grid" role="group" aria-label="12 espaços de equipamento">
+      {EQUIPMENT_SLOTS.map((slot, i) => {
+        const Icon = EQUIPMENT_ICONS[slot.id];
+        return <button type="button" key={slot.id} className="equipment-slot" data-slot={slot.id}
+          data-selected={selectedSlot === slot.id} aria-pressed={selectedSlot === slot.id}
+          onClick={() => setSelectedSlot(slot.id)}>
+          <span className="equipment-slot-icon"><Icon aria-hidden="true"/></span>
+          <span className="equipment-slot-copy"><strong>{i + 1}. {slot.label}</strong><small>Vazio</small></span>
+        </button>;
+      })}
+    </div>
+    <section className="equipment-slot-detail parchment" aria-live="polite">
+      <span className="equipment-detail-label">{activeSlot.group}</span>
+      <h3>{activeSlot.label}</h3><p>{activeSlot.description}</p>
+      <p className="equipment-catalog-warning"><LockKeyhole aria-hidden="true"/> Nenhum item disponível para equipar nesta versão.</p>
+    </section>
+    <button type="button" className="equipment-bottom-back" onClick={back}><ChevronLeft aria-hidden="true"/> Voltar à ficha do herói</button>
   </section>;
 }
 
@@ -755,14 +815,15 @@ export default function Game() {
 
   return <div className="app-shell">
     <TopBar state={state} goGuild={() => go("guild")} musicEnabled={musicEnabled} toggleMusic={toggleMusic} />
-    {screen !== "guild" && <TopNav screen={screen} go={go} />}
+    {screen !== "guild" && screen !== "equipment" && <TopNav screen={screen} go={go} />}
     {error && <button className="error" onClick={() => setError("")}><X /> {error}</button>}
     <main className="game-content">
       {screen === "mission" && <MissionPage state={state} selectedId={selectedMission.id} selectMission={setSelectedMissionId} goTeam={() => go("team")} />}
       {screen === "team" && <TeamPage state={state} selectedMission={selectedMission} team={team} formation={formation} tactic={tactic} slot={slot} busy={busy} setTeam={setTeam} setFormation={setFormation} setTactic={setTactic} setSlot={setSlot} act={perform} openBattle={setBattleExpeditionId} />}
       {screen === "league" && <LeaguePage state={state} team={team} act={perform} busy={busy} />}
       {screen === "rest" && <RestPage state={state} act={perform} busy={busy} />}
-      {screen === "heroes" && <HeroPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} act={perform} busy={busy} />}
+      {screen === "heroes" && <HeroPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} openEquipment={() => go("equipment")} act={perform} busy={busy} />}
+      {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} />}
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
       {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} />}

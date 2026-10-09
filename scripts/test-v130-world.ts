@@ -235,7 +235,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
   old.heroes[0].class = "monk";
   old.heroes[0].level = 9; old.heroes[0].attack = 40; old.heroes[0].defense = 35; old.heroes[0].magic = 18;
   const migrated = normalizeCampaign(JSON.parse(JSON.stringify(old)));
-  ok(migrated.balanceVersion === 4, "Save antigo não recebeu a versão canônica de dados.");
+  ok(migrated.balanceVersion === 5, "Save antigo não recebeu a versão canônica de dados.");
   ok(migrated.heroes.map(h => h.name).join("|") === ["Aric Valen","Lyria Cael","Thorgar Pedraferro","Kaelith Sombria","Eldrin Silvestre","Rhokar Brasavil"].join("|"), "Save antigo não foi migrado para o elenco canônico.");
   ok(migrated.heroes[0].level === 1 && migrated.heroes[0].attack <= 8, "Save antigo não foi rebalanceado para nível 1/status baixo.");
 }

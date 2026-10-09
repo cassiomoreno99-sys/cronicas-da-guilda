@@ -867,22 +867,30 @@ img{display:block;max-width:100%}
 .drinks .action-button{width:100%}
 .shop{padding:5px}
 .merchant-head{
-  display:grid;
-  grid-template-columns:48px minmax(0,1fr);
+  display:flex;
+  flex-direction:column;
   align-items:center;
-  gap:6px;
-  padding-bottom:5px;
+  gap:7px;
+  padding:5px 0 10px;
+  text-align:center;
   border-bottom:1px solid #a47f46;
 }
 .merchant-portrait{
-  width:46px;height:46px;
+  display:block;
+  width:100%;
+  max-width:145px;
+  height:auto;
+  aspect-ratio:1;
+  object-fit:cover;
+  object-position:center 28%;
   border:2px solid #8d6430;
-  border-radius:6px;
-  background:url("/reference/tavern-hero.webp") 94% 53%/450% auto no-repeat;
-  box-shadow:0 2px 4px #0007;
+  border-radius:7px;
+  background:#382515;
+  box-shadow:0 2px 6px #0008;
 }
-.merchant-head h3{margin:0;font-size:14px}
-.merchant-head small{font-size:7px;line-height:1.05}
+.merchant-head span{min-width:0}
+.merchant-head h3{margin:0;font-size:16px}
+.merchant-head small{font-size:10px;line-height:1.2}
 .shop>button{
   width:100%;
   min-height:49px;

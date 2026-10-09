@@ -79,7 +79,7 @@ export function uniqueAdventurerName(index:number):string {
   const first = nameFirstPool[pair % nameFirstPool.length];
   const family = nameFamilyPool[Math.floor(pair / nameFirstPool.length)];
   const origin = tier > 0 ? " " + epithets[(tier - 1) % epithets.length] : "";
-  const cycle = Math.floor(tier / (epithets.length + 1));
+  const cycle = tier > 0 ? Math.floor((tier - 1) / epithets.length) : 0;
   return first + " " + family + origin + (cycle ? " " + (cycle + 1) : "");
 }
 

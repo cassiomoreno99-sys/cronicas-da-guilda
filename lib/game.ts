@@ -801,11 +801,20 @@ export function trainingPlan(s: Campaign, h: Hero) {
   const gap = Math.max(0, Math.max(...s.heroes.map(hero => hero.level)) - h.level);
   return { cost: 90, xp: 90 + Math.min(4, gap) * 35, energy: 15, catchup: Math.min(4, gap) * 35 };
 }
+// Reservas numéricas exclusivas: rivais ocupam os primeiros 6.400 índices,
+// e o mercado começa em 7.000. Cada índice gera nome diferente.
+const RIVAL_NAME_SLOTS = 64;
+const MARKET_NAME_OFFSET = 7000;
+function rivalNameIndex(guildIndex:number,sequence:number) {
+  return sequence < RIVAL_NAME_SLOTS
+    ? guildIndex * RIVAL_NAME_SLOTS + sequence
+    : 12000 + (sequence - RIVAL_NAME_SLOTS) * 100 + guildIndex;
+}
 export function market(s: Campaign): Hero[] {
   const week = Math.floor((s.day - 1) / 7), classes = [...CLASSIC_CLASSES];
   return [0, 1, 2, 3].map(i => {
     const c = classes[(week * 4 + i) % classes.length], id = "hire-" + week + "-" + i;
-    const hero = levelOneHero(id, uniqueAdventurerName(10000 + week * 4 + i), c, c === "bard" ? "Afortunado" : c === "healer" ? "Devoto" : c === "rogue" ? "Discreto" : "Aventureiro");
+    const hero = levelOneHero(id, uniqueAdventurerName(MARKET_NAME_OFFSET + week * 4 + i), c, c === "bard" ? "Afortunado" : c === "healer" ? "Devoto" : c === "rogue" ? "Discreto" : "Aventureiro");
     const targetLevel = Math.min(MAX_HERO_LEVEL, 1 + Math.floor((s.day - 1) / 14));
     while (hero.level < targetLevel) gainXp(hero, threshold(hero));
     hero.salary = 8 + Math.floor(hero.level * 2.5); hero.value = 120 + hero.level * 45 + i * 15;
@@ -826,7 +835,7 @@ function developRival(h: RivalHero, index: number) {
 }
 function rivalAdventurer(guild: Pick<RivalGuild, "id" | "strength">, sequence: number, season: number, rookie = false): RivalHero {
   const index = Number(guild.id.split("-")[1]) || 0, c = CLASSIC_CLASSES[(index * 3 + sequence) % CLASSIC_CLASSES.length];
-  const base = levelOneHero(guild.id + "-hero-" + sequence, uniqueAdventurerName(index * 32 + sequence + 200), c, c === "bard" ? "Sortudo" : "Rival");
+  const base = levelOneHero(guild.id + "-hero-" + sequence, uniqueAdventurerName(rivalNameIndex(index,sequence)), c, c === "bard" ? "Sortudo" : "Rival");
   const targetLevel = Math.min(MAX_HERO_LEVEL, rookie ? 1 : 1 + Math.floor((season - 1) / 2) + Math.floor(guild.strength / 2));
   while (base.level < targetLevel) gainXp(base, threshold(base));
   const h: RivalHero = { ...base, salary: 8 + targetLevel * 3, value: 120 + targetLevel * 55, loyalty: 35 + stableNumber(guild.id + ":" + sequence) % 56 };

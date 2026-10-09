@@ -279,13 +279,13 @@ img{display:block;max-width:100%}
   overflow:hidden;
   border:2px solid #936c31;
   border-radius:9px;
-  background-size:cover;
-  background-position:center 25%;
+  background-size:150% auto;
+  background-position:center 20%;
   background-repeat:no-repeat;
   background-color:#0d1b29;
   box-shadow:0 2px 5px #0008;
 }
-.hero-portrait-large{width:100%;height:100%;border:0;border-radius:0}
+.hero-portrait-large{width:100%;height:100%;border:0;border-radius:0;background-size:cover;background-position:center 22%}
 
 .item-art{
   position:relative;
@@ -610,7 +610,7 @@ img{display:block;max-width:100%}
   width:100%;
   min-height:78px;
   display:grid;
-  grid-template-columns:58px minmax(0,1fr) auto;
+  grid-template-columns:60px minmax(0,1fr) auto;
   align-items:center;
   gap:5px;
   margin-bottom:5px;
@@ -623,7 +623,7 @@ img{display:block;max-width:100%}
   box-shadow:inset 0 0 0 1px #f8e7b2;
 }
 .hero-list>button[data-active="true"]{border-color:#f0bd50;box-shadow:inset 0 0 0 2px #f4c55b,0 0 8px #f0aa37}
-.hero-list .hero-portrait{width:55px;height:55px}
+.hero-list .hero-portrait{width:57px;height:57px}
 .hero-list>button>span{min-width:0;display:grid;gap:1px}
 .hero-list strong{font-size:12px;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .hero-list small{font-size:9px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -634,7 +634,7 @@ img{display:block;max-width:100%}
 .hero-sheet{min-width:0;overflow:hidden}
 .hero-feature{
   position:relative;
-  height:250px;
+  height:285px;
   overflow:hidden;
   background:#101923;
 }
@@ -649,7 +649,7 @@ img{display:block;max-width:100%}
 .hero-feature::after{
   content:"";
   position:absolute;inset:0;
-  background:linear-gradient(180deg,transparent 42%,#1a0d07e3 83%,#1a0d07);
+  background:linear-gradient(180deg,transparent 60%,#1a0d0755 78%,#1a0d07db 100%);
 }
 .hero-feature>div:last-child{
   position:absolute;
@@ -1247,11 +1247,11 @@ img{display:block;max-width:100%}
   .difficulty,.specialist{font-size:9px}
   .mission-rewards{padding:7px 4px;font-size:9px}
   .heroes-layout{grid-template-columns:42% 58%}
-  .hero-list>button{grid-template-columns:49px minmax(0,1fr) auto;min-height:70px;padding:4px}
-  .hero-list .hero-portrait{width:47px;height:47px}
+  .hero-list>button{grid-template-columns:52px minmax(0,1fr) auto;min-height:73px;padding:4px}
+  .hero-list .hero-portrait{width:50px;height:50px}
   .hero-list strong{font-size:10px}
   .hero-list small,.hero-list em{font-size:7.5px}
-  .hero-feature{height:220px}
+  .hero-feature{height:265px}
   .hero-feature h2{font-size:21px}
   .selected-item-art{height:185px}
   .tavern-hero{height:265px}

@@ -731,6 +731,25 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   const ids = new Set(s.rivals.map(r => r.id));
   for (let i = 0; s.rivals.length < LEAGUE_SIZE - 1; i++) if (!ids.has("rival-" + i)) { const r = createRival(i, s); s.rivals.push(r); ids.add(r.id); }
   for (const rival of s.rivals) for (const h of rival.heroes) { h.race ??= heroRace(h); if (h.talent && h.talent.rank >= 2 && !h.talent.branch) h.talent.branch = (stableNumber(h.id + ":branch") % 2 ? "b" : "a"); }
+  if (s.balanceVersion < 5) {
+    // Rebatiza apenas personagens das guildas rivais que vieram de saves antigos.
+    // Nunca altera o nome de um herói que o jogador já contratou.
+    const occupied = new Set(s.heroes.map(h => h.name));
+    let fallback = 0;
+    for (let gi = 0; gi < s.rivals.length; gi++) {
+      const rival = s.rivals[gi];
+      const index = Number(rival.id.split("-")[1]) || gi;
+      for (let hi = 0; hi < rival.heroes.length; hi++) {
+        const hero = rival.heroes[hi];
+        const sequence = Number(hero.id.match(/-hero-(\\d+)$/)?.[1] ?? hi);
+        let name = uniqueAdventurerName(rivalNameIndex(index, sequence));
+        while (occupied.has(name)) name = uniqueAdventurerName(240000 + fallback++);
+        hero.name = name;
+        occupied.add(name);
+      }
+    }
+    s.balanceVersion = 5;
+  }
   s.nextEventDay ??= s.day + 4; s.eventSequence ??= 0;
   if (s.event === undefined) s.event = createEvent(s);
   // Saves de versões antigas podem conter eventos que prometiam mapas ou poções.

@@ -1547,14 +1547,14 @@ img{display:block;max-width:100%}
   .cinema-arena{padding:7px 5px 9px}
   .cinema-fronts{gap:7px}
   .cinema-lineup{gap:6px}
-  .cinema-fighter{height:147px}
+  .cinema-fighter{height:124px}
   .cinema-mission-head h2{font-size:19px}
   .cinema-fighter-info{padding:4px 5px}
 }
 @media(max-width:355px){
   .cinema-header-label{font-size:8px}
   .cinema-back{font-size:9px}
-  .cinema-fighter{height:136px}
+  .cinema-fighter{height:119px}
   .cinema-fighter-info strong{font-size:10px}
   .cinema-effects em{font-size:7px}
   .cinema-objective-line{grid-template-columns:15px minmax(0,1fr);font-size:9px}

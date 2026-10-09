@@ -244,7 +244,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
 {
   let s=prep(newCampaign(1016)); s.hq.forge=2; s.academy.trainees=[s.heroes[0].id]; s.region=4; s.activeRegion=3;
   const restored=normalizeCampaign(JSON.parse(JSON.stringify(s)));
-  ok(restored.hq.forge===2 && restored.activeRegion===3 && restored.balanceVersion===4, "Backup JSON perdeu dados v1.3.");
+  ok(restored.hq.forge===2 && restored.activeRegion===3 && restored.balanceVersion===5, "Backup JSON perdeu dados v1.3.");
 }
 
 // 16) Stress: várias campanhas, dezenas de dias, batalhas, descanso e mercado.

@@ -61,11 +61,26 @@ const epithets = [
   "de Valen","de Brumavale","de Ashen","do Norte","da Costa","do Deserto","dos Picos","do Bosque","da Fronteira","do Ocaso","da Aurora","das Ruínas",
   "do Abismo","da Torre","do Vale","das Marés","da Lua","do Sol","das Cinzas","do Horizonte","da Coroa","da Estrada","do Pântano","do Império"
 ];
-export function uniqueAdventurerName(index: number) {
-  const a = Math.abs(index) % firstNames.length;
-  const b = Math.floor(Math.abs(index) / firstNames.length) % familyNames.length;
-  const c = Math.floor(Math.abs(index) / (firstNames.length * familyNames.length)) % epithets.length;
-  return firstNames[a] + " " + familyNames[b] + " " + epithets[c];
+// 100 prenomes e 100 sobrenomes: 10.000 combinações curtas sem repetição.
+// Outras 240.000 combinações com origem permitem progressão de longas campanhas.
+const extraFirstNames = ["Aelric","Veylin","Ormira","Kaelen","Thalira","Brynden","Zephira","Nivara","Odran","Sylwen","Caldor","Belmira","Teryn","Ivaran","Elowen","Vorian","Myrith","Daelin","Arvessa","Sarn","Keldric","Mavira","Zevran","Ferys","Lorwyn","Braska","Avelis","Theron","Ylvara","Galren","Isolde","Roneth","Vaelor","Druska","Mireth","Zalric"];
+const extraFamilyNames = ["Alvorduna","Brasalume","Corvoprata","Pedrassol","Ventobravo","Cinzardente","Sombravéu","Auroraforte","Runaespinho","Luaferro","Geloespora","Brumaclara","Estelarubro","Falcãoalto","Lobodourado","Tempestanoite","Ferromaré","Soldebruma","Chamaeterna","Raizdeouro","Valeespinho","Vidrorruna","Pedraestrela","Espadacinza","Trovejanoite","Florabismo","Véunegro","Corvossol","Ecoferro","Noitelume","Riosombrio","Arcovento","Brasalva","Serraflor","Falcatrua","Coraçãoferro","Sangueprata","Nevoeiroalto","Coroaquebrada","Pódeestrela","Trilhassol","Montebruma","Ruinalva","Alvorpedra","Marluar","Soldeferro","Ventoaurora","Fogoazul","Espinhofrio","Luarverde","Almaferro","Brumaviva"];
+const nameFirstPool = [...firstNames,...extraFirstNames];
+const nameFamilyPool = [...familyNames,...extraFamilyNames];
+export const ADVENTURER_SHORT_NAME_COUNT = nameFirstPool.length * nameFamilyPool.length;
+export const ADVENTURER_NAME_CAPACITY = ADVENTURER_SHORT_NAME_COUNT * (epithets.length + 1);
+
+export function uniqueAdventurerName(index:number):string {
+  if (!Number.isSafeInteger(index) || index < 0) throw new RangeError("Índice de aventureiro inválido.");
+  const tier = Math.floor(index / ADVENTURER_SHORT_NAME_COUNT);
+  // Permutação bijetiva: índices diferentes produzem pares diferentes.
+  // O primo 65537 é coprimo com 10.000, evitando famílias consecutivas iguais.
+  const pair = ((index % ADVENTURER_SHORT_NAME_COUNT) * 65537 + 7919) % ADVENTURER_SHORT_NAME_COUNT;
+  const first = nameFirstPool[pair % nameFirstPool.length];
+  const family = nameFamilyPool[Math.floor(pair / nameFirstPool.length)];
+  const origin = tier > 0 ? " " + epithets[(tier - 1) % epithets.length] : "";
+  const cycle = tier > 0 ? Math.floor((tier - 1) / epithets.length) : 0;
+  return first + " " + family + origin + (cycle ? " " + (cycle + 1) : "");
 }
 
 export const LEVEL_ABILITIES: Record<string, Array<{ level: number; id: string; name: string; description: string; target: string; cooldown: number; effect: string }>> = {

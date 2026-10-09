@@ -23,6 +23,7 @@ import {
   type LocalSave
 } from "@/lib/local-save";
 import { portraitSource } from "@/lib/portraits";
+import merchantPortrait from "@/lib/portrait-art/merchant";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 
 type Save = Pick<LocalSave, "state" | "revision">;
@@ -651,7 +652,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
       <section className="rumors parchment"><ParchmentTitle icon={<ScrollText />} title="Rumores da Taverna" />{rumors.map(m => <button key={m.id} onClick={() => openMission(m.id)}><span><strong>{m.title}</strong><small>{m.description}</small></span><em><Coins /> {m.reward}</em></button>)}</section>
       <aside className="tavern-side">
         <section className="parchment drinks"><div className="mug">🍺</div><h3>Bebidas da Casa</h3><p>Brinde com a guilda para recuperar o moral e a energia.</p><button className="action-button green" disabled={busy || state.gold < 8} onClick={() => act({type:"rest"})}>Descansar</button></section>
-        <section className="parchment shop"><div className="merchant-head"><div className="merchant-portrait" role="img" aria-label="Mercador da taverna" /><span><h3>Mercador</h3><small>Suprimentos e achados da estrada</small></span></div><small>Sem itens disponíveis.</small></section>
+        <section className="parchment shop"><div className="merchant-head"><img className="merchant-portrait" src={merchantPortrait} alt="Mercador da taverna medieval" /><span><h3>Mercador</h3><small>Suprimentos e achados da estrada</small></span></div><small>Sem itens disponíveis.</small></section>
       </aside>
     </div>
   </section>;

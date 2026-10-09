@@ -67,6 +67,11 @@ await sanity("05b-herois-volta-equipamentos");
 
 await bottom("Baú","06-bau");
 await bottom("Taverna","07-taverna");
+const merchantImage = page.locator(".merchant-head img.merchant-portrait");
+if (await merchantImage.count() !== 1) throw new Error("Retrato novo do mercador não aparece na Taverna.");
+await merchantImage.evaluate(async el => { if (!el.complete) await new Promise((resolve,reject) => { el.addEventListener("load",resolve,{once:true}); el.addEventListener("error",reject,{once:true}); }); });
+const merchantInfo = await merchantImage.evaluate(el => ({ width:el.naturalWidth, height:el.naturalHeight, rendered:el.getBoundingClientRect().width }));
+if (merchantInfo.width < 600 || merchantInfo.height < 600 || merchantInfo.rendered < 90) throw new Error("Retrato do mercador pequeno ou sem imagem: "+JSON.stringify(merchantInfo));
 await bottom("Guilda","08-guilda");
 const councilChoice = page.locator(".council-actions button:not([disabled])").first();
 if (await councilChoice.count()) {

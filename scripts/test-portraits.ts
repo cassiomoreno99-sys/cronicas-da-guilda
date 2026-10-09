@@ -29,7 +29,7 @@ assert.ok(!styles.includes("hero-portraits-v6.webp"));
 assert.ok(!fs.existsSync("public/hero-portraits-v6.webp"));
 assert.ok(!fs.existsSync("public/hero-portraits-v121.webp"));
 const merchant = fs.readFileSync("lib/portrait-art/merchant.ts", "utf8");
-const merchantMatch = merchant.match(/data:image\\/avif;base64,([A-Za-z0-9+/=]+)/);
+const merchantMatch = merchant.match(/base64,([A-Za-z0-9+/=]+)/);
 assert.ok(merchantMatch,"Retrato do mercador ausente");
 const merchantBytes = Buffer.from(merchantMatch[1],"base64");
 assert.ok(merchantBytes.length > 50000,"Retrato do mercador perdeu nitidez");

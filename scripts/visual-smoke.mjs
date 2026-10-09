@@ -67,6 +67,18 @@ await sanity("05b-herois-volta-equipamentos");
 
 await bottom("Baú","06-bau");
 await bottom("Taverna","07-taverna");
+const tavernImage = page.locator(".tavern-hero img");
+if (await tavernImage.count() !== 1) throw new Error("Nova arte da Taverna não foi renderizada.");
+const banner = await tavernImage.evaluate(async el => {
+  if (!el.complete) await new Promise((resolve,reject) => { el.addEventListener("load",resolve,{once:true});el.addEventListener("error",reject,{once:true}); });
+  const wrapper = el.parentElement.getBoundingClientRect();
+  const img = el.getBoundingClientRect();
+  return {src:el.getAttribute("src")?.slice(0,30),naturalWidth:el.naturalWidth,naturalHeight:el.naturalHeight, width:img.width,height:img.height,containerWidth:wrapper.width,containerHeight:wrapper.height};
+});
+if(!banner.src?.startsWith("data:image/avif;base64,") || banner.naturalWidth !== 1024 || banner.naturalHeight !== 576)
+  throw new Error("Banner da Taverna não carregou a nova imagem inteira: "+JSON.stringify(banner));
+if(Math.abs(banner.containerWidth / banner.containerHeight - 16/9) > 0.025)
+  throw new Error("Imagem da Taverna está sendo cortada na tela: "+JSON.stringify(banner));
 const merchantImage = page.locator(".merchant-head img.merchant-portrait");
 if (await merchantImage.count() !== 1) throw new Error("Retrato novo do mercador não aparece na Taverna.");
 await merchantImage.evaluate(async el => { if (!el.complete) await new Promise((resolve,reject) => { el.addEventListener("load",resolve,{once:true}); el.addEventListener("error",reject,{once:true}); }); });

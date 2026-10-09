@@ -1119,6 +1119,9 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   } else { s.losses++; s.fame = Math.max(0, s.fame - (status === "retreated" ? 2 + m.rank : 4 + m.rank * 2)); }
   b.fameChange = s.fame - before;
   note(s, (won ? "Vitória" : status === "retreated" ? "Retirada ordenada" : "Missão fracassou") + " em " + m.title + ". " + (won ? "+" + m.reward + " ouro e +" + b.fameChange + " renome. A equipe ganhou experiência." : b.fameChange + " renome. A equipe ganhou experiência."));
+  // Preserva somente o estado visual final antes de descartar o motor ativo.
+  // Não altera resultados, cálculos ou regras do combate.
+  b.fighters = c.fighters.map(f => ({ id:f.id, name:f.name, side:f.side, ...(f.class ? {class:f.class} : {}), hp:f.hp, maxHp:f.maxHp, ...(f.position ? {position:f.position} : {}), statuses:f.statuses.map(status=>({...status})) }));
   delete b.combat;
   s.lastBattle = b;
   if (!activeExpeditions(s).length) {

@@ -716,14 +716,108 @@ function GuildPage({
   </section>;
 }
 
-function BattleOverlay({ state, expedition, act, close, busy }: {
-  state: Campaign; expedition: Expedition; act: (a: Action) => void; close: () => void; busy: boolean;
+
+const CINEMA_STATUS_LABELS: Record<string,string> = {
+  bleed:"Sangramento",poison:"Envenenado",stun:"Atordoado",shield:"Escudo",
+  regen:"Regeneração",taunt:"Provocação",inspired:"Inspirado",vulnerable:"Vulnerável"
+};
+function CinematicBattlePage({ expedition, act, close, back, busy }: {
+  expedition: Expedition; act:(a:Action)=>void; close:()=>void; back:()=>void; busy:boolean;
 }) {
   const battle = expedition.battle;
   const fighters = battle.combat?.fighters || battle.fighters || [];
   const heroes = fighters.filter(f => f.side === "hero");
   const enemies = fighters.filter(f => f.side === "enemy");
   const active = battle.status === "active" && !!battle.combat;
+  const recent = battle.log.slice(-4).reverse();
+  const latest = recent[0];
+  const mission = battle.combat?.mission;
+  const maxRounds = battle.objective?.targetRounds || battle.combat?.targetRounds;
+  const round = battle.rounds;
+  const health = (hp:number, max:number) => Math.max(0,Math.min(100,max ? hp/max*100 : 0));
+  const status = active ? "Combate automático" : battle.won ? "Vitória da guilda" : battle.status === "retreated" ? "Equipe retirada" : "Combate encerrado";
+  const event = latest?.kind === "critical" ? "critical" : latest?.kind === "heal" ? "heal" : latest?.kind === "ability" ? "magic" : "attack";
+  return <section className="battle-sheet cinema-screen" aria-label="Arena Cinematográfica" data-combat-state={active ? "active" : "finished"}>
+    <header className="cinema-header">
+      <button type="button" className="cinema-back" onClick={back}><ChevronLeft aria-hidden="true"/> Tela clássica</button>
+      <span className="cinema-header-label"><Swords aria-hidden="true"/> ARENA CINEMATOGRÁFICA</span>
+      <button type="button" className="cinema-close" onClick={close} aria-label="Fechar batalha"><X aria-hidden="true"/></button>
+    </header>
+    <div className="cinema-mission-head">
+      <div><span className="cinema-eyebrow">MISSÃO EM ANDAMENTO</span><h2>{battle.title}</h2><p>{mission?.location || battle.objective?.name || "Terras da Guilda"}</p></div>
+      <div className="cinema-round"><span>RODADA</span><strong>{round}{maxRounds ? " / "+maxRounds : ""}</strong></div>
+    </div>
+    <div className="cinema-objective-line"><Shield aria-hidden="true"/><span>{battle.objective?.name || mission?.description || "Derrote os inimigos"}</span><b>{status}</b></div>
+    <div className="cinema-arena" role="region" aria-label="Campo de batalha com personagens e inimigos">
+      <div className="cinema-atmosphere" aria-hidden="true"/>
+      <div className="cinema-lightning" key={"beam-"+round+"-"+battle.log.length} aria-hidden="true"/>
+      <div className="cinema-fronts">
+        <div className="cinema-lineup cinema-heroes">
+          <div className="cinema-lineup-title"><Shield aria-hidden="true"/> SUA EQUIPE</div>
+          {heroes.map((f,i) => <article className="cinema-fighter cinema-ally" key={f.id} data-defeated={f.hp <= 0}>
+            <div className="cinema-fighter-art">
+              <img src={portraitSource(f.name,f.id,f.class || "warrior")} alt="" />
+              <span className="cinema-art-index">{i+1}</span>
+            </div>
+            <div className="cinema-fighter-info">
+              <strong>{f.name}</strong>
+              <small>{f.class ? CLASSES[f.class].name : "Herói"}</small>
+              <div className="cinema-health" role="progressbar" aria-label={"Vida de "+f.name} aria-valuenow={Math.max(0,f.hp)} aria-valuemin={0} aria-valuemax={f.maxHp}><i style={{width:health(f.hp,f.maxHp)+"%"}}/></div>
+              <span className="cinema-hp">{fmt(Math.max(0,f.hp))} / {fmt(f.maxHp)} PV</span>
+              {f.statuses && f.statuses.length > 0 && <span className="cinema-effects">{f.statuses.slice(0,2).map((s,j)=><em key={j} data-status={s.kind}>{CINEMA_STATUS_LABELS[s.kind] || s.kind}</em>)}</span>}
+            </div>
+          </article>)}
+        </div>
+        <div className="cinema-lineup cinema-enemies">
+          <div className="cinema-lineup-title"><Swords aria-hidden="true"/> INIMIGOS</div>
+          {enemies.map((f,i)=><article className="cinema-fighter cinema-foe" key={f.id} data-defeated={f.hp <= 0}>
+            <div className="cinema-fighter-art">
+              <img src={"/enemies/"+enemyArtKey(f.name)+".webp"} alt="" />
+              <span className="cinema-art-index">{i+1}</span>
+            </div>
+            <div className="cinema-fighter-info">
+              <strong>{f.name}</strong>
+              <small>{f.hp <= 0 ? "Derrotado" : "Hostil"}</small>
+              <div className="cinema-health" role="progressbar" aria-label={"Vida de "+f.name} aria-valuenow={Math.max(0,f.hp)} aria-valuemin={0} aria-valuemax={f.maxHp}><i style={{width:health(f.hp,f.maxHp)+"%"}}/></div>
+              <span className="cinema-hp">{fmt(Math.max(0,f.hp))} / {fmt(f.maxHp)} PV</span>
+              {f.statuses && f.statuses.length > 0 && <span className="cinema-effects">{f.statuses.slice(0,2).map((s,j)=><em key={j} data-status={s.kind}>{CINEMA_STATUS_LABELS[s.kind] || s.kind}</em>)}</span>}
+            </div>
+          </article>)}
+        </div>
+      </div>
+      <div className="cinema-clash" aria-hidden="true"><Swords /></div>
+      {latest && <div key={"event-"+round+"-"+battle.log.length} className={"cinema-hit cinema-hit-"+event} aria-hidden="true">{latest.amount ? <><b>{event==="heal"?"+":"−"}{Math.abs(latest.amount)}</b><small>{event==="critical"?"CRÍTICO!":event==="heal"?"CURA":event==="magic"?"MAGIA":"DANO"}</small></> : <Sparkles/>}</div>}
+    </div>
+    <div className="cinema-turn-bar">
+      <div className="cinema-turn-title"><Sparkles aria-hidden="true"/><span>{active ? "Confronto em andamento" : status}</span></div>
+      <span>{TACTICS[expedition.tactic].name} · {heroes.length} heróis × {enemies.length} inimigos</span>
+    </div>
+    <section className="cinema-chronicle parchment" aria-label="Registro real da batalha">
+      <header><ScrollText aria-hidden="true"/><h3>Crônica do combate</h3><small>Atualização automática</small></header>
+      <div className="cinema-chronicle-entries" aria-live="polite" aria-relevant="additions text">
+        {recent.length ? recent.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}><span className="cinema-log-icon">{l.kind==="heal"?"✚":l.kind==="critical"?"✦":l.kind==="ability"?"✧":"⚔"}</span><span>{l.text}</span></p>) : <p><span className="cinema-log-icon">⚔</span><span>Os combatentes tomam posição para a batalha.</span></p>}
+      </div>
+    </section>
+    <div className="cinema-actions">
+      {active ? <>
+        <button type="button" className="action-button blue" disabled={busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><Swords aria-hidden="true"/> Concluir combate</button>
+        <button type="button" className="action-button red" disabled={busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button>
+      </> : <button type="button" className="action-button green huge" onClick={close}>Voltar à guilda</button>}
+    </div>
+    <p className="cinema-no-items">Combate automático original preservado. Equipamentos e consumíveis serão liberados com o futuro catálogo.</p>
+  </section>;
+}
+
+function BattleOverlay({ state, expedition, act, close, busy }: {
+  state: Campaign; expedition: Expedition; act: (a: Action) => void; close: () => void; busy: boolean;
+}) {
+  const [cinematic,setCinematic] = useState(false);
+  const battle = expedition.battle;
+  const fighters = battle.combat?.fighters || battle.fighters || [];
+  const heroes = fighters.filter(f => f.side === "hero");
+  const enemies = fighters.filter(f => f.side === "enemy");
+  const active = battle.status === "active" && !!battle.combat;
+  if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} busy={busy}/></div>;
   return <div className="battle-overlay">
     <section className="battle-sheet">
       <div className="battle-top"><div><strong>{battle.title}</strong><span>Rodada {battle.rounds}{battle.objective?.targetRounds ? "/" + battle.objective.targetRounds : ""}</span></div><button onClick={close}><X /></button></div>
@@ -735,6 +829,7 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
       </div>
       <div className="battle-log parchment">{battle.log.slice(-5).map((l,i) => <p key={i} data-kind={l.kind}>{l.text}</p>)}{!battle.log.length && <p>Os combatentes tomam posição.</p>}</div>
       <div className="battle-actions">
+        <button type="button" className="cinema-open-button" onClick={() => setCinematic(true)}><Sparkles aria-hidden="true"/> Abrir Arena Cinematográfica <ChevronRight aria-hidden="true"/></button>
         {active ? <><button className="action-button blue" disabled={busy} onClick={() => act({type:"battle-auto",expeditionId:expedition.id})}>Concluir combate</button><button className="action-button red" disabled={busy} onClick={() => act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button></> : <button className="action-button green huge" onClick={close}>Voltar à guilda</button>}
       </div>
     </section>

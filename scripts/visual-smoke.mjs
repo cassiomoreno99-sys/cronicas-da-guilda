@@ -109,6 +109,33 @@ if (await missionAction.count()) {
     await send.click();
     await page.locator(".battle-overlay").waitFor({state:"visible",timeout:5000});
     await sanity("10-batalha");
+    const originalTitle = await page.locator(".battle-top strong").innerText();
+    const enterCinema = page.getByRole("button",{name:/Abrir Arena Cinematográfica/});
+    if(await enterCinema.count() !== 1) throw new Error("Botão para a página cinematográfica ausente.");
+    await enterCinema.click();
+    await page.locator(".cinema-screen").waitFor({state:"visible"});
+    if(await page.locator(".battle-stage").count() !== 0) throw new Error("A arena não é uma página independente.");
+    if(await page.locator(".cinema-ally").count() !== 4) throw new Error("A arena não mostrou os 4 heróis da batalha real.");
+    if(await page.locator(".cinema-foe").count() < 1) throw new Error("Inimigos reais não carregaram na arena.");
+    if((await page.locator(".cinema-mission-head h2").innerText()) !== originalTitle) throw new Error("Arena perdeu o título real da missão.");
+    const cinemaPortraits = page.locator(".cinema-fighter-art img");
+    if(await cinemaPortraits.count() < 5) throw new Error("Faltam imagens dos combatentes na Arena.");
+    for(const img of await cinemaPortraits.all()){
+      const ok = await img.evaluate(el => el.complete && el.naturalWidth > 100 && el.naturalHeight > 100);
+      if(!ok) throw new Error("Retrato cinematográfico não carregou.");
+    }
+    await sanity("10a-arena-cinematografica");
+    await page.getByRole("button",{name:/Tela clássica/}).click();
+    if(await page.locator(".battle-stage").count() !== 1) throw new Error("Voltar para o combate clássico falhou.");
+    if((await page.locator(".battle-top strong").innerText()) !== originalTitle) throw new Error("Batalha mudou ao trocar de tela.");
+    await page.getByRole("button",{name:/Abrir Arena Cinematográfica/}).click();
+    if(await page.getByRole("button",{name:"Concluir combate"}).count() !== 1) throw new Error("Ação automática não foi preservada.");
+    await page.getByRole("button",{name:"Concluir combate"}).click();
+    await page.waitForTimeout(400);
+    if(await page.getByRole("button",{name:"Voltar à guilda"}).count() !== 1) throw new Error("Resultado do combate automático não apareceu na Arena.");
+    await sanity("10b-arena-resultado");
+    await page.getByRole("button",{name:"Voltar à guilda"}).click();
+    if(await page.locator(".battle-overlay").count() !== 0) throw new Error("A página Arena não fechou após o combate.");
   } else {
     throw new Error("Não foi possível habilitar Enviar para validar a batalha.");
   }

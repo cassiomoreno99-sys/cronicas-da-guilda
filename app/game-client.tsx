@@ -23,6 +23,7 @@ import {
   type LocalSave
 } from "@/lib/local-save";
 import { portraitSource } from "@/lib/portraits";
+import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 
@@ -645,7 +646,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
   const recruits = market(state).slice(0,4);
   const rumors = missions(state).slice(0,3);
   return <section className="screen tavern-screen">
-    <div className="tavern-hero"><img src="/reference/tavern-hero.webp" alt="" /><div>Boas histórias<br/>sempre encontram<br/>um lugar aqui.</div></div>
+    <div className="tavern-hero"><img src={tavernArtwork} alt="Taverneira sorrindo e erguendo um caneco em brinde na Taverna da Guilda" /></div>
     <ParchmentTitle icon={<Users />} title="Heróis para Recrutar" side={<span>Renova semanalmente</span>} />
     <div className="recruit-grid parchment">{recruits.map(h => <article key={h.id}><HeroPortrait hero={h} large /><h3>{h.name}</h3><span>{CLASSES[h.class].name}</span><small><Coins /> {h.value} Ouro</small><button className="action-button red" disabled={busy || state.gold < h.value} onClick={() => act({type:"hire",heroId:h.id})}>Recrutar</button></article>)}</div>
     <div className="tavern-lower">

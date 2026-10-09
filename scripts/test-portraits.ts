@@ -7,8 +7,12 @@ for(const name of names){
   const found = module.match(/data:image\/avif;base64,([A-Za-z0-9+/=]+)/);
   assert.ok(found, "Imagem não encontrada para " + name);
   const bytes = Buffer.from(found[1], "base64");
-  assert.ok(bytes.length > 3000, "Imagem incompleta: " + name);
+  assert.ok(bytes.length > 25000, "Imagem perdeu qualidade: " + name);
   assert.equal(bytes.subarray(4,12).toString("ascii"), "ftypavif", "AVIF inválido: " + name);
+  const ispe = bytes.indexOf(Buffer.from("ispe"));
+  assert.ok(ispe >= 0, "Dimensões AVIF ausentes: "+name);
+  assert.equal(bytes.readUInt32BE(ispe + 8), 640, "Largura incorreta: "+name);
+  assert.equal(bytes.readUInt32BE(ispe + 12), 800, "Altura incorreta: "+name);
 }
 const portraits = fs.readFileSync("lib/portraits.ts", "utf8");
 for(const name of names)assert.ok(portraits.includes("portrait-art/"+name), "Retrato ausente: "+name);
@@ -19,6 +23,8 @@ assert.ok(heroPage.includes("portraitSource(hero.name"));
 assert.ok(!heroPage.includes("portraitPosition("));
 const styles = fs.readFileSync("app/ui.css", "utf8");
 assert.ok(styles.includes("background-size:cover"));
+assert.ok(styles.includes("background-size:150% auto"), "Miniaturas sem novo enquadramento");
+assert.ok(styles.includes("height:265px"), "Retrato principal mobile não foi ampliado");
 assert.ok(!styles.includes("hero-portraits-v6.webp"));
 assert.ok(!fs.existsSync("public/hero-portraits-v6.webp"));
 assert.ok(!fs.existsSync("public/hero-portraits-v121.webp"));

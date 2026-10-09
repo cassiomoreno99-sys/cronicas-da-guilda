@@ -812,9 +812,14 @@ function rivalNameIndex(guildIndex:number,sequence:number) {
 }
 export function market(s: Campaign): Hero[] {
   const week = Math.floor((s.day - 1) / 7), classes = [...CLASSIC_CLASSES];
+  // Evita conflito inclusive com heróis já contratados em salvamentos antigos.
+  const occupied = new Set([...s.heroes.map(h => h.name), ...s.rivals.flatMap(r => r.heroes.map(h => h.name))]);
   return [0, 1, 2, 3].map(i => {
     const c = classes[(week * 4 + i) % classes.length], id = "hire-" + week + "-" + i;
     const hero = levelOneHero(id, uniqueAdventurerName(MARKET_NAME_OFFSET + week * 4 + i), c, c === "bard" ? "Afortunado" : c === "healer" ? "Devoto" : c === "rogue" ? "Discreto" : "Aventureiro");
+    let fallback = 0;
+    while (occupied.has(hero.name)) hero.name = uniqueAdventurerName(250000 + (week * 4 + i) * 16 + fallback++);
+    occupied.add(hero.name);
     const targetLevel = Math.min(MAX_HERO_LEVEL, 1 + Math.floor((s.day - 1) / 14));
     while (hero.level < targetLevel) gainXp(hero, threshold(hero));
     hero.salary = 8 + Math.floor(hero.level * 2.5); hero.value = 120 + hero.level * 45 + i * 15;

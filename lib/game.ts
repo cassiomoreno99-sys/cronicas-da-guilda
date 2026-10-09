@@ -741,7 +741,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
       const index = Number(rival.id.split("-")[1]) || gi;
       for (let hi = 0; hi < rival.heroes.length; hi++) {
         const hero = rival.heroes[hi];
-        const sequence = Number(hero.id.match(/-hero-(\\d+)$/)?.[1] ?? hi);
+        const sequence = Number(hero.id.split("-hero-")[1] ?? hi);
         let name = uniqueAdventurerName(rivalNameIndex(index, sequence));
         while (occupied.has(name)) name = uniqueAdventurerName(240000 + fallback++);
         hero.name = name;

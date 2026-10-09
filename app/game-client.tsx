@@ -789,7 +789,7 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
       {latest && <div key={"event-"+round+"-"+battle.log.length} className={"cinema-hit cinema-hit-"+event} aria-hidden="true">{latest.amount ? <><b>{event==="heal"?"+":"−"}{Math.abs(latest.amount)}</b><small>{event==="critical"?"CRÍTICO!":event==="heal"?"CURA":event==="magic"?"MAGIA":"DANO"}</small></> : <Sparkles/>}</div>}
     </div>
     <div className="cinema-turn-bar">
-      <div className="cinema-turn-title"><Sparkles aria-hidden="true"/><span>Confronto em andamento</span></div>
+      <div className="cinema-turn-title"><Sparkles aria-hidden="true"/><span>{active ? "Confronto em andamento" : status}</span></div>
       <span>{TACTICS[expedition.tactic].name} · {heroes.length} heróis × {enemies.length} inimigos</span>
     </div>
     <section className="cinema-chronicle parchment" aria-label="Registro real da batalha">

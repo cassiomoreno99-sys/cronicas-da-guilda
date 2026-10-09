@@ -8,7 +8,7 @@
     "build": "npm run smoke && npm run typecheck && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc --noEmit",
-    "smoke": "node --experimental-strip-types scripts/test-multi-expeditions.ts && node --experimental-strip-types scripts/test-v130-world.ts && node --experimental-strip-types scripts/test-battle-consumables.ts && node --experimental-strip-types scripts/test-equipment-layout.ts && node --experimental-strip-types scripts/test-portraits.ts && node --experimental-strip-types scripts/test-tavern-art.ts"
+    "smoke": "node --experimental-strip-types scripts/test-multi-expeditions.ts && node --experimental-strip-types scripts/test-v130-world.ts && node --experimental-strip-types scripts/test-battle-consumables.ts && node --experimental-strip-types scripts/test-equipment-layout.ts && node --experimental-strip-types scripts/test-portraits.ts && node --experimental-strip-types scripts/test-tavern-art.ts && node --experimental-strip-types scripts/test-unique-names.ts"
   },
   "dependencies": {
     "lucide-react": "^1.31.0",

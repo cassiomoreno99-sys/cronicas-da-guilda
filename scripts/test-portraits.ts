@@ -28,4 +28,17 @@ assert.ok(styles.includes("height:265px"), "Retrato principal mobile não foi am
 assert.ok(!styles.includes("hero-portraits-v6.webp"));
 assert.ok(!fs.existsSync("public/hero-portraits-v6.webp"));
 assert.ok(!fs.existsSync("public/hero-portraits-v121.webp"));
+const merchant = fs.readFileSync("lib/portrait-art/merchant.ts", "utf8");
+const merchantMatch = merchant.match(/data:image\\/avif;base64,([A-Za-z0-9+/=]+)/);
+assert.ok(merchantMatch,"Retrato do mercador ausente");
+const merchantBytes = Buffer.from(merchantMatch[1],"base64");
+assert.ok(merchantBytes.length > 50000,"Retrato do mercador perdeu nitidez");
+assert.equal(merchantBytes.subarray(4,12).toString("ascii"),"ftypavif");
+const merchantIspe = merchantBytes.indexOf(Buffer.from("ispe"));
+assert.ok(merchantIspe >= 0,"Dimensões do mercador ausentes");
+assert.equal(merchantBytes.readUInt32BE(merchantIspe + 8),640);
+assert.equal(merchantBytes.readUInt32BE(merchantIspe + 12),640);
+assert.ok(heroPage.includes('src={merchantPortrait}'),"A taverna não usa a arte nova");
+assert.ok(!styles.includes('background:url("/reference/tavern-hero.webp") 94% 53%'),"O retrato improvisado antigo continua ativo");
+console.log("Mercador: imagem HD 640x640 integrada e referência antiga removida.");
 console.log("7 retratos novos presentes, íntegros e conectados. Imagens antigas removidas.");

@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { applyAction, missions, newCampaign } from "../lib/game.ts";
 
 const initial = newCampaign(20161009);
+initial.event = null;
 const mission = missions(initial)[0];
 const started = applyAction(initial, {type:"mission",missionId:mission.id,team:initial.team,tactic:"balanced",expeditionSlot:1,startedAt:1_700_000_000_000});
 const expedition = started.expeditions.find(e=>e.slot===1);

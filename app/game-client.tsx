@@ -31,7 +31,7 @@ type Save = Pick<LocalSave, "state" | "revision">;
 type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
-const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp"];
+const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp", "/reference/mission-2.webp", "/reference/mission-3.webp"];
 const itemSlots = new Set(["weapon","offhand","helmet","armor","gloves","boots","accessory"]);
 const specialtyNames: Record<string,string> = {
   warrior:"Guerreiro", paladin:"Paladino", rogue:"Ladino", ranger:"Arqueiro",
@@ -306,7 +306,7 @@ function MissionPage({
 }) {
   const board = missions(state);
   const boss = seasonBoss(state);
-  const cards = [...board, ...(boss ? [boss] : [])].slice(0,5);
+  const cards = [...board, ...(boss ? [boss] : [])];
   return <section className="screen mission-screen">
     <div className="mission-list">
       {cards.map((m, index) => {

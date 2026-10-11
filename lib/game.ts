@@ -770,32 +770,40 @@ export function missions(s: Campaign): Mission[] {
   const regionIndex = Math.max(0, Math.min(WORLD_REGIONS.length - 1, (s.activeRegion || 1) - 1));
   const region = WORLD_REGIONS[regionIndex], progression = Math.max(0, region.minLevel - 1);
   const scaling = 1 + progression * .045 + (s.season - 1) * .055 + Math.floor((seasonDay(s) - 1) / 7) * .025;
-  const kinds: MissionKind[] = ["escort", "defense", "dungeon", "hunt", "dungeon"];
-  const descriptors = ["Rota de", "Defesa de", "Ruínas de", "Caçada em", "Tesouro perdido de"];
-  return [1, 2, 3, 4, 5].map((difficulty, i) => {
+  // Cada região possui seis missões próprias; o guardião regional é a sétima.
+  // A sexta entra no quadro no dia 14; o guardião surge no dia 21.
+  const kinds: MissionKind[] = ["dungeon", "hunt", "escort", "dungeon", "dungeon", "hunt"];
+  const descriptors = ["Ritual oculto nas ruínas de", "Infestação nas ruínas de", "Escolta pelas estradas de", "Exploração das profundezas de", "O tesouro perdido de", "Caçada nos arredores de"];
+  const regionOneTitles = ["Ritual sombrio na cripta", "Aranhas nas ruínas", "Escolta da caravana", "Exploração de masmorra", "O cofre do tesouro perdido", "Caçada no vale nebuloso"];
+  const availableCount = seasonDay(s) >= 14 ? 6 : 5;
+  return Array.from({ length: availableCount }, (_, i) => {
     const enemy = region.enemies[(s.day + i) % region.enemies.length];
     const kind = kinds[i];
-    const title = i === 3 ? "Passagem secreta · " + region.name : i === 4 ? "O cofre de " + region.name : descriptors[i] + " " + region.name;
-    const forceBase = [30, 48, 68, 92, 125][i];
-    const rewardBase = [35, 58, 90, 135, 205][i];
+    const difficulty = Math.min(5, i + 1);
+    const forceBase = [30, 48, 68, 92, 125, 145][i];
+    const rewardBase = [35, 58, 90, 135, 205, 245][i];
     return {
       id: "mission-" + s.day + "-" + regionIndex + "-" + i,
-      title, location: region.name,
-      description: kind === "escort" ? "Escolte uma caravana pelas rotas de " + region.name + "."
-        : kind === "defense" ? "Segure a posição contra " + enemy + " e seus aliados."
-        : kind === "hunt" ? "Rastreie e elimine " + enemy + " antes que escape."
-        : "Explore uma área perigosa dominada por " + enemy + " e enfrente seus guardiões.",
+      title: regionIndex === 0 ? regionOneTitles[i] : descriptors[i] + " " + region.name,
+      location: region.name,
+      description: [
+        "Interrompa um ritual hostil nos territórios de " + region.name + ".",
+        "Elimine as criaturas que ocupam as ruínas de " + region.name + ".",
+        "Proteja a caravana que atravessa " + region.name + ".",
+        "Explore as masmorras de " + region.name + " e enfrente seus guardiões.",
+        "Recupere um cofre antigo escondido em " + region.name + ".",
+        "Rastreie e vença " + enemy + " nas terras de " + region.name + "."
+      ][i],
       rank: difficulty,
       force: Math.round(forceBase * scaling),
       reward: Math.round(rewardBase * (1 + regionIndex * .10 + (s.season - 1) * .04)),
       enemy, count: i === 0 ? 3 : i >= 3 ? 4 : 3,
-      specialty: kind === "hunt" ? "ranger" : kind === "defense" ? "paladin" : kind === "dungeon" ? "rogue" : "warrior",
+      specialty: kind === "hunt" ? "ranger" : kind === "dungeon" ? "rogue" : "warrior",
       flavor: kind === "hunt" ? "Arqueiros e Assassinos se destacam na perseguição."
-        : kind === "defense" ? "Cavaleiros e Guerreiros seguram melhor a linha."
         : kind === "dungeon" ? "Assassinos ajudam contra armadilhas; Magos lidam bem com ameaças arcanas."
         : "Mobilidade e uma linha de frente estável reduzem os riscos.",
       kind,
-      requiredFame: i === 3 ? 80 + regionIndex * 20 : i === 4 ? 180 + regionIndex * 30 : 0,
+      requiredFame: i === 3 ? 80 + regionIndex * 20 : i === 4 ? 180 + regionIndex * 30 : i === 5 ? 220 + regionIndex * 30 : 0,
     };
   });
 }
@@ -805,10 +813,10 @@ export function seasonBoss(s: Campaign): Mission | null {
   const region = WORLD_REGIONS[regionIndex], enemy = region.enemies[region.enemies.length - 1];
   return {
     id: "boss-" + s.season + "-" + regionIndex,
-    title: "Guardião de " + region.name,
+    title: regionIndex === 0 ? "Chefe regional · Vale de Valen" : "Guardião de " + region.name,
     location: region.name,
     description: "Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
-    rank: 3,
+    rank: 5,
     force: Math.round((78 + regionIndex * 12) * (1 + (s.season - 1) * .06)),
     reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
     enemy, count: 3, specialty: "boss",

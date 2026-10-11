@@ -31,7 +31,8 @@ type Save = Pick<LocalSave, "state" | "revision">;
 type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
-const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp", "/reference/mission-2.webp", "/reference/mission-3.webp"];
+const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp"];
+const valenMissionArt = Array.from({ length: 7 }, (_, i) => `/reference/valen-mission-${i + 1}.jpg`);
 const itemSlots = new Set(["weapon","offhand","helmet","armor","gloves","boots","accessory"]);
 const specialtyNames: Record<string,string> = {
   warrior:"Guerreiro", paladin:"Paladino", rogue:"Ladino", ranger:"Arqueiro",
@@ -313,7 +314,7 @@ function MissionPage({
         const locks = missionLocks(state, m);
         const selected = m.id === selectedId;
         return <article className="mission-card" data-selected={selected} data-locked={!!locks.length} key={m.id}>
-          <div className="mission-art"><img src={missionArt[index % missionArt.length]} alt="" /><span>{KIND_NAMES[m.kind]}</span></div>
+          <div className="mission-art"><img src={(state.activeRegion === 1 ? valenMissionArt : missionArt)[index % (state.activeRegion === 1 ? valenMissionArt : missionArt).length]} alt="" /><span>{KIND_NAMES[m.kind]}</span></div>
           <div className="mission-copy">
             <h2>{m.title}</h2>
             <p>{m.description}</p>

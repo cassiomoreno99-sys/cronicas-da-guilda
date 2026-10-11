@@ -913,9 +913,13 @@ export default function Game() {
 
   return <div className="app-shell">
     <TopBar state={state} goGuild={() => go("guild")} musicEnabled={musicEnabled} toggleMusic={toggleMusic} />
-    {screen !== "guild" && screen !== "equipment" && <TopNav screen={screen} go={go} />}
-    {error && <button className="error" onClick={() => setError("")}><X /> {error}</button>}
-    <main className="game-content">
+    <div className="layout-frame">
+      <aside className="nav-sidebar" aria-label="Navegação do jogo">
+        {screen !== "guild" && screen !== "equipment" && <TopNav screen={screen} go={go} />}
+        <BottomNav screen={screen} go={go} />
+      </aside>
+      {error && <button className="error" onClick={() => setError("")}><X /> {error}</button>}
+      <main className="game-content">
       {screen === "mission" && <MissionPage state={state} selectedId={selectedMission.id} selectMission={setSelectedMissionId} goTeam={() => go("team")} />}
       {screen === "team" && <TeamPage state={state} selectedMission={selectedMission} team={team} formation={formation} tactic={tactic} slot={slot} busy={busy} setTeam={setTeam} setFormation={setFormation} setTactic={setTactic} setSlot={setSlot} act={perform} openBattle={setBattleExpeditionId} />}
       {screen === "league" && <LeaguePage state={state} team={team} act={perform} busy={busy} />}
@@ -925,8 +929,8 @@ export default function Game() {
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
       {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} />}
-    </main>
-    <BottomNav screen={screen} go={go} />
+      </main>
+    </div>
     <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />
     {battleExpedition && <BattleOverlay state={state} expedition={battleExpedition} act={perform} close={() => setBattleExpeditionId(null)} busy={busy} />}
   </div>;

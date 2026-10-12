@@ -1,4 +1,4 @@
-import { TEST_ITEMS, TEST_RECIPES, CATALOG_ITEMS } from "./catalog-test.ts";
+import { TEST_ITEMS, TEST_RECIPES, CATALOG_ITEMS, CATALOG_BY_ID } from "./catalog-test.ts";
 import { handleCatalogAction, awardCatalogLoot, setBonuses } from "./catalog-runtime.ts";
 import { CLASSIC_CLASS_IDS, V130_BASE_STATS, WORLD_REGIONS, HQ_BUILDINGS, HERO_SCARS, LEVEL_ABILITIES, V130_ITEMS, ITEM_SETS, CRAFT_RECIPES, uniqueAdventurerName } from "./v130-content.ts";
 export type HeroClass = "warrior" | "mage" | "healer" | "rogue" | "ranger" | "paladin" | "monk" | "necromancer" | "druid" | "bard";
@@ -15,7 +15,7 @@ export type StoryStage = 0 | 1 | 2 | 3;
 export type JourneyDuration = 3 | 5 | 7;
 export type JourneyChoice = "camp" | "explore" | "shortcut";
 export type HeroJourney = { id: string; heroId: string; startedDay: number; duration: JourneyDuration; remaining: number; choice: JourneyChoice; xpEarned: number; loot: string[] };
-export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean; scars?: string[] };
+export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean; scars?: string[]; supremeBook?: string; supremeRespecced?: boolean };
 export type Ledger = { id: number; day: number; label: string; amount: number };
 export type ItemSlot = "weapon" | "offhand" | "helmet" | "armor" | "gloves" | "boots" | "accessory" | "consumable" | "material" | "quest" | "treasure";
 export type ItemDef = { name: string; slot: ItemSlot; race?: HeroRace; rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"; value: number; description: string; attack?: number; defense?: number; magic?: number; hp?: number; speed?: number; critical?: number; luck?: number; set?: string; classes?: HeroClass[]; levelReq?: number; material?: string };
@@ -26,20 +26,20 @@ export type RivalHero = Hero & { loyalty: number };
 export type RivalGuild = { id: string; name: string; points: number; victories: number; strength: number; heroes: RivalHero[]; recruitSequence: number };
 export type NegotiationMode = "transfer" | "offer" | "covert";
 export type NegotiationResult = { id: number; day: number; guildId: string; guildName: string; heroId: string; heroName: string; mode: NegotiationMode; success: boolean; cost: number; chance: number; fameChange: number; salary: number; message: string };
-export type StatusKind = "bleed" | "poison" | "stun" | "shield" | "regen" | "taunt" | "inspired" | "vulnerable";
+export type StatusKind = "bleed" | "poison" | "stun" | "shield" | "regen" | "taunt" | "inspired" | "vulnerable" | "ward" | "lastStand" | "dodge" | "riposte" | "might" | "critBlessing" | "slow";
 export type CombatStatus = { kind: StatusKind; rounds: number; amount?: number; sourceId?: string };
 export type BattleLog = { round: number; text: string; kind: "hit" | "heal" | "critical" | "fall" | "order" | "ability" | "status"; actorId?: string; targetId?: string; targetHp?: number; amount?: number; objectiveHp?: number };
 export type BattleFighter = { id: string; name: string; side: "hero" | "enemy"; class?: HeroClass; hp: number; maxHp: number; position?: FormationLine; statuses?: CombatStatus[] };
 type Combatant = BattleFighter & { attack: number; defense: number; magic: number; speed: number; critical: number; energy: number; healing: number; guarding: number; statuses: CombatStatus[] };
 export type AbilityTarget = "self" | "ally" | "enemy" | "all-allies" | "all-enemies";
-export type AbilityEffect = "challenge" | "fireball" | "restore" | "venom" | "pinning" | "aegis" | "chi" | "drain" | "renew" | "anthem" | "execution" | "storm" | "lifebloom" | "sanctuary" | "fortress" | "control";
+export type AbilityEffect = "challenge" | "fireball" | "restore" | "venom" | "pinning" | "aegis" | "chi" | "drain" | "renew" | "anthem" | "execution" | "storm" | "lifebloom" | "sanctuary" | "fortress" | "control" | "supreme";
 export type AbilitySpec = { id: string; name: string; description: string; target: AbilityTarget; cooldown: number; effect: AbilityEffect; evolved?: boolean };
 export type PendingAbility = { heroId: string; abilityId: string; targetId?: string };
 export type BattleConsumableKey = "healing_potion" | "antidote" | "stun_bomb";
 export type PendingConsumable = { key: BattleConsumableKey; targetId: string };
 export type MissionKind = "escort" | "defense" | "dungeon" | "hunt" | "boss";
 export type Mission = { id: string; title: string; location: string; description: string; rank: number; force: number; reward: number; enemy: string; count: number; specialty: string; flavor: string; kind: MissionKind; requiredFame: number; requiredItem?: string; boss?: number };
-type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
+type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; supremeUsed?: Record<string,boolean>; revivedIds?: string[]; damageThis?: Record<string,number>; damagePrevious?: Record<string,number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
 export type Battle = { title: string; day: number; won: boolean; reward: number; xp: number; rounds: number; log: BattleLog[]; levelUps: string[]; wounded: string[]; remaining: number; fighters?: BattleFighter[]; status?: "active" | "won" | "lost" | "retreated"; combat?: Combat; loot?: string[]; fameChange?: number; regionUnlocked?: number; objective?: { name: string; hp: number; maxHp: number; targetRounds: number } };
 export type ExpeditionSlot = 1 | 2 | 3;
 export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; level: number; xp: number; wins: number };
@@ -53,7 +53,7 @@ export type LeagueMatch = { season: number; day: number; opponentId: string; opp
 export type Rivalry = { guildId: string; heat: number; sinceSeason: number; lastReason: string };
 export type CupStage = "oitavas" | "quartas" | "semifinal" | "final" | "champion" | "eliminated";
 export type CupState = { season: number; stage: CupStage; wins: number; history: LeagueMatch[] };
-export type Campaign = { schema: 1; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
+export type Campaign = { schema: 1; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
 export type Action =
   | { type: "mission"; missionId: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine>; startedAt?: number; expeditionSlot?: ExpeditionSlot }
   | { type: "save-squad"; specialty: MissionKind; name: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
@@ -63,6 +63,9 @@ export type Action =
   | { type: "academy-mentor"; heroId?: string }
   | { type: "travel-region"; region: number }
   | { type: "craft"; recipeId: string }
+  | { type: "scribe-book"; bookId: string; heroId: string }
+  | { type: "learn-book"; itemId: string; heroId: string }
+  | { type: "reset-specialization"; heroId: string }
   | { type: "guild-raid"; rivalId?: string; teams: string[][] }
   | { type: "rival-battle"; guildId: string; team: string[] }
   | { type: "expedition-tick"; now: number }
@@ -304,6 +307,10 @@ export function availableAbilities(hero: Hero): AbilitySpec[] {
     abilities.push({ ...racial.ability, description: racial.ability.description + (hero.racial.rank >= 3 ? " Forma ancestral dominada." : "") });
   }
   if (hero.storyAbilityUnlocked) abilities.push(HERO_STORIES[hero.class].ability);
+  if(hero.supremeBook && CATALOG_BY_ID[hero.supremeBook]){
+    const d=CATALOG_BY_ID[hero.supremeBook];
+    abilities.push({id:"supreme-"+d.id,name:d.nome,description:d.efeito,target:"self",cooldown:9999,effect:"supreme"});
+  }
   return abilities;
 }
 export function abilityCooldownRemaining(battle: Battle | null | undefined, heroId: string, abilityId: string) {
@@ -616,7 +623,7 @@ function createEvent(s: Campaign): GuildEvent {
   // Eventos antigos de mapa/poção foram retirados; nenhum oferece itens.
   return villageEvent(id);
 }
-type AddedFields = "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "activeRegion" | "bossSeasons" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads" | "balanceVersion" | "hq" | "academy" | "raidHistory" | "rivalBattleHistory";
+type AddedFields = "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "activeRegion" | "bossSeasons" | "claimedQuestItems" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads" | "balanceVersion" | "hq" | "academy" | "raidHistory" | "rivalBattleHistory";
 type StoredRival = Pick<RivalGuild, "id" | "name" | "points" | "victories"> & Partial<RivalGuild>;
 type StoredCampaign = Omit<Campaign, AddedFields | "rivals"> & Partial<Pick<Campaign, AddedFields>> & { rivals: StoredRival[] };
 function normalizedFormation(s: Pick<Campaign, "heroes" | "team"> & Partial<Pick<Campaign, "formation">>) {
@@ -716,7 +723,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     } else if (!([1, 2, 3] as ExpeditionSlot[]).includes(expedition.slot as ExpeditionSlot)) expedition.slot = 1;
     if (expedition.battle?.combat) {
       const c = expedition.battle.combat;
-      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= { ...expedition.formation }; c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
+      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.supremeUsed ??= {}; c.revivedIds ??= []; c.damageThis ??= {}; c.damagePrevious ??= {}; c.formation ??= { ...expedition.formation }; c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
       delete c.pendingPotion; delete c.pendingConsumable;
       for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
       if (expedition.battle.fighters) for (const f of expedition.battle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
@@ -735,7 +742,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.raidHistory.forEach(r => { r.loot ??= []; });
   if (s.lastBattle) { s.lastBattle.loot ??= []; if (s.lastBattle.combat) delete s.lastBattle.combat.pendingConsumable; }
   s.expeditions.forEach(e => { e.battle.loot ??= []; if (e.battle.combat) delete e.battle.combat.pendingConsumable; });
-  s.region ??= 1; s.bossSeasons ??= []; s.shopPurchases ??= [];
+  s.region ??= 1; s.bossSeasons ??= []; s.claimedQuestItems ??= []; s.shopPurchases ??= [];
   s.rivalAttempts ??= []; s.lastNegotiation ??= null;
   s.rivals = s.rivals.slice(0, LEAGUE_SIZE - 1).map((r, i) => r.heroes?.length && r.strength && r.recruitSequence !== undefined ? r : { ...createRival(i, s), ...r });
   const ids = new Set(s.rivals.map(r => r.id));
@@ -766,7 +773,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   if (s.event?.kind === "map" || s.event?.kind === "caravan") s.event = villageEvent(s.event.id);
   if (s.lastBattle?.combat) {
     const c = s.lastBattle.combat;
-    c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.formation ??= normalizedFormation(s); c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
+    c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.supremeUsed ??= {}; c.revivedIds ??= []; c.damageThis ??= {}; c.damagePrevious ??= {}; c.formation ??= normalizedFormation(s); c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
     delete c.pendingPotion; delete c.pendingConsumable;
     for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
     if (s.lastBattle.fighters) for (const f of s.lastBattle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
@@ -1129,7 +1136,7 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   const battleTeam = c.fighters.filter(f => f.side === "hero").map(f => f.id);
   awardSquadExperience(s, battleTeam, m.kind, won);
   if (won) {
-    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s);
+    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s,m);
     if (m.kind === "boss") {
       s.bossSeasons.push(s.season);
       if (s.activeRegion >= s.region && s.region < WORLD_REGIONS.length) { s.region++; b.regionUnlocked = s.region; }
@@ -1379,7 +1386,10 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       requireRule(Number.isInteger(action.region) && action.region >= 1 && action.region <= s.region && action.region <= WORLD_REGIONS.length, "Essa região ainda não foi desbloqueada.");
       s.activeRegion = action.region; note(s, "A guilda estabeleceu operações em " + WORLD_REGIONS[action.region - 1].name + "."); break;
     }
-    case "craft": handleCatalogAction(s,action,entry); break;
+    case "craft":
+    case "scribe-book":
+    case "learn-book":
+    case "reset-specialization": handleCatalogAction(s,action,entry); break;
     case "guild-raid": resolveGuildRaid(s, action.teams, action.rivalId); break;
     case "rival-battle": resolveRivalBattle(s, action.guildId, action.team); break;
     case "expedition-tick": {

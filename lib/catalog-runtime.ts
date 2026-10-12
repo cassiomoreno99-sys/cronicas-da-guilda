@@ -46,7 +46,8 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   const recipe=RECIPE_BY_ID[action.recipeId];ensure(recipe&&recipe.forge>0,"Receita inexistente ou indisponível.");
   const d=CATALOG_BY_ID[recipe.result];ensure(d,"Item não cadastrado.");
   ensure(s.hq.forge>=recipe.forge,"Forja nível "+recipe.forge+" necessária.");
-  ensure(s.region>=CATALOG_ITEMS.filter(x=>x.regiao===d.regiao).length*0+1,"Região não liberada.");
+  const regions=["Vale de Valen","Terras de Brumavale","Ruínas de Ashen","Fronteira dos Dragões","Deserto de Sahir","Costa de Namar","Bosque de Elarin","Picos de Kharum","Pântano de Morn","Império de Solkar","Abismo de Nhal","Coroa do Mundo"];
+  ensure(regions.includes(d.regiao)&&s.region>=regions.indexOf(d.regiao)+1,"Região do projeto não liberada.");
   ensure(s.gold>=recipe.cost,"Ouro insuficiente.");
   ensure(s.chest.length<120,"Inventário cheio.");
   for(const [key,qty] of Object.entries(recipe.materials))ensure(own(s,key)>=qty,"Material insuficiente: "+key);

@@ -880,7 +880,6 @@ function GuildPage({
         <GuildRoomArt room={key} compact label={spec.name+": local medieval da Sede da Guilda."}/><div><h3>{spec.name} <small>Nv. {lvl}</small></h3><p>{spec.description}</p></div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
     <section className="parchment catalog-forge"><h3><GameSymbol kind="forge" size={18}/> Forja · Nv. {state.hq.forge}</h3>
-    <GuildRoomArt room="forge" label="Forja monumental com bigorna, fogo e ferreiro anão."/>
     <div className="guild-forjador">
       <img src="/guild/forjador.webp" alt="O Forjador, mestre artesão da guilda, trabalhando com martelo e bigorna diante da fornalha." width={720} height={960} loading="lazy"/>
       <div><strong>O Forjador</strong><p>O mestre artesão da guilda transforma recursos raros em armas e equipamentos. Traga seus materiais, pague a taxa e escolha sua encomenda.</p>

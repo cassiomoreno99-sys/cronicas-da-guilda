@@ -671,13 +671,13 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
           <p><b>Função:</b> {detail.efeito}</p>
           <p><b>Como obter:</b> {detail.obtencao}</p>
           <p><b>Valor:</b> {detail.preco_compra!==null?fmt(detail.preco_compra)+" ouro de compra":"Não vendido por mercador"} · {fmt(detail.preco_venda)} de venda</p>
-          <small>Disponibilidade e receitas dependem da evolução da campanha. Livros supremos ainda não têm habilidades ativas implementadas.</small>
+          <small>Disponibilidade e receitas dependem da evolução da campanha. Livros supremos exigem história pessoal e uma ativação por batalha.</small>
         </article>}
       </div>
     </section>;
   }
   return <section className="screen chest-screen">
-    <div className="inventory-top"><button data-active>▣ Inventário</button><button onClick={()=>setShowCatalog(true)}>📚 Ver 314 itens</button><button onClick={() => setFilter("material")} data-active={filter === "material"}>◆ Materiais</button><span>🎒 {state.chest.length}/80</span></div>
+    <div className="inventory-top"><button data-active>▣ Inventário</button><button onClick={()=>setShowCatalog(true)}>📚 Ver 314 itens</button><button onClick={() => setFilter("material")} data-active={filter === "material"}>◆ Materiais</button><span>🎒 {state.chest.length}/120</span></div>
     <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>
     <div className="inventory-layout">
       <div className="item-grid">{filtered.slice(0,40).map(item => <button key={item.id} data-active={selected?.id === item.id} className={"item-tile rarity-" + ITEMS[item.key].rarity} onClick={() => setSelectedId(item.id)}>
@@ -690,10 +690,16 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
         <div className="item-stats">{([["Ataque",def.attack],["Defesa",def.defense],["Magia",def.magic],["Vida",def.hp],["Velocidade",def.speed]] as Array<[string,number|undefined]>).filter(([,v]) => v).map(([k,v]) => <span key={k}><b>{k}</b><em>+{v}</em></span>)}</div>
         {def.levelReq && <small>Nível necessário: {def.levelReq}</small>}
         {owner && <small>Equipado por {owner.name}</small>}
+        {def.slot==="quest"&&CATALOG_BY_ID[selected.key]?.categoria==="Livro de magia suprema"&&
+        <div className="item-book-learn"><strong>Aprender habilidade suprema:</strong>
+        {state.heroes.filter(h=>({warrior:"Guerreiro",paladin:"Cavaleiro",ranger:"Arqueiro",rogue:"Assassino",mage:"Mago",healer:"Sacerdote",bard:"Pierrô"} as Record<string,string>)[h.class]===CATALOG_BY_ID[selected.key].classes[0]&&h.level>=CATALOG_BY_ID[selected.key].nivel).map(h=>
+         <button key={h.id} className="action-button blue" disabled={busy||!!h.supremeBook||h.storyStage!==3} onClick={()=>act({type:"learn-book",itemId:selected.id,heroId:h.id})}>
+         {h.name} · {h.storyStage===3?"Aprender":"História pessoal incompleta"}</button>)}
+        </div>}
         {!owner && compatible.length > 0 && <select value={target} onChange={e => setRecipient(e.target.value)}>{compatible.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select>}
         <div className="item-actions">
           {itemSlots.has(def.slot) && (owner ? <button className="action-button blue" disabled={busy} onClick={() => act({type:"unequip",itemId:selected.id})}>Desequipar</button> : <button className="action-button green" disabled={busy || !target} onClick={() => target && act({type:"equip",itemId:selected.id,heroId:target})}>Equipar</button>)}
-          {!owner && <button className="action-button blue" disabled={busy} onClick={() => act({type:"sell",itemId:selected.id})}><Coins /> Vender · {def.value}</button>}
+          {!owner && def.value>0 && <button className="action-button blue" disabled={busy} onClick={() => act({type:"sell",itemId:selected.id})}><Coins /> Vender · {def.value}</button>}
           {def.slot === "consumable" && <div className="combat-only-note">Consumível de combate</div>}
         </div>
       </article> : <div className="item-detail parchment empty-detail">Inventário vazio. Consiga materiais em missões ou visite o mercador.</div>}
@@ -712,7 +718,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
       <section className="rumors parchment"><ParchmentTitle icon={<ScrollText />} title="Rumores da Taverna" />{rumors.map(m => <button key={m.id} onClick={() => openMission(m.id)}><span><strong>{m.title}</strong><small>{m.description}</small></span><em><Coins /> {m.reward}</em></button>)}</section>
       <aside className="tavern-side">
         <section className="parchment drinks"><div className="mug">🍺</div><h3>Bebidas da Casa</h3><p>Brinde com a guilda para recuperar o moral e a energia.</p><button className="action-button green" disabled={busy || state.gold < 8} onClick={() => act({type:"rest"})}>Descansar</button></section>
-        <section className="parchment shop"><div className="merchant-head"><img className="merchant-portrait" src={merchantPortrait} alt="Mercador da taverna medieval" /><span><h3>Mercador · Teste</h3><small>Estoque regional renovado semanalmente</small></span></div>
+        <section className="parchment shop"><div className="merchant-head"><img className="merchant-portrait" src={merchantPortrait} alt="Mercador da taverna medieval" /><span><h3>Mercador Regional</h3><small>Estoque regional renovado semanalmente</small></span></div>
   <div className="catalog-shop">
   {testShop(state).map(d=>{
     const sold=state.shopPurchases.includes(Math.floor((state.day-1)/7)+":"+state.activeRegion+":"+d.id);
@@ -771,7 +777,7 @@ function GuildPage({
       const arts = ["/reference/guild-training.webp","/reference/guild-market.webp","/reference/guild-sanctuary.webp","/reference/guild-workshop.webp"];
       return <article key={key}><img src={arts[index%arts.length]} alt="" /><div><h3>{spec.name} <small>Nv. {lvl}</small></h3><p>{spec.description}</p></div><div><span><Coins /> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
-    <section className="parchment catalog-forge"><h3><Hammer size={18}/> Forja experimental · Nv. {state.hq.forge}</h3><small>Consome materiais e taxa em ouro. Sem itens gratuitos.</small>
+    <section className="parchment catalog-forge"><h3><Hammer size={18}/> Forja · Nv. {state.hq.forge}</h3><small>Consome materiais e taxa em ouro. Sem itens gratuitos.</small>
     <div className="catalog-shop">{TEST_RECIPES.filter(r=>r.forge>0&&r.forge<=state.hq.forge).slice(0,16).map(r=>{
       const enough=Object.entries(r.materials).every(([k,q])=>state.chest.filter(i=>i.key===k&&!i.equippedTo).length>=q);
       return <div key={r.id}><ItemArt itemKey={r.result}/><span><strong>{ITEMS[r.result]?.name}</strong><small>{Object.entries(r.materials).map(([k,q])=>q+"× "+(ITEMS[k]?.name||k)).join(" + ")}</small></span>

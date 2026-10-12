@@ -26,7 +26,7 @@ import { portraitSource } from "@/lib/portraits";
 import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
-import { testShop, CATALOG_BY_ID, TEST_RECIPES, equippedPosition } from "@/lib/catalog-test";
+import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, equippedPosition } from "@/lib/catalog-test";
 
 type Save = Pick<LocalSave, "state" | "revision">;
 type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
@@ -625,6 +625,9 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
 
 function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
   const [filter,setFilter] = useState("all");
+  const [showCatalog,setShowCatalog] = useState(false);
+  const [catalogPage,setCatalogPage] = useState(0);
+  const [catalogSelection,setCatalogSelection] = useState("CG-001");
   const [selectedId,setSelectedId] = useState(state.chest[0]?.id || "");
   const [recipient,setRecipient] = useState(state.heroes[0]?.id || "");
   const filtered = state.chest.filter(i => {
@@ -642,8 +645,39 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const owner = selected?.equippedTo ? state.heroes.find(h => h.id === selected.equippedTo) : undefined;
   const compatible = def ? state.heroes.filter(h => itemSlots.has(def.slot) && !heroOnExpedition(state,h.id) && (!def.race || heroRace(h) === def.race) && (!def.classes || def.classes.includes(h.class)) && (!def.levelReq || h.level >= def.levelReq)) : [];
   const target = compatible.some(h => h.id === recipient) ? recipient : compatible[0]?.id || "";
+  if(showCatalog) {
+    const visible=CATALOG_ITEMS.slice(catalogPage*30,(catalogPage+1)*30);
+    const detail=CATALOG_BY_ID[catalogSelection]&&visible.some(d=>d.id===catalogSelection)?CATALOG_BY_ID[catalogSelection]:visible[0];
+    const changePage=(next:number)=>{setCatalogPage(next);setCatalogSelection(CATALOG_ITEMS[next*30].id);};
+    return <section className="screen chest-screen catalog-gallery">
+      <div className="inventory-top"><button onClick={()=>setShowCatalog(false)}>← Meu inventário</button><strong>Catálogo · 314 imagens</strong></div>
+      <p className="catalog-note">Acervo visual dos 314 itens. Ver uma imagem não significa que o item esteja disponível na campanha.</p>
+      <div className="catalog-pagination">
+        <button disabled={catalogPage===0} onClick={()=>changePage(catalogPage-1)}>‹ Anterior</button>
+        <strong>Página {catalogPage+1} de {Math.ceil(CATALOG_ITEMS.length/30)}</strong>
+        <button disabled={(catalogPage+1)*30>=CATALOG_ITEMS.length} onClick={()=>changePage(catalogPage+1)}>Próxima ›</button>
+      </div>
+      <div className="inventory-layout">
+        <div className="item-grid catalog-gallery-grid">
+          {visible.map(d=><button key={d.id} data-active={detail?.id===d.id} className={"item-tile rarity-"+ITEMS[d.id].rarity} aria-label={d.id+" — "+d.nome}
+           onClick={()=>setCatalogSelection(d.id)}><ItemArt itemKey={d.id}/><span>{d.id}</span></button>)}
+        </div>
+        {detail&&<article className="item-detail parchment">
+          <span className="rarity-label">{detail.id} · {detail.raridade}</span><h2>{detail.nome}</h2>
+          <div className="selected-item-art"><ItemArt itemKey={detail.id}/></div>
+          <p><b>Categoria:</b> {detail.categoria} · {detail.subcategoria}</p>
+          <p><b>Classes:</b> {detail.classes.join(", ")}</p>
+          <p><b>Requisito:</b> Nível {detail.nivel}</p>
+          <p><b>Função:</b> {detail.efeito}</p>
+          <p><b>Como obter:</b> {detail.obtencao}</p>
+          <p><b>Valor:</b> {detail.preco_compra!==null?fmt(detail.preco_compra)+" ouro de compra":"Não vendido por mercador"} · {fmt(detail.preco_venda)} de venda</p>
+          <small>Disponibilidade e receitas dependem da evolução da campanha. Livros supremos ainda não têm habilidades ativas implementadas.</small>
+        </article>}
+      </div>
+    </section>;
+  }
   return <section className="screen chest-screen">
-    <div className="inventory-top"><button data-active>▣ Inventário</button><button onClick={() => setFilter("material")} data-active={filter === "material"}>◆ Materiais</button><span>🎒 {state.chest.length}/80</span></div>
+    <div className="inventory-top"><button data-active>▣ Inventário</button><button onClick={()=>setShowCatalog(true)}>📚 Ver 314 itens</button><button onClick={() => setFilter("material")} data-active={filter === "material"}>◆ Materiais</button><span>🎒 {state.chest.length}/80</span></div>
     <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>
     <div className="inventory-layout">
       <div className="item-grid">{filtered.slice(0,40).map(item => <button key={item.id} data-active={selected?.id === item.id} className={"item-tile rarity-" + ITEMS[item.key].rarity} onClick={() => setSelectedId(item.id)}>

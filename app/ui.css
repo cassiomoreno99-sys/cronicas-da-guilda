@@ -1870,3 +1870,107 @@ img{display:block;max-width:100%}
  .battle-item-actions button,.supreme-battle-actions button{flex-basis:45%;font-size:9px}
  .mission-special-loot,.mission-material-loot{font-size:9px}
 }
+
+/* Identidade visual oficial dos símbolos: única nos layouts PC e celular. */
+svg.game-symbol{
+  display:inline-block;
+  flex:0 0 auto;
+  width:1.15em;
+  height:1.15em;
+  min-width:13px;
+  min-height:13px;
+  stroke-width:2.3;
+  vertical-align:-.19em;
+  color:#865e2a;
+  overflow:visible;
+}
+svg.game-symbol--gold,svg.game-symbol--reward{
+  box-sizing:border-box;
+  width:23px;
+  height:23px;
+  min-width:23px;
+  min-height:23px;
+  padding:3px;
+  stroke-width:2.6;
+  border-radius:50%;
+  border:2px ridge #f5c765;
+  color:#57310a;
+  background:radial-gradient(circle at 28% 20%,#fff6be 0%,#f8d76c 24%,#d89c2a 62%,#7d4910 100%);
+  box-shadow:inset 0 0 0 1px #81500d,0 1px 3px #1a0c07a0,0 0 4px #ffd26b64;
+}
+svg.game-symbol--reward{
+  background:radial-gradient(circle at 25% 25%,#fff2b3,#ecc963 35%,#ad7323 80%);
+  filter:drop-shadow(1px 1px 2px #47281090);
+}
+svg.game-symbol--fame,svg.game-symbol--mission,svg.game-symbol--guild{color:#bb8c37}
+svg.game-symbol--battle,svg.game-symbol--difficulty,svg.game-symbol--attack,svg.game-symbol--boss{color:#9f4b31}
+svg.game-symbol--defense,svg.game-symbol--squad,svg.game-symbol--sanctuary{color:#457790}
+svg.game-symbol--health,svg.game-symbol--healing{color:#b64249}
+svg.game-symbol--magic,svg.game-symbol--book,svg.game-symbol--experience{color:#7353a6}
+svg.game-symbol--energy,svg.game-symbol--speed{color:#277f8d}
+svg.game-symbol--critical,svg.game-symbol--legendary{color:#a87420}
+svg.game-symbol--rare{color:#704bad}
+svg.game-symbol--locked{color:#a24d42}
+svg.game-symbol--objective,svg.game-symbol--treasure,svg.game-symbol--inventory{color:#9f753d}
+svg.game-symbol--forge,svg.game-symbol--merchant{color:#7d5732}
+.header-resources{width:124px}
+.header-resources button{grid-template-columns:23px minmax(0,1fr) 13px;gap:3px;height:34px;padding:0 3px}
+.header-resources button svg.game-symbol--gold{width:23px;height:23px;color:#54310b}
+.header-resources button svg.game-symbol--fame{width:21px;height:21px;color:#7ad2ff;filter:drop-shadow(0 0 2px #4ec9ff)}
+.header-resources strong{font-size:clamp(11px,3.1vw,15px);overflow:hidden;text-overflow:ellipsis}
+.header-resources b{font-size:15px}
+.game-header button:focus-visible,.screen button:focus-visible{outline:2px solid #ffd36a;outline-offset:2px}
+.game-content svg.game-symbol--gold,.game-content svg.game-symbol--reward{color:#57310a}
+.mission-copy p svg.game-symbol,.difficulty svg.game-symbol{width:14px;height:14px;margin-right:4px;vertical-align:middle}
+.mission-art span svg.game-symbol{width:13px;height:13px;color:#f0cd75;vertical-align:middle;margin-right:4px}
+.mission-rewards svg.game-symbol--reward,.league-row svg.game-symbol--reward{width:22px;height:22px;min-width:22px;min-height:22px}
+.mission-rewards .mission-special-loot,.mission-rewards .mission-material-loot{display:flex;align-items:start;gap:5px;line-height:1.3}
+.mission-special-loot svg.game-symbol,.mission-material-loot svg.game-symbol{width:14px;height:14px;min-width:14px;min-height:14px}
+.league-head b svg.game-symbol{width:14px;height:14px;vertical-align:middle}
+.stat-grid b{display:flex;align-items:center;gap:4px;min-width:0}
+.stat-grid b svg.game-symbol{width:15px;height:15px}
+.stat-grid b em{margin-left:auto}
+.hero-list em svg.game-symbol,.recovery-list small svg.game-symbol{width:13px;height:13px;vertical-align:middle}
+.item-stats b svg.game-symbol{width:14px;height:14px;vertical-align:middle;margin-right:4px}
+.catalog-price svg.game-symbol{vertical-align:middle}
+.guild-identity aside strong svg.game-symbol--gold{width:22px;height:22px;min-width:22px}
+.building-list article svg.game-symbol--gold{width:22px;height:22px;min-width:22px}
+.inventory-top svg.game-symbol,.catalog-gallery .inventory-top svg.game-symbol{width:16px;height:16px;vertical-align:middle}
+.sanctuary-head h2 svg.game-symbol{width:22px;height:22px;vertical-align:middle}
+.sanctuary-head strong svg.game-symbol{width:14px;height:14px}
+.catalog-shop button svg.game-symbol--gold{width:20px;height:20px;min-width:20px;min-height:20px}
+.catalog-shop button{display:flex;align-items:center;justify-content:center;gap:4px}
+.item-actions button svg.game-symbol--gold,.recruit-grid svg.game-symbol--gold{width:21px;height:21px;min-width:21px;min-height:21px}
+.cinema-log-icon svg.game-symbol{width:17px;height:17px}
+.battle-objective svg.game-symbol,.battle-loot svg.game-symbol{width:17px;height:17px;vertical-align:middle}
+.top-nav svg.game-symbol,.bottom-nav svg.game-symbol{stroke-width:2.4}
+.top-nav button[data-active="true"] svg.game-symbol,.bottom-nav button[data-active="true"] svg.game-symbol{color:#f2d484}
+@media(max-width:430px){
+ .header-resources{width:118px}
+ .header-resources strong{font-size:12px}
+ .mission-rewards svg.game-symbol--gold,.mission-rewards svg.game-symbol--reward{width:20px;height:20px}
+ .stat-grid b{font-size:10px}
+ .stat-grid b svg.game-symbol{width:13px;height:13px}
+ .inventory-top button svg.game-symbol{width:14px;height:14px}
+}
+@media(min-width:1000px){
+ .header-resources{width:153px}
+ .header-resources button{height:38px;grid-template-columns:26px minmax(0,1fr) 18px}
+ .header-resources button svg.game-symbol--gold{width:25px;height:25px}
+ .header-resources strong{font-size:17px}
+ .game-symbol--gold,.game-symbol--reward{min-width:23px;min-height:23px}
+}
+
+.symbol-guide{margin:12px 0;padding:10px;border:2px ridge #98713d;background:linear-gradient(140deg,#eed8a4,#d8b476)}
+.symbol-guide>summary{display:flex;align-items:center;gap:8px;cursor:pointer;color:#633d1f;font-size:14px;font-weight:800;min-height:34px;list-style:none}
+.symbol-guide>summary::-webkit-details-marker{display:none}
+.symbol-guide>summary:after{content:"▾";margin-left:auto;color:#704d24}
+.symbol-guide[open]>summary:after{content:"▴"}
+.symbol-guide>p{font-size:12px;color:#65442c;margin:8px 0 10px}
+.symbol-guide h4{margin:12px 0 5px;font-size:12px;color:#5b2f1e}
+.symbol-guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.symbol-guide-grid>span{min-width:0;display:flex;align-items:center;gap:6px;background:#f5dfb2;border:1px solid #b89552;border-radius:4px;padding:6px;font-size:11px;font-weight:600;color:#5e3b20}
+.symbol-guide-grid>span svg.game-symbol{min-width:19px;min-height:19px;max-width:24px;max-height:24px}
+.symbol-guide-grid>span svg.game-symbol--gold,.symbol-guide-grid>span svg.game-symbol--reward{width:23px;height:23px}
+@media(max-width:550px){.symbol-guide-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.symbol-guide-grid>span{font-size:10px}}
+@media(min-width:1000px){.symbol-guide-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}

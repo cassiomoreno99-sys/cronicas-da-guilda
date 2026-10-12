@@ -1,5 +1,5 @@
 /** Catálogo experimental CG-001…CG-314. NUNCA importar na versão principal antes da validação. */
-import raw from "./catalogo-314.json";
+import raw from "./catalogo-314.json" with { type: "json" };
 import type { HeroClass, ItemDef, ItemSlot, Campaign } from "./game.ts";
 export type CatalogEntry = {
  id:string; nome:string; raridade:string; categoria:string; subcategoria:string; classes:string[];

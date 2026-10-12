@@ -74,7 +74,7 @@ for(const p of [1,4,7,11]){
  if(!pageNum.includes("Página "+p+" de 11")) throw new Error("Paginação do catálogo incorreta: "+pageNum);
  const probe=await page.locator(".catalog-gallery-grid .item-art").first().evaluate(async el=>{
   const image=getComputedStyle(el).backgroundImage;
-  const url=image.match(/url\\(["']?(.*?)["']?\\)/)?.[1];
+  const url=image.startsWith("url(")?image.slice(4,-1).replaceAll('"',"").replaceAll("'",""):undefined;
   const response=url?await fetch(url):null;
   return {image,url,status:response?.status,type:response?.headers.get("content-type")};
  });

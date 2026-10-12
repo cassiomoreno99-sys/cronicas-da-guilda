@@ -38,6 +38,19 @@ const ATTRIBUTE_SYMBOLS:Record<string,GameSymbolKind>={Ataque:"attack",Defesa:"d
 
 const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp"];
 const valenMissionArt = Array.from({ length: 7 }, (_, i) => `/reference/valen-mission-${i + 1}.jpg`);
+const LEAGUE_TROPHY = "/league/trophy.webp";
+const LEAGUE_PLAYER_CREST = "/league/crest-player.webp";
+const RIVAL_CREST_NAMES: Record<string,number> = {
+  "Cavaleiros da Tempestade":0, "Escudos da Fronteira":1,
+  "Arautos da Floresta":2, "Andarilhos da Montanha":3, "Arautos da Torre":4
+};
+function leagueCrest(guild:{id:string;name:string}) {
+  if(guild.id==="player") return LEAGUE_PLAYER_CREST;
+  const named=RIVAL_CREST_NAMES[guild.name];
+  const rivalId=/^rival-(\d+)$/.exec(guild.id);
+  const fallback=rivalId?Number(rivalId[1])%5:Math.abs([...guild.id].reduce((acc,ch)=>acc*31+ch.charCodeAt(0),0))%5;
+  return "/league/crest-rival-"+(named??fallback)+".webp";
+}
 const itemSlots = new Set(["weapon","offhand","helmet","armor","gloves","boots","accessory"]);
 const specialtyNames: Record<string,string> = {
   warrior:"Guerreiro", paladin:"Paladino", rogue:"Ladino", ranger:"Arqueiro",
@@ -329,6 +342,18 @@ function MissionPage({
   const boss = seasonBoss(state);
   const cards = [...board, ...(boss ? [boss] : [])];
   return <section className="screen mission-screen">
+    {state.activeRegion===1&&<details className="enemy-dossier parchment">
+      <summary>
+        <img src="/reference/olho-rubro-report-2026.webp" alt="" loading="lazy"/>
+        <span><strong>Relatório de reconhecimento · Olho Rubro</strong>
+          <small>Acampamento hostil, bandeiras e movimentações inimigas. Abrir relatório ilustrado.</small></span>
+        <GameSymbol kind="objective" size={23}/>
+      </summary>
+      <div className="enemy-dossier-content">
+        <img src="/reference/olho-rubro-report-2026.webp" alt="Relatório ilustrado sobre o posto avançado do Olho Rubro, com fortificações, estandartes, objetivos e recomendações de reconhecimento." loading="lazy"/>
+        <p>Registro de inteligência sobre o Olho Rubro. Os objetivos, dificuldades e recompensas válidos para jogar estão nas missões abaixo.</p>
+      </div>
+    </details>}
     <div className="mission-list">
       {cards.map((m, index) => {
         const locks = missionLocks(state, m);
@@ -463,14 +488,14 @@ function LeaguePage({ state, team, act, busy }: { state: Campaign; team: string[
   return <section className="screen league-screen">
     <div className="league-summary parchment">
       <div><span>Nossa Posição</span><strong>{place}º</strong></div>
-      <div className="big-crest"><GameSymbol kind="guild"/></div>
-      <div><h2>{state.name}</h2><p><GameSymbol kind="league"/> {state.points} Pontos da Liga</p><small><GameSymbol kind="fame"/> Prestígio: {state.fame} · Divisão {rank(state)}</small></div>
+      <div className="big-crest"><img src={LEAGUE_PLAYER_CREST} alt="Brasão da Guilda do Alvorecer: sol dourado sobre montanhas e fundo azul." width={90} height={104}/></div>
+      <div><h2>{state.name}</h2><p><img className="league-trophy" src={LEAGUE_TROPHY} alt="" width={24} height={29}/> {state.points} Pontos da Liga</p><small><GameSymbol kind="fame"/> Prestígio: {state.fame} · Divisão {rank(state)}</small></div>
     </div>
-    <ParchmentTitle icon={<GameSymbol kind="league"/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
+    <ParchmentTitle icon={<img className="league-trophy" src={LEAGUE_TROPHY} alt="" width={29} height={35}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
     <div className="league-table parchment">
-      <div className="league-head"><b>#</b><b>Guilda</b><b><GameSymbol kind="league"/> Pontos</b><b><GameSymbol kind="reward"/> Recompensa</b></div>
+      <div className="league-head"><b>#</b><b>Guilda</b><b><img className="league-trophy" src={LEAGUE_TROPHY} alt="" width={17} height={21}/> Pontos</b><b><GameSymbol kind="reward"/> Recompensa</b></div>
       {table.slice(0,5).map((g,i) => <div key={g.id} className="league-row" data-player={g.id === "player"}>
-        <strong>{i+1}</strong><span><i className={"mini-banner b" + (i%5)} />{g.name}</span><b><GameSymbol kind="league"/> {g.points}</b><small><GameSymbol kind="reward"/> {leaguePrize(i+1, state.leagueTier)} ouro</small>
+        <strong>{i+1}</strong><span><img className="league-rival-crest" src={leagueCrest(g)} alt={"Brasão de "+g.name} width={42} height={48}/>{g.name}</span><b><img className="league-trophy" src={LEAGUE_TROPHY} alt="" width={22} height={28}/> {g.points}</b><small><GameSymbol kind="reward"/> {leaguePrize(i+1, state.leagueTier)} ouro</small>
       </div>)}
     </div>
     <ParchmentTitle icon={<GameSymbol kind="battle"/>} title="Desafio de Guilda" side={<span>Equipe: {team.length}/4</span>} />
@@ -490,7 +515,7 @@ function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => v
   const shown = (recover.length ? recover : state.heroes).slice(0,4);
   return <section className="screen rest-screen">
     <div className="sanctuary-head parchment">
-      <img src="/reference/sanctuary.webp" alt="" />
+      <img src="/reference/sanctuary-2026.webp" alt="Santuário da Guilda: acampamento medieval com leitos de recuperação, fogueira, lanternas e o estandarte azul da guilda." width={1360} height={765} />
       <div><h2><GameSymbol kind="sanctuary"/> Santuário da Guilda</h2><p>Aqui seus heróis feridos podem repousar e se recuperar para novas aventuras.</p>
         <strong><GameSymbol kind="squad"/> Capacidade</strong><div className="beds">▰ ▰ ▰ ▱ ▱</div><span>{recover.length} heróis precisam de recuperação</span>
       </div>
@@ -827,7 +852,7 @@ function GuildPage({
   const raidTeams = availableRaidHeroes.length >= 9 ? [availableRaidHeroes.slice(0,3).map(h=>h.id),availableRaidHeroes.slice(3,6).map(h=>h.id),availableRaidHeroes.slice(6,9).map(h=>h.id)] : [];
   return <section className="screen guild-screen">
     <div className="guild-identity parchment">
-      <div className="guild-banner"><GameSymbol kind="guild"/></div>
+      <div className="guild-banner"><img src={LEAGUE_PLAYER_CREST} alt="Brasão da Guilda do Alvorecer" width={88} height={102}/></div>
       <div><h2>{state.name}</h2><p>Força na união, glória em cada jornada.</p><span><GameSymbol kind="squad"/> Membros: {state.heroes.length}/12</span><span><GameSymbol kind="defense"/> Nível da Guilda: {Math.max(1,Math.ceil(state.fame/120))}</span></div>
       <aside><strong><GameSymbol kind="gold"/> Tesouro {fmt(state.gold)}</strong><strong><GameSymbol kind="fame"/> Renome {state.fame}</strong><strong><GameSymbol kind="league"/> Liga {rank(state)}</strong></aside>
     </div>

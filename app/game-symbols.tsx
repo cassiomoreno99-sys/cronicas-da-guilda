@@ -69,7 +69,7 @@ export function GameSymbol({kind,size=18,className="",label}:{kind:GameSymbolKin
  const ornamental=MEDIEVAL_EMBLEMS[kind];
  if(ornamental){
    return <svg className={"game-symbol game-emblem game-symbol--"+kind+(className?" "+className:"")}
-      width={size} height={size} viewBox="0 0 48 48" role="img" aria-label={label||spec.label} xmlns="http://www.w3.org/2000/svg">
+      width={size} height={size} viewBox="0 0 48 48" role={label?"img":undefined} aria-label={label} aria-hidden={label?undefined:true} xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id={id+"gold"} x1="0" y1="0" x2="1" y2="1">
           <stop offset="0" stopColor="#fff4bd"/><stop offset=".15" stopColor="#c98b2e"/><stop offset=".31" stopColor="#61310c"/>

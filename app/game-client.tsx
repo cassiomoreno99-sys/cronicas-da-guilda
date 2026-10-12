@@ -758,6 +758,32 @@ function RivalRecruitPanel({ state, act, busy }: { state: Campaign; act: (a: Act
   </div>;
 }
 
+function SupremeLibraryPanel({state,act,busy}:{state:Campaign;act:(a:Action)=>void;busy:boolean}){
+ const [selectedHero,setSelectedHero]=useState(state.heroes[0]?.id||"");
+ const h=state.heroes.find(x=>x.id===selectedHero)||state.heroes[0];
+ const map:Record<string,string>={warrior:"Guerreiro",paladin:"Cavaleiro",ranger:"Arqueiro",rogue:"Assassino",mage:"Mago",healer:"Sacerdote",bard:"Pierrô"};
+ const books=CATALOG_ITEMS.filter(d=>d.categoria==="Livro de magia suprema"&&d.classes.includes(map[h?.class]||""));
+ return <section className="parchment catalog-forge supreme-library" aria-label="Livros supremos">
+  <h3><BookOpen/> Biblioteca dos 14 Livros Supremos</h3>
+  <p>A prova de classe exige história pessoal concluída, biblioteca nível 3, um chefe regional derrotado, materiais raros e ouro. O herói só aprende um livro.</p>
+  <label>Herói da prova <select value={h?.id||""} onChange={e=>setSelectedHero(e.target.value)}>
+   {state.heroes.map(x=><option key={x.id} value={x.id}>{x.name} · {CLASSES[x.class].name} · Nv. {x.level}</option>)}
+  </select></label>
+  {h?.supremeBook&&<p>Livro aprendido: {CATALOG_BY_ID[h.supremeBook]?.nome}</p>}
+  {h?.supremeBook&&h.talent&&!h.supremeRespecced&&<button className="action-button blue" disabled={busy} onClick={()=>act({type:"reset-specialization",heroId:h.id})}>Corrigir especialização (uma vez)</button>}
+  <div className="catalog-shop">{books.map(d=>{
+    const price=Math.round((d.preco_compra||0)*.7);
+    const res=(d.materiais||[]).map(mat=>({...mat,owned:state.chest.filter(i=>i.key===mat.id&&!i.equippedTo).length}));
+    const ready=!!h&&h.level>=d.nivel&&h.storyStage===3&&state.hq.library>=3&&state.bossSeasons.length>0&&
+      res.every(r=>r.owned>=r.quantidade)&&state.gold>=price&&state.chest.length<120;
+    return <div key={d.id}><ItemArt itemKey={d.id}/><span><strong>{d.nome}</strong>
+       <small>Nível {d.nivel} · {d.efeito}</small><small>{res.map(r=>r.quantidade+"× "+CATALOG_BY_ID[r.id]?.nome+" ("+r.owned+")").join(" + ")}</small></span>
+       <button className="small-button gold" disabled={busy||!ready||!h} onClick={()=>h&&act({type:"scribe-book",bookId:d.id,heroId:h.id})}>Transcrever · {fmt(price)} ouro</button>
+     </div>;
+  })}</div>
+ </section>;
+}
+
 function GuildPage({
   state, act, busy, onExport, onImport, onReset
 }: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void }) {
@@ -783,6 +809,7 @@ function GuildPage({
       return <div key={r.id}><ItemArt itemKey={r.result}/><span><strong>{ITEMS[r.result]?.name}</strong><small>{Object.entries(r.materials).map(([k,q])=>q+"× "+(ITEMS[k]?.name||k)).join(" + ")}</small></span>
       <button className="small-button" disabled={busy||!enough||state.gold<r.cost||state.chest.length>=120} onClick={()=>act({type:"craft",recipeId:r.id})}>Forjar · {fmt(r.cost)}</button></div>;
     })}{!state.hq.forge&&<p>Melhore a Forja para liberar receitas.</p>}</div></section>
+    <SupremeLibraryPanel state={state} act={act} busy={busy}/>
     <div className="guild-grid">
       <section className="guild-mini parchment"><h3>Mapa do Mundo</h3><div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}><strong>{i+1}. {r.name}</strong><small>{r.theme}</small></button>)}</div></section>
       <AcademyPanel state={state} act={act} busy={busy} />

@@ -18,5 +18,6 @@ for(const p of [".game-symbol--gold",".game-symbol--reward",".symbol-guide-grid"
 for(const raw of ["⚔","❤","🛡","🎒","📚","⚙","🍺"])
   must(!ui.includes(raw),"Símbolo não padronizado ainda está na interface: "+raw);
 must((ui.match(/<GameSymbol\s/g)||[]).length>=90,"Cobertura de símbolos inconsistente");
-must((ui.match(/<RealisticTrophy /g)||[]).length>=4,"Troféus medievais ausentes");
+must((ui.match(/className="league-trophy-art"/g)||[]).length>=4,"Troféus em arte aprovada ausentes");
+must(symbols.includes('src="/economy/gold-real.webp"'),"Moeda de ouro realista não aplicada em toda a economia");
 console.log("SIMBOLOS-OK: "+keys.length+" significados, menus, telas, economia e responsividade");

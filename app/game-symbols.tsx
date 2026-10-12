@@ -67,6 +67,13 @@ export function GameSymbol({kind,size=18,className="",label}:{kind:GameSymbolKin
  const spec=GAME_SYMBOLS[kind],Icon=spec.icon;
  const id=useId().replace(/:/g,"");
  const ornamental=MEDIEVAL_EMBLEMS[kind];
+ // A moeda é uma peça física do mundo, não um desenho digital da interface.
+ if(kind==="gold"||kind==="reward"){
+   return <img src="/economy/gold-real.webp" width={size} height={size}
+      className={"game-symbol game-coin game-symbol--"+kind+(className?" "+className:"")}
+      alt={label||""} aria-hidden={label?undefined:true} loading="eager"/>;
+ }
+
  if(ornamental){
    return <svg className={"game-symbol game-emblem game-symbol--"+kind+(className?" "+className:"")}
       width={size} height={size} viewBox="0 0 48 48" role={label?"img":undefined} aria-label={label} aria-hidden={label?undefined:true} xmlns="http://www.w3.org/2000/svg">

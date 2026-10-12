@@ -26,7 +26,6 @@ import { portraitSource } from "@/lib/portraits";
 import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
-import { RealisticTrophy } from "./league-trophy";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, equippedPosition } from "@/lib/catalog-test";
 import { missionLootPreview } from "@/lib/catalog-runtime";
@@ -39,17 +38,29 @@ const ATTRIBUTE_SYMBOLS:Record<string,GameSymbolKind>={Ataque:"attack",Defesa:"d
 
 const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp"];
 const valenMissionArt = Array.from({ length: 7 }, (_, i) => `/reference/valen-mission-${i + 1}.jpg`);
-const LEAGUE_PLAYER_CREST = "/league/crest-player.webp";
-const RIVAL_CREST_NAMES: Record<string,number> = {
-  "Cavaleiros da Tempestade":0, "Escudos da Fronteira":1,
-  "Arautos da Floresta":2, "Andarilhos da Montanha":3, "Arautos da Torre":4
+const LEAGUE_PLAYER_CREST = "/league/crest-alvorecer.webp";
+const LEAGUE_TROPHY = "/league/trophy-real.webp";
+const RIVAL_CREST_NAMES: Record<string,string> = {
+  "escudos da fronteira":"fronteira",
+  "vigias da montanha":"vigias",
+  "dragoes do vale":"dragoes",
+  "guardioes da montanha":"guardioes",
+  "cacadores da torre":"cacadores",
+  // Compatibilidade com campanhas antigas e guildas geradas previamente.
+  "cavaleiros da tempestade":"fronteira",
+  "arautos da floresta":"vigias",
+  "andarilhos da montanha":"guardioes",
+  "arautos da torre":"cacadores"
 };
-function leagueCrest(guild:{id:string;name:string}) {
-  if(guild.id==="player") return LEAGUE_PLAYER_CREST;
-  const named=RIVAL_CREST_NAMES[guild.name];
-  const rivalId=/^rival-(\d+)$/.exec(guild.id);
-  const fallback=rivalId?Number(rivalId[1])%5:Math.abs([...guild.id].reduce((acc,ch)=>acc*31+ch.charCodeAt(0),0))%5;
-  return "/league/crest-rival-"+(named??fallback)+".webp";
+const RIVAL_CRESTS=["fronteira","vigias","dragoes","guardioes","cacadores"];
+function leagueCrest(guild:{id:string;name:string}){
+  if(guild.id==="player")return LEAGUE_PLAYER_CREST;
+  const key=guild.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim();
+  const matching=RIVAL_CREST_NAMES[key];
+  if(matching)return "/league/crest-"+matching+".webp";
+  const guildIndex=/^rival-(\d+)$/.exec(guild.id);
+  const index=guildIndex?Number(guildIndex[1]):[...guild.id].reduce((n,ch)=>(n*31+ch.charCodeAt(0))>>>0,0);
+  return "/league/crest-"+RIVAL_CRESTS[index%RIVAL_CRESTS.length]+".webp";
 }
 const itemSlots = new Set(["weapon","offhand","helmet","armor","gloves","boots","accessory"]);
 const specialtyNames: Record<string,string> = {
@@ -476,14 +487,14 @@ function LeaguePage({ state, team, act, busy }: { state: Campaign; team: string[
   return <section className="screen league-screen">
     <div className="league-summary parchment">
       <div><span>Nossa Posição</span><strong>{place}º</strong></div>
-      <div className="big-crest"><img src={LEAGUE_PLAYER_CREST} alt="Brasão da Guilda do Alvorecer: sol dourado sobre montanhas e fundo azul." width={90} height={104}/></div>
-      <div><h2>{state.name}</h2><p><RealisticTrophy size={28}/> {state.points} Pontos da Liga</p><small><GameSymbol kind="fame"/> Prestígio: {state.fame} · Divisão {rank(state)}</small></div>
+      <div className="big-crest"><img src={LEAGUE_PLAYER_CREST} alt={"Brasão de "+state.name} width={90} height={104}/></div>
+      <div><h2>{state.name}</h2><p><img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={28} height={28}/> {state.points} Pontos da Liga</p><small><GameSymbol kind="fame"/> Prestígio: {state.fame} · Divisão {rank(state)}</small></div>
     </div>
-    <ParchmentTitle icon={<RealisticTrophy size={31}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
+    <ParchmentTitle icon={<img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={31} height={31}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
     <div className="league-table parchment">
-      <div className="league-head"><b>#</b><b>Guilda</b><b><RealisticTrophy size={18}/> Pontos</b><b><GameSymbol kind="reward"/> Recompensa</b></div>
+      <div className="league-head"><b>#</b><b>Guilda</b><b><img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={18} height={18}/> Pontos</b><b><GameSymbol kind="reward"/> Recompensa</b></div>
       {table.slice(0,5).map((g,i) => <div key={g.id} className="league-row" data-player={g.id === "player"}>
-        <strong>{i+1}</strong><span><span className="league-crest-frame"><img className="league-rival-crest" src={leagueCrest(g)} alt={"Brasão de "+g.name} width={42} height={48}/></span>{g.name}</span><b><RealisticTrophy size={25}/> {g.points}</b><small><GameSymbol kind="reward"/> {leaguePrize(i+1, state.leagueTier)} ouro</small>
+        <strong>{i+1}</strong><span><img className="league-rival-crest" src={leagueCrest(g)} alt={"Brasão de "+g.name} width={42} height={48}/>{g.name}</span><b><img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={25} height={25}/> {g.points}</b><small><GameSymbol kind="reward"/> {leaguePrize(i+1, state.leagueTier)} ouro</small>
       </div>)}
     </div>
     <ParchmentTitle icon={<GameSymbol kind="battle"/>} title="Desafio de Guilda" side={<span>Equipe: {team.length}/4</span>} />
@@ -840,7 +851,7 @@ function GuildPage({
   const raidTeams = availableRaidHeroes.length >= 9 ? [availableRaidHeroes.slice(0,3).map(h=>h.id),availableRaidHeroes.slice(3,6).map(h=>h.id),availableRaidHeroes.slice(6,9).map(h=>h.id)] : [];
   return <section className="screen guild-screen">
     <div className="guild-identity parchment">
-      <div className="guild-banner"><img src={LEAGUE_PLAYER_CREST} alt="Brasão da Guilda do Alvorecer" width={88} height={102}/></div>
+      <div className="guild-banner"><img src={LEAGUE_PLAYER_CREST} alt={"Brasão de "+state.name} width={88} height={102}/></div>
       <div><h2>{state.name}</h2><p>Força na união, glória em cada jornada.</p><span><GameSymbol kind="squad"/> Membros: {state.heroes.length}/12</span><span><GameSymbol kind="defense"/> Nível da Guilda: {Math.max(1,Math.ceil(state.fame/120))}</span></div>
       <aside><strong><GameSymbol kind="gold"/> Tesouro {fmt(state.gold)}</strong><strong><GameSymbol kind="fame"/> Renome {state.fame}</strong><strong><GameSymbol kind="league"/> Liga {rank(state)}</strong></aside>
     </div>
@@ -851,7 +862,13 @@ function GuildPage({
       const arts = ["/reference/guild-training.webp","/reference/guild-market.webp","/reference/guild-sanctuary.webp","/reference/guild-workshop.webp"];
       return <article key={key}><img src={arts[index%arts.length]} alt="" /><div><h3>{spec.name} <small>Nv. {lvl}</small></h3><p>{spec.description}</p></div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
-    <section className="parchment catalog-forge"><h3><GameSymbol kind="forge" size={18}/> Forja · Nv. {state.hq.forge}</h3><small>Consome materiais e taxa em ouro. Sem itens gratuitos.</small>
+    <section className="parchment catalog-forge"><h3><GameSymbol kind="forge" size={18}/> Forja · Nv. {state.hq.forge}</h3>
+    <div className="guild-forjador">
+      <img src="/guild/forjador.webp" alt="O Forjador, mestre artesão da guilda, trabalhando com martelo e bigorna diante da fornalha." width={720} height={960} loading="lazy"/>
+      <div><strong>O Forjador</strong><p>O mestre artesão da guilda transforma recursos raros em armas e equipamentos. Traga seus materiais, pague a taxa e escolha sua encomenda.</p>
+       <small>{state.hq.forge>0?"Forja disponível · nível "+state.hq.forge:"Aprimore a Forja na Sede para liberar suas receitas."}</small></div>
+    </div>
+    <small>Consome materiais e taxa em ouro. Sem itens gratuitos.</small>
     <div className="catalog-shop">{TEST_RECIPES.filter(r=>r.forge>0&&r.forge<=state.hq.forge).slice(0,16).map(r=>{
       const enough=Object.entries(r.materials).every(([k,q])=>state.chest.filter(i=>i.key===k&&!i.equippedTo).length>=q);
       return <div key={r.id}><ItemArt itemKey={r.result}/><span><strong>{ITEMS[r.result]?.name}</strong><small>{Object.entries(r.materials).map(([k,q])=>q+"× "+(ITEMS[k]?.name||k)).join(" + ")}</small></span>

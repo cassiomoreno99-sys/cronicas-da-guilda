@@ -2212,3 +2212,94 @@ svg.game-symbol.game-emblem{stroke:initial;stroke-width:initial;filter:drop-shad
  .stat-grid b svg.game-emblem{width:23px;height:23px;min-width:23px;min-height:23px;flex-basis:23px}
  .stat-grid b em{font-size:11px}
 }
+
+/* Artes aprovadas: brasões originais isolados, sem banners antigos ou molduras que cortem. */
+.league-screen .league-row .league-rival-crest {
+  display:block;
+  flex:0 0 auto;
+  width:clamp(38px,4.1vw,54px);
+  height:clamp(46px,5vw,64px);
+  object-fit:contain;
+  object-position:center;
+  clip-path:none;
+  background:transparent;
+  filter:drop-shadow(0 2px 2px rgba(50,28,11,.35));
+}
+.league-screen .league-row>span{overflow:visible;min-width:0}
+.league-summary .big-crest,.guild-banner{background:transparent;clip-path:none;overflow:visible}
+.league-summary .big-crest img,.guild-banner img{
+  display:block;object-fit:contain;object-position:center;
+  background:transparent;clip-path:none;
+}
+.league-screen .league-trophy-art{
+  display:inline-block;
+  vertical-align:middle;
+  width:clamp(20px,2.25vw,32px);
+  height:clamp(23px,2.55vw,36px);
+  min-width:0;min-height:0;
+  object-fit:contain;
+  flex:0 0 auto;
+  background:transparent;
+  filter:drop-shadow(0 2px 1px #5b321e66);
+}
+.league-screen .league-head .league-trophy-art{width:20px;height:25px}
+.league-screen .league-row>b .league-trophy-art{width:27px;height:32px}
+.league-screen .league-row .league-rival-crest{max-width:none;max-height:none}
+.league-screen .league-head>b,.league-screen .league-row>b{white-space:nowrap}
+/* Símbolos da economia: moedas fotorrealistas com fundo transparente. */
+img.game-symbol.game-coin{
+  width:27px;height:27px;min-width:22px;min-height:22px;max-width:none;
+  display:inline-block;vertical-align:middle;object-fit:contain;
+  box-sizing:border-box;
+  padding:0;border:0;border-radius:0;background:transparent;
+  box-shadow:none;filter:drop-shadow(0 1px 1px #50300e85);
+  flex:0 0 auto;
+}
+.header-resources button img.game-symbol--gold{width:30px;height:27px}
+.game-content img.game-symbol--gold,.game-content img.game-symbol--reward{color:inherit}
+.mission-rewards img.game-coin,.league-row img.game-coin{width:30px;height:26px}
+.catalog-shop button img.game-coin,.item-actions button img.game-coin{width:27px;height:25px}
+.guild-identity aside img.game-coin,.building-list img.game-coin{width:29px;height:27px}
+/* Mestre artesão: personagem visível mesmo antes de desbloquear receitas. */
+.guild-forjador{
+  margin:10px 0 12px;
+  display:grid;
+  grid-template-columns:minmax(100px,185px) minmax(0,1fr);
+  gap:clamp(12px,1.8vw,24px);
+  padding:10px;
+  align-items:center;
+  background:linear-gradient(100deg,#3d251b,#714129 26%,#d2a568 100%);
+  border:2px ridge #a77234;
+  border-radius:6px;
+  box-shadow:inset 0 0 10px #1a0d0755;
+}
+.guild-forjador>img{
+  display:block;
+  width:100%;height:auto;max-height:235px;object-fit:contain;
+  box-shadow:0 2px 8px #120b0880;
+  border:1px solid #c79b53;
+}
+.guild-forjador>div{display:grid;gap:8px;align-content:center;color:#fff2cf}
+.guild-forjador strong{
+  font-size:clamp(19px,2vw,27px);
+  color:#ffdf9b;text-shadow:0 2px 3px #21120a;
+}
+.guild-forjador p{font-size:clamp(12px,1.2vw,16px);line-height:1.45;margin:0;color:#fff1d2}
+.guild-forjador small{font-size:clamp(10px,1vw,13px);font-weight:700;color:#ffd283}
+@media(max-width:650px){
+  .league-screen .league-row .league-rival-crest{width:33px;height:41px}
+  .league-screen .league-head .league-trophy-art{width:17px;height:20px}
+  .league-screen .league-row>b .league-trophy-art{width:18px;height:23px}
+  .header-resources button img.game-symbol--gold{width:26px;height:25px}
+  img.game-symbol.game-coin{width:25px;height:23px;min-width:20px;min-height:20px}
+  .guild-forjador{grid-template-columns:118px minmax(0,1fr);gap:10px;padding:8px}
+  .guild-forjador>img{max-height:180px}
+  .guild-forjador strong{font-size:18px}
+  .guild-forjador p{font-size:11px;line-height:1.32}
+  .guild-forjador small{font-size:10px}
+}
+@media(max-width:380px){
+  .guild-forjador{grid-template-columns:94px minmax(0,1fr)}
+  .guild-forjador>img{max-height:150px}
+  .league-screen .league-row .league-rival-crest{width:28px;height:35px}
+}

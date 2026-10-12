@@ -1779,3 +1779,28 @@ img{display:block;max-width:100%}
   :root{--max-app:920px}
   .mission-card{min-height:185px}
 }
+
+/* Recursos exclusivos do catálogo em teste. Não afeta produção. */
+.catalog-shop{display:grid;gap:6px;margin:7px 0;padding:4px;max-height:380px;overflow-y:auto}
+.catalog-shop>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px;background:#e7ca88;border:1px solid #977344;color:#512b19;border-radius:5px}
+.catalog-shop strong,.catalog-shop small{display:block;line-height:1.2}
+.catalog-shop strong{font-size:11px}
+.catalog-shop small{font-size:9px;margin-top:3px}
+.catalog-shop button{min-width:99px;font-size:10px;white-space:normal;min-height:32px}
+.catalog-forge{padding:12px}
+.catalog-forge>h3{display:flex;align-items:center;gap:7px;margin:0 0 5px;font-size:20px;color:#6c2619}
+.catalog-forge>small{font-size:11px;color:#553822}
+.catalog-equippable{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:12px}
+.catalog-equippable button{min-width:0;white-space:normal;min-height:40px}
+.item-art>svg{width:65%;height:65%;max-width:45px;color:#f6dca0;stroke-width:1.5;filter:drop-shadow(0 2px 4px #000d)}
+.item-art.rarity-common{background:linear-gradient(130deg,#293744,#55606d)}
+.item-art.rarity-uncommon{background:linear-gradient(130deg,#153426,#236c43)}
+.item-art.rarity-rare{background:linear-gradient(130deg,#132b50,#225da0)}
+.item-art.rarity-epic{background:linear-gradient(130deg,#30154e,#64338b)}
+.item-art.rarity-legendary{background:linear-gradient(130deg,#544014,#ac6b21)}
+@media(max-width:430px){
+ .catalog-shop>div{grid-template-columns:minmax(0,1fr) 105px;gap:4px}
+ .catalog-shop strong{font-size:10px}
+ .catalog-shop small{font-size:8px}
+ .catalog-shop button{min-width:0;font-size:9px}
+}

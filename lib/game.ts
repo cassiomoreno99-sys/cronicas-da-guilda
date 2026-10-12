@@ -1,3 +1,5 @@
+import { TEST_ITEMS, TEST_RECIPES, CATALOG_ITEMS } from "./catalog-test.ts";
+import { handleCatalogAction, awardCatalogLoot, setBonuses } from "./catalog-runtime.ts";
 import { CLASSIC_CLASS_IDS, V130_BASE_STATS, WORLD_REGIONS, HQ_BUILDINGS, HERO_SCARS, LEVEL_ABILITIES, V130_ITEMS, ITEM_SETS, CRAFT_RECIPES, uniqueAdventurerName } from "./v130-content.ts";
 export type HeroClass = "warrior" | "mage" | "healer" | "rogue" | "ranger" | "paladin" | "monk" | "necromancer" | "druid" | "bard";
 export type HeroRace = "human" | "elf" | "dwarf" | "orc" | "beastkin" | "umbral";
@@ -17,7 +19,7 @@ export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace
 export type Ledger = { id: number; day: number; label: string; amount: number };
 export type ItemSlot = "weapon" | "offhand" | "helmet" | "armor" | "gloves" | "boots" | "accessory" | "consumable" | "material" | "quest" | "treasure";
 export type ItemDef = { name: string; slot: ItemSlot; race?: HeroRace; rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"; value: number; description: string; attack?: number; defense?: number; magic?: number; hp?: number; speed?: number; critical?: number; luck?: number; set?: string; classes?: HeroClass[]; levelReq?: number; material?: string };
-export type ChestItem = { id: string; key: string; equippedTo?: string };
+export type ChestItem = { id: string; key: string; equippedTo?: string; equippedSlot?: string };
 export type EventChoice = { id: string; label: string; effect: string; cost?: number };
 export type GuildEvent = { id: string; kind: "village" | "offer" | "map" | "caravan" | "retaliation"; title: string; text: string; heroId?: string; rivalId?: string; choices: EventChoice[] };
 export type RivalHero = Hero & { loyalty: number };
@@ -128,7 +130,7 @@ export const TACTICS: Record<Tactic, { name: string; description: string; damage
   defensive: { name: "Defensiva", description: "−25% de dano, −20% de dano recebido. Gasta 16 de energia.", damage: .75, incoming: .8, fatigue: 16 },
 };
 // Itens removidos; catálogo deliberadamente vazio.
-export const ITEMS: Record<string, ItemDef> = {};
+export const ITEMS: Record<string, ItemDef> = TEST_ITEMS;
 export const SLOT_NAMES: Record<ItemSlot, string> = { weapon: "Arma", offhand: "Mão secundária", helmet: "Elmo", armor: "Armadura", gloves: "Luvas", boots: "Botas", accessory: "Acessório", consumable: "Consumível", material: "Material", quest: "Acesso", treasure: "Tesouro" };
 export const RARITY_NAMES = { common: "Comum", uncommon: "Incomum", rare: "Raro", epic: "Épico", legendary: "Lendário" };
 export const REGIONS = WORLD_REGIONS.map(region => region.name);
@@ -400,6 +402,12 @@ export function heroStats(h: Hero, s?: Campaign) {
     }
   }
   if (s?.hq?.library) n.magic += Math.floor(s.hq.library / 2);
+  if(s){
+    const extra=setBonuses(s,h.class,equipped.map(i=>i.key));
+    for(const key of ["attack","defense","magic","hp","speed","critical","healing","luck"] as const)n[key]+=extra[key];
+  }
+  n.critical=Math.max(0,Math.min(.45,n.critical));
+  n.luck=Math.max(0,Math.min(.45,n.luck));
   return n;
 }
 export function heroLuck(h: Hero, s?: Campaign) { return Math.max(0, Math.min(.45, heroStats(h, s).luck)); }
@@ -475,7 +483,7 @@ export function hqUpgradeCost(s: Campaign, building: HQBuilding) {
 export function academySlots(s: Campaign) { return s.hq?.academy ? Math.min(4, 1 + s.hq.academy) : 0; }
 export const HQ_DEFINITIONS = HQ_BUILDINGS;
 export const WORLD_MAP = WORLD_REGIONS;
-export const CRAFTING_RECIPES = CRAFT_RECIPES;
+export const CRAFTING_RECIPES = TEST_RECIPES;
 export const ITEM_SET_DEFINITIONS = ITEM_SETS;
 export const SCAR_DEFINITIONS = HERO_SCARS;
 
@@ -720,12 +728,13 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   for (const h of s.heroes) if (s.team.length < 4 && !deployed.has(h.id) && !s.team.includes(h.id) && h.energy >= 25 && h.injuredUntil <= s.day && !activeJourney(s, h.id)) s.team.push(h.id);
   s.formation = normalizedFormation(s);
   // Limpeza dos itens inclusive em saves antigos, para não reaparecerem ao atualizar.
-  s.chest = []; s.itemSequence = 0;
+  s.chest = Array.isArray(s.chest) ? s.chest.filter(i=>!!ITEMS[i.key]) : [];
+  s.itemSequence = Math.max(s.itemSequence||0,0,...s.chest.map(i=>Number(i.id.match(/-(\d+)$/)?.[1]||0)));
   s.journeys.forEach(j => { j.loot = []; });
   s.raidHistory.forEach(r => { r.loot = []; });
   if (s.lastBattle) { s.lastBattle.loot = []; if (s.lastBattle.combat) delete s.lastBattle.combat.pendingConsumable; }
   s.expeditions.forEach(e => { e.battle.loot = []; if (e.battle.combat) delete e.battle.combat.pendingConsumable; });
-  s.region ??= 1; s.bossSeasons ??= []; s.shopPurchases = [];
+  s.region ??= 1; s.bossSeasons ??= []; s.shopPurchases ??= [];
   s.rivalAttempts ??= []; s.lastNegotiation ??= null;
   s.rivals = s.rivals.slice(0, LEAGUE_SIZE - 1).map((r, i) => r.heroes?.length && r.strength && r.recruitSequence !== undefined ? r : { ...createRival(i, s), ...r });
   const ids = new Set(s.rivals.map(r => r.id));
@@ -1119,7 +1128,7 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   const battleTeam = c.fighters.filter(f => f.side === "hero").map(f => f.id);
   awardSquadExperience(s, battleTeam, m.kind, won);
   if (won) {
-    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = [];
+    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s);
     if (m.kind === "boss") {
       s.bossSeasons.push(s.season);
       if (s.activeRegion >= s.region && s.region < WORLD_REGIONS.length) { s.region++; b.regionUnlocked = s.region; }
@@ -1348,7 +1357,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     }
     case "upgrade-hq": {
       const spec = HQ_BUILDINGS[action.building]; requireRule(spec, "Construção da sede inválida.");
-      requireRule(action.building !== "forge", "A Forja está desativada enquanto não houver itens.");
+      // Forja disponível apenas na branch experimental.
       const current = s.hq[action.building] || 0; requireRule(current < spec.max, spec.name + " já está no nível máximo.");
       const cost = hqUpgradeCost(s, action.building); requireRule(s.gold >= cost, "Essa melhoria custa " + cost + " ouro.");
       entry(s, "Sede · " + spec.name + " Nv." + (current + 1), -cost); s.hq[action.building] = current + 1;
@@ -1369,7 +1378,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       requireRule(Number.isInteger(action.region) && action.region >= 1 && action.region <= s.region && action.region <= WORLD_REGIONS.length, "Essa região ainda não foi desbloqueada.");
       s.activeRegion = action.region; note(s, "A guilda estabeleceu operações em " + WORLD_REGIONS[action.region - 1].name + "."); break;
     }
-    case "craft": requireRule(false, "A Forja não possui receitas enquanto o catálogo estiver vazio."); break;
+    case "craft": handleCatalogAction(s,action,entry); break;
     case "guild-raid": resolveGuildRaid(s, action.teams, action.rivalId); break;
     case "rival-battle": resolveRivalBattle(s, action.guildId, action.team); break;
     case "expedition-tick": {
@@ -1418,7 +1427,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "equip":
     case "unequip":
     case "sell":
-    case "buy": requireRule(false, "O catálogo de itens foi removido do jogo."); break;
+    case "buy": handleCatalogAction(s,action,entry); break;
     case "specialize": {
       const h = s.heroes.find(h => h.id === action.heroId); requireRule(h && ["offense", "healing", "defense"].includes(action.path), "Escolha uma especialização válida para o herói."); requireRule(!heroOnExpedition(s, h.id), "Esse herói está em expedição.");
       requireRule(talentPoints(h) > 0, "Esse herói precisa alcançar os níveis 4, 7 ou 10 para ganhar um ponto de evolução.");

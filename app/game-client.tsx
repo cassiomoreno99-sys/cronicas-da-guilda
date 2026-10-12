@@ -633,6 +633,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const [catalogSelection,setCatalogSelection] = useState("CG-001");
   const [selectedId,setSelectedId] = useState(state.chest[0]?.id || "");
   const [recipient,setRecipient] = useState(state.heroes[0]?.id || "");
+  const [useHero,setUseHero] = useState(state.heroes[0]?.id || "");
   const filtered = state.chest.filter(i => {
     const slot = ITEMS[i.key]?.slot;
     if (filter === "all") return slot !== "material";
@@ -703,7 +704,15 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
         <div className="item-actions">
           {itemSlots.has(def.slot) && (owner ? <button className="action-button blue" disabled={busy} onClick={() => act({type:"unequip",itemId:selected.id})}>Desequipar</button> : <button className="action-button green" disabled={busy || !target} onClick={() => target && act({type:"equip",itemId:selected.id,heroId:target})}>Equipar</button>)}
           {!owner && def.value>0 && <button className="action-button blue" disabled={busy} onClick={() => act({type:"sell",itemId:selected.id})}><Coins /> Vender · {def.value}</button>}
-          {def.slot === "consumable" && <div className="combat-only-note">Consumível de combate</div>}
+          {def.slot==="consumable"&&(()=>{
+            const outside=/energia|após uma expedição|entre expedições|eficiência/i.test(CATALOG_BY_ID[selected.key]?.efeito||"");
+            return outside?<div className="catalog-consume">
+              <select value={useHero} onChange={e=>setUseHero(e.target.value)}>
+                {state.heroes.map(h=><option key={h.id} value={h.id}>{h.name} · Nv. {h.level}</option>)}
+              </select>
+              <button className="action-button green" disabled={busy} onClick={()=>act({type:"use-item",itemId:selected.id,heroId:useHero})}>Utilizar na sede</button>
+             </div>:<div className="combat-only-note">Usar durante uma batalha.</div>;
+          })()}
         </div>
       </article> : <div className="item-detail parchment empty-detail">Inventário vazio. Consiga materiais em missões ou visite o mercador.</div>}
     </div>
@@ -939,6 +948,10 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
       {!active&&!!battle.loot?.length&&<div className="battle-loot parchment"><strong>Itens encontrados:</strong> {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</div>}
        <div className="battle-actions">
         <button type="button" className="cinema-open-button" onClick={() => setCinematic(true)}><Sparkles aria-hidden="true"/> Abrir Arena Cinematográfica <ChevronRight aria-hidden="true"/></button>
+        {active&&<div className="battle-item-actions">{state.chest.filter(i=>ITEMS[i.key]?.slot==="consumable"&&!/energia|após uma expedição|entre expedições/i.test(CATALOG_BY_ID[i.key]?.efeito||"")).slice(0,5).map(i=>
+          <button key={i.id} className="action-button blue" disabled={busy||(battle.combat?.consumablesUsed||0)>=3}
+            onClick={()=>act({type:"battle-item",itemId:i.id,expeditionId:expedition.id})}><ItemArt itemKey={i.key}/>{ITEMS[i.key]?.name}</button>
+        )}</div>}
         {active&&<div className="supreme-battle-actions">{heroes.filter(f=>state.heroes.some(h=>h.id===f.id&&h.supremeBook)).map(f=>{
           const h=state.heroes.find(h=>h.id===f.id)!;
           const used=battle.combat?.supremeUsed?.[f.id];

@@ -787,11 +787,9 @@ function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) 
   const [draft,setDraft] = useState<string[]>(state.academy.trainees);
   useEffect(() => setDraft(state.academy.trainees), [state.academy.trainees.join(",")]);
   if (!slots) return <div className="guild-mini parchment"><h3>Academia</h3>
-  <GuildRoomArt room="academy" label="Academia da Cidadela Azul e Dourada, pátio medieval de treinamento."/>
   <p>Melhore a Academia para liberar aprendizes.</p></div>;
   const toggle = (id:string) => setDraft(old => old.includes(id) ? old.filter(x => x !== id) : old.length < slots ? [...old,id] : old);
   return <div className="guild-mini parchment"><h3>Academia · {draft.length}/{slots}</h3>
-  <GuildRoomArt room="academy" label="Academia da Cidadela Azul e Dourada, pátio dos heróis."/>
   <div className="academy-heroes">{state.heroes.slice(0,8).map(h => <button key={h.id} data-active={draft.includes(h.id)} onClick={() => toggle(h.id)}><HeroPortrait hero={h}/><span>{h.name.split(" ")[0]}</span></button>)}</div><button className="small-button" disabled={busy} onClick={() => act({type:"academy-trainees",heroIds:draft})}>Salvar aprendizes</button>
     <select value={state.academy.mentorId || ""} onChange={e => act({type:"academy-mentor",heroId:e.target.value || undefined})}><option value="">Sem mentor</option>{state.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select>
   </div>;
@@ -820,7 +818,6 @@ function SupremeLibraryPanel({state,act,busy}:{state:Campaign;act:(a:Action)=>vo
  const books=CATALOG_ITEMS.filter(d=>d.categoria==="Livro de magia suprema"&&d.classes.includes(map[h?.class]||""));
  return <section className="parchment catalog-forge supreme-library" aria-label="Livros supremos">
   <h3><GameSymbol kind="book"/> Biblioteca dos 14 Livros Supremos</h3>
-  <GuildRoomArt room="library" label="Biblioteca Arcana sob os céus estrelados, com grimórios e magia."/>
   <p>A prova de classe exige história pessoal concluída, biblioteca nível 3, um chefe regional derrotado, materiais raros e ouro. O herói só aprende um livro.</p>
   <label>Herói da prova <select value={h?.id||""} onChange={e=>setSelectedHero(e.target.value)}>
    {state.heroes.map(x=><option key={x.id} value={x.id}>{x.name} · {CLASSES[x.class].name} · Nv. {x.level}</option>)}
@@ -896,7 +893,6 @@ function GuildPage({
       <section className="guild-mini parchment"><h3>Mapa do Mundo</h3><div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}><strong>{i+1}. {r.name}</strong><small>{r.theme}</small></button>)}</div></section>
       <AcademyPanel state={state} act={act} busy={busy} />
       <section className="guild-mini parchment"><h3>Sala de Guerra · Guerra de Guildas</h3>
-        <GuildRoomArt room="warroom" label="Sala de Guerra na fortaleza, mapas e comandantes medievais."/>
         <p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
     </div>
     <RivalRecruitPanel state={state} act={act} busy={busy} />

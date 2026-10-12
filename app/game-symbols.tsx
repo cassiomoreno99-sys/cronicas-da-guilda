@@ -59,8 +59,7 @@ const MEDIEVAL_EMBLEMS: Partial<Record<GameSymbolKind,{center:string;dark:string
   battle:  {center:"#a84f29",dark:"#391d16"},
   difficulty:{center:"#9b4535",dark:"#3c1e1b"},
   boss:    {center:"#8e292d",dark:"#250b13"},
-  elite:   {center:"#836227",dark:"#332611"},
-  strength:{center:"#aa6226",dark:"#472412"}
+  elite:   {center:"#836227",dark:"#332611"}
 };
 
 /** Ícones de atributo em medalhões de esmalte e metal com volume, não símbolos de interface plana. */

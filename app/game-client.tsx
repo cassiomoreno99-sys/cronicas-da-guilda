@@ -26,6 +26,7 @@ import { portraitSource } from "@/lib/portraits";
 import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
+import { RealisticTrophy } from "./league-trophy";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, equippedPosition } from "@/lib/catalog-test";
 import { missionLootPreview } from "@/lib/catalog-runtime";
@@ -38,7 +39,6 @@ const ATTRIBUTE_SYMBOLS:Record<string,GameSymbolKind>={Ataque:"attack",Defesa:"d
 
 const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp"];
 const valenMissionArt = Array.from({ length: 7 }, (_, i) => `/reference/valen-mission-${i + 1}.jpg`);
-const LEAGUE_TROPHY = "/league/trophy.webp";
 const LEAGUE_PLAYER_CREST = "/league/crest-player.webp";
 const RIVAL_CREST_NAMES: Record<string,number> = {
   "Cavaleiros da Tempestade":0, "Escudos da Fronteira":1,
@@ -342,18 +342,6 @@ function MissionPage({
   const boss = seasonBoss(state);
   const cards = [...board, ...(boss ? [boss] : [])];
   return <section className="screen mission-screen">
-    {state.activeRegion===1&&<details className="enemy-dossier parchment">
-      <summary>
-        <img src="/reference/olho-rubro-report-2026.webp" alt="" loading="lazy"/>
-        <span><strong>Relatório de reconhecimento · Olho Rubro</strong>
-          <small>Acampamento hostil, bandeiras e movimentações inimigas. Abrir relatório ilustrado.</small></span>
-        <GameSymbol kind="objective" size={23}/>
-      </summary>
-      <div className="enemy-dossier-content">
-        <img src="/reference/olho-rubro-report-2026.webp" alt="Relatório ilustrado sobre o posto avançado do Olho Rubro, com fortificações, estandartes, objetivos e recomendações de reconhecimento." loading="lazy"/>
-        <p>Registro de inteligência sobre o Olho Rubro. Os objetivos, dificuldades e recompensas válidos para jogar estão nas missões abaixo.</p>
-      </div>
-    </details>}
     <div className="mission-list">
       {cards.map((m, index) => {
         const locks = missionLocks(state, m);
@@ -489,18 +477,18 @@ function LeaguePage({ state, team, act, busy }: { state: Campaign; team: string[
     <div className="league-summary parchment">
       <div><span>Nossa Posição</span><strong>{place}º</strong></div>
       <div className="big-crest"><img src={LEAGUE_PLAYER_CREST} alt="Brasão da Guilda do Alvorecer: sol dourado sobre montanhas e fundo azul." width={90} height={104}/></div>
-      <div><h2>{state.name}</h2><p><img className="league-trophy" src={LEAGUE_TROPHY} alt="" width={24} height={29}/> {state.points} Pontos da Liga</p><small><GameSymbol kind="fame"/> Prestígio: {state.fame} · Divisão {rank(state)}</small></div>
+      <div><h2>{state.name}</h2><p><RealisticTrophy size={28}/> {state.points} Pontos da Liga</p><small><GameSymbol kind="fame"/> Prestígio: {state.fame} · Divisão {rank(state)}</small></div>
     </div>
-    <ParchmentTitle icon={<img className="league-trophy" src={LEAGUE_TROPHY} alt="" width={29} height={35}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
+    <ParchmentTitle icon={<RealisticTrophy size={31}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
     <div className="league-table parchment">
-      <div className="league-head"><b>#</b><b>Guilda</b><b><img className="league-trophy" src={LEAGUE_TROPHY} alt="" width={17} height={21}/> Pontos</b><b><GameSymbol kind="reward"/> Recompensa</b></div>
+      <div className="league-head"><b>#</b><b>Guilda</b><b><RealisticTrophy size={18}/> Pontos</b><b><GameSymbol kind="reward"/> Recompensa</b></div>
       {table.slice(0,5).map((g,i) => <div key={g.id} className="league-row" data-player={g.id === "player"}>
-        <strong>{i+1}</strong><span><img className="league-rival-crest" src={leagueCrest(g)} alt={"Brasão de "+g.name} width={42} height={48}/>{g.name}</span><b><img className="league-trophy" src={LEAGUE_TROPHY} alt="" width={22} height={28}/> {g.points}</b><small><GameSymbol kind="reward"/> {leaguePrize(i+1, state.leagueTier)} ouro</small>
+        <strong>{i+1}</strong><span><span className="league-crest-frame"><img className="league-rival-crest" src={leagueCrest(g)} alt={"Brasão de "+g.name} width={42} height={48}/></span>{g.name}</span><b><RealisticTrophy size={25}/> {g.points}</b><small><GameSymbol kind="reward"/> {leaguePrize(i+1, state.leagueTier)} ouro</small>
       </div>)}
     </div>
     <ParchmentTitle icon={<GameSymbol kind="battle"/>} title="Desafio de Guilda" side={<span>Equipe: {team.length}/4</span>} />
     <div className="guild-challenge parchment">
-      <img src="/reference/league-challenge.webp" alt="" />
+      <img className="guild-challenge-art" src="/reference/olho-rubro-report-2026.webp" alt="Relatório completo do Olho Rubro: estandarte, reduto inimigo e informações da missão." width={1536} height={1024} />
       <div><h2>{rivalData?.name || "Guilda Rival"}</h2><p>Uma guilda rival disputa influência e prestígio. Derrote-a para fortalecer sua posição.</p>
         <span><GameSymbol kind="league"/> {rivalData?.points || 0} pontos</span><span><GameSymbol kind="attack"/> Força {rivalData?.strength || 0}</span>
       </div>

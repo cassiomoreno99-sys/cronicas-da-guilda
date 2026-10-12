@@ -1,4 +1,5 @@
 import { TEST_ITEMS, TEST_RECIPES, CATALOG_ITEMS, CATALOG_BY_ID } from "./catalog-test.ts";
+import { performSupreme, type SupremeUnit } from "./supreme-abilities.ts";
 import { handleCatalogAction, awardCatalogLoot, setBonuses } from "./catalog-runtime.ts";
 import { CLASSIC_CLASS_IDS, V130_BASE_STATS, WORLD_REGIONS, HQ_BUILDINGS, HERO_SCARS, LEVEL_ABILITIES, V130_ITEMS, ITEM_SETS, CRAFT_RECIPES, uniqueAdventurerName } from "./v130-content.ts";
 export type HeroClass = "warrior" | "mage" | "healer" | "rogue" | "ranger" | "paladin" | "monk" | "necromancer" | "druid" | "bard";
@@ -1158,6 +1159,8 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
 function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
   const c = b.combat!, m = c.mission;
   const round = ++b.rounds, log = b.log, heroes = () => c.fighters.filter(f => f.side === "hero" && f.hp > 0), enemies = () => c.fighters.filter(f => f.side === "enemy" && f.hp > 0);
+  c.supremeUsed ??= {}; c.revivedIds ??= [];
+  c.damagePrevious={...(c.damageThis||{})};c.damageThis={};
   const addStatus = (target: Combatant, kind: StatusKind, rounds: number, amount?: number, sourceId?: string) => {
     const existing = target.statuses.find(x => x.kind === kind && kind !== "shield");
     if (existing) { existing.rounds = Math.max(existing.rounds, rounds); if (amount !== undefined) existing.amount = Math.max(existing.amount || 0, amount); existing.sourceId = sourceId || existing.sourceId; }
@@ -1165,6 +1168,20 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
   };
   const hit = (target: Combatant, amount: number, text: string, actorId?: string, critical = false, bypassShield = false, kind: BattleLog["kind"] = "hit") => {
     if (target.statuses.some(x => x.kind === "vulnerable")) amount *= 1.15;
+    const attacker=actorId?c.fighters.find(f=>f.id===actorId):undefined;
+    const dodge=target.statuses.find(x=>x.kind==="dodge"&&(x.amount||0)>0);
+    if(dodge&&attacker&&attacker.side!==target.side){
+      dodge.amount=(dodge.amount||0)-1;
+      log.push({round,text:target.name+" se esquivou do ataque.",kind:"status",targetId:target.id,targetHp:target.hp});
+      if(target.statuses.some(x=>x.kind==="riposte")){
+        target.statuses=target.statuses.filter(x=>x.kind!=="riposte");
+        hit(attacker,Math.max(1,target.attack*1.8-attacker.defense*.4),target.name+" contra-ataca "+attacker.name+": ",target.id,false,false,"ability");
+      }
+      if(dodge.amount<=0)target.statuses=target.statuses.filter(x=>x!==dodge);
+      return 0;
+    }
+    const ward=target.statuses.find(x=>x.kind==="ward");
+    if(ward)amount*=1-Math.min(.6,Math.max(0,ward.amount||0));
     let blocked = 0;
     if (!bypassShield) for (const shield of target.statuses.filter(x => x.kind === "shield" && (x.amount || 0) > 0)) {
       const absorb = Math.min(amount, shield.amount || 0); shield.amount = Math.max(0, (shield.amount || 0) - absorb); amount -= absorb; blocked += absorb; if (amount <= 0) break;
@@ -1172,7 +1189,14 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     target.statuses = target.statuses.filter(x => x.kind !== "shield" || (x.amount || 0) > 0);
     if (blocked > 0) log.push({ round, text: target.name + " absorveu " + Math.round(blocked) + " de dano com o escudo.", kind: "status", targetId: target.id, targetHp: target.hp, amount: Math.round(blocked) });
     if (amount <= .5) return 0;
-    amount = Math.max(1, Math.round(amount)); const before = target.hp; target.hp = Math.max(0, target.hp - amount); const dealt = before - target.hp;
+    amount = Math.max(1, Math.round(amount)); const before = target.hp;
+    const rescue=target.statuses.find(x=>x.kind==="lastStand");
+    if(rescue&&amount>=target.hp){
+      amount=Math.max(0,target.hp-1);target.statuses=target.statuses.filter(x=>x!==rescue);
+      log.push({round,text:target.name+" resiste ao golpe fatal graças ao juramento.",kind:"status",targetId:target.id,targetHp:target.hp});
+    }
+    target.hp = Math.max(0, target.hp - amount); const dealt = before - target.hp;
+    if(target.side==="hero"&&attacker?.side==="enemy")c.damageThis![target.id]=(c.damageThis![target.id]||0)+dealt;
     log.push({ round, text: text + dealt + " de dano." + (target.hp === 0 ? " Fora de combate." : ""), kind: target.hp === 0 ? "fall" : critical ? "critical" : kind, actorId, targetId: target.id, targetHp: target.hp, amount: dealt });
     return dealt;
   };
@@ -1194,7 +1218,7 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
   const livingIds = heroes().map(f => f.id);
   const frost = s.heroes.filter(h => livingIds.includes(h.id) && h.class === "mage" && h.talent?.path === "defense").reduce((n, h) => n + .05 * (h.talent?.rank || 0), 0);
   const bardPassive = Math.min(.12, s.heroes.filter(h => livingIds.includes(h.id) && h.class === "bard").length * .04);
-  const actors = c.fighters.filter(f => f.hp > 0).map(f => ({ fighter: f, speed: f.speed + random(s) * 12 })).sort((a, b) => b.speed - a.speed);
+  const actors = c.fighters.filter(f => f.hp > 0).map(f => ({ fighter: f, speed: f.speed*(1-(f.statuses.find(x=>x.kind==="slow")?.amount||0))+random(s)*12 })).sort((a,b)=>b.speed-a.speed);
 
   const executeAbility = (a: Combatant, h: Hero, order: PendingAbility, ability: AbilitySpec) => {
     const allyTarget = heroes().find(f => f.id === order.targetId) || heroes().sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
@@ -1217,6 +1241,19 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     else if (ability.effect === "sanctuary") for (const target of heroes()) { heal(target, (16 + a.magic * .32) * ultimate, ability.name + " cura " + target.name + ": ", a.id, "ability"); addStatus(target, "shield", 2, Math.round((28 + a.magic * .24 + a.defense * .18) * ultimate), a.id); }
     else if (ability.effect === "fortress") { addStatus(a, "shield", 3, Math.round((62 + a.defense * 1.05) * ultimate), a.id); addStatus(a, "taunt", 2, undefined, a.id); }
     else if (ability.effect === "control" && enemyTarget) { hit(enemyTarget, power * .72 * ultimate, ability.name + " controla " + enemyTarget.name + ": ", a.id, false, false, "ability"); if (enemyTarget.hp > 0) addStatus(enemyTarget, "stun", 1, undefined, a.id); addStatus(a, "shield", 2, Math.round(22 + a.defense * .35), a.id); }
+    if(ability.effect==="supreme"&&h.supremeBook){
+      if(c.supremeUsed![a.id])return;
+      c.supremeUsed![a.id]=true;
+      performSupreme({
+        actor:a,heroBook:h.supremeBook,units:()=>c.fighters,allies:heroes,enemies,
+        missionBoss:m.kind==="boss",missionUndead:m.specialty==="undead"||/sombr|morto|cripta/i.test(m.enemy),
+        targetId:order.targetId,hit:(u:SupremeUnit,n:number)=>hit(u as Combatant,n,ability.name+" atinge "+u.name+": ",a.id,false,false,"ability"),
+        heal:(u:SupremeUnit,n:number)=>heal(u as Combatant,n,ability.name+" restaura "+u.name+": ",a.id,"ability"),
+        status:(u:SupremeUnit,kind:StatusKind,rounds:number,amount?:number)=>addStatus(u as Combatant,kind,rounds,amount,a.id),
+        previousDamage:c.damagePrevious||{},cooldowns:c.abilityCooldowns,round,revived:c.revivedIds!,
+        mark:(message:string)=>log.push({round,text:message,kind:"ability",actorId:a.id})
+      });
+    }
     c.abilityCooldowns[a.id + ":" + ability.id] = round + ability.cooldown;
   };
 
@@ -1228,7 +1265,7 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
       const h = s.heroes.find(h => h.id === a.id)!;
       let order = c.pendingAbilities.find(x => x.heroId === a.id);
       if (!order && c.autoAbilities) {
-        const abilities = availableAbilities(h).toReversed().filter(ab => (c.abilityCooldowns[a.id + ":" + ab.id] || 1) <= round);
+        const abilities = availableAbilities(h).toReversed().filter(ab => ab.effect!=="supreme" && (c.abilityCooldowns[a.id + ":" + ab.id] || 1) <= round);
         const chosen = abilities[0]; if (chosen) order = { heroId: a.id, abilityId: chosen.id };
       }
       if (order) {
@@ -1241,10 +1278,13 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
       if (injured.length && canHeal) { heal(injured[0], (12 + a.magic * .55) * (.55 + a.energy * .0045) * a.healing, a.name + " cura " + injured[0].name + " em ", a.id); continue; }
       const alive = enemies(), target = alive[Math.floor(random(s) * alive.length)], magical = a.magic > a.attack;
       const bonus = m.kind === "hunt" && a.class === "ranger" ? 1.18 : m.specialty === a.class || m.specialty === "undead" && ["mage", "paladin"].includes(a.class || "") ? 1.12 : 1;
-      const critical = random(s) < a.critical + (m.kind === "hunt" && a.class === "ranger" ? .1 : 0);
+       const blessed=a.statuses.some(x=>x.kind==="critBlessing");
+       const critical = blessed || random(s) < Math.min(.45,a.critical + (m.kind === "hunt" && a.class === "ranger" ? .1 : 0));
+       if(blessed)a.statuses=a.statuses.filter(x=>x.kind!=="critBlessing");
       const inspired = a.statuses.some(x => x.kind === "inspired") ? .15 : 0;
-      const damage = Math.max(3, ((magical ? a.magic : a.attack) + h.level * 2) * (.55 + a.energy * .0045) * (.85 + random(s) * .3) * t.damage * bonus * (1 + bardPassive + inspired) - target.defense * (magical ? .22 : .4));
-      const dealt = hit(target, damage * (critical ? 1.65 : 1), a.name + (critical ? " acerta um crítico em " : " ataca ") + target.name + ": ", a.id, critical);
+      const boost=a.statuses.find(x=>x.kind==="might")?.amount||0;
+       const damage = Math.max(3, ((magical ? a.magic : a.attack) + h.level * 2) * (.55 + a.energy * .0045) * (.85 + random(s) * .3) * t.damage * bonus * (1 + bardPassive + inspired + boost) - target.defense * (magical ? .22 : .4));
+      const dealt = hit(target, damage * (critical ? (blessed?1.75:1.65) : 1), a.name + (critical ? " acerta um crítico em " : " ataca ") + target.name + ": ", a.id, critical);
       if (a.class === "necromancer" && a.hp < a.maxHp && dealt) heal(a, dealt * .15, a.name + " drena a vida do inimigo: ", a.id);
     } else {
       const alive = heroes();
@@ -1276,6 +1316,7 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     }
   }
   for (const f of c.fighters) {
+    if(f.side==="hero"&&f.statuses.some(x=>x.kind==="lastStand"))heal(f,f.maxHp*.35,"Juramento Sagrado cura "+f.name+": ",undefined,"ability");
     for (const status of f.statuses) if (!["bleed", "poison", "regen", "stun"].includes(status.kind)) status.rounds--;
     f.statuses = f.statuses.filter(x => x.rounds > 0 && (x.kind !== "shield" || (x.amount || 0) > 0));
   }
@@ -1430,6 +1471,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const ability = availableAbilities(h).find(a => a.id === action.abilityId); requireRule(ability, "Habilidade não disponível para esse herói.");
       requireRule(!c.pendingAbilities.some(o => o.heroId === h.id), "Esse herói já recebeu uma ordem de habilidade para o próximo turno.");
       requireRule(abilityCooldownRemaining(battle, h.id, ability.id) === 0, "A habilidade ainda está em recarga.");
+      requireRule(ability.effect!=="supreme"||!c.supremeUsed?.[h.id],"O livro supremo só pode ser usado uma vez por batalha.");
       if (ability.target === "enemy") requireRule(c.fighters.some(f => f.id === action.targetId && f.side === "enemy" && f.hp > 0), "Escolha um inimigo vivo como alvo.");
       if (ability.target === "ally") requireRule(c.fighters.some(f => f.id === action.targetId && f.side === "hero" && f.hp > 0), "Escolha um aliado vivo como alvo.");
       c.pendingAbilities.push({ heroId: h.id, abilityId: ability.id, ...(action.targetId ? { targetId: action.targetId } : {}) }); s.lastBattle = battle; break;

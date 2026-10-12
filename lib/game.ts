@@ -730,10 +730,11 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   // Limpeza dos itens inclusive em saves antigos, para não reaparecerem ao atualizar.
   s.chest = Array.isArray(s.chest) ? s.chest.filter(i=>!!ITEMS[i.key]) : [];
   s.itemSequence = Math.max(s.itemSequence||0,0,...s.chest.map(i=>Number(i.id.match(/-(\d+)$/)?.[1]||0)));
-  s.journeys.forEach(j => { j.loot = []; });
-  s.raidHistory.forEach(r => { r.loot = []; });
-  if (s.lastBattle) { s.lastBattle.loot = []; if (s.lastBattle.combat) delete s.lastBattle.combat.pendingConsumable; }
-  s.expeditions.forEach(e => { e.battle.loot = []; if (e.battle.combat) delete e.battle.combat.pendingConsumable; });
+  // Preserva históricos de itens, sem devolver recompensas ao reabrir o jogo.
+  s.journeys.forEach(j => { j.loot ??= []; });
+  s.raidHistory.forEach(r => { r.loot ??= []; });
+  if (s.lastBattle) { s.lastBattle.loot ??= []; if (s.lastBattle.combat) delete s.lastBattle.combat.pendingConsumable; }
+  s.expeditions.forEach(e => { e.battle.loot ??= []; if (e.battle.combat) delete e.battle.combat.pendingConsumable; });
   s.region ??= 1; s.bossSeasons ??= []; s.shopPurchases ??= [];
   s.rivalAttempts ??= []; s.lastNegotiation ??= null;
   s.rivals = s.rivals.slice(0, LEAGUE_SIZE - 1).map((r, i) => r.heroes?.length && r.strength && r.recruitSequence !== undefined ? r : { ...createRival(i, s), ...r });

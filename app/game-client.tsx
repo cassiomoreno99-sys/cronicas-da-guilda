@@ -25,7 +25,7 @@ import {
 import { portraitSource } from "@/lib/portraits";
 import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
-import { GameSymbol, type GameSymbolKind } from "./game-symbols";
+import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, equippedPosition } from "@/lib/catalog-test";
 import { missionLootPreview } from "@/lib/catalog-runtime";
@@ -309,7 +309,7 @@ function TopNav({ screen, go }: { screen: Screen; go: (s: Screen) => void }) {
 function BottomNav({ screen, go }: { screen: Screen; go: (s: Screen) => void }) {
   const missionActive = ["mission","team","league","rest"].includes(screen);
   const tabs: Array<[Screen,string,ReactNode,boolean]> = [
-    ["mission","Missões",<GameSymbol kind="scouting" key="m"/>,missionActive],
+    ["mission","Missões",<GameSymbol kind="mission" key="m"/>,missionActive],
     ["heroes","Heróis",<GameSymbol kind="defense" key="h"/>,screen === "heroes" || screen === "equipment"],
     ["chest","Baú",<GameSymbol kind="inventory" key="b"/>,screen === "chest"],
     ["tavern","Taverna",<Beer key="t" />,screen === "tavern"],
@@ -799,6 +799,26 @@ function SupremeLibraryPanel({state,act,busy}:{state:Campaign;act:(a:Action)=>vo
  </section>;
 }
 
+
+const SYMBOL_GROUPS:Array<{title:string;kinds:GameSymbolKind[]}>= [
+ {title:"Economia e progresso",kinds:["gold","reward","treasure","experience","fame","league"]},
+ {title:"Missões e regiões",kinds:["objective","difficulty","mission","squad","duration","boss","elite","location","sanctuary"]},
+ {title:"Atributos e combate",kinds:["attack","defense","critical","speed","health","magic","healing","energy"]},
+ {title:"Itens e atividades",kinds:["forge","merchant","potion","book","rare","legendary","inventory","guild","locked"]},
+];
+function SymbolGuide(){
+ return <details className="symbol-guide parchment">
+  <summary><GameSymbol kind="help" size={19}/> Guia oficial de símbolos do jogo</summary>
+  <p>O mesmo ícone representa o mesmo recurso, seja no PC ou no celular.</p>
+  {SYMBOL_GROUPS.map(group=><section key={group.title}>
+   <h4>{group.title}</h4>
+   <div className="symbol-guide-grid">{group.kinds.map(kind=><span key={kind}>
+    <GameSymbol kind={kind} size={19}/>{GAME_SYMBOLS[kind].label}
+   </span>)}</div>
+  </section>)}
+ </details>;
+}
+
 function GuildPage({
   state, act, busy, onExport, onImport, onReset
 }: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void }) {
@@ -831,6 +851,7 @@ function GuildPage({
       <section className="guild-mini parchment"><h3>Guerra de Guildas</h3><p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
     </div>
     <RivalRecruitPanel state={state} act={act} busy={busy} />
+    <SymbolGuide />
     <ParchmentTitle icon={<GameSymbol kind="help"/>} title="Save e Configurações" />
     <div className="settings-panel parchment"><button onClick={onExport}><Download /> Baixar backup</button><button onClick={onImport}><Upload /> Importar backup</button><button className="danger" onClick={onReset}><X /> Reiniciar campanha</button></div>
   </section>;
@@ -867,7 +888,7 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
       <div><span className="cinema-eyebrow">MISSÃO EM ANDAMENTO</span><h2>{battle.title}</h2><p>{mission?.location || battle.objective?.name || "Terras da Guilda"}</p></div>
       <div className="cinema-round"><span>RODADA</span><strong>{round}{maxRounds ? " / "+maxRounds : ""}</strong></div>
     </div>
-    <div className="cinema-objective-line"><GameSymbol kind="defense" aria-hidden="true"/><span>{battle.objective?.name || mission?.description || "Derrote os inimigos"}</span><b>{status}</b></div>
+    <div className="cinema-objective-line"><GameSymbol kind="objective" aria-hidden="true"/><span>{battle.objective?.name || mission?.description || "Derrote os inimigos"}</span><b>{status}</b></div>
     <div className="cinema-arena" role="region" aria-label="Campo de batalha com personagens e inimigos">
       <div className="cinema-atmosphere" aria-hidden="true"/>
       <div className="cinema-lightning" key={"beam-"+round+"-"+battle.log.length} aria-hidden="true"/>

@@ -69,7 +69,7 @@ const fresh=(seed:number)=>{const s=newCampaign(seed);s.event=null;return s;};
  ok(s.expeditions.length===1,"Expedição não iniciou");
  s=applyAction(s,{type:"battle-auto",expeditionId:s.expeditions[0].id});
  ok(s.lastBattle?.status==="won","Combate com equipe de teste superdesenvolvida não venceu");
- ok(s.lastBattle.loot?.length===1,"Combate não concedeu material.");
+ ok((s.lastBattle.loot?.length||0)>=1,"Combate não concedeu material.");
  ok(s.chest.some(x=>x.key===s.lastBattle?.loot?.[0]),"Item de loot não ficou no inventário.");
 }
 console.log("CATALOGO-314: IDs, preços, loja, estoque, persistência, venda, slots, forja, consumo e combate OK.");

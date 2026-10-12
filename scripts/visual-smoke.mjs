@@ -66,6 +66,27 @@ if(await page.locator(".heroes-screen").count() !== 1) throw new Error("Voltar n
 await sanity("05b-herois-volta-equipamentos");
 
 await bottom("Baú","06-bau");
+await page.getByRole("button",{name:/Ver 314 itens/}).click();
+if(await page.locator(".catalog-gallery-grid .item-art.catalog-image").count()!==30)
+  throw new Error("O catálogo não exibiu 30 miniaturas na primeira página.");
+for(const p of [1,4,7,11]){
+ const pageNum=await page.locator(".catalog-pagination strong").innerText();
+ if(!pageNum.includes("Página "+p+" de 11")) throw new Error("Paginação do catálogo incorreta: "+pageNum);
+ const probe=await page.locator(".catalog-gallery-grid .item-art").first().evaluate(async el=>{
+  const image=getComputedStyle(el).backgroundImage;
+  const url=image.match(/url\\(["']?(.*?)["']?\\)/)?.[1];
+  const response=url?await fetch(url):null;
+  return {image,url,status:response?.status,type:response?.headers.get("content-type")};
+ });
+ if(probe.status!==200||!probe.type?.includes("image/avif"))
+   throw new Error("Miniatura do catálogo não carregada: "+JSON.stringify(probe));
+ if(p===1||p===11) await sanity(p===1?"06a-catalogo-itens":"06b-catalogo-livros");
+ if(p<11){
+  const next= p===1?4:p===4?7:11;
+  for(let i=p;i<next;i++)await page.locator(".catalog-pagination button").last().click();
+ }
+}
+await page.getByRole("button",{name:/Meu inventário/}).click();
 await bottom("Taverna","07-taverna");
 const tavernImage = page.locator(".tavern-hero img");
 if (await tavernImage.count() !== 1) throw new Error("Nova arte da Taverna não foi renderizada.");

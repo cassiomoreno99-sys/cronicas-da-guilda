@@ -31,6 +31,15 @@ async function sanity(name) {
 
 await page.goto(base, { waitUntil: "networkidle" });
 await sanity("01-missoes");
+const dossier=page.locator(".enemy-dossier");
+if(await dossier.count()!==1)throw new Error("Relatório do Olho Rubro não está no quadro regional.");
+await dossier.locator("summary").click();
+await page.locator(".enemy-dossier-content img").evaluate(async el=>{
+ if(!el.complete)await new Promise((resolve,reject)=>{el.addEventListener("load",resolve,{once:true});el.addEventListener("error",reject,{once:true});});
+ if(el.naturalWidth<1200||el.naturalHeight<950)throw new Error("Relatório do Olho Rubro não carregou na resolução adequada.");
+});
+await sanity("01a-olho-rubro-aberto");
+await dossier.locator("summary").click();
 if(await page.locator(".header-resources svg.game-symbol--gold").count()!==1)
  throw new Error("Símbolo de ouro não aparece no cabeçalho");
 if(await page.locator(".mission-rewards svg.game-symbol--reward").count()<1)
@@ -54,7 +63,24 @@ async function top(label, name) {
 
 await top("Equipe","02-equipe");
 await top("Liga","03-liga");
+const rivalCrests=page.locator(".league-row .league-rival-crest");
+if(await rivalCrests.count()!==5)throw new Error("A Liga não mostra os cinco brasões.");
+await page.waitForFunction(()=>[...document.querySelectorAll(".league-row .league-rival-crest")].every(im=>im.complete));
+for(const img of await rivalCrests.all()){
+ if(!(await img.evaluate(el=>el.naturalWidth>=100&&el.naturalHeight>=100)))throw new Error("Brasão da Liga não carregou.");
+}
+if(await page.locator(".league-trophy").count()<7)throw new Error("Faltam troféus dourados.");
+if(await page.locator(".league-summary .big-crest img").count()!==1)throw new Error("Brasão do jogador ausente.");
+await sanity("03a-liga-brasoes");
 await top("Descanso","04-descanso");
+const sanctuaryImage=page.locator(".sanctuary-head>img");
+const saint=await sanctuaryImage.evaluate(async el=>{
+ if(!el.complete)await new Promise((resolve,reject)=>{el.addEventListener("load",resolve,{once:true});el.addEventListener("error",reject,{once:true});});
+ const box=el.getBoundingClientRect();return {nw:el.naturalWidth,nh:el.naturalHeight,w:box.width,h:box.height};
+});
+if(saint.nw!==1360||saint.nh!==765||Math.abs(saint.w/saint.h-1360/765)>.03)
+ throw new Error("Santuário cortado ou fora de proporção: "+JSON.stringify(saint));
+await sanity("04a-santuario-inteiro");
 await bottom("Heróis","05-herois");
 const equipmentLink = page.getByRole("button",{name:/Ver equipamentos · 12 espaços/});
 if (await equipmentLink.count() !== 1) throw new Error("Botão da nova tela de equipamentos ausente.");
@@ -191,6 +217,17 @@ if(await desktop.locator(".header-resources svg.game-symbol--gold").count()!==1)
 const overflow=await desktop.evaluate(()=>Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-innerWidth);
 if(overflow>2)throw new Error("Layout de PC excede a largura: "+overflow);
 await desktop.screenshot({path:"visual-report/11a-simbolos-pc.png",fullPage:true});
+await desktop.getByRole("button",{name:"Liga",exact:true}).first().click();
+await desktop.locator(".league-summary .big-crest img").waitFor({state:"visible"});
+await desktop.screenshot({path:"visual-report/11c-liga-brasoes-pc.png",fullPage:true});
+await desktop.getByRole("button",{name:"Descanso",exact:true}).first().click();
+await desktop.locator(".sanctuary-head>img").waitFor({state:"visible"});
+await desktop.screenshot({path:"visual-report/11d-santuario-pc.png",fullPage:true});
+await desktop.getByRole("button",{name:"Missão",exact:true}).first().click();
+await desktop.locator(".enemy-dossier summary").click();
+await desktop.locator(".enemy-dossier-content img").waitFor({state:"visible"});
+await desktop.screenshot({path:"visual-report/11e-olho-rubro-pc.png",fullPage:true});
+
 await desktop.getByRole("button",{name:"Guilda",exact:true}).last().click();
 await desktop.locator(".symbol-guide summary").click();
 await desktop.screenshot({path:"visual-report/11b-guia-simbolos-pc.png",fullPage:true});

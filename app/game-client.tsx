@@ -936,7 +936,7 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
     <section className="cinema-chronicle parchment" aria-label="Registro real da batalha">
       <header><GameSymbol kind="objective" aria-hidden="true"/><h3>Crônica do combate</h3><small>Atualização automática</small></header>
       <div className="cinema-chronicle-entries" aria-live="polite" aria-relevant="additions text">
-        {recent.length ? recent.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}><span className="cinema-log-icon"><GameSymbol kind={l.kind==="heal"?"healing":l.kind==="critical"?"critical":l.kind==="ability"?"magic":"battle"} size={16}/></span><span>{l.text}</span></p>) : <p><span className="cinema-log-icon">⚔</span><span>Os combatentes tomam posição para a batalha.</span></p>}
+        {recent.length ? recent.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}><span className="cinema-log-icon"><GameSymbol kind={l.kind==="heal"?"healing":l.kind==="critical"?"critical":l.kind==="ability"?"magic":"battle"} size={16}/></span><span>{l.text}</span></p>) : <p><span className="cinema-log-icon"><GameSymbol kind="battle"/></span><span>Os combatentes tomam posição para a batalha.</span></p>}
       </div>
     </section>
     <div className="cinema-actions">

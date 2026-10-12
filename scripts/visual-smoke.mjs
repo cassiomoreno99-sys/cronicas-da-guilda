@@ -150,6 +150,24 @@ await merchantImage.evaluate(async el => { if (!el.complete) await new Promise((
 const merchantInfo = await merchantImage.evaluate(el => ({ width:el.naturalWidth, height:el.naturalHeight, rendered:el.getBoundingClientRect().width }));
 if (merchantInfo.width < 600 || merchantInfo.height < 600 || merchantInfo.rendered < 90) throw new Error("Retrato do mercador pequeno ou sem imagem: "+JSON.stringify(merchantInfo));
 await bottom("Guilda","08-guilda");
+const rooms=["infirmary","forge","academy","library","stables","warroom"];
+const buildingImages=page.locator(".building-list article.guild-building-card img.guild-room-art");
+if(await buildingImages.count()!==rooms.length)throw new Error("Sede não exibe os seis edifícios com suas artes.");
+for(let i=0;i<rooms.length;i++){
+ const el=buildingImages.nth(i);
+ await el.scrollIntoViewIfNeeded();
+ const data=await el.evaluate(async im=>{
+  if(!im.complete)await new Promise((resolve,reject)=>{im.addEventListener("load",resolve,{once:true});im.addEventListener("error",reject,{once:true})});
+  const r=im.getBoundingClientRect();
+  return {src:im.getAttribute("src"),naturalWidth:im.naturalWidth,naturalHeight:im.naturalHeight,width:r.width,height:r.height,fit:getComputedStyle(im).objectFit};
+ });
+ if(data.src!=="/guild/rooms/"+rooms[i]+".webp"||data.naturalWidth!==1280||data.naturalHeight!==720||
+ Math.abs(data.width/data.height-1280/720)>.04||data.fit!=="contain")
+  throw new Error("Ilustração do edifício ausente ou cortada: "+rooms[i]+" "+JSON.stringify(data));
+}
+if(await page.locator(".catalog-forge>.guild-room-art").count()!==2)throw new Error("Forja e Biblioteca sem ilustração especial.");
+if(await page.locator(".guild-mini .guild-room-art").count()<2)throw new Error("Academia e Sala de Guerra sem imagem.");
+await sanity("08c-seis-edificios-celular");
 const forgePortrait=page.locator(".guild-forjador>img");
 if(await forgePortrait.count()!==1)throw new Error("O Forjador não aparece na Sede");
 if(!(await forgePortrait.evaluate(async el=>{if(!el.complete)await new Promise(r=>el.addEventListener("load",r,{once:true}));return el.naturalWidth>=700})))throw new Error("Imagem do Forjador não carregou");
@@ -240,6 +258,18 @@ if(await desktop.locator(".enemy-dossier").count()!==0)throw new Error("Atalho i
 await desktop.screenshot({path:"visual-report/11e-missoes-sem-atalho-pc.png",fullPage:true});
 
 await desktop.getByRole("button",{name:"Guilda",exact:true}).last().click();
+const desktopBuildings=desktop.locator(".building-list img.guild-room-art");
+if(await desktopBuildings.count()!==6)throw new Error("Imagens dos seis edifícios não aparecem no PC.");
+for(const art of await desktopBuildings.all()){
+ await art.scrollIntoViewIfNeeded();
+ const check=await art.evaluate(async img=>{
+   if(!img.complete)await new Promise((resolve,reject)=>{img.addEventListener("load",resolve,{once:true});img.addEventListener("error",reject,{once:true})});
+   const rect=img.getBoundingClientRect();
+   return img.naturalWidth===1280&&img.naturalHeight===720&&Math.abs(rect.width/rect.height-1280/720)<.04;
+ });
+ if(!check)throw new Error("Imagem de edifício cortada ou não carregada no PC.");
+}
+await desktop.screenshot({path:"visual-report/11g-seis-edificios-pc.png",fullPage:true});
 await desktop.locator(".symbol-guide summary").click();
 await desktop.screenshot({path:"visual-report/11b-guia-simbolos-pc.png",fullPage:true});
 await desktop.close();

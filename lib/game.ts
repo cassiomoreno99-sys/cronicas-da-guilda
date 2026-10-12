@@ -16,7 +16,7 @@ export type StoryStage = 0 | 1 | 2 | 3;
 export type JourneyDuration = 3 | 5 | 7;
 export type JourneyChoice = "camp" | "explore" | "shortcut";
 export type HeroJourney = { id: string; heroId: string; startedDay: number; duration: JourneyDuration; remaining: number; choice: JourneyChoice; xpEarned: number; loot: string[] };
-export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean; scars?: string[]; supremeBook?: string; supremeRespecced?: boolean };
+export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean; scars?: string[]; supremeBook?: string; supremeRespecced?: boolean; nextMissionBoost?: number };
 export type Ledger = { id: number; day: number; label: string; amount: number };
 export type ItemSlot = "weapon" | "offhand" | "helmet" | "armor" | "gloves" | "boots" | "accessory" | "consumable" | "material" | "quest" | "treasure";
 export type ItemDef = { name: string; slot: ItemSlot; race?: HeroRace; rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"; value: number; description: string; attack?: number; defense?: number; magic?: number; hp?: number; speed?: number; critical?: number; luck?: number; set?: string; classes?: HeroClass[]; levelReq?: number; material?: string };
@@ -40,7 +40,7 @@ export type BattleConsumableKey = "healing_potion" | "antidote" | "stun_bomb";
 export type PendingConsumable = { key: BattleConsumableKey; targetId: string };
 export type MissionKind = "escort" | "defense" | "dungeon" | "hunt" | "boss";
 export type Mission = { id: string; title: string; location: string; description: string; rank: number; force: number; reward: number; enemy: string; count: number; specialty: string; flavor: string; kind: MissionKind; requiredFame: number; requiredItem?: string; boss?: number };
-type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; supremeUsed?: Record<string,boolean>; revivedIds?: string[]; damageThis?: Record<string,number>; damagePrevious?: Record<string,number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
+type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; healingItemsUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; supremeUsed?: Record<string,boolean>; revivedIds?: string[]; damageThis?: Record<string,number>; damagePrevious?: Record<string,number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
 export type Battle = { title: string; day: number; won: boolean; reward: number; xp: number; rounds: number; log: BattleLog[]; levelUps: string[]; wounded: string[]; remaining: number; fighters?: BattleFighter[]; status?: "active" | "won" | "lost" | "retreated"; combat?: Combat; loot?: string[]; fameChange?: number; regionUnlocked?: number; objective?: { name: string; hp: number; maxHp: number; targetRounds: number } };
 export type ExpeditionSlot = 1 | 2 | 3;
 export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; level: number; xp: number; wins: number };
@@ -63,6 +63,8 @@ export type Action =
   | { type: "academy-trainees"; heroIds: string[] }
   | { type: "academy-mentor"; heroId?: string }
   | { type: "travel-region"; region: number }
+  | { type: "use-item"; itemId:string; heroId:string }
+  | { type: "battle-item"; itemId:string; expeditionId?:string }
   | { type: "craft"; recipeId: string }
   | { type: "scribe-book"; bookId: string; heroId: string }
   | { type: "learn-book"; itemId: string; heroId: string }
@@ -724,7 +726,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     } else if (!([1, 2, 3] as ExpeditionSlot[]).includes(expedition.slot as ExpeditionSlot)) expedition.slot = 1;
     if (expedition.battle?.combat) {
       const c = expedition.battle.combat;
-      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.supremeUsed ??= {}; c.revivedIds ??= []; c.damageThis ??= {}; c.damagePrevious ??= {}; c.formation ??= { ...expedition.formation }; c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
+      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.supremeUsed ??= {}; c.revivedIds ??= []; c.damageThis ??= {}; c.damagePrevious ??= {}; c.formation ??= { ...expedition.formation }; c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0; c.healingItemsUsed ??= 0;
       delete c.pendingPotion; delete c.pendingConsumable;
       for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
       if (expedition.battle.fighters) for (const f of expedition.battle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
@@ -1106,7 +1108,9 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   const scaling = m.force / [30, 48, 68, 92, 125][m.rank - 1], cohesion = squadBonus(s, team.map(h => h.id));
   const fighters: Combatant[] = team.map(h => {
     const base = heroStats(h, s), position = s.formation[h.id] || defaultFormationLine(h.class);
-    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion, attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion, magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion, speed: base.speed + (position === "back" ? 2 : 0) };
+    const missionBoost=Math.min(.15,h.nextMissionBoost||0);
+    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion, attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost), magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost), speed: base.speed + (position === "back" ? 2 : 0) };
+    delete h.nextMissionBoost;
     const hp = Math.round(80 + n.defense * 3 + h.level * 15 + n.hp);
     return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy, guarding: h.talent?.path === "defense" && ["warrior", "paladin", "monk"].includes(h.class) ? h.talent.rank : 0 };
   });
@@ -1118,7 +1122,7 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   const scout = team.some(h => h.class === "ranger" && h.talent?.path === "defense");
   const objectiveMax = m.kind === "escort" ? 170 + m.rank * 25 : m.kind === "defense" ? 200 + Math.round(fighters.filter(f => f.side === "hero").reduce((n, f) => n + f.defense, 0) * .6) : 0;
   const targetRounds = m.kind === "escort" ? Math.max(3, 6 - (agile >= 2 ? 1 : 0) - (scout ? 1 : 0)) : m.kind === "defense" ? 6 : m.kind === "hunt" ? 12 : 24;
-  return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, consumablesUsed: 0, pendingAbilities: [], abilityCooldowns: {}, autoAbilities: true, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
+  return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, consumablesUsed: 0, pendingAbilities: [], abilityCooldowns: {}, autoAbilities: true, healingItemsUsed:0, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
 }
 function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreated") {
   const c = b.combat!, m = c.mission, won = status === "won";
@@ -1426,6 +1430,53 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "travel-region": {
       requireRule(Number.isInteger(action.region) && action.region >= 1 && action.region <= s.region && action.region <= WORLD_REGIONS.length, "Essa região ainda não foi desbloqueada.");
       s.activeRegion = action.region; note(s, "A guilda estabeleceu operações em " + WORLD_REGIONS[action.region - 1].name + "."); break;
+    }
+    case "use-item": {
+      const item=s.chest.find(x=>x.id===action.itemId&&!x.equippedTo),h=s.heroes.find(x=>x.id===action.heroId);
+      requireRule(item&&h&&!heroOnExpedition(s,h.id)&&!activeJourney(s,h.id),"Herói ou item indisponível.");
+      const def=CATALOG_BY_ID[item.key];
+      requireRule(def?.categoria==="Consumíveis","O item selecionado não é consumível.");
+      requireRule(h.level>=def.nivel,"Nível insuficiente para este item.");
+      const energy=def.efeito.match(/(?:Restabelece|Recupera) (\d+) (?:pontos? )?de energia/i);
+      const buff=def.efeito.match(/\+(\d+)% (?:de )?efici[eê]ncia/i);
+      requireRule(energy||buff,"Este item deve ser usado em combate.");
+      if(energy)h.energy=Math.min(100,h.energy+Number(energy[1]));
+      else h.nextMissionBoost=Math.min(.15,Math.max(h.nextMissionBoost||0,Number(buff![1])/100));
+      s.chest=s.chest.filter(x=>x.id!==item.id);
+      note(s,h.name+" utilizou "+def.nome+".");
+      break;
+    }
+    case "battle-item": {
+      const found=expeditionBattle(s,action.expeditionId);
+      requireRule(found?.battle.combat,"Confronto indisponível.");
+      const b=found.battle,c=b.combat!,owned=s.chest.find(x=>x.id===action.itemId&&!x.equippedTo);
+      requireRule(owned&&CATALOG_BY_ID[owned.key]?.categoria==="Consumíveis","O item não existe ou não é consumível.");
+      const d=CATALOG_BY_ID[owned.key];
+      requireRule((c.consumablesUsed||0)<3,"Máximo de 3 itens por batalha.");
+      const friends=c.fighters.filter(x=>x.side==="hero"&&x.hp>0);
+      const enemies=c.fighters.filter(x=>x.side==="enemy"&&x.hp>0);
+      const healing=d.efeito.match(/Restaura (\d+)% do PV/i);
+      requireRule(!/energia|após uma expedição|entre expedições/i.test(d.efeito),"Este item é usado fora do combate.");
+      if(healing){
+        requireRule((c.healingItemsUsed||0)<2,"Máximo de 2 consumíveis de cura por equipe.");
+        requireRule(friends.length>0,"Não existem aliados vivos.");
+        const target=friends.toSorted((x,y)=>x.hp/x.maxHp-y.hp/y.maxHp)[0];
+        const amount=Math.min(target.maxHp-target.hp,Math.round(target.maxHp*Number(healing[1])/100));
+        target.hp+=amount;c.healingItemsUsed=(c.healingItemsUsed||0)+1;
+        b.log.push({round:b.rounds,kind:"heal",targetId:target.id,targetHp:target.hp,amount,text:d.nome+" recupera "+amount+" PV de "+target.name+"."});
+      }else if(d.subcategoria==="Antídoto"){
+        const target=friends[0];requireRule(target,"Sem aliado disponível.");target.statuses=target.statuses.filter(x=>x.kind!=="poison"&&x.kind!=="bleed");
+        b.log.push({round:b.rounds,kind:"ability",text:d.nome+" remove veneno e sangramento de "+target.name+"."});
+      }else if(d.subcategoria==="Veneno"||/aplica veneno/i.test(d.efeito)){
+        const target=enemies[0];requireRule(target,"Sem inimigos.");target.statuses.push({kind:"poison",rounds:2,amount:Math.max(2,Math.round(target.maxHp*(b.combat!.mission.kind==="boss"?.005:.02)))});
+        b.log.push({round:b.rounds,kind:"status",text:d.nome+" envenena "+target.name+" por duas rodadas."});
+      }else {
+        const target=friends[0];requireRule(target,"Sem aliado disponível.");
+        const percent=Number(d.efeito.match(/\+(\d+)%/)?.[1]||5);
+        target.statuses.push({kind:"might",rounds:1,amount:Math.min(.15,percent/100)});
+        b.log.push({round:b.rounds,kind:"ability",text:d.nome+" fortalece "+target.name+" para esta rodada."});
+      }
+      s.chest=s.chest.filter(x=>x.id!==owned.id);c.consumablesUsed=(c.consumablesUsed||0)+1;s.lastBattle=b;break;
     }
     case "craft":
     case "scribe-book":

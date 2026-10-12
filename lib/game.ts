@@ -27,7 +27,7 @@ export type RivalHero = Hero & { loyalty: number };
 export type RivalGuild = { id: string; name: string; points: number; victories: number; strength: number; heroes: RivalHero[]; recruitSequence: number };
 export type NegotiationMode = "transfer" | "offer" | "covert";
 export type NegotiationResult = { id: number; day: number; guildId: string; guildName: string; heroId: string; heroName: string; mode: NegotiationMode; success: boolean; cost: number; chance: number; fameChange: number; salary: number; message: string };
-export type StatusKind = "bleed" | "poison" | "stun" | "shield" | "regen" | "taunt" | "inspired" | "vulnerable" | "ward" | "lastStand" | "dodge" | "riposte" | "might" | "critBlessing" | "slow";
+export type StatusKind = "bleed" | "poison" | "stun" | "shield" | "regen" | "taunt" | "inspired" | "vulnerable" | "ward" | "lastStand" | "dodge" | "riposte" | "might" | "critBlessing" | "slow" | "evasion";
 export type CombatStatus = { kind: StatusKind; rounds: number; amount?: number; sourceId?: string };
 export type BattleLog = { round: number; text: string; kind: "hit" | "heal" | "critical" | "fall" | "order" | "ability" | "status"; actorId?: string; targetId?: string; targetHp?: number; amount?: number; objectiveHp?: number };
 export type BattleFighter = { id: string; name: string; side: "hero" | "enemy"; class?: HeroClass; hp: number; maxHp: number; position?: FormationLine; statuses?: CombatStatus[] };
@@ -1173,6 +1173,11 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
   const hit = (target: Combatant, amount: number, text: string, actorId?: string, critical = false, bypassShield = false, kind: BattleLog["kind"] = "hit") => {
     if (target.statuses.some(x => x.kind === "vulnerable")) amount *= 1.15;
     const attacker=actorId?c.fighters.find(f=>f.id===actorId):undefined;
+    const evasion=target.statuses.find(x=>x.kind==="evasion");
+    if(evasion&&attacker&&attacker.side!==target.side&&random(s)<Math.min(.25,evasion.amount||0)){
+      log.push({round,text:target.name+" evitou o ataque sob cobertura de fumaça.",kind:"status",targetId:target.id,targetHp:target.hp});
+      return 0;
+    }
     const dodge=target.statuses.find(x=>x.kind==="dodge"&&(x.amount||0)>0);
     if(dodge&&attacker&&attacker.side!==target.side){
       dodge.amount=(dodge.amount||0)-1;
@@ -1288,7 +1293,7 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
       const inspired = a.statuses.some(x => x.kind === "inspired") ? .15 : 0;
       const boost=a.statuses.find(x=>x.kind==="might")?.amount||0;
        const damage = Math.max(3, ((magical ? a.magic : a.attack) + h.level * 2) * (.55 + a.energy * .0045) * (.85 + random(s) * .3) * t.damage * bonus * (1 + bardPassive + inspired + boost) - target.defense * (magical ? .22 : .4));
-      const dealt = hit(target, damage * (critical ? (blessed?1.75:1.65) : 1), a.name + (critical ? " acerta um crítico em " : " ataca ") + target.name + ": ", a.id, critical);
+      const dealt = hit(target, damage * (critical ? (blessed?1.75:1.5) : 1), a.name + (critical ? " acerta um crítico em " : " ataca ") + target.name + ": ", a.id, critical);
       if (a.class === "necromancer" && a.hp < a.maxHp && dealt) heal(a, dealt * .15, a.name + " drena a vida do inimigo: ", a.id);
     } else {
       const alive = heroes();
@@ -1464,6 +1469,10 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
         const amount=Math.min(target.maxHp-target.hp,Math.round(target.maxHp*Number(healing[1])/100));
         target.hp+=amount;c.healingItemsUsed=(c.healingItemsUsed||0)+1;
         b.log.push({round:b.rounds,kind:"heal",targetId:target.id,targetHp:target.hp,amount,text:d.nome+" recupera "+amount+" PV de "+target.name+"."});
+      }else if(/evasão/i.test(d.efeito)){
+        const target=friends[0];requireRule(target,"Sem aliado disponível.");
+        target.statuses.push({kind:"evasion",rounds:1,amount:.25});
+        b.log.push({round:b.rounds,kind:"status",text:d.nome+" concede +25% de evasão a "+target.name+"."});
       }else if(d.subcategoria==="Antídoto"){
         const target=friends[0];requireRule(target,"Sem aliado disponível.");target.statuses=target.statuses.filter(x=>x.kind!=="poison"&&x.kind!=="bleed");
         b.log.push({round:b.rounds,kind:"ability",text:d.nome+" remove veneno e sangramento de "+target.name+"."});

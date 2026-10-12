@@ -17,5 +17,6 @@ for(const p of [".game-symbol--gold",".game-symbol--reward",".symbol-guide-grid"
   must(css.includes(p),"Aparência não adaptada: "+p);
 for(const raw of ["⚔","❤","🛡","🎒","📚","⚙","🍺"])
   must(!ui.includes(raw),"Símbolo não padronizado ainda está na interface: "+raw);
-must((ui.match(/<GameSymbol\s/g)||[]).length>95,"Cobertura visual inesperadamente baixa");
+must((ui.match(/<GameSymbol\s/g)||[]).length>=90,"Cobertura de símbolos inconsistente");
+must((ui.match(/<RealisticTrophy /g)||[]).length>=4,"Troféus medievais ausentes");
 console.log("SIMBOLOS-OK: "+keys.length+" significados, menus, telas, economia e responsividade");

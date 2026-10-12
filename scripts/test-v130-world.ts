@@ -108,12 +108,12 @@ console.log("v1.3.0: iniciando bateria ampla...");
   ok(names.size >= 1200, "Gerador de nomes não produziu variedade suficiente.");
 }
 
-// 6-7) Catálogo removido e saves limpos.
+// 6-7) Catálogo experimental de 314 itens e migração segura de saves.
 {
-  ok(Object.keys(ITEMS).length === 0, "O catálogo antigo não foi removido.");
-  ok(CRAFTING_RECIPES.length === 0, "As receitas antigas ainda existem.");
+  ok(Object.keys(ITEMS).length === 314, "Catálogo de teste deve ter 314 itens.");
+  ok(CRAFTING_RECIPES.length > 100, "As receitas revisadas não foram carregadas.");
   const s = prep(newCampaign(1006));
-  ok(s.chest.length === 0, "O novo jogo não deve entregar itens.");
+  ok(s.chest.length === 0, "Nova campanha deve começar com inventário vazio.");
   const old = structuredClone(s); old.chest = [{id:"old-item",key:"iron_sword",equippedTo:old.heroes[0].id}];
   const cleaned = applyAction(old,{type:"rest"});
   ok(cleaned.chest.length === 0, "O save antigo manteve os itens após a atualização.");
@@ -139,7 +139,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
     const spawned = normalizeCampaign(next);
     ok(spawned.event?.kind !== "map" && spawned.event?.kind !== "caravan", "Evento novo ainda pode oferecer itens.");
   }
-  expectRule(() => applyAction(s, {type:"upgrade-hq",building:"forge"}), "O jogador ainda pode gastar ouro na Forja vazia.");
+  ok(applyAction(s,{type:"upgrade-hq",building:"forge"}).hq.forge===s.hq.forge+1, "Forja experimental não evolui.");
   expectRule(() => applyAction(s, {type:"buy",key:"healing_potion"}), "O mercador ainda aceita compra de poção.");
   expectRule(() => applyAction(s, {type:"battle-potion",heroId:s.heroes[0].id}), "Comando de poção antiga ainda está disponível.");
 }

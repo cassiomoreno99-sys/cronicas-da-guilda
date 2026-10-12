@@ -27,6 +27,7 @@ import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, equippedPosition } from "@/lib/catalog-test";
+import { missionLootPreview } from "@/lib/catalog-runtime";
 
 type Save = Pick<LocalSave, "state" | "revision">;
 type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
@@ -341,6 +342,8 @@ function MissionPage({
           <div className="mission-rewards">
             <span><Coins /> {m.reward} Ouro</span>
             <span><Sparkles /> +{20 + m.rank * 15} XP</span>
+            {!!missionLootPreview(state,m).length&&<small className="mission-special-loot"><Gem/> Item de objetivo: {missionLootPreview(state,m).join(", ")}</small>}
+            <small className="mission-material-loot">Materiais regionais e chance de equipamento</small>
             
             <button
               className={"action-button " + (index % 3 === 0 ? "red" : index % 3 === 1 ? "green" : "blue")}

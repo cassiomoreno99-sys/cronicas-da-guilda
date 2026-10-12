@@ -26,6 +26,7 @@ import { portraitSource } from "@/lib/portraits";
 import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
+import { testShop, CATALOG_BY_ID, TEST_RECIPES, equippedPosition } from "@/lib/catalog-test";
 
 type Save = Pick<LocalSave, "state" | "revision">;
 type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
@@ -226,7 +227,12 @@ function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" 
   />;
 }
 
-function ItemArt({ itemKey: _itemKey }: { itemKey: string }) { return null; }
+function ItemArt({ itemKey }: { itemKey: string }) {
+ const item=CATALOG_BY_ID[itemKey];
+ return <span className={"item-art rarity-"+(ITEMS[itemKey]?.rarity||"common")} aria-label={item?.nome||"Item"}>
+   {item?.categoria==="Livro de magia suprema"?<BookOpen aria-hidden="true"/>:item?.categoria==="Materiais"?<Gem aria-hidden="true"/>:item?.categoria==="Armas"?<Swords aria-hidden="true"/>:item?.categoria==="Armaduras"?<Shield aria-hidden="true"/>:<Archive aria-hidden="true"/>}
+ </span>;
+}
 
 function ProgressBar({ value, tone = "green" }: { value: number; tone?: "green" | "red" | "blue" | "gold" }) {
   return <span className={"progress progress-" + tone}><i style={{ width: Math.max(0, Math.min(100, value)) + "%" }} /></span>;
@@ -547,13 +553,18 @@ const EQUIPMENT_ICONS = {
   cloak:Flag, ring1:Gem, ring2:Gem, amulet:Sparkles,
 } satisfies Record<EquipmentSlotId, typeof Swords>;
 
-function EquipmentPage({ state, selectedId, selectHero, back }: {
+function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
   state: Campaign; selectedId: string; selectHero: (id: string) => void; back: () => void;
+  act:(a:Action)=>void;busy:boolean;
 }) {
   const hero = state.heroes.find(h => h.id === selectedId) || state.heroes[0];
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlotId>("weapon");
   const activeSlot = EQUIPMENT_SLOTS.find(s => s.id === selectedSlot) || EQUIPMENT_SLOTS[0];
   const equippedCount = state.chest.filter(i => i.equippedTo === hero.id && ITEMS[i.key]).length;
+  const used=state.chest.filter(i=>i.equippedTo===hero.id);
+  const current=used.find(i=>(i.equippedSlot||equippedPosition(i.key))===selectedSlot);
+  const candidates=state.chest.filter(i=>!i.equippedTo&&((equippedPosition(i.key)===selectedSlot)||(equippedPosition(i.key)==="ring"&&["ring1","ring2"].includes(selectedSlot))) &&
+    (ITEMS[i.key]?.classes||[]).includes(hero.class)&&hero.level>=(ITEMS[i.key]?.levelReq||0));
 
   return <section className="screen equipment-screen" aria-label="Equipamentos de 12 espaços">
     <header className="equipment-page-header">
@@ -578,7 +589,7 @@ function EquipmentPage({ state, selectedId, selectHero, back }: {
       </label>
     </section>
 
-    <p className="equipment-intro">Toque em um espaço para conhecer sua função. Os itens serão habilitados após a aprovação do novo catálogo.</p>
+    <p className="equipment-intro">Versão de teste: selecione um espaço para equipar ou remover itens. A versão principal permanece inalterada.</p>
     <div className="equipment-slot-grid" role="group" aria-label="12 espaços de equipamento">
       {EQUIPMENT_SLOTS.map((slot, i) => {
         const Icon = EQUIPMENT_ICONS[slot.id];
@@ -586,14 +597,17 @@ function EquipmentPage({ state, selectedId, selectHero, back }: {
           data-selected={selectedSlot === slot.id} aria-pressed={selectedSlot === slot.id}
           onClick={() => setSelectedSlot(slot.id)}>
           <span className="equipment-slot-icon"><Icon aria-hidden="true"/></span>
-          <span className="equipment-slot-copy"><strong>{i + 1}. {slot.label}</strong><small>Vazio</small></span>
+          <span className="equipment-slot-copy"><strong>{i + 1}. {slot.label}</strong><small>{used.find(x=>(x.equippedSlot||equippedPosition(x.key))===slot.id)?.key ? ITEMS[used.find(x=>(x.equippedSlot||equippedPosition(x.key))===slot.id)!.key]?.name : "Vazio"}</small></span>
         </button>;
       })}
     </div>
     <section className="equipment-slot-detail parchment" aria-live="polite">
       <span className="equipment-detail-label">{activeSlot.group}</span>
       <h3>{activeSlot.label}</h3><p>{activeSlot.description}</p>
-      <p className="equipment-catalog-warning"><LockKeyhole aria-hidden="true"/> Nenhum item disponível para equipar nesta versão.</p>
+      {current?<div><strong>{ITEMS[current.key]?.name}</strong><p>{ITEMS[current.key]?.description}</p><button className="action-button blue" disabled={busy} onClick={()=>act({type:"unequip",itemId:current.id})}>Desequipar</button></div>:
+      <div><p>Sem item equipado neste espaço.</p><div className="catalog-equippable">
+        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}>{ITEMS[i.key]?.name}</button>)}
+      </div>{!candidates.length&&<small>Sem itens compatíveis no baú.</small>}</div>}
     </section>
     <button type="button" className="equipment-bottom-back" onClick={back}><ChevronLeft aria-hidden="true"/> Voltar à ficha do herói</button>
   </section>;
@@ -638,7 +652,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
           {!owner && <button className="action-button blue" disabled={busy} onClick={() => act({type:"sell",itemId:selected.id})}><Coins /> Vender · {def.value}</button>}
           {def.slot === "consumable" && <div className="combat-only-note">Consumível de combate</div>}
         </div>
-      </article> : <div className="item-detail parchment empty-detail">O catálogo de itens foi removido.</div>}
+      </article> : <div className="item-detail parchment empty-detail">Inventário vazio. Consiga materiais em missões ou visite o mercador.</div>}
     </div>
   </section>;
 }
@@ -654,7 +668,14 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
       <section className="rumors parchment"><ParchmentTitle icon={<ScrollText />} title="Rumores da Taverna" />{rumors.map(m => <button key={m.id} onClick={() => openMission(m.id)}><span><strong>{m.title}</strong><small>{m.description}</small></span><em><Coins /> {m.reward}</em></button>)}</section>
       <aside className="tavern-side">
         <section className="parchment drinks"><div className="mug">🍺</div><h3>Bebidas da Casa</h3><p>Brinde com a guilda para recuperar o moral e a energia.</p><button className="action-button green" disabled={busy || state.gold < 8} onClick={() => act({type:"rest"})}>Descansar</button></section>
-        <section className="parchment shop"><div className="merchant-head"><img className="merchant-portrait" src={merchantPortrait} alt="Mercador da taverna medieval" /><span><h3>Mercador</h3><small>Suprimentos e achados da estrada</small></span></div><small>Sem itens disponíveis.</small></section>
+        <section className="parchment shop"><div className="merchant-head"><img className="merchant-portrait" src={merchantPortrait} alt="Mercador da taverna medieval" /><span><h3>Mercador · Teste</h3><small>Estoque regional renovado semanalmente</small></span></div>
+  <div className="catalog-shop">
+  {testShop(state).map(d=>{
+    const sold=state.shopPurchases.includes(Math.floor((state.day-1)/7)+":"+state.activeRegion+":"+d.id);
+    return <div key={d.id}><span><strong>{d.nome}</strong><small>{d.id} · {d.raridade} · Nv. {d.nivel}</small></span><button className="small-button gold" disabled={busy||sold||state.chest.length>=120||state.gold<(d.preco_compra||0)} onClick={()=>act({type:"buy",key:d.id})}>{sold?"Esgotado":fmt(d.preco_compra||0)+" ouro"}</button></div>;
+  })}
+  {!testShop(state).length&&<small>Sem mercadorias nesta região.</small>}
+  </div></section>
       </aside>
     </div>
   </section>;
@@ -701,11 +722,17 @@ function GuildPage({
     </div>
     {state.event && <div className="council parchment"><img src="/reference/guild-council.webp" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
     <ParchmentTitle icon={<Crown />} title="Sede da Guilda" />
-    <div className="building-list parchment">{buildings.filter(([key]) => key !== "forge").map(([key,spec],index) => {
+    <div className="building-list parchment">{buildings.map(([key,spec],index) => {
       const lvl = state.hq[key] || 0, max = spec.max, cost = hqUpgradeCost(state,key);
       const arts = ["/reference/guild-training.webp","/reference/guild-market.webp","/reference/guild-sanctuary.webp","/reference/guild-workshop.webp"];
       return <article key={key}><img src={arts[index%arts.length]} alt="" /><div><h3>{spec.name} <small>Nv. {lvl}</small></h3><p>{spec.description}</p></div><div><span><Coins /> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
+    <section className="parchment catalog-forge"><h3><Hammer size={18}/> Forja experimental · Nv. {state.hq.forge}</h3><small>Consome materiais e taxa em ouro. Sem itens gratuitos.</small>
+    <div className="catalog-shop">{TEST_RECIPES.filter(r=>r.forge>0&&r.forge<=state.hq.forge).slice(0,16).map(r=>{
+      const enough=Object.entries(r.materials).every(([k,q])=>state.chest.filter(i=>i.key===k&&!i.equippedTo).length>=q);
+      return <div key={r.id}><span><strong>{ITEMS[r.result]?.name}</strong><small>{Object.entries(r.materials).map(([k,q])=>q+"× "+(ITEMS[k]?.name||k)).join(" + ")}</small></span>
+      <button className="small-button" disabled={busy||!enough||state.gold<r.cost||state.chest.length>=120} onClick={()=>act({type:"craft",recipeId:r.id})}>Forjar · {fmt(r.cost)}</button></div>;
+    })}{!state.hq.forge&&<p>Melhore a Forja para liberar receitas.</p>}</div></section>
     <div className="guild-grid">
       <section className="guild-mini parchment"><h3>Mapa do Mundo</h3><div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}><strong>{i+1}. {r.name}</strong><small>{r.theme}</small></button>)}</div></section>
       <AcademyPanel state={state} act={act} busy={busy} />
@@ -925,7 +952,7 @@ export default function Game() {
       {screen === "league" && <LeaguePage state={state} team={team} act={perform} busy={busy} />}
       {screen === "rest" && <RestPage state={state} act={perform} busy={busy} />}
       {screen === "heroes" && <HeroPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} openEquipment={() => go("equipment")} act={perform} busy={busy} />}
-      {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} />}
+      {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} act={perform} busy={busy} />}
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
       {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} />}

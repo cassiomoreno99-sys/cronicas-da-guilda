@@ -31,6 +31,17 @@ async function sanity(name) {
 
 await page.goto(base, { waitUntil: "networkidle" });
 await sanity("01-missoes");
+if(await page.locator(".header-resources svg.game-symbol--gold").count()!==1)
+ throw new Error("Símbolo de ouro não aparece no cabeçalho");
+if(await page.locator(".mission-rewards svg.game-symbol--reward").count()<1)
+ throw new Error("Recompensa sem símbolo dourado");
+const coin=await page.locator(".header-resources svg.game-symbol--gold").evaluate(el=>{
+ const box=el.getBoundingClientRect(),style=getComputedStyle(el);
+ return {w:box.width,h:box.height,color:style.color,visible:style.visibility};
+});
+if(coin.w<18||coin.h<18||coin.visible!=="visible")
+ throw new Error("Moeda do cabeçalho está invisível ou pequena: "+JSON.stringify(coin));
+
 
 async function bottom(label, name) {
   await page.getByRole("button", { name: label, exact: true }).last().click();
@@ -106,6 +117,14 @@ await merchantImage.evaluate(async el => { if (!el.complete) await new Promise((
 const merchantInfo = await merchantImage.evaluate(el => ({ width:el.naturalWidth, height:el.naturalHeight, rendered:el.getBoundingClientRect().width }));
 if (merchantInfo.width < 600 || merchantInfo.height < 600 || merchantInfo.rendered < 90) throw new Error("Retrato do mercador pequeno ou sem imagem: "+JSON.stringify(merchantInfo));
 await bottom("Guilda","08-guilda");
+const guide=page.locator(".symbol-guide");
+if(await guide.count()!==1)throw new Error("Guia oficial de símbolos ausente");
+await guide.locator("summary").click();
+if(await page.locator(".symbol-guide-grid svg.game-symbol").count()<25)
+ throw new Error("Guia de símbolos incompleto");
+await sanity("08a-guia-simbolos-celular");
+await guide.locator("summary").click();
+
 const councilChoice = page.locator(".council-actions button:not([disabled])").first();
 if (await councilChoice.count()) {
   await councilChoice.click();
@@ -162,6 +181,20 @@ if (await missionAction.count()) {
   }
 }
 
+
+const desktop=await browser.newPage({viewport:{width:1440,height:900},deviceScaleFactor:1});
+await desktop.goto(base,{waitUntil:"networkidle"});
+if(await desktop.locator(".nav-sidebar .bottom-nav svg.game-symbol").count()<4)
+ throw new Error("Menu PC não mostra ícones padronizados");
+if(await desktop.locator(".header-resources svg.game-symbol--gold").count()!==1)
+ throw new Error("Ouro sem símbolo no PC");
+const overflow=await desktop.evaluate(()=>Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-innerWidth);
+if(overflow>2)throw new Error("Layout de PC excede a largura: "+overflow);
+await desktop.screenshot({path:"visual-report/11a-simbolos-pc.png",fullPage:true});
+await desktop.getByRole("button",{name:"Guilda",exact:true}).last().click();
+await desktop.locator(".symbol-guide summary").click();
+await desktop.screenshot({path:"visual-report/11b-guia-simbolos-pc.png",fullPage:true});
+await desktop.close();
 if (errors.length) throw new Error(errors.join("\n"));
 await browser.close();
 console.log("VISUAL_OK");

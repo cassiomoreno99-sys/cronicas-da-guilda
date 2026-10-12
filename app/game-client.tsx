@@ -229,9 +229,19 @@ function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" 
 
 function ItemArt({ itemKey }: { itemKey: string }) {
  const item=CATALOG_BY_ID[itemKey];
- return <span className={"item-art rarity-"+(ITEMS[itemKey]?.rarity||"common")} aria-label={item?.nome||"Item"}>
-   {item?.categoria==="Livro de magia suprema"?<BookOpen aria-hidden="true"/>:item?.categoria==="Materiais"?<Gem aria-hidden="true"/>:item?.categoria==="Armas"?<Swords aria-hidden="true"/>:item?.categoria==="Armaduras"?<Shield aria-hidden="true"/>:<Archive aria-hidden="true"/>}
- </span>;
+ const index=/^CG-\\d{3}$/.test(itemKey)?Number(itemKey.slice(3))-1:-1;
+ if(item && index>=0 && index<314) {
+   const sheet=index<300?Math.floor(index/100)+1:4;
+   const position=index<300?index%100:index-300;
+   const cols=index<300?10:7;
+   const rows=index<300?10:2;
+   const x=(position%cols)/(cols-1)*100;
+   const y=Math.floor(position/cols)/(rows-1)*100;
+   return <span role="img" className={"item-art catalog-image rarity-"+(ITEMS[itemKey]?.rarity||"common")} aria-label={item.nome}
+     style={{backgroundImage:`url(/items/atlas-${sheet}.avif)`,backgroundSize:`${cols*100}% ${rows*100}%`,
+             backgroundPosition:`${x}% ${y}%`,backgroundRepeat:"no-repeat"}}/>;
+ }
+ return <span className="item-art" role="img" aria-label="Imagem indisponível"><Archive aria-hidden="true"/></span>;
 }
 
 function ProgressBar({ value, tone = "green" }: { value: number; tone?: "green" | "red" | "blue" | "gold" }) {
@@ -606,7 +616,7 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
       <h3>{activeSlot.label}</h3><p>{activeSlot.description}</p>
       {current?<div><strong>{ITEMS[current.key]?.name}</strong><p>{ITEMS[current.key]?.description}</p><button className="action-button blue" disabled={busy} onClick={()=>act({type:"unequip",itemId:current.id})}>Desequipar</button></div>:
       <div><p>Sem item equipado neste espaço.</p><div className="catalog-equippable">
-        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}>{ITEMS[i.key]?.name}</button>)}
+        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}><ItemArt itemKey={i.key}/>{ITEMS[i.key]?.name}</button>)}
       </div>{!candidates.length&&<small>Sem itens compatíveis no baú.</small>}</div>}
     </section>
     <button type="button" className="equipment-bottom-back" onClick={back}><ChevronLeft aria-hidden="true"/> Voltar à ficha do herói</button>
@@ -672,7 +682,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
   <div className="catalog-shop">
   {testShop(state).map(d=>{
     const sold=state.shopPurchases.includes(Math.floor((state.day-1)/7)+":"+state.activeRegion+":"+d.id);
-    return <div key={d.id}><span><strong>{d.nome}</strong><small>{d.id} · {d.raridade} · Nv. {d.nivel}</small></span><button className="small-button gold" disabled={busy||sold||state.chest.length>=120||state.gold<(d.preco_compra||0)} onClick={()=>act({type:"buy",key:d.id})}>{sold?"Esgotado":fmt(d.preco_compra||0)+" ouro"}</button></div>;
+    return <div key={d.id}><ItemArt itemKey={d.id}/><span><strong>{d.nome}</strong><small>{d.id} · {d.raridade} · Nv. {d.nivel}</small></span><button className="small-button gold" disabled={busy||sold||state.chest.length>=120||state.gold<(d.preco_compra||0)} onClick={()=>act({type:"buy",key:d.id})}>{sold?"Esgotado":fmt(d.preco_compra||0)+" ouro"}</button></div>;
   })}
   {!testShop(state).length&&<small>Sem mercadorias nesta região.</small>}
   </div></section>
@@ -730,7 +740,7 @@ function GuildPage({
     <section className="parchment catalog-forge"><h3><Hammer size={18}/> Forja experimental · Nv. {state.hq.forge}</h3><small>Consome materiais e taxa em ouro. Sem itens gratuitos.</small>
     <div className="catalog-shop">{TEST_RECIPES.filter(r=>r.forge>0&&r.forge<=state.hq.forge).slice(0,16).map(r=>{
       const enough=Object.entries(r.materials).every(([k,q])=>state.chest.filter(i=>i.key===k&&!i.equippedTo).length>=q);
-      return <div key={r.id}><span><strong>{ITEMS[r.result]?.name}</strong><small>{Object.entries(r.materials).map(([k,q])=>q+"× "+(ITEMS[k]?.name||k)).join(" + ")}</small></span>
+      return <div key={r.id}><ItemArt itemKey={r.result}/><span><strong>{ITEMS[r.result]?.name}</strong><small>{Object.entries(r.materials).map(([k,q])=>q+"× "+(ITEMS[k]?.name||k)).join(" + ")}</small></span>
       <button className="small-button" disabled={busy||!enough||state.gold<r.cost||state.chest.length>=120} onClick={()=>act({type:"craft",recipeId:r.id})}>Forjar · {fmt(r.cost)}</button></div>;
     })}{!state.hq.forge&&<p>Melhore a Forja para liberar receitas.</p>}</div></section>
     <div className="guild-grid">

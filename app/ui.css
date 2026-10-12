@@ -1804,3 +1804,15 @@ img{display:block;max-width:100%}
  .catalog-shop small{font-size:8px}
  .catalog-shop button{min-width:0;font-size:9px}
 }
+/* Miniaturas reais extraídas das 314 fichas e agrupadas em quatro atlas AVIF.
+   300 itens nas três primeiras grades (10 x 10) e 14 livros na última (7 x 2). */
+.item-art.catalog-image{display:block;background-color:#171a26;background-origin:padding-box;background-clip:padding-box}
+.item-tile .item-art.catalog-image{background-color:#171a26}
+.catalog-shop>div{grid-template-columns:42px minmax(0,1fr) auto}
+.catalog-shop .item-art{width:38px;height:38px;border-radius:5px}
+.catalog-equippable button{display:flex;align-items:center;gap:5px}
+.catalog-equippable .item-art{width:32px;height:32px;border-radius:5px}
+@media(max-width:430px){
+  .catalog-shop>div{grid-template-columns:30px minmax(0,1fr) 99px}
+  .catalog-shop .item-art{width:28px;height:28px}
+}

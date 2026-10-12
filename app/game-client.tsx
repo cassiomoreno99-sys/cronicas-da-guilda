@@ -933,8 +933,18 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
         <div className="fighters enemies">{enemies.map(f => <article key={f.id}><img src={"/enemies/" + enemyArtKey(f.name) + ".webp"} alt="" /><div><strong>{f.name}</strong><small>{f.statuses?.map(s=>s.kind).join(" · ") || "Inimigo"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
       </div>
       <div className="battle-log parchment">{battle.log.slice(-5).map((l,i) => <p key={i} data-kind={l.kind}>{l.text}</p>)}{!battle.log.length && <p>Os combatentes tomam posição.</p>}</div>
-      <div className="battle-actions">
+      {!active&&!!battle.loot?.length&&<div className="battle-loot parchment"><strong>Itens encontrados:</strong> {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</div>}
+       <div className="battle-actions">
         <button type="button" className="cinema-open-button" onClick={() => setCinematic(true)}><Sparkles aria-hidden="true"/> Abrir Arena Cinematográfica <ChevronRight aria-hidden="true"/></button>
+        {active&&<div className="supreme-battle-actions">{heroes.filter(f=>state.heroes.some(h=>h.id===f.id&&h.supremeBook)).map(f=>{
+          const h=state.heroes.find(h=>h.id===f.id)!;
+          const used=battle.combat?.supremeUsed?.[f.id];
+          const pending=battle.combat?.pendingAbilities?.some(o=>o.heroId===f.id);
+          return <button key={f.id} className="action-button gold" disabled={busy||!!used||!!pending||f.hp<=0}
+            onClick={()=>act({type:"battle-ability",heroId:f.id,abilityId:"supreme-"+h.supremeBook,expeditionId:expedition.id})}>
+            <BookOpen/> {h.name} · {used?"Usado":pending?"Aguardando":CATALOG_BY_ID[h.supremeBook!]?.nome}
+          </button>;
+        })}</div>}
         {active ? <><button className="action-button blue" disabled={busy} onClick={() => act({type:"battle-auto",expeditionId:expedition.id})}>Concluir combate</button><button className="action-button red" disabled={busy} onClick={() => act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button></> : <button className="action-button green huge" onClick={close}>Voltar à guilda</button>}
       </div>
     </section>

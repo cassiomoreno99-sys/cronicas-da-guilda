@@ -31,15 +31,8 @@ async function sanity(name) {
 
 await page.goto(base, { waitUntil: "networkidle" });
 await sanity("01-missoes");
-const dossier=page.locator(".enemy-dossier");
-if(await dossier.count()!==1)throw new Error("Relatório do Olho Rubro não está no quadro regional.");
-await dossier.locator("summary").click();
-await page.locator(".enemy-dossier-content img").evaluate(async el=>{
- if(!el.complete)await new Promise((resolve,reject)=>{el.addEventListener("load",resolve,{once:true});el.addEventListener("error",reject,{once:true});});
- if(el.naturalWidth<1200||el.naturalHeight<950)throw new Error("Relatório do Olho Rubro não carregou na resolução adequada.");
-});
-await sanity("01a-olho-rubro-aberto");
-await dossier.locator("summary").click();
+if(await page.locator(".enemy-dossier").count()!==0)
+ throw new Error("A imagem indevida continua no início das missões.");
 if(await page.locator(".header-resources svg.game-symbol--gold").count()!==1)
  throw new Error("Símbolo de ouro não aparece no cabeçalho");
 if(await page.locator(".mission-rewards svg.game-symbol--reward").count()<1)
@@ -69,8 +62,16 @@ await page.waitForFunction(()=>[...document.querySelectorAll(".league-row .leagu
 for(const img of await rivalCrests.all()){
  if(!(await img.evaluate(el=>el.naturalWidth>=100&&el.naturalHeight>=100)))throw new Error("Brasão da Liga não carregou.");
 }
-if(await page.locator(".league-trophy").count()<7)throw new Error("Faltam troféus dourados.");
+if(await page.locator(".realistic-trophy").count()<7)throw new Error("Faltam troféus metálicos na Liga.");
 if(await page.locator(".league-summary .big-crest img").count()!==1)throw new Error("Brasão do jogador ausente.");
+const fullChallenge=await page.locator(".guild-challenge-art").evaluate(async el=>{
+ if(!el.complete)await new Promise((resolve,reject)=>{el.addEventListener("load",resolve,{once:true});el.addEventListener("error",reject,{once:true});});
+ const r=el.getBoundingClientRect();return {src:el.getAttribute("src"),nw:el.naturalWidth,nh:el.naturalHeight,w:r.width,h:r.height,style:getComputedStyle(el).objectFit};
+});
+if(fullChallenge.src!=="/reference/olho-rubro-report-2026.webp"||fullChallenge.nw<1000||fullChallenge.nh<900
+ ||Math.abs(fullChallenge.w/fullChallenge.h-fullChallenge.nw/fullChallenge.nh)>.025
+ ||fullChallenge.style!=="contain")
+ throw new Error("A imagem do desafio foi cortada: "+JSON.stringify(fullChallenge));
 await sanity("03a-liga-brasoes");
 await top("Descanso","04-descanso");
 const sanctuaryImage=page.locator(".sanctuary-head>img");
@@ -100,6 +101,8 @@ if(heroes > 1) {
 }
 await page.getByRole("button",{name:"Voltar aos Heróis",exact:true}).click();
 if(await page.locator(".heroes-screen").count() !== 1) throw new Error("Voltar não restaurou a ficha do herói.");
+if(await page.locator(".stat-grid svg.game-emblem").count()!==6)
+ throw new Error("Atributos dos heróis continuam com ícones digitais.");
 await sanity("05b-herois-volta-equipamentos");
 
 await bottom("Baú","06-bau");
@@ -220,13 +223,13 @@ await desktop.screenshot({path:"visual-report/11a-simbolos-pc.png",fullPage:true
 await desktop.getByRole("button",{name:"Liga",exact:true}).first().click();
 await desktop.locator(".league-summary .big-crest img").waitFor({state:"visible"});
 await desktop.screenshot({path:"visual-report/11c-liga-brasoes-pc.png",fullPage:true});
+await desktop.locator(".guild-challenge-art").screenshot({path:"visual-report/11f-desafio-inteiro-pc.png"});
 await desktop.getByRole("button",{name:"Descanso",exact:true}).first().click();
 await desktop.locator(".sanctuary-head>img").waitFor({state:"visible"});
 await desktop.screenshot({path:"visual-report/11d-santuario-pc.png",fullPage:true});
 await desktop.getByRole("button",{name:"Missão",exact:true}).first().click();
-await desktop.locator(".enemy-dossier summary").click();
-await desktop.locator(".enemy-dossier-content img").waitFor({state:"visible"});
-await desktop.screenshot({path:"visual-report/11e-olho-rubro-pc.png",fullPage:true});
+if(await desktop.locator(".enemy-dossier").count()!==0)throw new Error("Atalho indevido no desktop.");
+await desktop.screenshot({path:"visual-report/11e-missoes-sem-atalho-pc.png",fullPage:true});
 
 await desktop.getByRole("button",{name:"Guilda",exact:true}).last().click();
 await desktop.locator(".symbol-guide summary").click();

@@ -1816,3 +1816,21 @@ img{display:block;max-width:100%}
   .catalog-shop>div{grid-template-columns:30px minmax(0,1fr) 99px}
   .catalog-shop .item-art{width:28px;height:28px}
 }
+
+/* Galeria consultável de todos os 314 itens, independente do inventário do jogador */
+.catalog-gallery .inventory-top{gap:8px;align-items:center}
+.catalog-gallery .inventory-top strong{color:#f5d398;font-size:12px}
+.catalog-note{font-size:11px;color:#e8d7b1;margin:7px 3px 10px}
+.catalog-pagination{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:4px 0 10px;color:#f6d492;font-size:11px}
+.catalog-pagination button{padding:9px 11px;background:#253747;color:#f8e8c5;border:1px solid #b18a47;border-radius:6px}
+.catalog-pagination button:disabled{opacity:.4}
+.catalog-gallery-grid .item-tile{border-radius:5px}
+.catalog-gallery-grid .item-tile>span:not(.item-art){display:block;position:absolute;bottom:0;right:0;left:0;
+ background:#000c;color:#fff4c4;font-size:8px;line-height:16px;font-weight:bold;pointer-events:none}
+.catalog-gallery-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.catalog-gallery .item-detail p{font-size:12px;line-height:1.4;margin:7px 0}
+.catalog-gallery .selected-item-art .item-art.catalog-image{width:80%;height:80%}
+@media(max-width:550px){
+ .catalog-gallery-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .catalog-gallery .item-detail p{font-size:11px}
+}

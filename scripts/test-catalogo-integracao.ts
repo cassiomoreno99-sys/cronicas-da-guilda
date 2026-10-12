@@ -62,3 +62,46 @@ for(const b of bookItems){
  blocked(()=>applyAction(s,{type:"battle-ability",heroId:heroes[0].id,abilityId:"supreme-CG-302",expeditionId:exp.id}),"Livro ativado mais de uma vez");
 }
 console.log("INTEGRACAO-314: itens unicos, missoes, receitas, aprendizado, respec, backup e habilidades OK");
+
+{
+ let s=newCampaign(9041);s.event=null;s.heroes[0].level=50;s.heroes[0].energy=40;
+ s.chest=[{id:"item-1",key:"CG-010"},{id:"item-2",key:"CG-011"}];s.itemSequence=2;
+ s=applyAction(s,{type:"use-item",itemId:"item-1",heroId:s.heroes[0].id});
+ ok(s.heroes[0].energy===50,"Poção de energia não recuperou 10 pontos");
+ s=applyAction(s,{type:"use-item",itemId:"item-2",heroId:s.heroes[0].id});
+ ok((s.heroes[0].nextMissionBoost||0)>.04,"Elixir de apoio não concede bônus da próxima missão");
+ blocked(()=>applyAction(s,{type:"use-item",itemId:"item-2",heroId:s.heroes[0].id}),"Consumo de item inexistente autorizado");
+}
+{
+ let s=newCampaign(9042);s.event=null;
+ const team=s.heroes.slice(0,4);for(const h of team){h.level=50;h.energy=100;h.attack=15;h.defense=200;h.magic=18;}
+ s.chest=[{id:"item-1",key:"CG-009"},{id:"item-2",key:"CG-009"},{id:"item-3",key:"CG-009"},{id:"item-4",key:"CG-095"}];s.itemSequence=4;
+ s=applyAction(s,{type:"mission",missionId:missions(s)[0].id,team:team.map(h=>h.id),tactic:"balanced"});
+ const expedition=s.expeditions.at(-1)!;
+ const fid=expedition.battle.combat!.fighters.find(x=>x.side==="hero")!;
+ fid.hp=Math.max(1,Math.floor(fid.maxHp*.20));
+ s=applyAction(s,{type:"battle-item",itemId:"item-1",expeditionId:expedition.id});
+ ok(s.expeditions.at(-1)?.battle.combat?.healingItemsUsed===1,"Curativo não foi contado");
+ s=applyAction(s,{type:"battle-item",itemId:"item-2",expeditionId:expedition.id});
+ blocked(()=>applyAction(s,{type:"battle-item",itemId:"item-3",expeditionId:expedition.id}),"Mais de dois curativos permitidos");
+ s=applyAction(s,{type:"battle-item",itemId:"item-4",expeditionId:expedition.id});
+ ok(s.expeditions.at(-1)?.battle.combat?.consumablesUsed===3,"Três usos não foram registrados");
+}
+{
+ const titles:Record<string,string>={warrior:"Guerreiro",paladin:"Cavaleiro",ranger:"Arqueiro",rogue:"Assassino",mage:"Mago",healer:"Sacerdote",bard:"Pierrô"};
+ for(const book of bookItems){
+  let s=newCampaign(9088);s.event=null;
+  let main=s.heroes.find(h=>titles[h.class]===book.classes[0])!;
+  if(!main){main=s.heroes[0];main.class=Object.keys(titles).find(k=>titles[k]===book.classes[0]) as typeof main.class;}
+  const party=[main,...s.heroes.filter(h=>h.id!==main.id).slice(0,3)];
+  for(const h of party){h.level=50;h.energy=100;h.defense=280;h.attack=20;h.magic=22;}
+  main.supremeBook=book.id;
+  s=applyAction(s,{type:"mission",missionId:missions(s)[0].id,team:party.map(x=>x.id),tactic:"defensive"});
+  const id=s.expeditions.at(-1)!.id;
+  s=applyAction(s,{type:"battle-ability",heroId:main.id,abilityId:"supreme-"+book.id,expeditionId:id});
+  s=applyAction(s,{type:"battle-round",expeditionId:id});
+  ok(s.expeditions.at(-1)?.battle.log.some(x=>x.text.includes("Livro supremo ativado: "+book.id)),"Livro não executou efeito: "+book.id);
+  blocked(()=>applyAction(s,{type:"battle-ability",heroId:main.id,abilityId:"supreme-"+book.id,expeditionId:id}),"Livro usado duas vezes: "+book.id);
+ }
+}
+console.log("INTEGRACAO-CONSUMIVEIS-LIVROS: 14 efeitos de combate e poções validados.");

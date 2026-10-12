@@ -1779,3 +1779,94 @@ img{display:block;max-width:100%}
   :root{--max-app:920px}
   .mission-card{min-height:185px}
 }
+
+/* Recursos exclusivos do catálogo em teste. Não afeta produção. */
+.catalog-shop{display:grid;gap:6px;margin:7px 0;padding:4px;max-height:380px;overflow-y:auto}
+.catalog-shop>div{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px;padding:7px;background:#e7ca88;border:1px solid #977344;color:#512b19;border-radius:5px}
+.catalog-shop strong,.catalog-shop small{display:block;line-height:1.2}
+.catalog-shop strong{font-size:11px}
+.catalog-shop small{font-size:9px;margin-top:3px}
+.catalog-shop button{min-width:99px;font-size:10px;white-space:normal;min-height:32px}
+.catalog-forge{padding:12px}
+.catalog-forge>h3{display:flex;align-items:center;gap:7px;margin:0 0 5px;font-size:20px;color:#6c2619}
+.catalog-forge>small{font-size:11px;color:#553822}
+.catalog-equippable{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-top:12px}
+.catalog-equippable button{min-width:0;white-space:normal;min-height:40px}
+.item-art>svg{width:65%;height:65%;max-width:45px;color:#f6dca0;stroke-width:1.5;filter:drop-shadow(0 2px 4px #000d)}
+.item-art.rarity-common{background:linear-gradient(130deg,#293744,#55606d)}
+.item-art.rarity-uncommon{background:linear-gradient(130deg,#153426,#236c43)}
+.item-art.rarity-rare{background:linear-gradient(130deg,#132b50,#225da0)}
+.item-art.rarity-epic{background:linear-gradient(130deg,#30154e,#64338b)}
+.item-art.rarity-legendary{background:linear-gradient(130deg,#544014,#ac6b21)}
+@media(max-width:430px){
+ .catalog-shop>div{grid-template-columns:minmax(0,1fr) 105px;gap:4px}
+ .catalog-shop strong{font-size:10px}
+ .catalog-shop small{font-size:8px}
+ .catalog-shop button{min-width:0;font-size:9px}
+}
+/* Miniaturas reais extraídas das 314 fichas e agrupadas em quatro atlas AVIF.
+   300 itens nas três primeiras grades (10 x 10) e 14 livros na última (7 x 2). */
+.item-art.catalog-image{display:block;background-color:#171a26;background-origin:padding-box;background-clip:padding-box}
+.item-tile .item-art.catalog-image{background-color:#171a26}
+.catalog-shop>div{grid-template-columns:42px minmax(0,1fr) auto}
+.catalog-shop .item-art{width:38px;height:38px;border-radius:5px}
+.catalog-equippable button{display:flex;align-items:center;gap:5px}
+.catalog-equippable .item-art{width:32px;height:32px;border-radius:5px}
+@media(max-width:430px){
+  .catalog-shop>div{grid-template-columns:30px minmax(0,1fr) 99px}
+  .catalog-shop .item-art{width:28px;height:28px}
+}
+
+/* Galeria consultável de todos os 314 itens, independente do inventário do jogador */
+.catalog-gallery .inventory-top{gap:8px;align-items:center}
+.catalog-gallery .inventory-top strong{color:#f5d398;font-size:12px}
+.catalog-note{font-size:11px;color:#e8d7b1;margin:7px 3px 10px}
+.catalog-pagination{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:4px 0 10px;color:#f6d492;font-size:11px}
+.catalog-pagination button{padding:9px 11px;background:#253747;color:#f8e8c5;border:1px solid #b18a47;border-radius:6px}
+.catalog-pagination button:disabled{opacity:.4}
+.catalog-gallery-grid .item-tile{border-radius:5px}
+.catalog-gallery-grid .item-tile>span:not(.item-art){display:block;position:absolute;bottom:0;right:0;left:0;
+ background:#000c;color:#fff4c4;font-size:8px;line-height:16px;font-weight:bold;pointer-events:none}
+.catalog-gallery-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
+.catalog-gallery .item-detail p{font-size:12px;line-height:1.4;margin:7px 0}
+.catalog-gallery .selected-item-art .item-art.catalog-image{width:80%;height:80%}
+@media(max-width:550px){
+ .catalog-gallery-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .catalog-gallery .item-detail p{font-size:11px}
+}
+
+@media(max-width:700px){
+  .catalog-gallery .inventory-layout{display:flex;flex-direction:column}
+  .catalog-gallery .item-grid{grid-template-columns:repeat(5,minmax(0,1fr));padding:8px;gap:7px}
+  .catalog-gallery .item-tile{aspect-ratio:1;min-height:0}
+  .catalog-gallery .item-detail{border-top:2px solid #94723e}
+  .catalog-gallery .selected-item-art{height:235px}
+  .catalog-gallery .selected-item-art .item-art.catalog-image{width:185px;height:185px;max-width:100%}
+}
+
+/* Catálogo definitivo: livros supremos, itens de missão e consumíveis. */
+.mission-special-loot,.mission-material-loot{display:block;font-size:10px;line-height:1.3;color:#674519}
+.mission-special-loot svg{display:inline;vertical-align:middle;width:14px;height:14px;color:#b27624}
+.supreme-library{margin-block:18px}
+.supreme-library>p{font-size:12px;color:#60412a;line-height:1.45}
+.supreme-library label{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#493b22;font-size:13px;font-weight:700;margin:8px 0}
+.supreme-library select,.catalog-consume select{min-height:36px;padding:6px;border:1px solid #aa8649;background:#eed7ab;border-radius:6px;max-width:100%}
+.supreme-library .catalog-shop{max-height:600px}
+.supreme-library .catalog-shop>div{grid-template-columns:46px minmax(0,1fr) 138px}
+.supreme-library .catalog-shop small{line-height:1.25}
+.supreme-library .catalog-shop button{min-width:120px}
+.item-book-learn{display:grid;gap:5px;margin-block:7px}
+.item-book-learn strong{font-size:11px}
+.item-book-learn button{font-size:11px}
+.catalog-consume{display:grid;gap:6px}
+.battle-item-actions,.supreme-battle-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 0}
+.battle-item-actions button,.supreme-battle-actions button{display:flex;align-items:center;justify-content:center;gap:5px;min-width:105px;min-height:39px;font-size:10px;flex:1 1 130px}
+.battle-item-actions .item-art{height:25px;width:25px;border-radius:5px}
+.battle-loot{padding:9px;margin:6px;font-size:12px;color:#57321b}
+@media(max-width:550px){
+ .supreme-library .catalog-shop>div{grid-template-columns:30px minmax(0,1fr);gap:5px}
+ .supreme-library .catalog-shop button{grid-column:2;min-width:0}
+ .supreme-library .catalog-shop .item-art{width:30px;height:30px}
+ .battle-item-actions button,.supreme-battle-actions button{flex-basis:45%;font-size:9px}
+ .mission-special-loot,.mission-material-loot{font-size:9px}
+}

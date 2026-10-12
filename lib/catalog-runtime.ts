@@ -1,10 +1,22 @@
 import { CATALOG_BY_ID, CATALOG_ITEMS, RECIPE_BY_ID, testShop, equippedPosition, isTwoHanded, SETS } from "./catalog-test.ts";
-import type {Campaign,Action,HeroClass} from "./game.ts";
+import type {Campaign,Action,HeroClass,Mission} from "./game.ts";
 type AddEntry=(s:Campaign,title:string,delta:number)=>void;
 function ensure(v:unknown,message:string):asserts v {if(!v)throw Error(message);}
 function own(s:Campaign,key:string){return s.chest.filter(i=>i.key===key&&!i.equippedTo).length;}
 const NAMES:Record<string,HeroClass>={"Guerreiro":"warrior","Cavaleiro":"paladin","Arqueiro":"ranger","Assassino":"rogue","Mago":"mage","Sacerdote":"healer","Pierrô":"bard"};
-function add(s:Campaign,key:string){ensure(s.chest.length<120,"Inventário cheio.");s.chest.push({id:"item-"+(++s.itemSequence),key});}
+export function addCatalogItem(s:Campaign,key:string){ensure(CATALOG_BY_ID[key],"Item não cadastrado.");ensure(s.chest.length<120,"Inventário cheio.");s.chest.push({id:"item-"+(++s.itemSequence),key});}
+const add=addCatalogItem;
+const REGIONS=["Vale de Valen","Terras de Brumavale","Ruínas de Ashen","Fronteira dos Dragões","Deserto de Sahir","Costa de Namar","Bosque de Elarin","Picos de Kharum","Pântano de Morn","Império de Solkar","Abismo de Nhal","Coroa do Mundo"] as const;
+function roll(s:Campaign){s.rng=(Math.imul(s.rng,1664525)+1013904223)>>>0;return s.rng/4294967296;}
+export function questMissionIndex(key:string, region:string):number{
+ const candidates=CATALOG_ITEMS.filter(x=>x.categoria==="Outros"&&x.preco_compra===null&&x.regiao===region).sort((a,b)=>a.id.localeCompare(b.id));
+ const idx=candidates.findIndex(x=>x.id===key);
+ return idx<0?-1:idx%6;
+}
+export function missionLootPreview(s:Campaign,m:Mission):string[]{
+ const index=m.kind==="boss"?6:Number(m.id.split("-").at(-1));
+ return CATALOG_ITEMS.filter(x=>x.categoria==="Outros"&&x.preco_compra===null&&x.regiao===m.location&&questMissionIndex(x.id,m.location)===index&&!(s.claimedQuestItems||[]).includes(x.id)).map(x=>x.nome);
+}
 export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):void{
  switch(action.type){
  case "buy":{
@@ -46,8 +58,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   const recipe=RECIPE_BY_ID[action.recipeId];ensure(recipe&&recipe.forge>0,"Receita inexistente ou indisponível.");
   const d=CATALOG_BY_ID[recipe.result];ensure(d,"Item não cadastrado.");
   ensure(s.hq.forge>=recipe.forge,"Forja nível "+recipe.forge+" necessária.");
-  const regions=["Vale de Valen","Terras de Brumavale","Ruínas de Ashen","Fronteira dos Dragões","Deserto de Sahir","Costa de Namar","Bosque de Elarin","Picos de Kharum","Pântano de Morn","Império de Solkar","Abismo de Nhal","Coroa do Mundo"];
-  ensure(regions.includes(d.regiao)&&s.region>=regions.indexOf(d.regiao)+1,"Região do projeto não liberada.");
+  ensure(REGIONS.includes(d.regiao as typeof REGIONS[number])&&s.region>=REGIONS.indexOf(d.regiao as typeof REGIONS[number])+1,"Região do projeto não liberada.");
   ensure(s.gold>=recipe.cost,"Ouro insuficiente.");
   ensure(s.chest.length<120,"Inventário cheio.");
   for(const [key,qty] of Object.entries(recipe.materials))ensure(own(s,key)>=qty,"Material insuficiente: "+key);
@@ -57,17 +68,65 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   }
   entry(s,"Forja · "+d.nome,-recipe.cost);add(s,d.id);break;
  }
+ case "scribe-book":{
+  const d=CATALOG_BY_ID[action.bookId],hero=s.heroes.find(h=>h.id===action.heroId);
+  ensure(d?.categoria==="Livro de magia suprema"&&hero,"Livro ou herói inexistente.");
+  ensure(hero.level>=d.nivel&&hero.storyStage===3,"A prova exige o nível indicado e história pessoal concluída.");
+  ensure(d.classes.some(c=>NAMES[c]===hero.class),"Este livro pertence a outra classe.");
+  ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(hero.id)),"Herói ocupado em combate.");
+  ensure(s.hq.library>=3,"A biblioteca da sede precisa alcançar nível 3.");
+  ensure(s.bossSeasons.length>=1,"Derrote um chefe regional para desbloquear provas supremas.");
+  ensure(s.chest.length<120,"Inventário cheio.");
+  const cost=Math.round((d.preco_compra||0)*.7);
+  ensure(cost>0&&s.gold>=cost,"Ouro insuficiente para a transcrição.");
+  for(const mat of d.materiais||[])ensure(own(s,mat.id)>=mat.quantidade,"Material insuficiente: "+CATALOG_BY_ID[mat.id]?.nome);
+  for(const mat of d.materiais||[]){let n=mat.quantidade;s.chest=s.chest.filter(i=>{if(i.key===mat.id&&!i.equippedTo&&n){n--;return false;}return true;});}
+  entry(s,"Prova de classe · "+d.nome,-cost);add(s,d.id);break;
+ }
+ case "learn-book":{
+  const owned=s.chest.find(i=>i.id===action.itemId),hero=s.heroes.find(h=>h.id===action.heroId);
+  ensure(owned&&!owned.equippedTo&&hero,"Herói ou livro indisponível.");
+  const d=CATALOG_BY_ID[owned.key];ensure(d?.categoria==="Livro de magia suprema","Selecione um livro supremo.");
+  ensure(d.classes.some(c=>NAMES[c]===hero.class)&&hero.level>=d.nivel,"Classe ou nível incompatível.");
+  ensure(hero.storyStage===3,"Conclua a história pessoal do herói antes de aprender este livro.");
+  ensure(!hero.supremeBook,"O herói já aprendeu um livro supremo.");
+  ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(hero.id)),"Herói está em expedição.");
+  hero.supremeBook=d.id;s.chest=s.chest.filter(i=>i.id!==owned.id);break;
+ }
+ case "reset-specialization":{
+  const hero=s.heroes.find(h=>h.id===action.heroId);
+  ensure(hero&&hero.supremeBook&&!hero.supremeRespecced&&hero.talent,"A revisão suprema não está disponível.");
+  ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(hero.id)),"Herói está em expedição.");
+  delete hero.talent;hero.supremeRespecced=true;break;
+ }
  default:throw Error("Ação de catálogo desconhecida.");
  }
 }
-export function awardCatalogLoot(s:Campaign):string[]{
+/** Recompensas: o objeto de missão tem posição fixa no quadro de seis missões;
+ * recursos são recolhidos regionalmente, e itens combatíveis dependem de rolagens de raridade.
+ * Loot só é concedido pelo chamador após uma vitória.
+ */
+export function awardCatalogLoot(s:Campaign,m:Mission):string[]{
  if(s.chest.length>=120)return [];
- const regions=["Vale de Valen","Terras de Brumavale","Ruínas de Ashen","Fronteira dos Dragões","Deserto de Sahir","Costa de Namar","Bosque de Elarin","Picos de Kharum","Pântano de Morn","Império de Solkar","Abismo de Nhal","Coroa do Mundo"];
- const mats=CATALOG_ITEMS.filter(x=>x.categoria==="Materiais"&&regions.indexOf(x.regiao)>=0&&regions.indexOf(x.regiao)<s.activeRegion);
- if(!mats.length)return [];
- // A função de loot é chamada apenas depois de uma vitória: um material por missão.
- const ix=(s.day+s.wins+s.rng)%mats.length;
- const chosen=mats[ix];add(s,chosen.id);return [chosen.id];
+ const won:string[]=[];
+ const pick=(candidates:typeof CATALOG_ITEMS)=>candidates[Math.floor(roll(s)*candidates.length)];
+ const material=CATALOG_ITEMS.filter(d=>d.categoria==="Materiais"&&d.regiao===m.location);
+ if(material.length&&s.chest.length<120){const d=pick(material);add(s,d.id);won.push(d.id);}
+ const index=m.kind==="boss"?6:Number(m.id.split("-").at(-1));
+ const quest=CATALOG_ITEMS.filter(d=>d.categoria==="Outros"&&d.preco_compra===null&&d.regiao===m.location&&questMissionIndex(d.id,m.location)===index);
+ for(const d of quest){
+  if(s.chest.length>=120)break;
+  if(s.claimedQuestItems.includes(d.id))continue;
+  add(s,d.id);won.push(d.id);s.claimedQuestItems.push(d.id);
+ }
+ // Uma segunda recompensa de equipamento é possível, mas não garantida.
+ const eligible=CATALOG_ITEMS.filter(d=>d.regiao===m.location&&d.categoria!=="Materiais"&&d.categoria!=="Livro de magia suprema"&&d.preco_compra!==null&&d.raridade!=="SUPREMO");
+ const probability:Record<string,number>={"COMUM":.30,"INCOMUM":.20,"RARO":.10,"ÉPICO":.04,"LENDÁRIO":.01};
+ const candidates=eligible.filter(d=>m.kind==="boss"||d.raridade!=="LENDÁRIO");
+ // No máximo um item extra, com probabilidade de raridade condicionada à missão.
+ const gated=candidates.filter(d=>roll(s)<(probability[d.raridade]||0)*(m.kind==="boss"?1.5:1));
+ if(gated.length&&s.chest.length<120){const d=pick(gated);add(s,d.id);won.push(d.id);}
+ return won;
 }
 export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[]){
  const n={attack:0,defense:0,magic:0,hp:0,speed:0,critical:0,healing:0,luck:0};

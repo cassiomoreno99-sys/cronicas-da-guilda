@@ -87,7 +87,7 @@ export function testShop(s:Campaign):CatalogEntry[]{
  const regionNames=["Vale de Valen","Terras de Brumavale","Ruínas de Ashen","Fronteira dos Dragões","Deserto de Sahir","Costa de Namar","Bosque de Elarin","Picos de Kharum","Pântano de Morn","Império de Solkar","Abismo de Nhal","Coroa do Mundo"];
  const current=regionNames[region-1];
  const eligible=CATALOG_ITEMS.filter(d=>d.preco_compra!=null&&d.nivel<=Math.max(1,region*4+3) &&
-   (d.regiao===current || d.categoria==="Materiais") &&
+   (d.regiao===current || (d.categoria==="Materiais"&&regionNames.indexOf(d.regiao)>=0&&regionNames.indexOf(d.regiao)<region)) &&
    d.categoria!=="Livro de magia suprema" && RARITY_WEIGHT[d.raridade] <=Math.min(5,Math.floor(region/2)+2));
  const rotation=Math.floor((s.day-1)/7);
  return eligible.filter((d,i)=>((i+rotation*7)%3===0)).slice(0,12);

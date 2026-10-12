@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import {
   Archive, BookOpen, CircleHelp, Coins, Crown, Crosshair, Flag, FlaskConical, Footprints,
   Gem, Hammer, Heart, HeartHandshake, Hourglass, LockKeyhole, MapPin, PackageOpen,
@@ -48,9 +47,6 @@ export const GAME_SYMBOLS = {
 export type GameSymbolKind = keyof typeof GAME_SYMBOLS;
 export function GameSymbol({kind,size=18,className="",label}:{kind:GameSymbolKind;size?:number;className?:string;label?:string}){
   const spec=GAME_SYMBOLS[kind],Icon=spec.icon;
-  const style={"--game-symbol-size":size+"px"} as CSSProperties;
-  return <span className={"game-symbol game-symbol--"+kind+(className?" "+className:"")} style={style}
-    role={label?"img":undefined} aria-label={label} aria-hidden={label?undefined:true}>
-    <Icon size={size} strokeWidth={2.3} aria-hidden="true"/>
-  </span>;
+  return <Icon size={size} strokeWidth={2.3} className={"game-symbol game-symbol--"+kind+(className?" "+className:"")}
+    role={label?"img":undefined} aria-label={label} aria-hidden={label?undefined:true}/>;
 }

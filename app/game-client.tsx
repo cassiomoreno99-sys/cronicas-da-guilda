@@ -229,7 +229,7 @@ function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" 
 
 function ItemArt({ itemKey }: { itemKey: string }) {
  const item=CATALOG_BY_ID[itemKey];
- const index=/^CG-\\d{3}$/.test(itemKey)?Number(itemKey.slice(3))-1:-1;
+ const index=/^CG-\d{3}$/.test(itemKey)?Number(itemKey.slice(3))-1:-1;
  if(item && index>=0 && index<314) {
    const sheet=index<300?Math.floor(index/100)+1:4;
    const position=index<300?index%100:index-300;

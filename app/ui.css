@@ -1843,3 +1843,30 @@ img{display:block;max-width:100%}
   .catalog-gallery .selected-item-art{height:235px}
   .catalog-gallery .selected-item-art .item-art.catalog-image{width:185px;height:185px;max-width:100%}
 }
+
+/* Catálogo definitivo: livros supremos, itens de missão e consumíveis. */
+.mission-special-loot,.mission-material-loot{display:block;font-size:10px;line-height:1.3;color:#674519}
+.mission-special-loot svg{display:inline;vertical-align:middle;width:14px;height:14px;color:#b27624}
+.supreme-library{margin-block:18px}
+.supreme-library>p{font-size:12px;color:#60412a;line-height:1.45}
+.supreme-library label{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#493b22;font-size:13px;font-weight:700;margin:8px 0}
+.supreme-library select,.catalog-consume select{min-height:36px;padding:6px;border:1px solid #aa8649;background:#eed7ab;border-radius:6px;max-width:100%}
+.supreme-library .catalog-shop{max-height:600px}
+.supreme-library .catalog-shop>div{grid-template-columns:46px minmax(0,1fr) 138px}
+.supreme-library .catalog-shop small{line-height:1.25}
+.supreme-library .catalog-shop button{min-width:120px}
+.item-book-learn{display:grid;gap:5px;margin-block:7px}
+.item-book-learn strong{font-size:11px}
+.item-book-learn button{font-size:11px}
+.catalog-consume{display:grid;gap:6px}
+.battle-item-actions,.supreme-battle-actions{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:6px 0}
+.battle-item-actions button,.supreme-battle-actions button{display:flex;align-items:center;justify-content:center;gap:5px;min-width:105px;min-height:39px;font-size:10px;flex:1 1 130px}
+.battle-item-actions .item-art{height:25px;width:25px;border-radius:5px}
+.battle-loot{padding:9px;margin:6px;font-size:12px;color:#57321b}
+@media(max-width:550px){
+ .supreme-library .catalog-shop>div{grid-template-columns:30px minmax(0,1fr);gap:5px}
+ .supreme-library .catalog-shop button{grid-column:2;min-width:0}
+ .supreme-library .catalog-shop .item-art{width:30px;height:30px}
+ .battle-item-actions button,.supreme-battle-actions button{flex-basis:45%;font-size:9px}
+ .mission-special-loot,.mission-material-loot{font-size:9px}
+}

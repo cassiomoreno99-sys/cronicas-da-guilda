@@ -12,7 +12,7 @@ for(const room of rooms){
 }
 check(code.includes("room={key} compact"),"As cartas não associam a imagem ao tipo de edifício");
 check(!code.includes("arts[index%arts.length]"),"Imagens genéricas ainda são repetidas por posição");
-check((code.match(/<GuildRoomArt\\s/g)||[]).length===1,"Imagens dos locais da Guilda aparecem fora dos seis cartões da Sede");
+check((code.match(/<GuildRoomArt\s/g)||[]).length===1,"Imagens dos locais da Guilda aparecem fora dos seis cartões da Sede");
 check(!code.includes('<GuildRoomArt room="forge"'),"A imagem panorâmica da Forja deve permanecer removida");
 check(code.includes('src="/guild/forjador.webp"'),"O cartão do Forjador deve permanecer na Forja");
 check(css.includes("building-list article.guild-building-card img.guild-room-art"),"As cartas perderam a proporção de imagem");

@@ -14,11 +14,12 @@ for(const rel of paths){
  assert(buf.toString("ascii",0,4)==="RIFF"&&buf.toString("ascii",8,12)==="WEBP","Formato inválido: "+rel);
 }
 assert(/leagueCrest\(g\)/.test(ui),"As classificações não usam brasões");
-assert(ui.includes('src={LEAGUE_TROPHY}'),"Os troféus não aparecem na liga");
+assert(ui.includes("<RealisticTrophy size={25}/>"),"Os troféus realistas não aparecem na Liga");
 assert(!ui.includes('className={"mini-banner b"'),"Bandeiras antigas continuam aparecendo");
 assert(ui.includes('/reference/sanctuary-2026.webp'),"Santuário antigo ainda ativo");
-assert(ui.includes('/reference/olho-rubro-report-2026.webp'),"Relatório do Olho Rubro ausente");
-assert(ui.includes('state.activeRegion===1&&<details className="enemy-dossier'),"Relatório fora da região definida");
+assert(ui.includes('className="guild-challenge-art" src="/reference/olho-rubro-report-2026.webp"'),"A imagem do desafio não foi posicionada na Liga");
+assert(!ui.includes('<details className="enemy-dossier'),"O relatório ainda aparece na frente das missões");
 assert(css.includes('.sanctuary-head>img')&&css.includes('object-fit:contain'),"Proporção da arte do santuário não foi preservada");
-assert(css.includes('.enemy-dossier-content img')&&css.includes('height:auto'),"Relatório poderá ser cortado");
-console.log("ARTES APROVADAS: 9 arquivos WebP; Liga, Descanso e Olho Rubro conectados");
+assert(css.includes('.guild-challenge img.guild-challenge-art')&&css.includes('object-fit:contain'),"Imagem do desafio pode ser cortada");
+assert(ui.includes("league-crest-frame"),"Brasões sem moldura");
+console.log("ARTES REVISADAS: desafio no único local correto, emblemas, troféus e proporções");

@@ -9,6 +9,10 @@ const add=addCatalogItem;
 const REGIONS=["Vale de Valen","Terras de Brumavale","Ruínas de Ashen","Fronteira dos Dragões","Deserto de Sahir","Costa de Namar","Bosque de Elarin","Picos de Kharum","Pântano de Morn","Império de Solkar","Abismo de Nhal","Coroa do Mundo"] as const;
 function roll(s:Campaign){s.rng=(Math.imul(s.rng,1664525)+1013904223)>>>0;return s.rng/4294967296;}
 export function questMissionIndex(key:string, region:string):number{
+ if(region==="Vale de Valen"){
+  const special:Record<string,number>={"CG-027":0,"CG-251":2,"CG-254":5,"CG-262":3};
+  if(special[key]!==undefined)return special[key];
+ }
  const candidates=CATALOG_ITEMS.filter(x=>x.categoria==="Outros"&&x.preco_compra===null&&x.regiao===region).sort((a,b)=>a.id.localeCompare(b.id));
  const idx=candidates.findIndex(x=>x.id===key);
  return idx<0?-1:idx%6;

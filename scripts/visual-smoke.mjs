@@ -33,11 +33,11 @@ await page.goto(base, { waitUntil: "networkidle" });
 await sanity("01-missoes");
 if(await page.locator(".enemy-dossier").count()!==0)
  throw new Error("A imagem indevida continua no início das missões.");
-if(await page.locator(".header-resources svg.game-symbol--gold").count()!==1)
+if(await page.locator(".header-resources img.game-symbol--gold").count()!==1)
  throw new Error("Símbolo de ouro não aparece no cabeçalho");
-if(await page.locator(".mission-rewards svg.game-symbol--reward").count()<1)
+if(await page.locator(".mission-rewards img.game-symbol--reward").count()<1)
  throw new Error("Recompensa sem símbolo dourado");
-const coin=await page.locator(".header-resources svg.game-symbol--gold").evaluate(el=>{
+const coin=await page.locator(".header-resources img.game-symbol--gold").evaluate(el=>{
  const box=el.getBoundingClientRect(),style=getComputedStyle(el);
  return {w:box.width,h:box.height,color:style.color,visible:style.visibility};
 });
@@ -62,7 +62,7 @@ await page.waitForFunction(()=>[...document.querySelectorAll(".league-row .leagu
 for(const img of await rivalCrests.all()){
  if(!(await img.evaluate(el=>el.naturalWidth>=100&&el.naturalHeight>=100)))throw new Error("Brasão da Liga não carregou.");
 }
-if(await page.locator(".realistic-trophy").count()<7)throw new Error("Faltam troféus metálicos na Liga.");
+if(await page.locator(".league-trophy-art").count()<7)throw new Error("Faltam troféus metálicos na Liga.");
 if(await page.locator(".league-summary .big-crest img").count()!==1)throw new Error("Brasão do jogador ausente.");
 const fullChallenge=await page.locator(".guild-challenge-art").evaluate(async el=>{
  if(!el.complete)await new Promise((resolve,reject)=>{el.addEventListener("load",resolve,{once:true});el.addEventListener("error",reject,{once:true});});
@@ -72,6 +72,10 @@ if(fullChallenge.src!=="/reference/olho-rubro-report-2026.webp"||fullChallenge.n
  ||Math.abs(fullChallenge.w/fullChallenge.h-fullChallenge.nw/fullChallenge.nh)>.025
  ||fullChallenge.style!=="contain")
  throw new Error("A imagem do desafio foi cortada: "+JSON.stringify(fullChallenge));
+const shieldNames=await rivalCrests.evaluateAll(els=>els.map(el=>el.getAttribute("src")));
+if(new Set(shieldNames).size<4)throw new Error("Brasões das guildas repetidos ou errados: "+shieldNames.join(", "));
+if(!(await page.locator(".league-summary .big-crest img").getAttribute("src"))?.includes("crest-alvorecer"))throw new Error("Brasão principal não atualizado");
+await page.locator(".league-trophy-art").first().evaluate(async el=>{if(!el.complete)await new Promise(r=>el.addEventListener("load",r,{once:true}));if(el.naturalWidth<200)throw new Error("Troféu de Liga aprovado não carregou")});
 await sanity("03a-liga-brasoes");
 await top("Descanso","04-descanso");
 const sanctuaryImage=page.locator(".sanctuary-head>img");
@@ -146,6 +150,10 @@ await merchantImage.evaluate(async el => { if (!el.complete) await new Promise((
 const merchantInfo = await merchantImage.evaluate(el => ({ width:el.naturalWidth, height:el.naturalHeight, rendered:el.getBoundingClientRect().width }));
 if (merchantInfo.width < 600 || merchantInfo.height < 600 || merchantInfo.rendered < 90) throw new Error("Retrato do mercador pequeno ou sem imagem: "+JSON.stringify(merchantInfo));
 await bottom("Guilda","08-guilda");
+const forgePortrait=page.locator(".guild-forjador>img");
+if(await forgePortrait.count()!==1)throw new Error("O Forjador não aparece na Sede");
+if(!(await forgePortrait.evaluate(async el=>{if(!el.complete)await new Promise(r=>el.addEventListener("load",r,{once:true}));return el.naturalWidth>=700})))throw new Error("Imagem do Forjador não carregou");
+await sanity("08b-forjador-da-guilda");
 const guide=page.locator(".symbol-guide");
 if(await guide.count()!==1)throw new Error("Guia oficial de símbolos ausente");
 await guide.locator("summary").click();
@@ -215,7 +223,7 @@ const desktop=await browser.newPage({viewport:{width:1440,height:900},deviceScal
 await desktop.goto(base,{waitUntil:"networkidle"});
 if(await desktop.locator(".nav-sidebar .bottom-nav svg.game-symbol").count()<4)
  throw new Error("Menu PC não mostra ícones padronizados");
-if(await desktop.locator(".header-resources svg.game-symbol--gold").count()!==1)
+if(await desktop.locator(".header-resources img.game-symbol--gold").count()!==1)
  throw new Error("Ouro sem símbolo no PC");
 const overflow=await desktop.evaluate(()=>Math.max(document.documentElement.scrollWidth,document.body.scrollWidth)-innerWidth);
 if(overflow>2)throw new Error("Layout de PC excede a largura: "+overflow);

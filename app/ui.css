@@ -1960,3 +1960,17 @@ svg.game-symbol--forge,svg.game-symbol--merchant{color:#7d5732}
  .header-resources strong{font-size:17px}
  .game-symbol--gold,.game-symbol--reward{min-width:23px;min-height:23px}
 }
+
+.symbol-guide{margin:12px 0;padding:10px;border:2px ridge #98713d;background:linear-gradient(140deg,#eed8a4,#d8b476)}
+.symbol-guide>summary{display:flex;align-items:center;gap:8px;cursor:pointer;color:#633d1f;font-size:14px;font-weight:800;min-height:34px;list-style:none}
+.symbol-guide>summary::-webkit-details-marker{display:none}
+.symbol-guide>summary:after{content:"▾";margin-left:auto;color:#704d24}
+.symbol-guide[open]>summary:after{content:"▴"}
+.symbol-guide>p{font-size:12px;color:#65442c;margin:8px 0 10px}
+.symbol-guide h4{margin:12px 0 5px;font-size:12px;color:#5b2f1e}
+.symbol-guide-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.symbol-guide-grid>span{min-width:0;display:flex;align-items:center;gap:6px;background:#f5dfb2;border:1px solid #b89552;border-radius:4px;padding:6px;font-size:11px;font-weight:600;color:#5e3b20}
+.symbol-guide-grid>span svg.game-symbol{min-width:19px;min-height:19px;max-width:24px;max-height:24px}
+.symbol-guide-grid>span svg.game-symbol--gold,.symbol-guide-grid>span svg.game-symbol--reward{width:23px;height:23px}
+@media(max-width:550px){.symbol-guide-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.symbol-guide-grid>span{font-size:10px}}
+@media(min-width:1000px){.symbol-guide-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}

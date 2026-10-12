@@ -770,13 +770,29 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
   </section>;
 }
 
+const GUILD_ROOM_IMAGES:Record<HQBuilding,string>={
+  infirmary:"/guild/rooms/infirmary.webp",
+  forge:"/guild/rooms/forge.webp",
+  academy:"/guild/rooms/academy.webp",
+  library:"/guild/rooms/library.webp",
+  stables:"/guild/rooms/stables.webp",
+  warroom:"/guild/rooms/warroom.webp",
+};
+function GuildRoomArt({room,label,compact=false}:{room:HQBuilding;label:string;compact?:boolean}){
+ return <img className={compact?"guild-room-art compact":"guild-room-art"}
+  src={GUILD_ROOM_IMAGES[room]} alt={label} width={1280} height={720} loading="lazy"/>;
+}
 function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
   const slots = academySlots(state);
   const [draft,setDraft] = useState<string[]>(state.academy.trainees);
   useEffect(() => setDraft(state.academy.trainees), [state.academy.trainees.join(",")]);
-  if (!slots) return <div className="guild-mini parchment"><h3>Academia</h3><p>Melhore a Academia para liberar aprendizes.</p></div>;
+  if (!slots) return <div className="guild-mini parchment"><h3>Academia</h3>
+  <GuildRoomArt room="academy" label="Academia da Cidadela Azul e Dourada, pátio medieval de treinamento."/>
+  <p>Melhore a Academia para liberar aprendizes.</p></div>;
   const toggle = (id:string) => setDraft(old => old.includes(id) ? old.filter(x => x !== id) : old.length < slots ? [...old,id] : old);
-  return <div className="guild-mini parchment"><h3>Academia · {draft.length}/{slots}</h3><div className="academy-heroes">{state.heroes.slice(0,8).map(h => <button key={h.id} data-active={draft.includes(h.id)} onClick={() => toggle(h.id)}><HeroPortrait hero={h}/><span>{h.name.split(" ")[0]}</span></button>)}</div><button className="small-button" disabled={busy} onClick={() => act({type:"academy-trainees",heroIds:draft})}>Salvar aprendizes</button>
+  return <div className="guild-mini parchment"><h3>Academia · {draft.length}/{slots}</h3>
+  <GuildRoomArt room="academy" label="Academia da Cidadela Azul e Dourada, pátio dos heróis."/>
+  <div className="academy-heroes">{state.heroes.slice(0,8).map(h => <button key={h.id} data-active={draft.includes(h.id)} onClick={() => toggle(h.id)}><HeroPortrait hero={h}/><span>{h.name.split(" ")[0]}</span></button>)}</div><button className="small-button" disabled={busy} onClick={() => act({type:"academy-trainees",heroIds:draft})}>Salvar aprendizes</button>
     <select value={state.academy.mentorId || ""} onChange={e => act({type:"academy-mentor",heroId:e.target.value || undefined})}><option value="">Sem mentor</option>{state.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select>
   </div>;
 }
@@ -804,6 +820,7 @@ function SupremeLibraryPanel({state,act,busy}:{state:Campaign;act:(a:Action)=>vo
  const books=CATALOG_ITEMS.filter(d=>d.categoria==="Livro de magia suprema"&&d.classes.includes(map[h?.class]||""));
  return <section className="parchment catalog-forge supreme-library" aria-label="Livros supremos">
   <h3><GameSymbol kind="book"/> Biblioteca dos 14 Livros Supremos</h3>
+  <GuildRoomArt room="library" label="Biblioteca Arcana sob os céus estrelados, com grimórios e magia."/>
   <p>A prova de classe exige história pessoal concluída, biblioteca nível 3, um chefe regional derrotado, materiais raros e ouro. O herói só aprende um livro.</p>
   <label>Herói da prova <select value={h?.id||""} onChange={e=>setSelectedHero(e.target.value)}>
    {state.heroes.map(x=><option key={x.id} value={x.id}>{x.name} · {CLASSES[x.class].name} · Nv. {x.level}</option>)}
@@ -859,10 +876,11 @@ function GuildPage({
     <ParchmentTitle icon={<GameSymbol kind="guild"/>} title="Sede da Guilda" />
     <div className="building-list parchment">{buildings.map(([key,spec],index) => {
       const lvl = state.hq[key] || 0, max = spec.max, cost = hqUpgradeCost(state,key);
-      const arts = ["/reference/guild-training.webp","/reference/guild-market.webp","/reference/guild-sanctuary.webp","/reference/guild-workshop.webp"];
-      return <article key={key}><img src={arts[index%arts.length]} alt="" /><div><h3>{spec.name} <small>Nv. {lvl}</small></h3><p>{spec.description}</p></div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
+      return <article className="guild-building-card" key={key}>
+        <GuildRoomArt room={key} compact label={spec.name+": local medieval da Sede da Guilda."}/><div><h3>{spec.name} <small>Nv. {lvl}</small></h3><p>{spec.description}</p></div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
     <section className="parchment catalog-forge"><h3><GameSymbol kind="forge" size={18}/> Forja · Nv. {state.hq.forge}</h3>
+    <GuildRoomArt room="forge" label="Forja monumental com bigorna, fogo e ferreiro anão."/>
     <div className="guild-forjador">
       <img src="/guild/forjador.webp" alt="O Forjador, mestre artesão da guilda, trabalhando com martelo e bigorna diante da fornalha." width={720} height={960} loading="lazy"/>
       <div><strong>O Forjador</strong><p>O mestre artesão da guilda transforma recursos raros em armas e equipamentos. Traga seus materiais, pague a taxa e escolha sua encomenda.</p>
@@ -878,7 +896,9 @@ function GuildPage({
     <div className="guild-grid">
       <section className="guild-mini parchment"><h3>Mapa do Mundo</h3><div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}><strong>{i+1}. {r.name}</strong><small>{r.theme}</small></button>)}</div></section>
       <AcademyPanel state={state} act={act} busy={busy} />
-      <section className="guild-mini parchment"><h3>Guerra de Guildas</h3><p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
+      <section className="guild-mini parchment"><h3>Sala de Guerra · Guerra de Guildas</h3>
+        <GuildRoomArt room="warroom" label="Sala de Guerra na fortaleza, mapas e comandantes medievais."/>
+        <p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
     </div>
     <RivalRecruitPanel state={state} act={act} busy={busy} />
     <SymbolGuide />

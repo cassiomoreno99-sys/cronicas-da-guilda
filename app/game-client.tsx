@@ -911,7 +911,7 @@ function GuildPage({
       <div><h2>{state.name}</h2><p>Força na união, glória em cada jornada.</p><span><GameSymbol kind="squad"/> Membros: {state.heroes.length}/12</span><span><GameSymbol kind="defense"/> Nível da Guilda: {Math.max(1,Math.ceil(state.fame/120))}</span></div>
       <aside><strong><GameSymbol kind="gold"/> Tesouro {fmt(state.gold)}</strong><strong><GameSymbol kind="fame"/> Renome {state.fame}</strong><strong><GameSymbol kind="league"/> Liga {rank(state)}</strong></aside>
     </div>
-    {state.event && <div className="council parchment"><img src="/reference/guild-council.webp" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
+    {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
     <ParchmentTitle icon={<GameSymbol kind="guild"/>} title="Sede da Guilda" />
     <div className="building-list parchment">{buildings.map(([key,spec],index) => {
       const lvl = state.hq[key] || 0, max = spec.max, cost = hqUpgradeCost(state,key);

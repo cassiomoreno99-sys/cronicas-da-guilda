@@ -3,11 +3,33 @@ import { readFile, stat } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import ffmpegPath from "ffmpeg-static";
+import { runInNewContext } from "node:vm";
 
 const component=await readFile("app/arena-demo.tsx","utf8");
 const game=await readFile("app/game-client.tsx","utf8");
 const build=await readFile("scripts/build-offline.mjs","utf8");
 const css=await readFile("app/arena-demo.css","utf8");
+const scriptSource=component.split("const SCRIPT: Move[] = [")[1]?.split("\n];")[0];
+assert.ok(scriptSource,"Roteiro da batalha não encontrado.");
+const acts=runInNewContext("["+scriptSource+"]");
+assert.ok(acts.length>=16&&acts.length<=24,"A demo precisa ser curta, mas com vários turnos.");
+const hp=new Map([["kaelith",180],["lyria",132],["thorgar",195],["eldrin",150],["lobo-1",95],["lobo-2",110],["lobo-3",150]]);
+const maxHp=new Map(hp);
+let specials=0;
+for(const [i,step] of acts.entries()){
+  assert.ok(hp.has(step.actor),"Atacante inexistente no passo "+i);
+  assert.ok(hp.get(step.actor)>0,"Um combatente derrotado atacou na ação "+i+": "+step.actor);
+  assert.ok(Array.isArray(step.targets)&&step.targets.length>0);
+  for(const target of step.targets){
+    assert.ok(hp.has(target.id),"Alvo inexistente na ação "+i);
+    assert.ok(hp.get(target.id)>0,"Alvo já derrotado foi atingido na ação "+i);
+    hp.set(target.id,Math.max(0,Math.min(maxHp.get(target.id),hp.get(target.id)-target.value)));
+  }
+  if(step.video)specials++;
+}
+assert.equal(specials,2,"Exatamente dois vídeos especiais.");
+assert.ok(["lobo-1","lobo-2","lobo-3"].every(id=>hp.get(id)===0),"A demonstração deve terminar em vitória coerente.");
+assert.ok(["kaelith","lyria","thorgar","eldrin"].every(id=>hp.get(id)>0),"A demo precisa manter heróis de pé.");
 assert.match(component,/function ArenaDemo/,"A demonstração precisa estar no jogo.");
 assert.match(component,/ARENA_DEMO_ACTION_COUNT = SCRIPT.length/);
 assert.match(game,/<ArenaDemo onExit=/,"Faltou entrada no jogo.");

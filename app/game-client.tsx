@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import OfflineInstall from "./offline-install";
+import soundtrackLibrary from "@/lib/music-playlist.json";
 import {
   Archive, BookOpen, Check, ChevronLeft, ChevronRight, CircleHelp, Coins, Crown, Download,
   Flag, Footprints, Gem, Hammer, Hand, Heart, LockKeyhole, ScrollText, Shield, Shirt, Sparkles, Swords,
@@ -76,32 +77,65 @@ const CORE_RACE_NAMES: Record<string,string> = {
 const raceLabel = (hero: Pick<Hero,"id"|"name"|"class"|"race">): string => CORE_RACE_NAMES[hero.id] || RACES[heroRace(hero)].name;
 /** Tema orquestral CC0: reprodução nativa com volume controlado pelo Android.
  * Sem dezenas de osciladores WebAudio; reduz CPU/bateria durante o jogo offline. */
+const RPG_MUSIC_TRACKS = soundtrackLibrary.tracks;
 function useAmbientRpgMusic() {
   const [musicEnabled,setMusicEnabled] = useState(() => {
-    try {return window.localStorage.getItem("cronicas-musica") !== "off";}
-    catch {return true;}
+    try{return window.localStorage.getItem("cronicas-musica") !== "off";}
+    catch{return true;}
   });
-  const enabledRef = useRef(musicEnabled);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const playMusic = useCallback(() => {
-    if (!enabledRef.current || document.hidden) return;
-    let audio=audioRef.current;
-    if (!audio) {
-      audio=new Audio("/music/cronicas-tema-epico.ogg");
-      audio.loop=true;
-      audio.preload="auto";
-      // Volume = 100% do canal de mídia. Botões físicos do Android controlam o volume.
-      audio.volume=1;
-      audioRef.current=audio;
-    }
-    if (audio.paused) void audio.play().catch(() => {});
+  const initialIndex = useMemo(() => {
+    try {
+      const value=Number(window.localStorage.getItem("cronicas-musica-faixa") || 0);
+      return Number.isSafeInteger(value) && value>=0 ? value % RPG_MUSIC_TRACKS.length : 0;
+    } catch{return 0;}
   },[]);
+  const [musicIndex,setMusicIndex] = useState(initialIndex);
+  const enabledRef = useRef(musicEnabled);
+  const indexRef = useRef(initialIndex);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const errorsRef = useRef(0);
+
+  const playMusic = useCallback(() => {
+    const audio=audioRef.current;
+    if(!enabledRef.current || document.hidden || !audio)return;
+    if(audio.paused)void audio.play().catch(() => {});
+  },[]);
+
+  const nextTrack = useCallback(() => {
+    const audio=audioRef.current;
+    if(!audio)return;
+    const next=(indexRef.current+1) % RPG_MUSIC_TRACKS.length;
+    indexRef.current=next;
+    setMusicIndex(next);
+    try{window.localStorage.setItem("cronicas-musica-faixa",String(next));}catch{}
+    audio.src="/music/"+RPG_MUSIC_TRACKS[next].file;
+    audio.load();
+    if(enabledRef.current && !document.hidden)void audio.play().catch(() => {});
+  },[]);
+
   useEffect(() => {
+    // Usa somente UM decodificador nativo de áudio: menor CPU e memória no Android.
+    // O volume fica em 100% do canal de mídia e respeita os botões físicos do telefone.
+    const audio=new Audio("/music/"+RPG_MUSIC_TRACKS[indexRef.current].file);
+    audio.preload="none";
+    audio.loop=false;
+    audio.volume=1;
+    audioRef.current=audio;
+    const ended=() => {errorsRef.current=0;nextTrack();};
+    const error=() => {
+      errorsRef.current++;
+      if(errorsRef.current<RPG_MUSIC_TRACKS.length)nextTrack();
+      else audio.pause();
+    };
+    const playing=() => {errorsRef.current=0;};
     const unlock=() => {if(enabledRef.current)playMusic();};
     const visibility=() => {
-      if(document.hidden) audioRef.current?.pause();
+      if(document.hidden)audio.pause();
       else unlock();
     };
+    audio.addEventListener("ended",ended);
+    audio.addEventListener("error",error);
+    audio.addEventListener("playing",playing);
     window.addEventListener("pointerdown",unlock,{passive:true});
     window.addEventListener("keydown",unlock);
     document.addEventListener("visibilitychange",visibility);
@@ -109,18 +143,26 @@ function useAmbientRpgMusic() {
       window.removeEventListener("pointerdown",unlock);
       window.removeEventListener("keydown",unlock);
       document.removeEventListener("visibilitychange",visibility);
-      audioRef.current?.pause();
+      audio.removeEventListener("ended",ended);
+      audio.removeEventListener("error",error);
+      audio.removeEventListener("playing",playing);
+      audio.pause();
+      audio.removeAttribute("src");
+      audio.load();
+      if(audioRef.current===audio)audioRef.current=null;
     };
-  },[playMusic]);
+  },[playMusic,nextTrack]);
+
   const toggleMusic = useCallback(() => {
     const next=!enabledRef.current;
     enabledRef.current=next;
     setMusicEnabled(next);
-    try {window.localStorage.setItem("cronicas-musica",next?"on":"off");} catch {}
+    try{window.localStorage.setItem("cronicas-musica",next?"on":"off");}catch{}
     if(next)playMusic();
     else audioRef.current?.pause();
   },[playMusic]);
-  return {musicEnabled,toggleMusic};
+
+  return {musicEnabled,toggleMusic,musicIndex,nextTrack,trackCount:RPG_MUSIC_TRACKS.length};
 }
 
 function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" | "class" | "race">; large?: boolean }) {
@@ -775,8 +817,8 @@ function SymbolGuide(){
 }
 
 function GuildPage({
-  state, act, busy, onExport, onImport, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode
-}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void }) {
+  state, act, busy, onExport, onImport, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack
+}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void }) {
   const buildings = Object.entries(HQ_DEFINITIONS) as Array<[HQBuilding,(typeof HQ_DEFINITIONS)[HQBuilding]]>;
   const availableRaidHeroes = state.heroes.filter(h => available(h,state)).slice(0,9);
   const raidTeams = availableRaidHeroes.length >= 9 ? [availableRaidHeroes.slice(0,3).map(h=>h.id),availableRaidHeroes.slice(3,6).map(h=>h.id),availableRaidHeroes.slice(6,9).map(h=>h.id)] : [];
@@ -817,14 +859,14 @@ function GuildPage({
     <ParchmentTitle icon={<GameSymbol kind="help"/>} title="Save e Configurações" />
     <div id="guild-settings" className="guild-settings-controls parchment">
       <div className="guild-setting-row">
-        <div><strong>Trilha épica de RPG</strong><small>Orquestra real. O volume acompanha os botões de mídia do celular; não existe controle de volume separado no jogo.</small></div>
+        <div><strong>Trilha de fantasia · {RPG_MUSIC_TRACKS.length} músicas</strong><small>Tocando: {RPG_MUSIC_TRACKS[musicIndex].name} ({RPG_MUSIC_TRACKS[musicIndex].mood}). A sequência avança automaticamente sem repetir faixas até o final; volume pelos botões do celular.</small><button className="music-next-button" onClick={nextTrack} aria-label="Pular para a próxima música">Próxima música →</button></div>
         <button className="small-button" onClick={toggleMusic} aria-pressed={musicEnabled}>{musicEnabled ? <><Volume2 size={16}/> Música ligada</> : <><VolumeX size={16}/> Música desligada</>}</button>
       </div>
       <div className="guild-setting-row">
         <div><strong>Modo leve · melhor desempenho</strong><small>Reduz sombras, efeitos e animações para melhorar a fluidez e poupar bateria. Não altera missões, cálculos ou salvamentos.</small></div>
         <button className="small-button" aria-pressed={liteMode} onClick={() => setLiteMode(!liteMode)}>{liteMode ? "Ativado" : "Desativado"}</button>
       </div>
-      <small className="music-credit">Trilha: Epic Boss Battle — Juhani Junkala / SubspaceAudio (CC0).</small>
+      <small className="music-credit">Músicas licenciadas CC0 · Juhani Junkala / SubspaceAudio, HydroGene e RandomMind. Mais de 30 minutos de faixas diferentes, disponíveis offline depois do carregamento inicial.</small>
     </div>
     <div className="settings-panel parchment"><button onClick={onExport}><Download /> Baixar backup</button><button onClick={onImport}><Upload /> Importar backup</button><button className="danger" onClick={onReset}><X /> Reiniciar campanha</button></div>
   </section>;
@@ -978,7 +1020,7 @@ export default function Game() {
   const [battleExpeditionId,setBattleExpeditionId] = useState<string | null>(null);
   const saveRef = useRef<Save | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const { musicEnabled, toggleMusic } = useAmbientRpgMusic();
+  const { musicEnabled, toggleMusic, musicIndex, nextTrack } = useAmbientRpgMusic();
   const [liteMode,setLiteMode] = useState(() => {
     try {
       const saved=window.localStorage.getItem("cronicas-modo-leve");
@@ -1073,7 +1115,7 @@ export default function Game() {
       {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} act={perform} busy={busy} />}
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
-      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} />} 
+      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} />} 
       </main>
     </div>
     <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />

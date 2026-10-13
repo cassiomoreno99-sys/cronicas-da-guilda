@@ -46,8 +46,8 @@ const valenMissionArt = Array.from({ length: 7 }, (_, i) => `/reference/valen-mi
 /** Usa a arte da missão real (e não uma foto fixa da vaga 1, 2 ou 3).
  * O ID carrega região e índice e continua válido nos saves em andamento. */
 function missionArtwork(missionId: string): string {
-  const normal = /^mission-\\d+-(\\d+)-(\\d+)$/.exec(missionId);
-  const boss = /^boss-\\d+-(\\d+)$/.exec(missionId);
+  const normal = /^mission-\d+-(\d+)-(\d+)$/.exec(missionId);
+  const boss = /^boss-\d+-(\d+)$/.exec(missionId);
   const region = normal ? Number(normal[1]) : boss ? Number(boss[1]) : -1;
   const index = normal ? Number(normal[2]) : boss ? 6 : 0;
   if (region === 0) return valenMissionArt[Math.min(6,Math.max(0,index))];

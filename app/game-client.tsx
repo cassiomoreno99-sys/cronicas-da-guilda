@@ -13,7 +13,7 @@ import {
   SPECIALIZATIONS, SPECIALIZATION_BRANCHES, RACE_TREES, HERO_STORIES,
   HQ_DEFINITIONS, WORLD_MAP, NEGOTIATION_MODES, JOURNEY_CHOICES,
   activeExpeditions, freeExpeditionSlots, available, activeJourney, heroOnExpedition,
-  heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, seasonBoss,
+  heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss,
   teamPower, standings, leaguePrize, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
   hqUpgradeCost, academySlots, academyCandidateChance, seasonDay,
@@ -295,11 +295,12 @@ function MissionPage({
             <p><GameSymbol kind="objective"/>{m.description}</p>
             <div className="difficulty"><GameSymbol kind="difficulty"/><b>Dificuldade:</b>{[0,1,2,3,4].map(i => <i key={i} data-on={i < m.rank}>◆</i>)}</div>
             <div className="specialist"><GameSymbol kind="squad"/><span>Especialistas: {specialtyName(m.specialty)}</span></div>
+            <div className="specialist"><GameSymbol kind="experience"/><span><strong>Nível recomendado: {missionSuggestedLevel(m) + Math.floor((state.season - 1) / 3)}</strong> · {m.kind==="boss"?"Chefe de elite":"Perigo desta região"}</span></div>
             {!!locks.length && <small className="locked-copy"><GameSymbol kind="locked"/> {locks[0]}</small>}
           </div>
           <div className="mission-rewards">
             <span><GameSymbol kind="reward"/> {m.reward} Ouro</span>
-            <span><GameSymbol kind="experience"/> +{20 + m.rank * 15} XP</span>
+            <span><GameSymbol kind="experience"/> Até +{missionRewardXp(m)} XP</span>
             {!!missionLootPreview(state,m).length&&<small className="mission-special-loot"><GameSymbol kind="objective"/> Item de objetivo: {missionLootPreview(state,m).join(", ")}</small>}
             <small className="mission-material-loot"><GameSymbol kind="treasure"/> Materiais regionais e chance de equipamento</small>
             

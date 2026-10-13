@@ -2514,3 +2514,38 @@ img.game-symbol.game-coin{
  font-size:12px;font-weight:700;margin-top:6px;padding:5px 10px;
  border:1px solid #967640;background:#ecd09a;color:#512918;border-radius:4px;
 }
+
+/* Combate ao vivo: a cada 1,35 s apenas o combatente da iniciativa age. */
+.battle-live-update{
+  margin:9px 10px;padding:9px 12px;border:1px solid #b88936;
+  border-radius:7px;background:linear-gradient(95deg,#091a2d,#14324a);
+  box-shadow:0 2px 9px #0004;color:#f6e0aa;
+}
+.battle-live-update>div{display:flex;align-items:center;gap:7px}
+.battle-live-update>div strong{font-size:12px;letter-spacing:.08em;color:#ffc86e}
+.battle-live-update>div small{margin-left:auto;font-size:11px;color:#a8d7eb;white-space:nowrap}
+.battle-live-update p{font-family:Georgia,serif;font-size:14px;line-height:1.45;margin:6px 0 0}
+.battle-live-update p:not(:empty){animation:battle-live-arrival .28s ease-out both}
+@keyframes battle-live-arrival{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}
+.battle-stage .fighters article[data-acting="true"],
+.cinema-fighter[data-acting="true"]{
+  outline:2px solid #68c9ff;outline-offset:1px;
+  box-shadow:0 0 13px #55bfff7a!important;
+}
+.battle-stage .fighters article[data-targeted="true"],
+.cinema-fighter[data-targeted="true"]{
+  outline:2px solid #ffae60;outline-offset:1px;
+  box-shadow:0 0 14px #fd613d99!important;
+}
+.battle-stage .fighters article[data-targeted="true"]{animation:battle-target-react .42s ease-out both}
+@keyframes battle-target-react{0%{filter:brightness(1.38)}100%{filter:brightness(1)}}
+.cinema-live-update{margin:7px 10px 10px}
+.guild-lite-mode .battle-stage .fighters article[data-acting="true"],
+.guild-lite-mode .cinema-fighter[data-acting="true"]{outline-color:#68c9ff;box-shadow:none!important}
+.guild-lite-mode .battle-stage .fighters article[data-targeted="true"],
+.guild-lite-mode .cinema-fighter[data-targeted="true"]{outline-color:#ffae60;box-shadow:none!important}
+@media(max-width:500px){
+ .battle-live-update{margin:6px;padding:8px 9px}
+ .battle-live-update p{font-size:12px}
+ .battle-live-update>div strong{font-size:11px}
+}

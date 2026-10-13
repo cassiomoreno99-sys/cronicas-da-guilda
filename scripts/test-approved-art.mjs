@@ -1,4 +1,4 @@
-import { readFileSync, statSync } from "node:fs";
+import { readFileSync, statSync, existsSync } from "node:fs";
 const ui=readFileSync(new URL("../app/game-client.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../app/ui.css",import.meta.url),"utf8");
 const paths=[
@@ -30,3 +30,31 @@ for(const file of ["../public/league/trophy-real.webp","../public/economy/gold-r
 for(const name of ["Escudos da Fronteira","Vigias da Montanha","Dragões do Vale","Guardiões da Montanha","Caçadores da Torre"])assert(ui.includes(name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase()),"Nome de guilda não mapeado: "+name);
 assert(ui.includes('src="/guild/forjador.webp"'),"Forjador não aparece na Sede");
 assert(ui.includes('LEAGUE_PLAYER_CREST = "/league/crest-alvorecer.webp"'),"Brasão da guilda sem identidade correta");
+
+
+// REGRESSÃO MOBILE: compra do mercador em segunda linha, sem sobreposição.
+assert(css.includes("Correção exclusiva para telas móveis: o botão do mercador"),"Mercador mobile perdeu ajuste de compra");
+assert(css.includes("@media (max-width: 900px)"),"Regra mobile não está isolada em media query");
+assert(css.includes(".tavern-screen .tavern-side .shop .catalog-shop > div > button"),"Botão da taverna sem alvo de CSS específico");
+assert(css.includes("grid-column: 1 / -1"),"Botão deve usar toda a largura abaixo dos detalhes");
+assert(css.includes("grid-row: 2"),"Botão do mercador deve ficar na segunda linha");
+
+// REGRESSÃO CAPAS: a expedição usa a imagem da missão, nunca a da vaga.
+assert(ui.includes("missionArtwork(exp.battle.combat?.mission.id"),"Capas da expedição não seguem a missão ativa");
+assert(ui.includes("missionArtwork(m.id)"),"Quadro de missões e expedições precisam compartilhar as artes");
+assert(!ui.includes("/reference/expedition-1.webp")&&!ui.includes("/reference/expedition-2.webp"),"Capa fixa antiga ainda existe no layout");
+for(const name of ["expedition-1.webp","expedition-2.webp"])
+ assert(!existsSync(new URL("../public/reference/"+name,import.meta.url)),"Arte antiga ainda ocupa espaço no offline: "+name);
+const match=ui.match(/function missionArtwork\(missionId: string\): string \{([\s\S]*?)\n\}/);
+assert(!!match,"Resolver de imagens da missão ausente");
+const pick=new Function("missionId","missionArt","valenMissionArt",match[1]);
+const old=["/reference/mission-1.webp","/reference/mission-2.webp","/reference/mission-3.webp","/reference/mission-4.webp","/reference/mission-5.webp"];
+const newArt=Array.from({length:7},(_,i)=>"/reference/valen-mission-"+(i+1)+".jpg");
+assert(pick("mission-5-0-0",old,newArt)===newArt[0],"Ritual sombrio deve mostrar cripta vermelha");
+assert(pick("mission-5-0-1",old,newArt)===newArt[1],"Aranhas nas ruínas devem mostrar aranhas");
+assert(pick("mission-5-0-2",old,newArt)===newArt[2],"Escolta deve mostrar caravana");
+assert(pick("boss-2-0",old,newArt)===newArt[6],"Guardião precisa usar sua própria arte");
+assert(pick("mission-5-1-2",old,newArt)===old[2],"Outras regiões devem manter a arte de sua missão");
+for(const name of ["valen-mission-1.jpg","valen-mission-2.jpg","valen-mission-3.jpg"])
+ assert(statSync(new URL("../public/reference/"+name,import.meta.url)).size>10000,"Nova arte ausente: "+name);
+console.log("MOBILE E EXPEDIÇÕES OK: botão abaixo das informações; capas de ritual, aranhas e escolta corretas; imagens antigas removidas.");

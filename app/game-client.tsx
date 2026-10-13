@@ -42,6 +42,17 @@ const ATTRIBUTE_SYMBOLS:Record<string,GameSymbolKind>={Ataque:"attack",Defesa:"d
 
 const missionArt = ["/reference/mission-1.webp", "/reference/mission-2.webp", "/reference/mission-3.webp", "/reference/mission-4.webp", "/reference/mission-5.webp"];
 const valenMissionArt = Array.from({ length: 7 }, (_, i) => `/reference/valen-mission-${i + 1}.jpg`);
+
+/** Usa a arte da missão real (e não uma foto fixa da vaga 1, 2 ou 3).
+ * O ID carrega região e índice e continua válido nos saves em andamento. */
+function missionArtwork(missionId: string): string {
+  const normal = /^mission-\\d+-(\\d+)-(\\d+)$/.exec(missionId);
+  const boss = /^boss-\\d+-(\\d+)$/.exec(missionId);
+  const region = normal ? Number(normal[1]) : boss ? Number(boss[1]) : -1;
+  const index = normal ? Number(normal[2]) : boss ? 6 : 0;
+  if (region === 0) return valenMissionArt[Math.min(6,Math.max(0,index))];
+  return missionArt[index % missionArt.length];
+}
 const LEAGUE_PLAYER_CREST = "/league/crest-alvorecer.webp";
 const LEAGUE_TROPHY = "/league/trophy-real.webp";
 const RIVAL_CREST_NAMES: Record<string,string> = {
@@ -277,7 +288,7 @@ function MissionPage({
         const locks = missionLocks(state, m);
         const selected = m.id === selectedId;
         return <article className="mission-card" data-selected={selected} data-locked={!!locks.length} key={m.id}>
-          <div className="mission-art"><img src={(state.activeRegion === 1 ? valenMissionArt : missionArt)[index % (state.activeRegion === 1 ? valenMissionArt : missionArt).length]} alt="" /><span><GameSymbol kind={m.kind==="boss"?"boss":"mission"}/>{KIND_NAMES[m.kind]}</span></div>
+          <div className="mission-art"><img src={missionArtwork(m.id)} alt="" /><span><GameSymbol kind={m.kind==="boss"?"boss":"mission"}/>{KIND_NAMES[m.kind]}</span></div>
           <div className="mission-copy">
             <h2>{m.title}</h2>
             <p><GameSymbol kind="objective"/>{m.description}</p>
@@ -341,7 +352,7 @@ function TeamPage({
         return <article key={s} className={"expedition-card " + (exp ? "active" : "")}>
           <b>Expedição {s}</b>
           {exp ? <>
-            <img src={s === 1 ? "/reference/expedition-1.webp" : "/reference/expedition-2.webp"} alt="" />
+            <img src={missionArtwork(exp.battle.combat?.mission.id || "")} alt={"Arte da missão "+exp.battle.title} />
             <h3>{exp.battle.title}</h3><span><GameSymbol kind="scouting"/> Em andamento · rodada {exp.battle.rounds}</span>
             <button className="action-button blue" onClick={() => openBattle(exp.id)}>Detalhes</button>
           </> : <>

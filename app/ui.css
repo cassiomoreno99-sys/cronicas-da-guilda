@@ -2397,3 +2397,30 @@ img.game-symbol.game-coin{
 .guild-screen img.guild-room-art:not(.compact){
   display:none!important;
 }
+
+/* Academia: heróis experientes e formação de cidadãos, sem imagens duplicadas. */
+.academy-system{display:grid;gap:10px}
+.academy-system>p{font-size:clamp(12px,1vw,14px);line-height:1.45;margin:0}
+.academy-system h4{font-size:15px;margin:6px 0 2px;color:#6f281b}
+.academy-system>small,.academy-civilians small{font-size:11px;line-height:1.4}
+.academy-mentor-label{display:grid;gap:4px;font-size:12px;font-weight:700;margin-top:4px}
+.academy-mentor-label select{font-size:12px;min-height:36px}
+.academy-civilians{margin-top:12px;padding:12px;border:1px solid #ae884d;background:rgba(110,64,26,.06);border-radius:7px;min-width:0}
+.academy-civilians>summary{cursor:pointer;font-size:16px;line-height:1.3;font-weight:800;color:#6f281b}
+.academy-civilians>p{font-size:12px;line-height:1.5;margin:10px 0}
+.academy-candidate-list{display:grid;gap:7px;margin-top:10px}
+.academy-candidate{display:grid;grid-template-columns:minmax(0,1fr) 70px;gap:7px;align-items:center;padding:9px;border-radius:5px;border:1px solid #b99157;background:#f2dfb7;min-width:0}
+.academy-candidate>div:first-child{display:grid;gap:4px;min-width:0}
+.academy-candidate strong{font-size:13px;color:#5e2716;overflow-wrap:anywhere}
+.academy-candidate small{color:#604429}
+.academy-candidate-chance{text-align:center}
+.academy-candidate-chance strong{display:block;font-size:20px;color:#286244}
+.academy-candidate>.small-button{grid-column:1/-1;font-size:12px;min-height:32px}
+.academy-results,.academy-reserve{display:grid;gap:8px;margin-top:12px;padding:10px;background:#e5ce9d;border:1px solid #af8548;border-radius:6px}
+.academy-results p{margin:0;font-size:12px;line-height:1.4}
+.academy-reserve>.academy-candidate{grid-template-columns:minmax(0,1fr)}
+@media(min-width:1250px){
+ .academy-system .academy-candidate{grid-template-columns:minmax(0,1fr) 72px 120px}
+ .academy-system .academy-candidate>.small-button{grid-column:auto}
+}
+@media(max-width:700px){.academy-civilians{padding:9px}.academy-candidate{padding:7px}.academy-civilians>summary{font-size:14px}}

@@ -717,6 +717,7 @@ function GuildRoomArt({room,label,compact=false}:{room:HQBuilding;label:string;c
 function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
   const slots = academySlots(state);
   const [draft,setDraft] = useState<string[]>(state.academy.trainees);
+  const [pendingDismissId,setPendingDismissId] = useState<string | null>(null);
   useEffect(() => setDraft(state.academy.trainees), [state.academy.trainees.join(",")]);
   const mentor = state.heroes.find(h => h.id === state.academy.mentorId && h.level >= 5);
   const dailyXp = slots ? 8 + state.hq.academy * 7 + (mentor ? Math.min(18, mentor.level) : 0) : 0;
@@ -759,10 +760,27 @@ function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) 
         {state.academy.lastGraduation.approved.length ? " " + state.academy.lastGraduation.approved.map(x=>x.name+(x.genius?" — GÊNIO REVELADO!":"")).join(", ") : " Nenhum candidato foi aprovado."}</p>
       </div>}
       {!!state.academy.reserve.length && <div className="academy-reserve"><h4>Formados esperando vaga · {state.academy.reserve.length}</h4>
-        <small>A Guilda comporta 12 heróis. Formados aguardam na reserva até você admiti-los, sem pagar nova contratação.</small>
+        <small>A Guilda comporta 12 heróis. Você pode admitir um formado gratuitamente ou dispensá-lo da reserva. A dispensa é definitiva, mas não afeta heróis já contratados.</small>
         {state.academy.reserve.map(h=><div className="academy-candidate" key={h.id}>
           <div><strong>{h.name}</strong><small>{CLASSES[h.class].name} · Nv. {h.level} · {h.trait}</small></div>
-          <button className="small-button" disabled={busy || state.heroes.length>=12} onClick={()=>act({type:"academy-admit",heroId:h.id})}>Admitir na Guilda</button>
+          {pendingDismissId===h.id ? (
+            <div className="academy-dismiss-confirm" role="group" aria-label={"Confirmar dispensa de "+h.name}>
+              <strong>Dispensar {h.name} da reserva?</strong>
+              <small>Essa decisão não pode ser desfeita. O formado não entrará para a Guilda.</small>
+              <div className="academy-reserve-actions">
+                <button type="button" className="small-button academy-dismiss-danger" disabled={busy} onClick={()=>{
+                  setPendingDismissId(null);
+                  act({type:"academy-dismiss",heroId:h.id});
+                }}>Confirmar dispensa</button>
+                <button type="button" className="small-button" disabled={busy} onClick={()=>setPendingDismissId(null)}>Cancelar</button>
+              </div>
+            </div>
+          ) : (
+            <div className="academy-reserve-actions">
+              <button type="button" className="small-button" disabled={busy || state.heroes.length>=12} onClick={()=>act({type:"academy-admit",heroId:h.id})}>Admitir na Guilda</button>
+              <button type="button" className="small-button academy-dismiss-danger" disabled={busy} onClick={()=>setPendingDismissId(h.id)}>Dispensar</button>
+            </div>
+          )}
         </div>)}
       </div>}
     </details>

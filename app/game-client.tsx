@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import OfflineInstall from "./offline-install";
 import Arena2D from "./arena-2d";
+import {enemyArtKey} from "@/lib/enemy-art";
 import soundtrackLibrary from "@/lib/music-playlist.json";
 import {
   Archive, BookOpen, Check, ChevronLeft, ChevronRight, CircleHelp, Coins, Crown, Download,
@@ -209,31 +210,6 @@ function ProgressBar({ value, tone = "green" }: { value: number; tone?: "green" 
 
 function ParchmentTitle({ icon, title, side }: { icon?: ReactNode; title: string; side?: ReactNode }) {
   return <div className="parchment-title"><span>{icon}</span><h2>{title}</h2>{side && <div className="title-side">{side}</div>}</div>;
-}
-
-function enemyArtKey(name: string) {
-  const n = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  if (n.includes("matriarca")) return "matriarch";
-  if (n.includes("senhor")) return "border_lord";
-  if (n.includes("vigia")) return "watcher";
-  if (n.includes("cavaleiro")) return "spectral_knight";
-  if (n.includes("obsidiana")) return "obsidian_guardian";
-  if (n.includes("guardiao") || n.includes("guardião")) return "ancient_guardian";
-  if (n.includes("guerreiro draco")) return "drake_warrior";
-  if (n.includes("salteador dracon")) return "draconic_raider";
-  if (n.includes("draco")) return "wild_drake";
-  if (n.includes("cultista")) return "cultist";
-  if (n.includes("goblin")) return "goblin";
-  if (n.includes("orc")) return "orc";
-  if (n.includes("espectro")) return "specter";
-  if (n.includes("pantera")) return "panther";
-  if (n.includes("aranha")) return "spider";
-  if (n.includes("troll")) return "troll";
-  if (n.includes("emboscador")) return "ambusher";
-  if (n.includes("lobo")) return "wolf";
-  if (n.includes("esqueleto")) return "skeleton";
-  if (n.includes("saqueador")) return "raider";
-  return "bandit";
 }
 
 function TopBar({ state, goGuild, goSettings }: { state: Campaign; goGuild: () => void; goSettings: () => void }) {

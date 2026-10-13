@@ -2549,3 +2549,19 @@ img.game-symbol.game-coin{
  .battle-live-update p{font-size:12px}
  .battle-live-update>div strong{font-size:11px}
 }
+
+/* Entrada independente da Arena Cinematográfica 2.0 — a arena antiga não é substituída. */
+.arena-demo-entry{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;gap:11px;align-items:center;
+  padding:13px;border:1px solid #bd8c44;border-radius:6px;
+  background:linear-gradient(100deg,#0c1c2dec,#18354ad8),url("/ui/battle-night.webp") center/cover;
+  color:#ffdfac;box-shadow:0 3px 12px #0007;
+}
+.arena-demo-entry>div>span{display:flex;align-items:center;gap:6px;color:#8bdcfa;font:800 10px system-ui,sans-serif;letter-spacing:.07em}
+.arena-demo-entry h3{margin:5px 0;font-size:19px;color:#ffdb94}
+.arena-demo-entry p{margin:3px 0;font-size:12px;line-height:1.45;color:#e9d8bc}
+.arena-demo-entry button{display:flex;align-items:center;justify-content:center;gap:6px;min-height:45px;white-space:nowrap}
+@media(max-width:540px){
+ .arena-demo-entry{grid-template-columns:1fr}
+ .arena-demo-entry button{justify-self:stretch}
+}

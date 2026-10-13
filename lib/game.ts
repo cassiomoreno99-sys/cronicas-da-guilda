@@ -370,6 +370,13 @@ export function missionSuggestedLevel(m:Pick<Mission,"location"|"rank"|"kind">) 
   const base=region?.minLevel||1;
   return Math.min(MAX_HERO_LEVEL,base+[0,1,2,4,6][Math.min(4,Math.max(0,m.rank-1))]+(m.kind==="boss"?3:0));
 }
+/** XP base exibido nas missões e entregue pelo motor após o resultado.
+ * Ajuste por nível individual ocorre separadamente (repetição rende menos). */
+export function missionRewardXp(m:Pick<Mission,"location"|"rank"|"kind">,won=true) {
+  const regionIndex=Math.max(0,WORLD_REGIONS.findIndex(r=>r.name===m.location));
+  const base=(won?24:12)+m.rank*(won?17:9);
+  return base+regionIndex*(won?18:9)+(m.kind==="boss"&&won?32:0);
+}
 export function activeJourney(s: Campaign, heroId: string) { return s.journeys?.find(j => j.heroId === heroId); }
 export function activeExpeditions(s: Campaign) { return (s.expeditions || []).filter(e => e.battle.status === "active" && !!e.battle.combat).toSorted((a, b) => a.slot - b.slot); }
 export function freeExpeditionSlots(s: Campaign): ExpeditionSlot[] {
@@ -1192,10 +1199,7 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
 function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreated") {
   const c = b.combat!, m = c.mission, won = status === "won";
   b.status = status; b.won = won; b.reward = won ? m.reward : 0;
-  const regionIndex=Math.max(0,WORLD_REGIONS.findIndex(r=>r.name===m.location));
-  const xpBase=(won?24:status==="retreated"?8:12)+m.rank*(won?17:9);
-  const xpRegion=regionIndex*(won?18:9);
-  b.xp=status==="retreated"&&!b.rounds?0:xpBase+xpRegion+(m.kind==="boss"&&won?32:0);
+  b.xp=status==="retreated"&&!b.rounds?0:status==="retreated"?8+m.rank*9:missionRewardXp(m,won);
   b.remaining = c.fighters.filter(f => f.side === "hero" && f.hp > 0).length;
   for (const f of c.fighters.filter(f => f.side === "hero")) {
     const h = s.heroes.find(h => h.id === f.id)!;

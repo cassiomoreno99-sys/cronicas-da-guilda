@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import OfflineInstall from "./offline-install";
-import ArenaDemo from "./arena-demo";
+import Arena3D from "./arena-3d";
 import soundtrackLibrary from "@/lib/music-playlist.json";
 import {
   Archive, BookOpen, Check, ChevronLeft, ChevronRight, CircleHelp, Coins, Crown, Download,
@@ -35,7 +35,7 @@ import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, equippedPosition 
 import { missionLootPreview } from "@/lib/catalog-runtime";
 
 type Save = Pick<LocalSave, "state" | "revision">;
-type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild" | "arena-demo";
+type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 const ATTRIBUTE_SYMBOLS:Record<string,GameSymbolKind>={Ataque:"attack",Defesa:"defense",Magia:"magic",Vida:"health",Velocidade:"speed",Crítico:"critical",Energia:"energy"};
@@ -267,7 +267,7 @@ function BottomNav({ screen, go }: { screen: Screen; go: (s: Screen) => void }) 
     ["heroes","Heróis",<GameSymbol kind="defense" key="h"/>,screen === "heroes" || screen === "equipment"],
     ["chest","Baú",<GameSymbol kind="inventory" key="b"/>,screen === "chest"],
     ["tavern","Taverna",<Beer key="t" />,screen === "tavern"],
-    ["guild","Guilda",<GameSymbol kind="guild" key="g"/>,screen === "guild" || screen === "arena-demo"],
+    ["guild","Guilda",<GameSymbol kind="guild" key="g"/>,screen === "guild"],
   ];
   return <nav className="bottom-nav">{tabs.map(([id,label,icon,active]) =>
     <button key={id} data-active={active} onClick={() => go(id)}>{icon}<span>{label}</span></button>
@@ -841,8 +841,8 @@ function GuildPage({
       <aside><strong><GameSymbol kind="gold"/> Tesouro {fmt(state.gold)}</strong><strong><GameSymbol kind="fame"/> Renome {state.fame}</strong><strong><GameSymbol kind="league"/> Liga {rank(state)}</strong></aside>
     </div>
     <div className="arena-demo-entry">
-      <div><span><Sparkles size={15}/> NOVA EXPERIÊNCIA · DEMO V1</span><h3>Arena Cinematográfica 2.0</h3><p>Veja quatro heróis animados enfrentando lobos sombrios, com vídeos de magia e finalização. Teste à vontade: sua campanha permanece intacta.</p></div>
-      <button className="action-button gold" onClick={onArenaDemo}><Swords size={17}/> Jogar demonstração <ChevronRight size={16}/></button>
+      <div><span><Sparkles size={15}/> COMBATE REAL · ARENA 3D WEBGL</span><h3>Arena Tridimensional</h3><p>Gráficos 3D com personagens animados e cenários físicos. Usa as batalhas e resultados da sua expedição, sem roteiro de simulação. Abra os detalhes de uma expedição e escolha Arena 3D.</p></div>
+      <button className="action-button gold" onClick={onArenaDemo}><Swords size={17}/> Ir às expedições <ChevronRight size={16}/></button>
     </div>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
     <ParchmentTitle icon={<GameSymbol kind="guild"/>} title="Sede da Guilda" />
@@ -893,8 +893,8 @@ const CINEMA_STATUS_LABELS: Record<string,string> = {
   bleed:"Sangramento",poison:"Envenenado",stun:"Atordoado",shield:"Escudo",
   regen:"Regeneração",taunt:"Provocação",inspired:"Inspirado",vulnerable:"Vulnerável"
 };
-function CinematicBattlePage({ expedition, act, close, back, returnToTeam, busy }: {
-  expedition: Expedition; act:(a:Action)=>void; close:()=>void; back:()=>void; returnToTeam:()=>void; busy:boolean;
+function CinematicBattlePage({ expedition, act, close, back, open3d, returnToTeam, busy }: {
+  expedition: Expedition; act:(a:Action)=>void; close:()=>void; back:()=>void; open3d:()=>void; returnToTeam:()=>void; busy:boolean;
 }) {
   const battle = expedition.battle;
   const fighters = battle.combat?.fighters || battle.fighters || [];
@@ -977,6 +977,7 @@ function CinematicBattlePage({ expedition, act, close, back, returnToTeam, busy 
       </div>
     </section>
     <div className="cinema-actions">
+      <button type="button" className="action-button battle-open-3d" onClick={open3d}><Swords aria-hidden="true"/> Abrir Arena 3D real</button>
       <button type="button" className="action-button battle-return-team" onClick={returnToTeam}><ChevronLeft aria-hidden="true"/> Voltar à seleção de heróis</button>
       {active ? <>
         <button type="button" className="action-button blue" disabled={busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><GameSymbol kind="battle" aria-hidden="true"/> Pular para o resultado</button>
@@ -991,6 +992,7 @@ function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
   state: Campaign; expedition: Expedition; act: (a: Action) => void; close: () => void; returnToTeam: () => void; busy: boolean;
 }) {
   const [cinematic,setCinematic] = useState(false);
+  const [show3d,setShow3d] = useState(false);
   const battle = expedition.battle;
   const fighters = battle.combat?.fighters || battle.fighters || [];
   const heroes = fighters.filter(f => f.side === "hero");
@@ -999,7 +1001,8 @@ function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
   const latest = battle.log.at(-1);
   const turnNumber=battle.combat?.liveCursor || 0;
   const turnTotal=battle.combat?.liveOrder?.length || 0;
-  if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} returnToTeam={returnToTeam} busy={busy}/></div>;
+  if (show3d) return <div className="battle-overlay"><Arena3D key={expedition.id} expedition={expedition} act={act} close={()=>setShow3d(false)} returnToTeam={returnToTeam} busy={busy}/></div>;
+  if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} open3d={() => setShow3d(true)} returnToTeam={returnToTeam} busy={busy}/></div>;
   return <div className="battle-overlay">
     <section className="battle-sheet">
       <div className="battle-top"><div><strong>{battle.title}</strong><span>Rodada {battle.rounds}{battle.objective?.targetRounds ? "/" + battle.objective.targetRounds : ""}</span></div><button onClick={close}><X /></button></div>
@@ -1016,6 +1019,7 @@ function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
       <div className="battle-log parchment">{battle.log.slice(-5).map((l,i) => <p key={i} data-kind={l.kind}>{l.text}</p>)}{!battle.log.length && <p>Os combatentes tomam posição.</p>}</div>
       {!active&&!!battle.loot?.length&&<div className="battle-loot parchment"><strong><GameSymbol kind="treasure"/> Itens encontrados:</strong> {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</div>}
        <div className="battle-actions">
+        <button type="button" className="battle-open-3d" onClick={() => setShow3d(true)}><Swords aria-hidden="true"/> Entrar na Arena 3D <ChevronRight aria-hidden="true"/></button>
         <button type="button" className="cinema-open-button" onClick={() => setCinematic(true)}><GameSymbol kind="experience" aria-hidden="true"/> Abrir Arena Cinematográfica <ChevronRight aria-hidden="true"/></button>
         {active&&<div className="battle-item-actions">{state.chest.filter(i=>ITEMS[i.key]?.slot==="consumable"&&!/energia|após uma expedição|entre expedições/i.test(CATALOG_BY_ID[i.key]?.efeito||"")).slice(0,5).map(i=>
           <button key={i.id} className="action-button blue" disabled={busy||(battle.combat?.consumablesUsed||0)>=3}
@@ -1100,7 +1104,7 @@ export default function Game() {
   useEffect(() => {
     // A demonstração visual não executa sequer ticks das expedições reais.
     // Ao voltar para a Guilda, o jogo retoma normalmente.
-    if (screen === "arena-demo" || !state || !running.length || busy) return;
+    if (!state || !running.length || busy) return;
     const nextAt = Math.min(...running.map(e=>e.nextRoundAt));
     const wait = Math.max(100,Math.min(5000,nextAt-Date.now()+50));
     const timer = window.setTimeout(() => perform({type:"expedition-tick",now:Date.now()}),wait);
@@ -1135,7 +1139,7 @@ export default function Game() {
     <OfflineInstall />
     <div className="layout-frame">
       <aside className="nav-sidebar" aria-label="Navegação do jogo">
-        {screen !== "guild" && screen !== "equipment" && screen !== "arena-demo" && <TopNav screen={screen} go={go} />}
+        {screen !== "guild" && screen !== "equipment" && <TopNav screen={screen} go={go} />}
         <BottomNav screen={screen} go={go} />
       </aside>
       {error && <button className="error" onClick={() => setError("")}><X /> {error}</button>}
@@ -1148,8 +1152,7 @@ export default function Game() {
       {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} act={perform} busy={busy} />}
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
-      {screen === "arena-demo" && <ArenaDemo onExit={() => go("guild")} />}
-      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} onArenaDemo={() => go("arena-demo")} />} 
+      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} onArenaDemo={() => go("team")} />} 
       </main>
     </div>
     <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />

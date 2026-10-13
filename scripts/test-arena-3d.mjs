@@ -21,7 +21,7 @@ for(const [id,sha] of manifest){
  assert.equal(data.toString("ascii",0,4),"glTF","GLB 3D corrupto: "+id);
  assert.equal(data.readUInt32LE(4),2);
  assert.equal(data.readUInt32LE(8),data.length);
- const actual=createHash("sha1").update("blob "+data.length+"\\0").update(data).digest("hex");
+ const actual=createHash("sha1").update("blob "+data.length+"\0").update(data).digest("hex");
  assert.equal(actual,sha,"Origem do modelo modificada: "+id);
  assert.ok(worker.includes("/models/arena3d/"+id+".glb"),"Modelo ausente do modo offline: "+id);
 }

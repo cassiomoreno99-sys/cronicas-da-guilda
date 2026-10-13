@@ -74,178 +74,53 @@ const CORE_RACE_NAMES: Record<string,string> = {
   aric:"Humano", lyra:"Elfa", elen:"Anão", kael:"Meio-Elfa", sora:"Elfo", doran:"Draconato"
 };
 const raceLabel = (hero: Pick<Hero,"id"|"name"|"class"|"race">): string => CORE_RACE_NAMES[hero.id] || RACES[heroRace(hero)].name;
-type AudioWindow = Window & typeof globalThis & { webkitAudioContext?: typeof AudioContext };
-
+/** Tema orquestral CC0: reprodução nativa com volume controlado pelo Android.
+ * Sem dezenas de osciladores WebAudio; reduz CPU/bateria durante o jogo offline. */
 function useAmbientRpgMusic() {
-  const [musicEnabled,setMusicEnabled] = useState(true);
-  const enabledRef = useRef(true);
-  const ctxRef = useRef<AudioContext | null>(null);
-  const masterRef = useRef<GainNode | null>(null);
-  const timerRef = useRef<number | null>(null);
-  const stepRef = useRef(0);
-
-  // "Caminho do Grifo": trilha procedural original, calma e medieval.
-  // O ciclo harmônico completo passa de 20 minutos antes de se repetir.
-  const progression = useMemo(() => [
-    38,41,45,43, 38,45,48,43, 41,45,50,48, 38,43,46,45,
-    36,41,45,43, 38,45,48,50, 41,43,46,45, 38,41,43,45,
-    38,45,43,41, 36,41,43,45, 38,43,48,46, 41,45,48,43,
-    38,41,45,48, 43,46,45,41, 38,45,50,48, 41,43,45,38,
-    38,43,45,41, 36,38,43,45, 41,45,48,46, 38,43,46,50,
-    41,45,43,38, 36,41,45,48, 43,46,50,48, 41,43,45,38,
-    38,41,46,43, 36,41,45,43, 38,45,48,46, 41,45,50,48,
-    38,43,46,45, 41,43,45,38, 36,41,43,45, 38,45,43,38
-  ], []);
-
-  const hz = (midi:number) => 440 * Math.pow(2,(midi - 69) / 12);
-
-  const tone = useCallback((
-    ctx:AudioContext,
-    destination:AudioNode,
-    note:number,
-    when:number,
-    duration:number,
-    peak:number,
-    wave:OscillatorType,
-    filterHz:number,
-    attack=.25,
-    release=.8
-  ) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    osc.type = wave;
-    osc.frequency.value = hz(note);
-    filter.type = "lowpass";
-    filter.frequency.value = filterHz;
-    filter.Q.value = .35;
-    gain.gain.setValueAtTime(.0001,when);
-    gain.gain.exponentialRampToValueAtTime(Math.max(.0002,peak),when + attack);
-    gain.gain.setValueAtTime(Math.max(.0002,peak),Math.max(when + attack,when + duration - release));
-    gain.gain.exponentialRampToValueAtTime(.0001,when + duration);
-    osc.connect(filter);
-    filter.connect(gain);
-    gain.connect(destination);
-    osc.start(when);
-    osc.stop(when + duration + .05);
-  },[]);
-
-  const pluck = useCallback((ctx:AudioContext,destination:AudioNode,note:number,when:number,peak=.017) => {
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const filter = ctx.createBiquadFilter();
-    osc.type = "triangle";
-    osc.frequency.value = hz(note);
-    filter.type = "lowpass";
-    filter.frequency.setValueAtTime(1850,when);
-    filter.frequency.exponentialRampToValueAtTime(620,when + 1.5);
-    gain.gain.setValueAtTime(.0001,when);
-    gain.gain.exponentialRampToValueAtTime(peak,when + .018);
-    gain.gain.exponentialRampToValueAtTime(.0001,when + 2.25);
-    osc.connect(filter); filter.connect(gain); gain.connect(destination);
-    osc.start(when); osc.stop(when + 2.3);
-  },[]);
-
-  const playStep = useCallback((ctx:AudioContext,master:GainNode,step:number) => {
-    const now = ctx.currentTime + .04;
-    const root = progression[step % progression.length];
-    const minor = step % 7 !== 2 && step % 11 !== 5;
-    const third = minor ? 3 : 4;
-    const fifth = 7;
-
-    // Base longa: cordas/pads muito discretos, sem percussão.
-    tone(ctx,master,root - 12,now,9.4,.0105,"triangle",420,1.2,2.4);
-    tone(ctx,master,root,now+.08,9.1,.0065,"sine",820,1.5,2.1);
-    tone(ctx,master,root + fifth,now+.18,8.8,.0048,"sine",940,1.7,2.0);
-
-    // Alaúde/harpa: pequenas figuras, alternadas para não virar loop perceptível.
-    const figure = step % 4 === 0
-      ? [0,fifth,12,third+12,fifth+12]
-      : step % 4 === 1
-        ? [0,third,fifth,12,fifth]
-        : step % 4 === 2
-          ? [fifth,0,third,12,third+12]
-          : [0,fifth,third,12,15];
-    figure.forEach((offset,index) => {
-      const drift = ((step + index * 3) % 5) * .055;
-      pluck(ctx,master,root + offset,now + .72 + index * 1.34 + drift,index === 0 ? .014 : .0105);
-    });
-
-    // "Flauta" suave: só aparece em alguns compassos e com frases espaçadas.
-    if (step % 6 === 1 || step % 8 === 5) {
-      const melody = step % 12 === 5 ? [12,15,17] : [12,14,15];
-      melody.forEach((offset,index) => {
-        tone(ctx,master,root + offset,now + 1.2 + index * 2.15,2.7,.0042,"sine",1450,.35,.9);
-        tone(ctx,master,root + offset + 12,now + 1.23 + index * 2.15,2.55,.0013,"triangle",1750,.4,.8);
-      });
+  const [musicEnabled,setMusicEnabled] = useState(() => {
+    try {return window.localStorage.getItem("cronicas-musica") !== "off";}
+    catch {return true;}
+  });
+  const enabledRef = useRef(musicEnabled);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playMusic = useCallback(() => {
+    if (!enabledRef.current || document.hidden) return;
+    let audio=audioRef.current;
+    if (!audio) {
+      audio=new Audio("/music/cronicas-tema-epico.ogg");
+      audio.loop=true;
+      audio.preload="auto";
+      // Volume = 100% do canal de mídia. Botões físicos do Android controlam o volume.
+      audio.volume=1;
+      audioRef.current=audio;
     }
-
-    // Uma nota de passagem rara dá sensação de jornada sem chamar atenção.
-    if (step % 13 === 9) {
-      tone(ctx,master,root + 10,now + 5.7,3.2,.0032,"sine",1200,.6,1.2);
-    }
-  },[pluck,progression,tone]);
-
-  const stopMusic = useCallback(() => {
-    if (timerRef.current !== null) window.clearInterval(timerRef.current);
-    timerRef.current = null;
-    const ctx = ctxRef.current;
-    ctxRef.current = null;
-    masterRef.current = null;
-    stepRef.current = 0;
-    if (ctx && ctx.state !== "closed") void ctx.close();
+    if (audio.paused) void audio.play().catch(() => {});
   },[]);
-
-  const startMusic = useCallback(async () => {
-    if (!enabledRef.current) return;
-    if (ctxRef.current) {
-      if (ctxRef.current.state === "suspended") await ctxRef.current.resume();
-      return;
-    }
-    const AudioCtor = window.AudioContext || (window as AudioWindow).webkitAudioContext;
-    if (!AudioCtor) return;
-    const ctx = new AudioCtor();
-    const master = ctx.createGain();
-    master.gain.value = .72;
-    master.connect(ctx.destination);
-    ctxRef.current = ctx;
-    masterRef.current = master;
-
-    // Começa em um ponto diferente a cada nova sessão para reduzir sensação de repetição.
-    stepRef.current = Math.floor(Date.now() / 60000) % progression.length;
-    const tick = () => {
-      if (!enabledRef.current || !ctxRef.current || !masterRef.current) return;
-      playStep(ctxRef.current,masterRef.current,stepRef.current++);
-    };
-    tick();
-    timerRef.current = window.setInterval(tick,9000);
-    if (ctx.state === "suspended") await ctx.resume();
-  },[playStep,progression.length]);
-
   useEffect(() => {
-    const saved = window.localStorage.getItem("cronicas-musica");
-    const enabled = saved === null ? true : saved === "on";
-    enabledRef.current = enabled;
-    setMusicEnabled(enabled);
-    const unlock = () => { if (enabledRef.current) void startMusic(); };
-    window.addEventListener("pointerdown",unlock,{once:true,passive:true});
-    window.addEventListener("keydown",unlock,{once:true});
+    const unlock=() => {if(enabledRef.current)playMusic();};
+    const visibility=() => {
+      if(document.hidden) audioRef.current?.pause();
+      else unlock();
+    };
+    window.addEventListener("pointerdown",unlock,{passive:true});
+    window.addEventListener("keydown",unlock);
+    document.addEventListener("visibilitychange",visibility);
     return () => {
       window.removeEventListener("pointerdown",unlock);
       window.removeEventListener("keydown",unlock);
-      stopMusic();
+      document.removeEventListener("visibilitychange",visibility);
+      audioRef.current?.pause();
     };
-  },[startMusic,stopMusic]);
-
+  },[playMusic]);
   const toggleMusic = useCallback(() => {
-    const next = !enabledRef.current;
-    enabledRef.current = next;
+    const next=!enabledRef.current;
+    enabledRef.current=next;
     setMusicEnabled(next);
-    window.localStorage.setItem("cronicas-musica",next ? "on" : "off");
-    if (next) void startMusic(); else stopMusic();
-  },[startMusic,stopMusic]);
-
-  return { musicEnabled, toggleMusic };
+    try {window.localStorage.setItem("cronicas-musica",next?"on":"off");} catch {}
+    if(next)playMusic();
+    else audioRef.current?.pause();
+  },[playMusic]);
+  return {musicEnabled,toggleMusic};
 }
 
 function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" | "class" | "race">; large?: boolean }) {
@@ -307,7 +182,7 @@ function enemyArtKey(name: string) {
   return "bandit";
 }
 
-function TopBar({ state, goGuild, musicEnabled, toggleMusic }: { state: Campaign; goGuild: () => void; musicEnabled: boolean; toggleMusic: () => void }) {
+function TopBar({ state, goGuild, goSettings }: { state: Campaign; goGuild: () => void; goSettings: () => void }) {
   return <header className="game-header">
     <div className="header-banner"><GameSymbol kind="guild"/></div>
     <div className="header-title">CRÔNICAS DA GUILDA</div>
@@ -315,8 +190,7 @@ function TopBar({ state, goGuild, musicEnabled, toggleMusic }: { state: Campaign
       <button onClick={goGuild} aria-label={"Ouro disponível: "+fmt(state.gold)} title="Ouro da guilda"><GameSymbol kind="gold" size={22}/><strong>{fmt(state.gold)}</strong><b>+</b></button>
       <button onClick={goGuild} aria-label={"Renome: "+fmt(state.fame)} title="Renome da guilda"><GameSymbol kind="fame" size={22}/><strong>{fmt(state.fame)}</strong><b>+</b></button>
     </div>
-    <button className="header-music" onClick={toggleMusic} aria-label={musicEnabled ? "Desligar música" : "Ligar música"} title={musicEnabled ? "Música ambiente ligada" : "Música ambiente desligada"}>{musicEnabled ? <Volume2 /> : <VolumeX />}</button>
-    <button className="header-settings" onClick={goGuild} aria-label="Configurações"><Settings aria-hidden="true"/></button>
+    <button className="header-settings" onClick={goSettings} aria-label="Abrir configurações de áudio e desempenho"><Settings aria-hidden="true"/></button>
   </header>;
 }
 
@@ -901,8 +775,8 @@ function SymbolGuide(){
 }
 
 function GuildPage({
-  state, act, busy, onExport, onImport, onReset
-}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void }) {
+  state, act, busy, onExport, onImport, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode
+}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void }) {
   const buildings = Object.entries(HQ_DEFINITIONS) as Array<[HQBuilding,(typeof HQ_DEFINITIONS)[HQBuilding]]>;
   const availableRaidHeroes = state.heroes.filter(h => available(h,state)).slice(0,9);
   const raidTeams = availableRaidHeroes.length >= 9 ? [availableRaidHeroes.slice(0,3).map(h=>h.id),availableRaidHeroes.slice(3,6).map(h=>h.id),availableRaidHeroes.slice(6,9).map(h=>h.id)] : [];
@@ -941,6 +815,17 @@ function GuildPage({
     <RivalRecruitPanel state={state} act={act} busy={busy} />
     <SymbolGuide />
     <ParchmentTitle icon={<GameSymbol kind="help"/>} title="Save e Configurações" />
+    <div id="guild-settings" className="guild-settings-controls parchment">
+      <div className="guild-setting-row">
+        <div><strong>Trilha épica de RPG</strong><small>Orquestra real. O volume acompanha os botões de mídia do celular; não existe controle de volume separado no jogo.</small></div>
+        <button className="small-button" onClick={toggleMusic} aria-pressed={musicEnabled}>{musicEnabled ? <><Volume2 size={16}/> Música ligada</> : <><VolumeX size={16}/> Música desligada</>}</button>
+      </div>
+      <div className="guild-setting-row">
+        <div><strong>Modo leve · melhor desempenho</strong><small>Reduz sombras, efeitos e animações para melhorar a fluidez e poupar bateria. Não altera missões, cálculos ou salvamentos.</small></div>
+        <button className="small-button" aria-pressed={liteMode} onClick={() => setLiteMode(!liteMode)}>{liteMode ? "Ativado" : "Desativado"}</button>
+      </div>
+      <small className="music-credit">Trilha: Epic Boss Battle — Juhani Junkala / SubspaceAudio (CC0).</small>
+    </div>
     <div className="settings-panel parchment"><button onClick={onExport}><Download /> Baixar backup</button><button onClick={onImport}><Upload /> Importar backup</button><button className="danger" onClick={onReset}><X /> Reiniciar campanha</button></div>
   </section>;
 }
@@ -1094,6 +979,17 @@ export default function Game() {
   const saveRef = useRef<Save | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { musicEnabled, toggleMusic } = useAmbientRpgMusic();
+  const [liteMode,setLiteMode] = useState(() => {
+    try {
+      const saved=window.localStorage.getItem("cronicas-modo-leve");
+      return saved === null ? /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) : saved === "on";
+    } catch {return true;}
+  });
+  useEffect(() => {
+    document.documentElement.classList.toggle("guild-lite-mode",liteMode);
+    try {window.localStorage.setItem("cronicas-modo-leve",liteMode ? "on" : "off");} catch {}
+    return () => document.documentElement.classList.remove("guild-lite-mode");
+  },[liteMode]);
 
   const hydrate = useCallback((body: Save) => {
     setSave(body); saveRef.current = body;
@@ -1142,7 +1038,13 @@ export default function Game() {
   const selectedMission = allMissions.find(m=>m.id===selectedMissionId) || allMissions[0];
   const battleExpedition = battleExpeditionId ? state.expeditions.find(e=>e.id===battleExpeditionId) : undefined;
 
-  const go = (s: Screen) => { setScreen(s); window.scrollTo({top:0,behavior:"smooth"}); };
+  const go = (s: Screen) => { setScreen(s); window.scrollTo({top:0,behavior:liteMode?"instant":"smooth"}); };
+  const openSettings = () => {
+    setScreen("guild");
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() =>
+      document.getElementById("guild-settings")?.scrollIntoView({behavior:liteMode?"instant":"smooth",block:"start"})
+    ));
+  };
   const downloadBackup = () => {
     const blob = new Blob([exportLocalCampaign()],{type:"application/json"});
     const url = URL.createObjectURL(blob), a = document.createElement("a");
@@ -1154,7 +1056,7 @@ export default function Game() {
   };
 
   return <div className="app-shell">
-    <TopBar state={state} goGuild={() => go("guild")} musicEnabled={musicEnabled} toggleMusic={toggleMusic} />
+    <TopBar state={state} goGuild={() => go("guild")} goSettings={openSettings} />
     <OfflineInstall />
     <div className="layout-frame">
       <aside className="nav-sidebar" aria-label="Navegação do jogo">
@@ -1171,7 +1073,7 @@ export default function Game() {
       {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} act={perform} busy={busy} />}
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
-      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} />}
+      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} />} 
       </main>
     </div>
     <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />

@@ -1,10 +1,11 @@
-import {useCallback,useEffect,useRef,useState} from "react";
+import {useEffect,useRef,useState} from "react";
 import * as THREE from "three";
 import {GLTFLoader} from "three/addons/loaders/GLTFLoader.js";
 import {OrbitControls} from "three/addons/controls/OrbitControls.js";
 import {clone as cloneSkinned} from "three/addons/utils/SkeletonUtils.js";
-import {ArrowLeft, Box, Camera, ChevronRight, FastForward, Shield, Swords, Volume2, Zap} from "lucide-react";
-import type {Action,BattleFighter,BattleLog,Expedition,HeroClass} from "@/lib/game";
+import {createWolf3D,type Wolf3D,type WolfMove} from "./arena-wolf";
+import {ArrowLeft, Box, Camera, ChevronRight, FastForward, Shield, Swords, Zap} from "lucide-react";
+import type {Action,BattleFighter,BattleLog,Expedition} from "@/lib/game";
 import "./arena-3d.css";
 
 type RenderActor={
@@ -12,10 +13,12 @@ type RenderActor={
   mixer:THREE.AnimationMixer;clips:THREE.AnimationClip[];animation?:THREE.AnimationAction;
   pose:THREE.Vector3; hp:number; actionStart:number;actionDuration:number;
   attackTarget?:THREE.Vector3;kind?:string;
+  wolf?:Wolf3D;reactionStart?:number;wolfDeathStart?:number;
 };
-type GraphicsController={sync:(fighters:BattleFighter[],log:BattleLog[])=>void;setCamera:(v:number)=>void;setLite:(v:boolean)=>void};
+type GraphicsController={sync:(fighters:BattleFighter[],log:BattleLog[])=>void;setCamera:(v:number)=>void;setLite:(v:boolean)=>void;setPreview:(v:boolean)=>void};
 const MODELS="/models/arena3d/";
 const NAMES=["player_swordsman","player_archer","player_priest","enemy_swordsman","enemy_archer","enemy_priest","dungeon_pillar","dungeon_wall"] as const;
+const isWolf=(f:BattleFighter)=>f.side==="enemy"&&/(lobo|lobisomem|wolf|warg|cão sombrio)/i.test(f.name);
 const CLIPS={idle:/idle|rest|breathing/i,melee:/melee|sword|attack|slash/i,ranged:/ranged|archer|bow|shoot|shooting/i,cast:/spell|cast|magic|priest/i,hit:/hit|hurt|damage/i,death:/death|dying|die/i,walk:/walk|run|move/i};
 const chooseModel=(f:BattleFighter)=>{
   const klass=f.class||"warrior";
@@ -66,6 +69,9 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
   const [errorDetail,setErrorDetail]=useState("");
   const [lite,setLite]=useState(()=>/Android|iPhone|Mobile/i.test(navigator.userAgent));
   const [cameraMode,setCameraMode]=useState(0);
+  const [wolfPreview,setWolfPreview]=useState(false);
+  const [lastStrike,setLastStrike]=useState<{text:string;amount?:number;kind:string;count:number}|null>(null);
+  const onActionRef=useRef((event:BattleLog)=>{setLastStrike({text:event.text,amount:event.amount,kind:event.kind,count:Date.now()});});
   const battle=expedition.battle;
   const fighters=battle.combat?.fighters||battle.fighters||[];
   const live=battle.status==="active"&&!!battle.combat;
@@ -74,6 +80,7 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
   useEffect(()=>{ctrlRef.current?.sync(fighters,logs);},[fighters,logs,logs.length]);
   useEffect(()=>{ctrlRef.current?.setLite(lite);},[lite]);
   useEffect(()=>{ctrlRef.current?.setCamera(cameraMode);},[cameraMode]);
+  useEffect(()=>{ctrlRef.current?.setPreview(wolfPreview);},[wolfPreview]);
 
   useEffect(()=>{
     const host=containerRef.current;
@@ -131,7 +138,19 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
     for(const x of [-5.4,5.4])for(const z of [-3.9,2.2])createTorch(scene,new THREE.Vector3(x,0,z),lights);
 
     let active=true;
-    let actors=new Map<string,RenderActor>();
+    const actors=new Map<string,RenderActor>();
+    // Exibição independente para verificar o modelo, sem modificar a missão.
+    const wolfViewer=createWolf3D();
+    wolfViewer.model.position.set(0,.04,-.15);
+    wolfViewer.model.scale.multiplyScalar(1.55);
+    wolfViewer.model.visible=false;
+    scene.add(wolfViewer.model);
+    let showingPreview=false;
+    const setPreview=(value:boolean)=>{
+      showingPreview=value;
+      wolfViewer.model.visible=value;
+      for(const actor of actors.values())actor.root.visible=!value;
+    };
     let lastLog:BattleLog[]=[];
     let moment=0;
     let effectTime=0;
@@ -197,7 +216,8 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
       lastLog=log.slice();
       if(latest)animateEntry(latest);
     }
-    ctrlRef.current={sync,setCamera,setLite};
+    ctrlRef.current={sync,setCamera,setLite,setPreview};
+    setPreview(wolfPreview);
     // GLTF animados realmente executam seus próprios clips de esqueleto.
     void (async()=>{
       try{
@@ -211,10 +231,11 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
         for(const [members,z] of groups){
           for(let i=0;i<members.length;i++){
             const f=members[i],glb=models.get(chooseModel(f));
-            if(!glb)continue;
+            if(!glb&&!isWolf(f))continue;
             const root=new THREE.Group();
-            const figure=cloneSkinned(glb.scene);
-            modelBox(figure,1.9);
+            const wolf=isWolf(f)?createWolf3D():undefined;
+            const figure=wolf?wolf.model:cloneSkinned(glb!.scene);
+            if(!wolf)modelBox(figure,1.9);
             figure.traverse(node=>{
               if((node as THREE.Mesh).isMesh){
                 (node as THREE.Mesh).castShadow=!low;
@@ -224,9 +245,10 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
             });
             root.position.set(actorSpacing(i,members.length),.07,z);
             root.rotation.y=f.side==="hero"?Math.PI:0;
+            root.visible=!showingPreview;
             root.add(figure);scene.add(root);
             const mixer=new THREE.AnimationMixer(figure);
-            const actor:RenderActor={id:f.id,side:f.side,root,figure,mixer,clips:glb.animations,pose:root.position.clone(),hp:f.hp,actionStart:-100,actionDuration:.86};
+            const actor:RenderActor={id:f.id,side:f.side,root,figure,mixer,clips:glb?.animations||[],wolf,pose:root.position.clone(),hp:f.hp,actionStart:-100,actionDuration:1.05,wolfDeathStart:f.hp<=0?-2:undefined};
             actors.set(f.id,actor);playClip(actor,f.hp>0?"idle":"death");
             // Aura rasteira: separa visualmente as facções sem fotos/HTML.
             const ring=new THREE.Mesh(new THREE.TorusGeometry(.58,.024,5,22),

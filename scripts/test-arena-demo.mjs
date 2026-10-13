@@ -43,9 +43,28 @@ assert.match(component,/setPaused/);
 assert.match(component,/setSpeed/);
 assert.match(component,/setSkipVideo/);
 assert.match(component,/setLite/);
+assert.match(component,/type BattlePhase = "waiting" \| "windup" \| "impact" \| "finished"/,"Fases do golpe ausentes.");
+assert.match(component,/appliedIndex=\(phase==="impact"\|\|phase==="finished"\)\?index:index-1/,"O PV foi antecipado antes do impacto.");
+assert.match(component,/useMemo\(\(\)=>simulateDemo\(appliedIndex\)/,"A barra de vida precisa seguir o impacto.");
+assert.match(component,/setPhase\("impact"\)/,"O impacto não é uma etapa separada.");
+assert.match(component,/data-phase=\{phase\}/,"O cenário não recebe a fase da ação.");
+assert.match(component,/getBoundingClientRect\(\)/,"Não há cálculo real da trajetória.");
+assert.match(component,/--demo-travel-x/,"Sem movimento orientado ao alvo.");
+assert.match(component,/--demo-projectile-x/,"Projétil não alcança o alvo.");
+assert.match(component,/playbackRate=speed/,"Velocidade do vídeo não acompanha a simulação.");
+assert.match(component,/data-paused=\{paused\}/,"Falta pausa visual das animações.");
+assert.match(component,/recentMoves=SCRIPT\.slice/,"Falta diário de combate.");
+assert.match(component,/setPhase\("finished"\)/,"Resultado da batalha precisa ser exibido depois da última ação.");
+
 assert.match(css,/@keyframes demo-attack/);
 assert.match(css,/@keyframes demo-hit/);
 assert.match(css, /demo-unit-figure/);
+assert.match(css,/@keyframes demo-target-lunge/,"Avanço corpo a corpo ausente.");
+assert.match(css,/@keyframes demo-target-retreat/,"Retorno à formação ausente.");
+assert.match(css,/@keyframes demo-fly-to-target/,"Feitiço/flecha não voam ao alvo.");
+assert.match(css,/animation-play-state:paused/,"Pausa não congela os movimentos.");
+assert.match(css,/demo-action-history/,"Diário sem apresentação.");
+assert.match(css,/data-front="true"/,"Combatente não passa à frente dos demais.");
 const videos=["arcane","finisher"];
 let totalSize=0;
 for (const id of videos){

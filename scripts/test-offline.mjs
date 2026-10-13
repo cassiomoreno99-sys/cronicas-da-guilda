@@ -10,6 +10,7 @@ assert.equal(manifest.start_url,"/");
 assert.match(index,/rel="manifest"/);
 assert.match(worker,/cache\.addAll\(batch\.map/);
 assert.match(worker,/request\.mode==="navigate"/);
+assert.match(worker,/new Request\(request,\{cache:"no-store"\}\)/,"Navegação online deve buscar versão recente na rede.");
 assert.match(worker,/cache\.match\(request,\{ignoreSearch:true\}\)/);
 const iconNames=["guild-192.png","guild-512.png"];
 for(const name of iconNames){

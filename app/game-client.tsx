@@ -887,6 +887,8 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
   const active = battle.status === "active" && !!battle.combat;
   const recent = battle.log.slice(-4).reverse();
   const latest = recent[0];
+  const turnNumber=battle.combat?.liveCursor || 0;
+  const turnTotal=battle.combat?.liveOrder?.length || 0;
   const mission = battle.combat?.mission;
   const maxRounds = battle.objective?.targetRounds || battle.combat?.targetRounds;
   const round = battle.rounds;
@@ -904,13 +906,17 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
       <div className="cinema-round"><span>RODADA</span><strong>{round}{maxRounds ? " / "+maxRounds : ""}</strong></div>
     </div>
     <div className="cinema-objective-line"><GameSymbol kind="objective" aria-hidden="true"/><span>{battle.objective?.name || mission?.description || "Derrote os inimigos"}</span><b>{status}</b></div>
+    <div className="battle-live-update cinema-live-update" role="status" aria-live="polite">
+      <div><GameSymbol kind="battle" size={17}/><strong>{active ? "AÇÃO AO VIVO" : "BATALHA ENCERRADA"}</strong>{active&&turnTotal>0&&<small>Ação {turnNumber}/{turnTotal}</small>}</div>
+      <p key={"action-"+battle.log.length}>{latest?.text || "Heróis e inimigos aguardam a primeira ação."}</p>
+    </div>
     <div className="cinema-arena" role="region" aria-label="Campo de batalha com personagens e inimigos">
       <div className="cinema-atmosphere" aria-hidden="true"/>
       <div className="cinema-lightning" key={"beam-"+round+"-"+battle.log.length} aria-hidden="true"/>
       <div className="cinema-fronts">
         <div className="cinema-lineup cinema-heroes">
           <div className="cinema-lineup-title"><GameSymbol kind="defense" aria-hidden="true"/> SUA EQUIPE</div>
-          {heroes.map((f,i) => <article className="cinema-fighter cinema-ally" key={f.id} data-defeated={f.hp <= 0}>
+          {heroes.map((f,i) => <article className="cinema-fighter cinema-ally" key={f.id} data-defeated={f.hp <= 0} data-acting={latest?.actorId===f.id} data-targeted={latest?.targetId===f.id}>
             <div className="cinema-fighter-art">
               <img src={portraitSource(f.name,f.id,f.class || "warrior")} alt="" />
               <span className="cinema-art-index">{i+1}</span>
@@ -926,7 +932,7 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
         </div>
         <div className="cinema-lineup cinema-enemies">
           <div className="cinema-lineup-title"><GameSymbol kind="battle" aria-hidden="true"/> INIMIGOS</div>
-          {enemies.map((f,i)=><article className="cinema-fighter cinema-foe" key={f.id} data-defeated={f.hp <= 0}>
+          {enemies.map((f,i)=><article className="cinema-fighter cinema-foe" key={f.id} data-defeated={f.hp <= 0} data-acting={latest?.actorId===f.id} data-targeted={latest?.targetId===f.id}>
             <div className="cinema-fighter-art">
               <img src={"/enemies/"+enemyArtKey(f.name)+".webp"} alt="" />
               <span className="cinema-art-index">{i+1}</span>
@@ -945,7 +951,7 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
       {latest && <div key={"event-"+round+"-"+battle.log.length} className={"cinema-hit cinema-hit-"+event} aria-hidden="true">{latest.amount ? <><b>{event==="heal"?"+":"−"}{Math.abs(latest.amount)}</b><small>{event==="critical"?"CRÍTICO!":event==="heal"?"CURA":event==="magic"?"MAGIA":"DANO"}</small></> : <GameSymbol kind="experience"/>}</div>}
     </div>
     <div className="cinema-turn-bar">
-      <div className="cinema-turn-title"><GameSymbol kind="experience" aria-hidden="true"/><span>{active ? "Confronto em andamento" : status}</span></div>
+      <div className="cinema-turn-title"><GameSymbol kind="experience" aria-hidden="true"/><span>{active ? "Combate ao vivo · ação por ação" : status}</span></div>
       <span>{TACTICS[expedition.tactic].name} · {heroes.length} heróis × {enemies.length} inimigos</span>
     </div>
     <section className="cinema-chronicle parchment" aria-label="Registro real da batalha">
@@ -956,11 +962,11 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
     </section>
     <div className="cinema-actions">
       {active ? <>
-        <button type="button" className="action-button blue" disabled={busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><GameSymbol kind="battle" aria-hidden="true"/> Concluir combate</button>
+        <button type="button" className="action-button blue" disabled={busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><GameSymbol kind="battle" aria-hidden="true"/> Pular para o resultado</button>
         <button type="button" className="action-button red" disabled={busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button>
       </> : <button type="button" className="action-button green huge" onClick={close}>Voltar à guilda</button>}
     </div>
-    <p className="cinema-no-items">Combate automático original preservado. Equipamentos e consumíveis serão liberados com o futuro catálogo.</p>
+    <p className="cinema-no-items">Cada combatente age uma vez conforme a iniciativa. Os PV mudam na hora do golpe; o botão azul encerra a simulação instantaneamente se você preferir.</p>
   </section>;
 }
 
@@ -973,15 +979,22 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
   const heroes = fighters.filter(f => f.side === "hero");
   const enemies = fighters.filter(f => f.side === "enemy");
   const active = battle.status === "active" && !!battle.combat;
+  const latest = battle.log.at(-1);
+  const turnNumber=battle.combat?.liveCursor || 0;
+  const turnTotal=battle.combat?.liveOrder?.length || 0;
   if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} busy={busy}/></div>;
   return <div className="battle-overlay">
     <section className="battle-sheet">
       <div className="battle-top"><div><strong>{battle.title}</strong><span>Rodada {battle.rounds}{battle.objective?.targetRounds ? "/" + battle.objective.targetRounds : ""}</span></div><button onClick={close}><X /></button></div>
-      <div className="battle-objective"><span><GameSymbol kind="objective"/> {battle.objective?.name || "Objetivo"}</span><strong>{battle.status === "active" ? "Combate automático" : battle.won ? "Vitória" : "Confronto encerrado"}</strong></div>
+      <div className="battle-objective"><span><GameSymbol kind="objective"/> {battle.objective?.name || "Objetivo"}</span><strong>{battle.status === "active" ? "Combate ao vivo" : battle.won ? "Vitória" : "Confronto encerrado"}</strong></div>
+      <div className="battle-live-update" role="status" aria-live="polite">
+        <div><GameSymbol kind="battle" size={17}/><strong>{active ? "AÇÃO AO VIVO" : "RESULTADO"}</strong>{active&&turnTotal>0&&<small>Ação {turnNumber}/{turnTotal}</small>}</div>
+        <p key={"live-"+battle.log.length}>{latest?.text || "Os combatentes tomam posição e aguardam a iniciativa."}</p>
+      </div>
       <div className="battle-stage">
-        <div className="fighters allies">{heroes.map(f => <article key={f.id}><HeroPortrait hero={{id:f.id,name:f.name,class:f.class || "warrior"}}/><div><strong>{f.name}</strong><small>{f.class ? CLASSES[f.class].name : "Herói"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
+        <div className="fighters allies">{heroes.map(f => <article key={f.id} data-acting={latest?.actorId===f.id} data-targeted={latest?.targetId===f.id}><HeroPortrait hero={{id:f.id,name:f.name,class:f.class || "warrior"}}/><div><strong>{f.name}</strong><small>{f.class ? CLASSES[f.class].name : "Herói"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
         <div className="battle-center-mark"><GameSymbol kind="battle"/></div>
-        <div className="fighters enemies">{enemies.map(f => <article key={f.id}><img src={"/enemies/" + enemyArtKey(f.name) + ".webp"} alt="" /><div><strong>{f.name}</strong><small>{f.statuses?.map(s=>s.kind).join(" · ") || "Inimigo"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
+        <div className="fighters enemies">{enemies.map(f => <article key={f.id} data-acting={latest?.actorId===f.id} data-targeted={latest?.targetId===f.id}><img src={"/enemies/" + enemyArtKey(f.name) + ".webp"} alt="" /><div><strong>{f.name}</strong><small>{f.statuses?.map(s=>s.kind).join(" · ") || "Inimigo"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
       </div>
       <div className="battle-log parchment">{battle.log.slice(-5).map((l,i) => <p key={i} data-kind={l.kind}>{l.text}</p>)}{!battle.log.length && <p>Os combatentes tomam posição.</p>}</div>
       {!active&&!!battle.loot?.length&&<div className="battle-loot parchment"><strong><GameSymbol kind="treasure"/> Itens encontrados:</strong> {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</div>}
@@ -1000,7 +1013,7 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
             <GameSymbol kind="book"/> {h.name} · {used?"Usado":pending?"Aguardando":CATALOG_BY_ID[h.supremeBook!]?.nome}
           </button>;
         })}</div>}
-        {active ? <><button className="action-button blue" disabled={busy} onClick={() => act({type:"battle-auto",expeditionId:expedition.id})}>Concluir combate</button><button className="action-button red" disabled={busy} onClick={() => act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button></> : <button className="action-button green huge" onClick={close}>Voltar à guilda</button>}
+        {active ? <><button className="action-button blue" disabled={busy} onClick={() => act({type:"battle-auto",expeditionId:expedition.id})}>Pular para o resultado</button><button className="action-button red" disabled={busy} onClick={() => act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button></> : <button className="action-button green huge" onClick={close}>Voltar à guilda</button>}
       </div>
     </section>
   </div>;

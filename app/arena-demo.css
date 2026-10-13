@@ -88,3 +88,123 @@
 @media(min-width:650px){.demo-controls{grid-template-columns:repeat(4,1fr)}.demo-controls .demo-primary{grid-column:span 2}.demo-unit-figure{max-width:105px}.demo-scene{height:505px}.demo-cast-heroes{height:53%}.demo-cast-enemies{height:39%}}
 @media(max-width:380px){.demo-version{font-size:8px}.demo-safety{font-size:8px}.demo-head button{font-size:9px;padding:5px}.demo-unit-weapon{font-size:16px;right:0}.demo-unit-status strong{font-size:9px}.demo-unit-status small{font-size:8px}.demo-intro p{font-size:11px}}
 @media(prefers-reduced-motion:reduce){.demo-atmosphere,.demo-sky-symbol,.demo-unit-figure,.demo-unit[data-actor="true"] .demo-unit-figure,.demo-unit[data-hit="true"] .demo-unit-figure,.demo-unit[data-heal="true"] .demo-unit-figure,.demo-impact,.demo-damage{animation:none!important}}
+
+
+/* Arena V2 · movimento orientado ao alvo, com preparação e impacto separados.
+   Apenas transform/opacity, sem recalcular a composição da página por frame. */
+.demo-scene[data-phase="windup"] .demo-unit[data-actor="true"] .demo-unit-figure{
+  z-index:6;
+  animation:demo-target-lunge 700ms cubic-bezier(.18,.38,.12,1) both;
+  animation-duration:calc(700ms / var(--demo-action-speed,1));
+  filter:drop-shadow(0 0 11px #8cceff);
+}
+.demo-scene[data-phase="impact"] .demo-unit[data-actor="true"] .demo-unit-figure{
+  animation:demo-target-retreat 570ms cubic-bezier(.35,0,.23,1) both;
+  animation-duration:calc(570ms / var(--demo-action-speed,1));
+  filter:drop-shadow(0 0 12px #ffcf6c);
+}
+/* Personagens de distância ficam na formação. A magia/flecha viaja até o alvo. */
+.demo-scene[data-move="shot"][data-phase="windup"] .demo-unit[data-actor="true"] .demo-unit-figure,
+.demo-scene[data-move="spell"][data-phase="windup"] .demo-unit[data-actor="true"] .demo-unit-figure,
+.demo-scene[data-move="heal"][data-phase="windup"] .demo-unit[data-actor="true"] .demo-unit-figure{
+  animation:demo-ranged-ready 650ms ease-out both;
+  animation-duration:calc(650ms / var(--demo-action-speed,1));
+}
+.demo-scene[data-move="shot"][data-phase="impact"] .demo-unit[data-actor="true"] .demo-unit-figure,
+.demo-scene[data-move="spell"][data-phase="impact"] .demo-unit[data-actor="true"] .demo-unit-figure,
+.demo-scene[data-move="heal"][data-phase="impact"] .demo-unit[data-actor="true"] .demo-unit-figure{
+  animation:demo-ranged-release 500ms ease-out both;
+  animation-duration:calc(500ms / var(--demo-action-speed,1));
+}
+.demo-scene[data-phase="impact"] .demo-unit[data-hit="true"] .demo-unit-figure{
+  animation:demo-hit .55s ease-out both!important;
+  animation-duration:calc(550ms / var(--demo-action-speed,1))!important;
+}
+.demo-scene[data-phase="impact"] .demo-unit[data-heal="true"] .demo-unit-figure{
+  animation:demo-heal-pulse .6s ease-out both;
+  animation-duration:calc(600ms / var(--demo-action-speed,1));
+}
+.demo-projectile{
+  position:absolute;left:var(--demo-source-x,50%);top:var(--demo-source-y,50%);
+  z-index:7;pointer-events:none;
+  color:#a7dcff;font-size:40px;line-height:1;
+  text-shadow:0 0 9px #fff,0 0 27px #44b4ff;
+  animation:demo-fly-to-target 620ms linear both;
+  animation-duration:calc(620ms / var(--demo-action-speed,1));
+}
+.demo-scene[data-move="shot"] .demo-projectile{
+  font-size:40px;color:#ffe3a3;text-shadow:0 0 10px #e5b35e;
+}
+.demo-scene[data-move="heal"] .demo-projectile{
+  color:#a4ffca;text-shadow:0 0 14px #36dd83;
+}
+.demo-impact{opacity:.1}
+.demo-scene[data-phase="windup"] .demo-impact,
+.demo-scene[data-phase="waiting"] .demo-impact{opacity:0;animation:none}
+.demo-scene[data-phase="impact"] .demo-impact{
+  opacity:1;animation:demo-impact .65s ease-out both;
+  animation-duration:calc(650ms / var(--demo-action-speed,1));
+}
+.demo-scene[data-paused="true"] *,
+.demo-scene[data-paused="true"] *::before,
+.demo-scene[data-paused="true"] *::after{animation-play-state:paused!important}
+.demo-unit[data-hit="true"] .demo-unit-status{
+  border-color:#ffa778;
+  box-shadow:0 0 11px #d54b4685;
+}
+.demo-unit[data-heal="true"] .demo-unit-status{
+  border-color:#9cecbb;
+  box-shadow:0 0 10px #34c98b75;
+}
+.demo-unit-hero[data-actor="true"]{z-index:8}
+.demo-unit-enemy[data-actor="true"]{z-index:8}
+.demo-scene[data-phase="finished"] .demo-unit[data-actor="false"] .demo-unit-figure{
+  animation:none;
+}
+@keyframes demo-target-lunge{
+  0%{transform:translate3d(0,0,0) scale(1)}
+  20%{transform:translate3d(0,5px,0) scale(.96)}
+  72%{transform:translate3d(var(--demo-travel-x,0px),var(--demo-travel-y,0px),0) scale(1.12)}
+  100%{transform:translate3d(var(--demo-travel-x,0px),var(--demo-travel-y,0px),0) scale(1.13)}
+}
+@keyframes demo-target-retreat{
+  0%{transform:translate3d(var(--demo-travel-x,0px),var(--demo-travel-y,0px),0) scale(1.13)}
+  45%{transform:translate3d(calc(var(--demo-travel-x,0px) * .3),calc(var(--demo-travel-y,0px) * .3),0) scale(1.03)}
+  100%{transform:translate3d(0,0,0) scale(1)}
+}
+@keyframes demo-ranged-ready{
+  0%{transform:translateY(0) scale(1)}
+  38%{transform:translateY(-8px) scale(1.1);filter:brightness(1.2)}
+  100%{transform:translateY(-10px) scale(1.07);filter:brightness(1.4)}
+}
+@keyframes demo-ranged-release{
+  from{transform:translateY(-10px) scale(1.07);filter:brightness(1.4)}
+  to{transform:translateY(0) scale(1);filter:brightness(1)}
+}
+@keyframes demo-fly-to-target{
+  0%{opacity:0;transform:translate3d(0,0,0) scale(.45)}
+  13%{opacity:1}
+  90%{opacity:1}
+  100%{opacity:0;transform:translate3d(var(--demo-projectile-x,0px),var(--demo-projectile-y,0px),0) scale(1.1)}
+}
+@keyframes demo-heal-pulse{
+  0%{filter:brightness(1);transform:scale(1)}
+  48%{filter:brightness(1.35) drop-shadow(0 0 15px #85ffae);transform:scale(1.08)}
+  100%{filter:brightness(1);transform:scale(1)}
+}
+/* O modo leve da própria demo reduz somente o efeito mais custoso,
+   mas mantém movimento de atacante e reação necessários para entender o golpe. */
+.demo-shell[data-demo-mode="lite"] .demo-scene[data-phase="windup"] .demo-unit[data-actor="true"] .demo-unit-figure{
+  animation:demo-lite-pulse .35s ease-out both;
+}
+.demo-shell[data-demo-mode="lite"] .demo-scene[data-phase="impact"] .demo-unit[data-actor="true"] .demo-unit-figure{
+  animation:none;
+}
+.demo-shell[data-demo-mode="lite"] .demo-projectile{
+  text-shadow:none;filter:none;opacity:.7;
+}
+@media(prefers-reduced-motion:reduce){
+  .demo-scene[data-phase="windup"] .demo-unit[data-actor="true"] .demo-unit-figure,
+  .demo-scene[data-phase="impact"] .demo-unit[data-actor="true"] .demo-unit-figure,
+  .demo-projectile{animation:none!important}
+}

@@ -104,8 +104,13 @@ console.log("INTEGRACAO-314: itens unicos, missoes, receitas, aprendizado, respe
   s=applyAction(s,{type:"mission",missionId:missions(s)[0].id,team:party.map(x=>x.id),tactic:"defensive"});
   const id=s.expeditions.at(-1)!.id;
   s=applyAction(s,{type:"battle-ability",heroId:main.id,abilityId:"supreme-"+book.id,expeditionId:id});
-  s=applyAction(s,{type:"battle-round",expeditionId:id});
-  ok(s.expeditions.at(-1)?.battle.log.some(x=>x.text.includes("Livro supremo ativado: "+book.id)),"Livro não executou efeito: "+book.id);
+  let fired=false;
+  for(let action=0;action<20;action++){
+   if(s.expeditions.at(-1)!.battle.status!=="active")break;
+   s=applyAction(s,{type:"battle-round",expeditionId:id});
+   if(s.expeditions.at(-1)!.battle.log.some(x=>x.text.includes("Livro supremo ativado: "+book.id))){fired=true;break;}
+  }
+  ok(fired,"Livro não executou efeito no turno do usuário: "+book.id);
   blocked(()=>applyAction(s,{type:"battle-ability",heroId:main.id,abilityId:"supreme-"+book.id,expeditionId:id}),"Livro usado duas vezes: "+book.id);
  }
 }

@@ -1085,12 +1085,14 @@ export default function Game() {
   const state = save?.state;
   const running = state ? activeExpeditions(state) : [];
   useEffect(() => {
-    if (!state || !running.length || busy) return;
+    // A demonstração visual não executa sequer ticks das expedições reais.
+    // Ao voltar para a Guilda, o jogo retoma normalmente.
+    if (screen === "arena-demo" || !state || !running.length || busy) return;
     const nextAt = Math.min(...running.map(e=>e.nextRoundAt));
     const wait = Math.max(100,Math.min(5000,nextAt-Date.now()+50));
     const timer = window.setTimeout(() => perform({type:"expedition-tick",now:Date.now()}),wait);
     return () => window.clearTimeout(timer);
-  },[save?.revision,busy,running.map(e=>e.nextRoundAt).join(","),perform]);
+  },[save?.revision,busy,screen,running.map(e=>e.nextRoundAt).join(","),perform]);
 
   if (!state) return <main className="boot-screen"><GameSymbol kind="guild"/><h1>Crônicas da Guilda</h1><p>{error || "Abrindo sua campanha…"}</p></main>;
 

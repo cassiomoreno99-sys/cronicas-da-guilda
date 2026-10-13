@@ -162,7 +162,10 @@ const PRECACHE = ${JSON.stringify(publicUrls)};
 self.addEventListener("install",event=>{
   event.waitUntil((async()=>{
     const cache=await caches.open(CACHE_NAME);
-    await cache.addAll(PRECACHE.map(url=>new Request(url,{cache:"reload"})));
+    for(let start=0;start<PRECACHE.length;start+=6){
+      const batch=PRECACHE.slice(start,start+6);
+      await cache.addAll(batch.map(url=>new Request(url,{cache:"reload"})));
+    }
     await self.skipWaiting();
   })());
 });

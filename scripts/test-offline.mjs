@@ -8,7 +8,7 @@ const index=await readFile(join(out,"index.html"),"utf8");
 assert.equal(manifest.display,"standalone");
 assert.equal(manifest.start_url,"/");
 assert.match(index,/rel="manifest"/);
-assert.match(worker,/cache\.addAll\(PRECACHE/);
+assert.match(worker,/cache\.addAll\(batch\.map/);
 assert.match(worker,/request\.mode==="navigate"/);
 assert.match(worker,/cache\.match\(request,\{ignoreSearch:true\}\)/);
 const iconNames=["guild-192.png","guild-512.png"];

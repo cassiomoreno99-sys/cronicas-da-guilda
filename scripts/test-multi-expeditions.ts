@@ -76,8 +76,19 @@ try {
 }
 check(blockedSecondTraining, "O mesmo herói treinou duas vezes no mesmo dia durante expedições.");
 
+// Cada atualização ao vivo avança só UM participante por expedição,
+ // mesmo quando a aba ficou em segundo plano por muito tempo.
+const firstRoundCounts=activeExpeditions(state).map(e=>e.battle.rounds);
 state = applyAction(state, { type: "expedition-tick", now: startedAt + 2_000_000 });
-check(activeExpeditions(state).length === 0, "As expedições não concluíram após o avanço em segundo plano.");
+check(activeExpeditions(state).length === 3, "O motor pulou a batalha inteira ao voltar do segundo plano.");
+check(activeExpeditions(state).every((e,i)=>e.battle.rounds<=firstRoundCounts[i]+1),"Pulou muitas rodadas numa atualização.");
+let iterations=0;
+while(activeExpeditions(state).length>0&&iterations++<500){
+  const now=Math.min(...activeExpeditions(state).map(e=>e.nextRoundAt));
+  state=applyAction(state,{type:"expedition-tick",now});
+}
+check(iterations<500,"Batalha em turnos individuais não terminou.");
+check(activeExpeditions(state).length === 0, "As expedições não concluíram após todas as ações ao vivo.");
 check(state.day === beforeDay + 1, "O dia deveria avançar uma única vez após o lote de expedições terminar.");
 
 console.log("Smoke multi-expedições: OK");

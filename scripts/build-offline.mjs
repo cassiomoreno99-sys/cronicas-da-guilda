@@ -55,6 +55,22 @@ function pngIcon(size) {
 }
 for(const size of [192,512])await writeFile(join(iconDir,"guild-"+size+".png"),pngIcon(size));
 
+// Tema orquestral CC0 de Juhani Junkala (SubspaceAudio), armazenado no pacote offline.
+// Fonte: https://opengameart.org/content/boss-battle-music
+// Arquivo OGG otimizado, hospedado publicamente no projeto dungeon-haskell.
+const musicSource = "https://raw.githubusercontent.com/jarlah/dungeon-haskell/master/assets/music/boss.ogg";
+const musicPath = join(out, "music", "cronicas-tema-epico.ogg");
+await mkdir(join(out, "music"), {recursive:true});
+const musicResponse = await fetch(musicSource, {signal:AbortSignal.timeout(20000)});
+if (!musicResponse.ok) throw new Error("Não foi possível preparar a trilha do jogo (" + musicResponse.status + ").");
+const music = Buffer.from(await musicResponse.arrayBuffer());
+if(music.length < 500000 || music.length > 6000000 || music.toString("ascii",0,4) !== "OggS")
+  throw new Error("A trilha de RPG não é um arquivo OGG válido.");
+const musicBlobHash = createHash("sha1").update("blob "+music.length+"\0").update(music).digest("hex");
+if(musicBlobHash !== "301eed6f6a65d966247b4cd978cff945175a558b")
+  throw new Error("A trilha mudou na origem. Verifique a licença antes de distribuir.");
+await writeFile(musicPath,music);
+
 const manifest={
  name:"Crônicas da Guilda",
  short_name:"Crônicas da Guilda",

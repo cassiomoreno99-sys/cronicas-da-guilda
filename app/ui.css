@@ -2392,3 +2392,8 @@ img.game-symbol.game-coin{
   .building-list article.guild-building-card h3{font-size:13px}
   .building-list article.guild-building-card p{font-size:9px}
 }
+
+/* Sede da Guilda: imagens dos locais somente nos seis cartões superiores. */
+.guild-screen img.guild-room-art:not(.compact){
+  display:none!important;
+}

@@ -65,7 +65,7 @@ export type Action =
   | { type: "upgrade-hq"; building: HQBuilding }
   | { type: "academy-trainees"; heroIds: string[] }
   | { type: "academy-mentor"; heroId?: string }
-  | { type: "academy-open-class" } | { type: "academy-focus"; candidateId: string } | { type: "academy-admit"; heroId: string }
+  | { type: "academy-open-class" } | { type: "academy-focus"; candidateId: string } | { type: "academy-admit"; heroId: string } | { type: "academy-dismiss"; heroId: string }
   | { type: "travel-region"; region: number }
   | { type: "use-item"; itemId:string; heroId:string }
   | { type: "battle-item"; itemId:string; expeditionId?:string }
@@ -1569,6 +1569,15 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       candidate.practice++;
       s.academy.lastFocusDay = s.day;
       note(s, "Treino dedicado a " + candidate.name + ": maior chance de passar na prova final.");
+      break;
+    }
+    case "academy-dismiss": {
+      // Apenas formados aguardando na reserva; não afeta heróis contratados,
+      // aprendizes em treinamento ou candidatos que ainda não fizeram a prova.
+      const index = s.academy.reserve.findIndex(h => h.id === action.heroId);
+      requireRule(index >= 0, "Este formado não está mais na reserva da Academia.");
+      const [graduate] = s.academy.reserve.splice(index, 1);
+      note(s, "Academia · " + graduate.name + " foi dispensado da reserva sem entrar na Guilda.");
       break;
     }
     case "academy-admit": {

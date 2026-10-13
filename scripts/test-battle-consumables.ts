@@ -39,9 +39,17 @@ console.log("Combate narrativo: verificando remoção de todos os consumíveis..
 // Habilidades seguem automáticas e narradas, sem comando manual.
 {
   let { state, expeditionId } = prepare(31004);
-  state = applyAction(state, { type: "battle-round", expeditionId });
-  const battle = state.expeditions.find(e => e.id === expeditionId)!.battle;
-  ok(battle.log.some(l => l.kind === "ability" && l.text.includes(" usa ")), "Nenhuma habilidade automática foi narrada.");
+  // Os combatentes agora agem individualmente. Habilidades podem ocorrer
+  // depois do primeiro participante agir, conforme a iniciativa da rodada.
+  let spell=false;
+  for(let turn=0;turn<20;turn++){
+    const battle=state.expeditions.find(e=>e.id===expeditionId)!.battle;
+    if(battle.status!=="active")break;
+    state=applyAction(state,{type:"battle-round",expeditionId});
+    const updated=state.expeditions.find(e=>e.id===expeditionId)!.battle;
+    if(updated.log.some(l=>l.kind==="ability" && l.text.includes(" usa "))) {spell=true;break;}
+  }
+  ok(spell,"Nenhuma habilidade automática foi narrada durante os turnos.");
 }
 
 console.log("Combate narrativo: catálogo vazio e habilidades automáticas OK.");

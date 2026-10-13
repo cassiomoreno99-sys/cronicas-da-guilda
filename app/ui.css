@@ -2425,6 +2425,16 @@ img.game-symbol.game-coin{
 }
 @media(max-width:700px){.academy-civilians{padding:9px}.academy-candidate{padding:7px}.academy-civilians>summary{font-size:14px}}
 
+/* Dispensa de formados: controles claros e tocáveis também no Android. */
+.academy-system .academy-reserve>.academy-candidate{grid-template-columns:minmax(0,1fr)}
+.academy-reserve-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:100%;min-width:0}
+.academy-reserve-actions>.small-button{min-height:43px;min-width:0;white-space:normal;padding:7px 6px;font-size:12px;line-height:1.2}
+.academy-reserve-actions>.academy-dismiss-danger{background:linear-gradient(#a44d43,#692f29);border:1px solid #742f2b;color:#fff3e8}
+.academy-dismiss-confirm{display:grid;gap:8px;padding:10px;background:#f7e2c2;border:2px solid #a04735;border-radius:7px}
+.academy-dismiss-confirm>strong{color:#7c3025}
+.academy-dismiss-confirm>small{font-size:12px;line-height:1.35;color:#723e32}
+@media(max-width:365px){.academy-reserve-actions{grid-template-columns:minmax(0,1fr)}}
+
 /* Instalação Android: a confirmação só aparece quando o jogo inteiro foi guardado. */
 .offline-mobile-bar{display:none}
 @media(max-width:900px){

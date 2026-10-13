@@ -15,9 +15,9 @@ const recentHit=(logs:BattleLog[])=>[...logs].reverse().find(x=>x.actorId&&x.tar
 const hpWidth=(hp:number,max:number)=>(max?Math.max(0,Math.min(100,100*hp/max)):0)+"%";
 type PosStyle=CSSProperties&{"--x":string;"--y":string;"--dash-x":string;"--dash-y":string};
 
-export default function Arena2D({state,expedition,act,close,returnToTeam,openClassic,open3d,busy}:{
+export default function Arena2D({state,expedition,act,close,returnToTeam,openClassic,busy}:{
  state:Campaign;expedition:Expedition;act:(action:Action)=>void;close:()=>void;
- returnToTeam:()=>void;openClassic:()=>void;open3d:()=>void;busy:boolean;
+ returnToTeam:()=>void;openClassic:()=>void;busy:boolean;
 }){
  const battle=expedition.battle;
  const all=battle.combat?.fighters||battle.fighters||[];
@@ -86,11 +86,12 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,openCla
    <div className="guild2d-help">Toque em um herói e em um inimigo para selecionar</div>
   </div>
   <div className="guild2d-chosen"><span>🛡️ {hero?.name||"Sem heróis vivos"}</span><span>⚔️</span><span>🐺 {enemy?.name||"Sem inimigos vivos"}</span></div>
+  <p className="guild2d-target-tip">O inimigo selecionado é usado nas habilidades direcionadas. O ataque comum obedece à ordem de iniciativa e à escolha automática do motor, não ao alvo tocado.</p>
   <div className="guild2d-log" aria-live="polite"><b>CRÔNICA · {active?"COMBATE REAL":"RESULTADO"}</b>
    {log.length?log.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}>{l.text}</p>):<p>Os combatentes tomam suas posições.</p>}
   </div>
   <div className="guild2d-actions">
-   <button type="button" className="guild2d-attack" disabled={!active||busy} onClick={()=>{setTip("Avançou uma ação do combate na ordem da iniciativa.");act({type:"battle-round",expeditionId:expedition.id});}}><Swords size={19}/> Atacar <small>Próxima ação</small></button>
+   <button type="button" className="guild2d-attack" disabled={!active||busy} onClick={()=>{setTip("Avançou a próxima ação da ordem de iniciativa.");act({type:"battle-round",expeditionId:expedition.id});}}><Swords size={19}/> Atacar <small>Ator e alvo automáticos</small></button>
    <button type="button" className="guild2d-skill" disabled={!active||busy||!hero||!!queued} onClick={()=>{setOpenSkill(v=>!v);setTip("");}}><Sparkles size={19}/> Habilidade <small>{queued?"Preparada":"Escolher"}</small></button>
    <button type="button" className="guild2d-defend" disabled={!active||busy} onClick={()=>{setTip("Tática defensiva ativada para a equipe.");act({type:"battle-tactic",tactic:"defensive",expeditionId:expedition.id});}}><Shield size={19}/> Defender <small>Tática defensiva</small></button>
    <button type="button" className="guild2d-retreat" disabled={!active||busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}><ArrowLeft size={19}/> Retirar equipe <small>Encerrar missão</small></button>
@@ -104,7 +105,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,openCla
    <button type="button" disabled={!active||busy} onClick={()=>{setTip("Tática equilibrada ativada.");act({type:"battle-tactic",tactic:"balanced",expeditionId:expedition.id});}}>Tática: {TACTICS[expedition.tactic].name}</button>
    <button type="button" disabled={!active||busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><ChevronsRight size={15}/> Pular resultado</button>
   </div>
-  <div className="guild2d-nav"><button type="button" onClick={returnToTeam}>← Seleção de heróis</button><button type="button" onClick={openClassic}>Tela clássica</button><button type="button" onClick={open3d}>Arena 3D</button>{!active&&<button type="button" onClick={close}>Voltar à guilda</button>}</div>
+  <div className="guild2d-nav"><button type="button" onClick={returnToTeam}>← Seleção de heróis</button><button type="button" onClick={openClassic}>Tela clássica</button>{!active&&<button type="button" onClick={close}>Voltar à guilda</button>}</div>
   <p className="guild2d-footnote">Os golpes, danos, habilidades, pontos de vida e resultados são os mesmos da sua campanha. Não existe simulação paralela; esta arena apenas mostra o combate real em 2D.</p>
  </section>;
 }

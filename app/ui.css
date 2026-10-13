@@ -2424,3 +2424,24 @@ img.game-symbol.game-coin{
  .academy-system .academy-candidate>.small-button{grid-column:auto}
 }
 @media(max-width:700px){.academy-civilians{padding:9px}.academy-candidate{padding:7px}.academy-civilians>summary{font-size:14px}}
+
+/* Instalação Android: a confirmação só aparece quando o jogo inteiro foi guardado. */
+.offline-mobile-bar{display:none}
+@media(max-width:900px){
+ .offline-mobile-bar{
+   display:flex;align-items:center;justify-content:space-between;gap:8px;
+   padding:7px 12px;background:#102235;color:#f5dfa6;
+   border-block:1px solid #947036;font-size:11px;font-weight:650;
+ }
+ .offline-mobile-bar>span{display:inline-flex;align-items:center;gap:7px;min-width:0}
+ .offline-mobile-bar small{font-size:10px;color:#edce8b}
+ .offline-mobile-bar button{
+   display:inline-flex;align-items:center;gap:5px;
+   background:#f2d18b;color:#40230e;border:1px solid #aa823a;
+   border-radius:6px;padding:6px 9px;font-size:11px;font-weight:750;
+ }
+}
+@media(max-width:420px){
+ .offline-mobile-bar{flex-wrap:wrap}
+ .offline-mobile-bar small{font-size:10px}
+}

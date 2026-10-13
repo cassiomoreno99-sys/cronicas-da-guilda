@@ -28,4 +28,13 @@ assert.ok(before.includes('type:"battle-retreat",expeditionId:expedition.id}'));
 assert.ok(before.includes('className="battle-stage"'),"Tela clássica removida");
 assert.ok(css.includes(".cinema-arena {"));
 assert.ok(css.includes("@media(prefers-reduced-motion:reduce)"));
+const navigationButtons=before.match(/<button type="button" className="action-button battle-return-team" onClick=\{returnToTeam\}>/g)||[];
+assert.equal(navigationButtons.length,2,"Seleção de heróis precisa estar acessível nas duas arenas.");
+assert.ok(before.includes('returnToTeam={returnToTeam}'),"Arena cinematográfica não encaminha retorno ao time.");
+assert.match(before,/returnToTeam=\{\(\) => \{[\s\S]*?setBattleExpeditionId\(null\);[\s\S]*?freeExpeditionSlots\(state\);[\s\S]*?go\("team"\);/,"Voltar não envia o usuário à seleção da equipe.");
+assert.ok(css.includes(".battle-actions .battle-return-team")&&css.includes(".cinema-actions .battle-return-team"),"Botão de retorno sem estilo em uma arena.");
+// Voltar usa apenas estados de interface: não pode retirar heróis, encerrar ou reiniciar combate.
+const returnHandler=before.split('returnToTeam={() => {')[1]?.split('}} busy={busy}')[0];
+assert.ok(returnHandler,"Callback de retorno ausente no contêiner principal.");
+assert.doesNotMatch(returnHandler,/perform\(|applyAction\(|battle-auto|battle-retreat|reset|retire/i,"Voltar está modificando o progresso da expedição.");
 console.log("Arena Cinematográfica: mantém motor, tela clássica e HP real no resultado.");

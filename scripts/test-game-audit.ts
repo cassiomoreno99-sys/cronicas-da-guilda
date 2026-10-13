@@ -59,7 +59,7 @@ for(let i=0;i<18;i++){
   const targetAfter=(battle.combat?.fighters||battle.fighters)!.find(f=>f.id===target.id)!;
   const healerAfter=(battle.combat?.fighters||battle.fighters)!.find(f=>f.id===healer.id)!;
   assert.ok(targetAfter.hp>hpBefore,"Cura não beneficiou o herói selecionado.");
-  assert.equal(healerAfter.hp,healerHp,"Cura deve atingir o aliado, não o conjurador.");
+  assert.ok(healerAfter.hp<=healerHp,"A cura direcionada não deve beneficiar o conjurador (ele ainda pode levar dano do inimigo).");
   healed=true;break;
  }
 }

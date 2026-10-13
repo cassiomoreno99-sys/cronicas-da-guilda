@@ -94,7 +94,7 @@ export default function ArenaDemo({ onExit }: { onExit: () => void }) {
       <h2>Ritual Sombrio na Cripta</h2>
       <p>Uma batalha cinematográfica de teste: movimentos individuais, efeitos de magia e dois vídeos especiais. Nenhum recurso da sua campanha é utilizado.</p>
     </div>
-    <div className="demo-scene" data-move={move?.type||"idle"} data-video={special} key={"scene-"+(move?.video||"none")+"-"+index}>
+    <div className="demo-scene" data-move={move?.type||"idle"} data-video={special}>
       <div className="demo-atmosphere" aria-hidden="true"/>
       <div className="demo-sky-symbol" aria-hidden="true">✧</div>
       <div className="demo-cast demo-cast-heroes" aria-label="Heróis da demonstração">

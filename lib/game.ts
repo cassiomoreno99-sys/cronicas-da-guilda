@@ -45,7 +45,9 @@ export type Battle = { title: string; day: number; won: boolean; reward: number;
 export type ExpeditionSlot = 1 | 2 | 3;
 export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; level: number; xp: number; wins: number };
 export type HQBuilding = keyof typeof HQ_BUILDINGS;
-export type AcademyState = { trainees: string[]; mentorId?: string };
+export type AcademyCandidate = { id: string; name: string; class: HeroClass; aptitude: number; genius: boolean; practice: number; joinedDay: number };
+export type AcademyGraduation = { season: number; evaluated: number; approved: Array<{ name: string; class: HeroClass; genius: boolean }>; passedExam: number };
+export type AcademyState = { trainees: string[]; mentorId?: string; candidates: AcademyCandidate[]; candidateSeason?: number; lastFocusDay?: number; reserve: Hero[]; lastGraduation?: AcademyGraduation };
 export type GuildRaidResult = { id: string; day: number; rivalId?: string; title: string; teams: string[][]; fronts: { name: string; won: boolean; playerPower: number; enemyPower: number }[]; won: boolean; reward: number; loot: string[] };
 export type RivalBattleResult = { id: string; day: number; rivalId: string; rivalName: string; playerPower: number; rivalPower: number; won: boolean; reward: number; fameChange: number };
 export type Expedition = { id: string; slot: ExpeditionSlot; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; battle: Battle; startedDay: number; nextRoundAt: number };
@@ -62,6 +64,7 @@ export type Action =
   | { type: "upgrade-hq"; building: HQBuilding }
   | { type: "academy-trainees"; heroIds: string[] }
   | { type: "academy-mentor"; heroId?: string }
+  | { type: "academy-open-class" } | { type: "academy-focus"; candidateId: string } | { type: "academy-admit"; heroId: string }
   | { type: "travel-region"; region: number }
   | { type: "use-item"; itemId:string; heroId:string }
   | { type: "battle-item"; itemId:string; expeditionId?:string }
@@ -491,6 +494,18 @@ export function hqUpgradeCost(s: Campaign, building: HQBuilding) {
   return Math.round(spec.baseCost * (1 + level * .75));
 }
 export function academySlots(s: Campaign) { return s.hq?.academy ? Math.min(4, 1 + s.hq.academy) : 0; }
+export const ACADEMY_COMMONER_CAPACITY = 10;
+export const ACADEMY_MAX_GRADUATES = 2;
+export const ACADEMY_ENROLL_COST = 100;
+export const ACADEMY_FOCUS_COST = 35;
+/** Probabilidade de passar na prova individual; somente dois aprovados podem se formar. */
+export function academyCandidateChance(s: Campaign, c: AcademyCandidate): number {
+  const level = s.hq?.academy || 0;
+  const mentor = s.heroes.find(h => h.id === s.academy?.mentorId && h.level >= 5);
+  const mentorBonus = mentor ? Math.min(12, 2 + Math.floor(mentor.level / 3)) : 0;
+  const days = Math.max(0, Math.min(28, s.day - c.joinedDay));
+  return Math.min(92, Math.max(5, Math.round(10 + c.aptitude + level * 4 + days * .9 + c.practice * 5 + mentorBonus + (c.genius ? 7 : 0))));
+}
 export const HQ_DEFINITIONS = HQ_BUILDINGS;
 export const WORLD_MAP = WORLD_REGIONS;
 export const CRAFTING_RECIPES = TEST_RECIPES;
@@ -523,6 +538,34 @@ function processAcademy(s: Campaign) {
     const xp = 8 + s.hq.academy * 7 + mentorBonus;
     gainXp(h, xp);
   }
+}
+/** Avalia a turma no fim da temporada e põe os formados na reserva da Guilda. */
+function graduateAcademyClass(s: Campaign) {
+  const members = s.academy.candidateSeason === s.season ? s.academy.candidates : [];
+  if (!members.length) return;
+  const passed = members.filter(c => random(s) * 100 < academyCandidateChance(s, c))
+    .sort((a,b) => (b.aptitude + b.practice * 5 + (b.genius ? 7 : 0)) - (a.aptitude + a.practice * 5 + (a.genius ? 7 : 0)) || a.id.localeCompare(b.id));
+  const winners = passed.slice(0, ACADEMY_MAX_GRADUATES);
+  const approved: AcademyGraduation["approved"] = [];
+  for (const candidate of winners) {
+    const prodigy = candidate.genius;
+    const hero = levelOneHero(candidate.id, candidate.name, candidate.class,
+      prodigy ? "Gênio formado na Academia" : "Revelado pela Academia");
+    if (prodigy) {
+      if (["mage","healer","bard"].includes(hero.class)) hero.magic += 3;
+      else if (["warrior","ranger","rogue"].includes(hero.class)) hero.attack += 3;
+      else hero.defense += 3;
+    }
+    gainXp(hero, 55 + candidate.practice * 15 + s.hq.academy * 10 + (prodigy ? 110 : 0));
+    hero.salary = 8 + Math.floor(hero.level * 2.5);
+    hero.value = 120 + hero.level * 45;
+    s.academy.reserve.push(hero);
+    approved.push({ name: hero.name, class: hero.class, genius: prodigy });
+  }
+  s.academy.lastGraduation = { season: s.season, evaluated: members.length, approved, passedExam: passed.length };
+  note(s, "Academia · temporada " + s.season + ": " + approved.length + "/" + members.length +
+    " formados (limite de 2). " + (approved.length ? approved.map(h => h.name + (h.genius ? " — GÊNIO!" : "")).join(", ") + ". Os formados aguardam admissão na reserva." : "Nenhum candidato superou a seleção."));
+  s.academy.candidates = [];
 }
 function itemCount(s: Campaign, key: string) { return s.chest.filter(i => i.key === key && !i.equippedTo).length; }
 function consumeItems(s: Campaign, key: string, quantity: number) {
@@ -656,7 +699,12 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.balanceVersion ??= 0;
   s.hq ??= { infirmary: 0, forge: 0, academy: 0, library: 0, stables: 0, warroom: 0 };
   for (const key of Object.keys(HQ_BUILDINGS) as HQBuilding[]) s.hq[key] = Math.max(0, Math.min(HQ_BUILDINGS[key].max, s.hq[key] || 0));
-  s.academy ??= { trainees: [] }; s.academy.trainees ??= [];
+  s.academy ??= { trainees: [], candidates: [], reserve: [] };
+  s.academy.trainees ??= [];
+  s.academy.candidates = Array.isArray(s.academy.candidates) ? s.academy.candidates.slice(0, ACADEMY_COMMONER_CAPACITY) : [];
+  s.academy.reserve = Array.isArray(s.academy.reserve) ? s.academy.reserve : [];
+  for (const hero of s.academy.reserve) hero.race ??= heroRace(hero);
+  if (s.academy.candidateSeason !== s.season) s.academy.candidates = [];
   s.raidHistory ??= []; s.rivalBattleHistory ??= [];
   s.region ??= 1; s.region = Math.max(1, Math.min(WORLD_REGIONS.length, s.region));
   s.activeRegion ??= Math.min(s.region, 1); s.activeRegion = Math.max(1, Math.min(s.region, s.activeRegion));
@@ -681,7 +729,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     s.expeditions = [];
     s.lastBattle = null;
     s.journeys = [];
-    s.academy = { trainees: [] };
+    s.academy = { trainees: [], candidates: [], reserve: [] };
     s.chest = [];
     s.itemSequence = 0;
     s.balanceVersion = 4;
@@ -1076,6 +1124,7 @@ function advance(s: Campaign, used: string[]) {
     if (paid < due) { s.heroes.forEach(h => h.energy = Math.max(0, h.energy - 10)); note(s, "Faltou ouro para os salários. A equipe perdeu 10 de energia."); }
   }
   if ((s.day - 1) % 28 === 0) {
+    graduateAcademyClass(s);
     const place = standings(s).findIndex(r => r.id === "player") + 1, oldTier = s.leagueTier, prize = leaguePrize(place, oldTier);
     entry(s, "Prêmio da temporada " + s.season + " · " + LEAGUE_TIERS[oldTier].name + " · " + place + "º lugar", prize);
     let movement = "Permaneceu na " + LEAGUE_TIERS[oldTier].name + ".";
@@ -1431,6 +1480,51 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       if (!action.heroId) { delete s.academy.mentorId; break; }
       const mentor = s.heroes.find(h => h.id === action.heroId); requireRule(mentor && !heroOnExpedition(s, mentor.id) && !activeJourney(s, mentor.id), "O mentor precisa estar disponível na sede.");
       requireRule(mentor.level >= 5, "O mentor precisa estar no nível 5 ou superior."); s.academy.mentorId = mentor.id; break;
+    }
+    case "academy-open-class": {
+      requireRule(s.hq.academy > 0, "Construa a Academia antes de formar novos heróis.");
+      requireRule(s.academy.candidateSeason !== s.season, "A turma desta temporada já foi aberta.");
+      requireRule(s.gold >= ACADEMY_ENROLL_COST, "A seleção de 10 cidadãos custa " + ACADEMY_ENROLL_COST + " ouro.");
+      entry(s, "Academia · selecionar dez cidadãos", -ACADEMY_ENROLL_COST);
+      const occupied = new Set([...s.heroes, ...s.academy.reserve].map(h => h.name));
+      const candidates: AcademyCandidate[] = [];
+      for (let i = 0; i < ACADEMY_COMMONER_CAPACITY; i++) {
+        const id = "academia-" + s.season + "-" + i;
+        let idx = 900000 + s.season * ACADEMY_COMMONER_CAPACITY + i;
+        let name = uniqueAdventurerName(idx);
+        while (occupied.has(name)) name = uniqueAdventurerName(++idx + 900000);
+        occupied.add(name);
+        candidates.push({id, name, class: CLASSIC_CLASSES[stableNumber(id + ":classe") % CLASSIC_CLASSES.length],
+          aptitude: stableNumber(id + ":aptidao") % 19, genius: (stableNumber(id + ":dom") % 100) < 8,
+          practice: 0, joinedDay: s.day});
+      }
+      s.academy.candidateSeason = s.season;
+      s.academy.candidates = candidates;
+      note(s, "Academia: 10 pessoas comuns começaram sua formação na temporada " + s.season + ".");
+      break;
+    }
+    case "academy-focus": {
+      requireRule(s.academy.candidateSeason === s.season && s.academy.candidates.length > 0, "Não há turma em treinamento.");
+      const candidate = s.academy.candidates.find(c => c.id === action.candidateId);
+      requireRule(candidate, "Candidato não encontrado.");
+      requireRule(s.academy.lastFocusDay !== s.day, "Você já dedicou um treinamento especial hoje.");
+      requireRule(s.gold >= ACADEMY_FOCUS_COST, "Este treino custa " + ACADEMY_FOCUS_COST + " ouro.");
+      entry(s, "Academia · treino dedicado de " + candidate.name, -ACADEMY_FOCUS_COST);
+      candidate.practice++;
+      s.academy.lastFocusDay = s.day;
+      note(s, "Treino dedicado a " + candidate.name + ": maior chance de passar na prova final.");
+      break;
+    }
+    case "academy-admit": {
+      requireRule(s.heroes.length < 12, "A Guilda tem 12 heróis. Abra uma vaga para admitir um formado.");
+      const index = s.academy.reserve.findIndex(h => h.id === action.heroId);
+      requireRule(index >= 0, "Este formado não está mais na reserva.");
+      const [graduate] = s.academy.reserve.splice(index, 1);
+      requireRule(!s.heroes.some(h => h.id === graduate.id), "Este herói já pertence à Guilda.");
+      s.heroes.push(graduate);
+      note(s, graduate.name + " foi admitido na Guilda, formado pela Academia!" +
+        (graduate.trait.startsWith("Gênio") ? " Um gênio foi revelado!" : ""));
+      break;
     }
     case "travel-region": {
       requireRule(Number.isInteger(action.region) && action.region >= 1 && action.region <= s.region && action.region <= WORLD_REGIONS.length, "Essa região ainda não foi desbloqueada.");

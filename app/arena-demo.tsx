@@ -73,6 +73,8 @@ export default function ArenaDemo({ onExit }: { onExit: () => void }) {
   const aliveHero=units.filter(u=>u.side==="hero"&&u.hp>0).length;
   const aliveEnemy=units.filter(u=>u.side==="enemy"&&u.hp>0).length;
   const special=Boolean(move?.video&&!lite&&!skipVideo&&!videoError);
+  const recentMoves=SCRIPT.slice(Math.max(0,appliedIndex-3),appliedIndex+1).reverse();
+  const actingSide=INITIAL_UNITS.find(u=>u.id===move?.actor)?.side;
 
   // A Arena Demo possui o próprio modo leve. Suspende temporariamente o modo
   // global para que o Android mostre os movimentos; restaura ao voltar à Guilda.
@@ -163,7 +165,7 @@ export default function ArenaDemo({ onExit }: { onExit: () => void }) {
     <div ref={sceneRef} className="demo-scene" data-move={move?.type||"idle"} data-phase={phase} data-paused={paused} data-video={special} style={{["--demo-action-speed" as string]:speed}}>
       <div className="demo-atmosphere" aria-hidden="true"/>
       <div className="demo-sky-symbol" aria-hidden="true">✧</div>
-      <div className="demo-cast demo-cast-heroes" aria-label="Heróis da demonstração">
+      <div className="demo-cast demo-cast-heroes" data-front={actingSide==="hero"&&phase!=="finished"} aria-label="Heróis da demonstração">
         {units.filter(u=>u.side==="hero").map((u,i)=><article key={u.id} ref={node=>{fighterRefs.current[u.id]=node;}} className="demo-unit demo-unit-hero" style={{["--demo-order" as string]:i}} data-actor={move?.actor===u.id&&phase!=="finished"} data-hit={activeTargets.has(u.id)&&move?.type!=="heal"} data-heal={activeTargets.has(u.id)&&move?.type==="heal"} data-dead={u.hp<=0}>
 
           <div className="demo-unit-figure"><img src={u.image} alt={"Arte de "+u.name}/><span className="demo-unit-weapon" aria-hidden="true">{u.classId==="mage"?"✦":u.classId==="ranger"?"➶":u.classId==="healer"?"✚":"⚔"}</span></div>
@@ -175,7 +177,7 @@ export default function ArenaDemo({ onExit }: { onExit: () => void }) {
       <div className="demo-impact" aria-hidden="true">
         {move?.type==="shot"?"➶":move?.type==="spell"?"✦":move?.type==="heal"?"✚":move?.type==="finisher"?"✶":move?"⚡":"⚔"}
       </div>
-      <div className="demo-cast demo-cast-enemies" aria-label="Lobos sombrios">
+      <div className="demo-cast demo-cast-enemies" data-front={actingSide==="enemy"&&phase!=="finished"} aria-label="Lobos sombrios">
         {units.filter(u=>u.side==="enemy").map((u,i)=><article key={u.id} ref={node=>{fighterRefs.current[u.id]=node;}} className="demo-unit demo-unit-enemy" style={{["--demo-order" as string]:i}} data-actor={move?.actor===u.id&&phase!=="finished"} data-hit={activeTargets.has(u.id)} data-dead={u.hp<=0}>
           <div className="demo-unit-figure"><img src={u.image} alt="Lobo sombrio"/></div>
           <div className="demo-unit-status"><strong>{i===2?"Líder sombrio":"Lobo "+(i+1)}</strong><span className="demo-hp"><i style={{width:percent(u)+"%"}}/></span><small>{u.hp}/{u.maxHp} PV</small></div>
@@ -195,6 +197,11 @@ export default function ArenaDemo({ onExit }: { onExit: () => void }) {
       <p key={index}>{move?(phase==="windup"?"Aguarde a animação de "+(INITIAL_UNITS.find(u=>u.id===move.actor)?.name||"combate")+"…":move.narrative):"Toque em Iniciar batalha para testar as animações e os vídeos especiais."}</p>
     </div>
     <div className="demo-health-summary"><span><Swords size={15}/> {aliveHero} heróis de pé</span><span>{aliveEnemy} lobos restantes</span></div>
+    <div className="demo-action-history" aria-label="Últimas ações de combate">
+      <strong>Diário do combate</strong>
+      <ol>{recentMoves.map((entry,i)=><li key={appliedIndex-i}><span>{Math.max(1,appliedIndex-i+1)}.</span> {entry.narrative}</li>)}
+        {!recentMoves.length&&<li>Os combatentes aguardam o início da batalha.</li>}</ol>
+    </div>
     <div className="demo-controls">
       {!playing?<button className="demo-primary" type="button" onClick={begin}><Play size={17}/> Iniciar batalha</button>:
         <button type="button" className="demo-primary" disabled={atEnd} onClick={togglePause}>{paused?<><Play size={16}/> Continuar</>:<><Pause size={16}/> Pausar</>}</button>}

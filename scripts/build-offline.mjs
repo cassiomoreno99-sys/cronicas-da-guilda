@@ -12,7 +12,7 @@ function colorImage(size) {
   const pixels = Buffer.alloc(size * size * 4);
   const inside = (x, y, vertices) => {
     let hit = false;
-    for (let i=0,j=vertices.length;i<vertices.length;j=i++) {
+    for (let i=0,j=vertices.length-1;i<vertices.length;j=i++) {
       const xi=vertices[i][0],yi=vertices[i][1],xj=vertices[j][0],yj=vertices[j][1];
       if ((yi>y)!==(yj>y) && x < (xj-xi)*(y-yi)/(yj-yi)+xi) hit=!hit;
     }

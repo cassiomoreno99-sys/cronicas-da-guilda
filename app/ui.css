@@ -2565,3 +2565,56 @@ img.game-symbol.game-coin{
  .arena-demo-entry{grid-template-columns:1fr}
  .arena-demo-entry button{justify-self:stretch}
 }
+
+/* Correção exclusiva para telas móveis: o botão do mercador nunca pode
+   sobrepor nome, raridade ou nível dos itens no painel estreito da taverna. */
+@media (max-width: 900px) {
+  .tavern-screen .tavern-side .shop .catalog-shop > div {
+    display: grid;
+    grid-template-columns: 34px minmax(0,1fr);
+    grid-template-rows: auto auto;
+    align-items: start;
+    column-gap: 7px;
+    row-gap: 9px;
+    min-width: 0;
+    padding: 9px 7px;
+  }
+  .tavern-screen .tavern-side .shop .catalog-shop > div > .item-art {
+    grid-column: 1;
+    grid-row: 1;
+    width: 32px;
+    height: 32px;
+    align-self: start;
+  }
+  .tavern-screen .tavern-side .shop .catalog-shop > div > span:not(.item-art) {
+    grid-column: 2;
+    grid-row: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .tavern-screen .tavern-side .shop .catalog-shop > div > span:not(.item-art) strong {
+    font-size: 12px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+  }
+  .tavern-screen .tavern-side .shop .catalog-shop > div > span:not(.item-art) small {
+    font-size: 10px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+  .tavern-screen .tavern-side .shop .catalog-shop > div > button {
+    position: static;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin: 0;
+    min-height: 39px;
+    white-space: normal;
+    text-align: center;
+    font-size: 11px;
+    padding: 6px 4px;
+  }
+}

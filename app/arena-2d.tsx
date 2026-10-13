@@ -2,14 +2,10 @@ import {useState,type CSSProperties} from "react";
 import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide-react";
 import {availableAbilities,abilityCooldownRemaining,TACTICS,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog} from "@/lib/game";
 import {portraitSource} from "@/lib/portraits";
+import {enemyArtSource} from "@/lib/enemy-art";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
-const enemyKey=(name:string)=>{
- const n=name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
- for(const [term,key] of [["lobo","wolf"],["esqueleto","skeleton"],["cultista","cultist"],["pantera","panther"],["goblin","goblin"],["orc","orc"],["aranha","spider"],["troll","troll"],["draco","wild_drake"],["espectro","specter"],["matriarca","matriarch"],["obsidiana","obsidian_guardian"],["cavaleiro","spectral_knight"],["guardiao","ancient_guardian"],["saqueador","raider"],["emboscador","ambusher"]]){if(n.includes(term))return key;}
- return "bandit";
-};
 const pos=(side:"hero"|"enemy",i:number)=>({x:side==="hero"?(i%2===0?16:28):(i%2===0?84:72),y:[15,39,63,87][Math.min(i,3)]});
 const recentHit=(logs:BattleLog[])=>[...logs].reverse().find(x=>x.actorId&&x.targetId&&["hit","critical","heal","fall","ability"].includes(x.kind)&&x.amount!==0);
 const hpWidth=(hp:number,max:number)=>(max?Math.max(0,Math.min(100,100*hp/max)):0)+"%";
@@ -47,14 +43,14 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,openCla
   const p=pos(f.side,i),acting=actor?.id===f.id&&!!targetPos&&f.hp>0;
   const struck=target?.id===f.id&&!!evt;
   const style:PosStyle={"--x":p.x+"%","--y":p.y+"%","--dash-x":acting&&targetPos?((targetPos.x-p.x)*.7)+"cqw":"0cqw","--dash-y":acting&&targetPos?((targetPos.y-p.y)*.7)+"cqh":"0cqh"};
-  const image=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior"):"/enemies/"+enemyKey(f.name)+".webp";
+  const image=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior"):enemyArtSource(f.name);
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={style} data-dead={f.hp<=0} data-selected={selected}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" key={acting?evtKey:f.id} data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"}>
-     <img src={image} alt="" draggable={false} decoding="async" loading="eager" onError={e=>{if(f.side==="enemy")e.currentTarget.src="/enemies/fallback.webp";}}/>
+     <img src={image} alt="" draggable={false} decoding="async" loading="eager" onError={e=>{if(f.side==="enemy"&&!e.currentTarget.src.endsWith("/fallback.webp"))e.currentTarget.src="/enemies/fallback.webp";}}/>
      <i aria-hidden="true">{f.side==="hero"?"◆":"✦"}</i>
     </span>
     <span className="guild2d-unit-name">{f.name.split(" ").slice(0,2).join(" ")}</span>

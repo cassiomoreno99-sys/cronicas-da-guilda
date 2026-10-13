@@ -171,6 +171,78 @@
       "githubBlob": "6e1fb384bddae15d6e8b2758243a53f5d4c7b098",
       "source": "https://raw.githubusercontent.com/GabrielGLevine/wandering-inn-rpg/main/wandering_inn_game/assets/audio/music/randommind_old_tower_inn.ogg",
       "licenseSource": "https://opengameart.org/content/medieval-the-old-tower-inn"
+    },
+    {
+      "file": "macleod_title_menu.ogg",
+      "name": "O Chamado da Guilda",
+      "originalTitle": "Ossuary 1 - A Beginning",
+      "composer": "Kevin MacLeod",
+      "mood": "Abertura",
+      "license": "CC BY 4.0",
+      "githubBlob": "9cf0a4920c4c195ec465acf1b260c1a4f7476348",
+      "source": "https://raw.githubusercontent.com/tapiwamakandigona/emberdelve/main/assets/audio/music/title_menu.ogg",
+      "licenseSource": "https://incompetech.com/music/royalty-free/",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "file": "macleod_map.ogg",
+      "name": "Caminho do Destino",
+      "originalTitle": "Ossuary 2 - Turn",
+      "composer": "Kevin MacLeod",
+      "mood": "Exploração",
+      "license": "CC BY 4.0",
+      "githubBlob": "ef5db319b26611e0d192c6d8e6f862314560730d",
+      "source": "https://raw.githubusercontent.com/tapiwamakandigona/emberdelve/main/assets/audio/music/map.ogg",
+      "licenseSource": "https://incompetech.com/music/royalty-free/",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "file": "macleod_map_deep.ogg",
+      "name": "Nas Terras Sombrias",
+      "originalTitle": "Ossuary 6 - Air",
+      "composer": "Kevin MacLeod",
+      "mood": "Mistério",
+      "license": "CC BY 4.0",
+      "githubBlob": "db9f83660d98858cb05649a21c3d2e26869e6ed2",
+      "source": "https://raw.githubusercontent.com/tapiwamakandigona/emberdelve/main/assets/audio/music/map_deep.ogg",
+      "licenseSource": "https://incompetech.com/music/royalty-free/",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "file": "macleod_combat.ogg",
+      "name": "A Maldição do Escaravelho",
+      "originalTitle": "Curse of the Scarab",
+      "composer": "Kevin MacLeod",
+      "mood": "Batalha",
+      "license": "CC BY 4.0",
+      "githubBlob": "03494df00e999fcba0b380cdc3707db4dd8d010f",
+      "source": "https://raw.githubusercontent.com/tapiwamakandigona/emberdelve/main/assets/audio/music/combat.ogg",
+      "licenseSource": "https://incompetech.com/music/royalty-free/",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "file": "macleod_boss_combat.ogg",
+      "name": "Cinco Exércitos",
+      "originalTitle": "Five Armies",
+      "composer": "Kevin MacLeod",
+      "mood": "Batalha",
+      "license": "CC BY 4.0",
+      "githubBlob": "77858bd9f3da91c077f7aa6faee095c0bb26cf08",
+      "source": "https://raw.githubusercontent.com/tapiwamakandigona/emberdelve/main/assets/audio/music/boss_combat.ogg",
+      "licenseSource": "https://incompetech.com/music/royalty-free/",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
+    },
+    {
+      "file": "macleod_combat_elite.ogg",
+      "name": "Reação Volátil",
+      "originalTitle": "Volatile Reaction",
+      "composer": "Kevin MacLeod",
+      "mood": "Batalha",
+      "license": "CC BY 4.0",
+      "githubBlob": "d17035059f32a47587a9f37dc704c4e4bb74fb66",
+      "source": "https://raw.githubusercontent.com/tapiwamakandigona/emberdelve/main/assets/audio/music/combat_elite.ogg",
+      "licenseSource": "https://incompetech.com/music/royalty-free/",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
     }
   ]
 }

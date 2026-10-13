@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import OfflineInstall from "./offline-install";
 import Arena3D from "./arena-3d";
+import Arena2D from "./arena-2d";
 import soundtrackLibrary from "@/lib/music-playlist.json";
 import {
   Archive, BookOpen, Check, ChevronLeft, ChevronRight, CircleHelp, Coins, Crown, Download,
@@ -993,6 +994,7 @@ function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
 }) {
   const [cinematic,setCinematic] = useState(false);
   const [show3d,setShow3d] = useState(false);
+  const [show2d,setShow2d] = useState(true);
   const battle = expedition.battle;
   const fighters = battle.combat?.fighters || battle.fighters || [];
   const heroes = fighters.filter(f => f.side === "hero");
@@ -1002,6 +1004,8 @@ function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
   const turnNumber=battle.combat?.liveCursor || 0;
   const turnTotal=battle.combat?.liveOrder?.length || 0;
   if (show3d) return <div className="battle-overlay"><Arena3D key={expedition.id} expedition={expedition} act={act} close={()=>setShow3d(false)} returnToTeam={returnToTeam} busy={busy}/></div>;
+  if (show2d) return <div className="battle-overlay"><Arena2D key={expedition.id} state={state} expedition={expedition} act={act} close={close}
+    returnToTeam={returnToTeam} openClassic={()=>setShow2d(false)} open3d={()=>setShow3d(true)} busy={busy}/></div>;
   if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} open3d={() => setShow3d(true)} returnToTeam={returnToTeam} busy={busy}/></div>;
   return <div className="battle-overlay">
     <section className="battle-sheet">
@@ -1019,6 +1023,7 @@ function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
       <div className="battle-log parchment">{battle.log.slice(-5).map((l,i) => <p key={i} data-kind={l.kind}>{l.text}</p>)}{!battle.log.length && <p>Os combatentes tomam posição.</p>}</div>
       {!active&&!!battle.loot?.length&&<div className="battle-loot parchment"><strong><GameSymbol kind="treasure"/> Itens encontrados:</strong> {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</div>}
        <div className="battle-actions">
+        <button type="button" className="action-button green" onClick={() => setShow2d(true)}><Swords aria-hidden="true"/> Abrir Arena 2D 4 × 4</button>
         <button type="button" className="battle-open-3d" onClick={() => setShow3d(true)}><Swords aria-hidden="true"/> Entrar na Arena 3D <ChevronRight aria-hidden="true"/></button>
         <button type="button" className="cinema-open-button" onClick={() => setCinematic(true)}><GameSymbol kind="experience" aria-hidden="true"/> Abrir Arena Cinematográfica <ChevronRight aria-hidden="true"/></button>
         {active&&<div className="battle-item-actions">{state.chest.filter(i=>ITEMS[i.key]?.slot==="consumable"&&!/energia|após uma expedição|entre expedições/i.test(CATALOG_BY_ID[i.key]?.efeito||"")).slice(0,5).map(i=>

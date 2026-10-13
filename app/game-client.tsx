@@ -866,7 +866,7 @@ function GuildPage({
         <div><strong>Modo leve · melhor desempenho</strong><small>Reduz sombras, efeitos e animações para melhorar a fluidez e poupar bateria. Não altera missões, cálculos ou salvamentos.</small></div>
         <button className="small-button" aria-pressed={liteMode} onClick={() => setLiteMode(!liteMode)}>{liteMode ? "Ativado" : "Desativado"}</button>
       </div>
-      <small className="music-credit">Músicas licenciadas CC0 · Juhani Junkala / SubspaceAudio, HydroGene e RandomMind. Mais de 30 minutos de faixas diferentes, disponíveis offline depois do carregamento inicial.</small>
+      <small className="music-credit">Trilhas de Juhani Junkala / SubspaceAudio, HydroGene, RandomMind (CC0) e Kevin MacLeod (CC BY 4.0). <a href="/music/CREDITOS.txt" target="_blank" rel="noreferrer">Ver licenças e créditos completos</a>. Mais de 30 minutos de faixas diferentes, disponíveis offline após o primeiro carregamento.</small>
     </div>
     <div className="settings-panel parchment"><button onClick={onExport}><Download /> Baixar backup</button><button onClick={onImport}><Upload /> Importar backup</button><button className="danger" onClick={onReset}><X /> Reiniciar campanha</button></div>
   </section>;

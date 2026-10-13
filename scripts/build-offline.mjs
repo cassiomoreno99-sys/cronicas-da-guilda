@@ -55,21 +55,72 @@ function pngIcon(size) {
 }
 for(const size of [192,512])await writeFile(join(iconDir,"guild-"+size+".png"),pngIcon(size));
 
-// Tema orquestral CC0 de Juhani Junkala (SubspaceAudio), armazenado no pacote offline.
-// Fonte: https://opengameart.org/content/boss-battle-music
-// Arquivo OGG otimizado, hospedado publicamente no projeto dungeon-haskell.
-const musicSource = "https://raw.githubusercontent.com/jarlah/dungeon-haskell/master/assets/music/boss.ogg";
-const musicPath = join(out, "music", "cronicas-tema-epico.ogg");
-await mkdir(join(out, "music"), {recursive:true});
-const musicResponse = await fetch(musicSource, {signal:AbortSignal.timeout(20000)});
-if (!musicResponse.ok) throw new Error("Não foi possível preparar a trilha do jogo (" + musicResponse.status + ").");
-const music = Buffer.from(await musicResponse.arrayBuffer());
-if(music.length < 500000 || music.length > 6000000 || music.toString("ascii",0,4) !== "OggS")
-  throw new Error("A trilha de RPG não é um arquivo OGG válido.");
-const musicBlobHash = createHash("sha1").update("blob "+music.length+"\0").update(music).digest("hex");
-if(musicBlobHash !== "301eed6f6a65d966247b4cd978cff945175a558b")
-  throw new Error("A trilha mudou na origem. Verifique a licença antes de distribuir.");
-await writeFile(musicPath,music);
+// Biblioteca musical de RPG licenciada CC0, empacotada para jogo OFFLINE.
+// A compilação confirma a identidade de cada arquivo e a duração REAL das faixas,
+// impedindo publicar "30 minutos" contando loops artificiais da mesma música.
+const catalog=JSON.parse(await readFile(resolve("lib/music-playlist.json"),"utf8"));
+const tracks=catalog.tracks;
+const musicDir=join(out,"music");
+await mkdir(musicDir,{recursive:true});
+if(!Array.isArray(tracks)||tracks.length<8)throw new Error("Playlist de RPG incompleta.");
+function verifyOggDuration(file){
+  if(file.toString("ascii",0,4)!=="OggS")throw new Error("Trilha não é OGG.");
+  const id=file.indexOf("vorbis",0,"ascii");
+  if(id<0||id+15>file.length)throw new Error("Trilha não é Ogg Vorbis.");
+  const sampleRate=file.readUInt32LE(id+11);
+  if(sampleRate<22050||sampleRate>192000)throw new Error("Taxa de amostragem de áudio inesperada: "+sampleRate);
+  let offset=0,lastGranule=0n,pages=0;
+  while(offset<file.length){
+    if(offset+27>file.length||file.toString("ascii",offset,offset+4)!=="OggS")
+      throw new Error("Página OGG truncada ou inválida.");
+    const pageSegments=file[offset+26];
+    if(offset+27+pageSegments>file.length)throw new Error("Índice de pacotes OGG inválido.");
+    let packetSize=0;
+    for(let i=0;i<pageSegments;i++)packetSize+=file[offset+27+i];
+    const end=offset+27+pageSegments+packetSize;
+    if(end>file.length)throw new Error("Arquivo de música OGG truncado.");
+    const granule=file.readBigUInt64LE(offset+6);
+    if(granule!==0xffffffffffffffffn)lastGranule=granule;
+    offset=end;pages++;
+  }
+  if(pages<3)throw new Error("Poucas páginas para uma música.");
+  const duration=Number(lastGranule)/sampleRate;
+  if(!Number.isFinite(duration)||duration<15||duration>1800)
+    throw new Error("Duração de música inválida ("+duration+").");
+  return duration;
+}
+async function downloadTrack(track){
+  let lastError;
+  for(let attempt=1;attempt<=3;attempt++){
+    try{
+      const response=await fetch(track.source,{signal:AbortSignal.timeout(35000)});
+      if(!response.ok)throw new Error("Download HTTP "+response.status);
+      const data=Buffer.from(await response.arrayBuffer());
+      if(data.length<30000||data.length>10000000)throw new Error("Tamanho de áudio inesperado.");
+      const sha=createHash("sha1").update("blob "+data.length+"\0").update(data).digest("hex");
+      if(sha!==track.githubBlob)throw new Error("Arquivo de áudio diferente da fonte verificada.");
+      const seconds=verifyOggDuration(data);
+      await writeFile(join(musicDir,track.file),data);
+      return {seconds,bytes:data.length};
+    } catch(error) {
+      lastError=error;
+      if(attempt<3)await new Promise(resolve=>setTimeout(resolve,attempt*900));
+    }
+  }
+  throw new Error("Não foi possível incluir "+track.file+": "+String(lastError));
+}
+const musicResults=new Array(tracks.length);
+const workers=Array.from({length:4},(_,worker)=> (async()=>{
+  for(let index=worker;index<tracks.length;index+=4){
+    musicResults[index]=await downloadTrack(tracks[index]);
+  }
+})());
+await Promise.all(workers);
+const durationSeconds=musicResults.reduce((sum,x)=>sum+x.seconds,0);
+if(durationSeconds<catalog.minimumUniqueMinutes*60)
+  throw new Error("Playlist tem somente "+Math.floor(durationSeconds/60)+" minutos de músicas diferentes; mínimo "+catalog.minimumUniqueMinutes+".");
+const sizeBytes=musicResults.reduce((sum,x)=>sum+x.bytes,0);
+console.log("TRILHA RPG: "+tracks.length+" músicas diferentes · "+(durationSeconds/60).toFixed(1)+" minutos reais · "+(sizeBytes/1048576).toFixed(1)+" MiB para offline.");
 
 const manifest={
  name:"Crônicas da Guilda",

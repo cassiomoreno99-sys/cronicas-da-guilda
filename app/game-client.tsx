@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import OfflineInstall from "./offline-install";
+import ArenaDemo from "./arena-demo";
 import soundtrackLibrary from "@/lib/music-playlist.json";
 import {
   Archive, BookOpen, Check, ChevronLeft, ChevronRight, CircleHelp, Coins, Crown, Download,
@@ -34,7 +35,7 @@ import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, equippedPosition 
 import { missionLootPreview } from "@/lib/catalog-runtime";
 
 type Save = Pick<LocalSave, "state" | "revision">;
-type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
+type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild" | "arena-demo";
 
 const fmt = (n: number) => n.toLocaleString("pt-BR");
 const ATTRIBUTE_SYMBOLS:Record<string,GameSymbolKind>={Ataque:"attack",Defesa:"defense",Magia:"magic",Vida:"health",Velocidade:"speed",Crítico:"critical",Energia:"energy"};
@@ -255,7 +256,7 @@ function BottomNav({ screen, go }: { screen: Screen; go: (s: Screen) => void }) 
     ["heroes","Heróis",<GameSymbol kind="defense" key="h"/>,screen === "heroes" || screen === "equipment"],
     ["chest","Baú",<GameSymbol kind="inventory" key="b"/>,screen === "chest"],
     ["tavern","Taverna",<Beer key="t" />,screen === "tavern"],
-    ["guild","Guilda",<GameSymbol kind="guild" key="g"/>,screen === "guild"],
+    ["guild","Guilda",<GameSymbol kind="guild" key="g"/>,screen === "guild" || screen === "arena-demo"],
   ];
   return <nav className="bottom-nav">{tabs.map(([id,label,icon,active]) =>
     <button key={id} data-active={active} onClick={() => go(id)}>{icon}<span>{label}</span></button>
@@ -817,8 +818,8 @@ function SymbolGuide(){
 }
 
 function GuildPage({
-  state, act, busy, onExport, onImport, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack
-}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void }) {
+  state, act, busy, onExport, onImport, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack, onArenaDemo
+}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void; onArenaDemo: () => void }) {
   const buildings = Object.entries(HQ_DEFINITIONS) as Array<[HQBuilding,(typeof HQ_DEFINITIONS)[HQBuilding]]>;
   const availableRaidHeroes = state.heroes.filter(h => available(h,state)).slice(0,9);
   const raidTeams = availableRaidHeroes.length >= 9 ? [availableRaidHeroes.slice(0,3).map(h=>h.id),availableRaidHeroes.slice(3,6).map(h=>h.id),availableRaidHeroes.slice(6,9).map(h=>h.id)] : [];
@@ -827,6 +828,10 @@ function GuildPage({
       <div className="guild-banner"><img src={LEAGUE_PLAYER_CREST} alt={"Brasão de "+state.name} width={88} height={102}/></div>
       <div><h2>{state.name}</h2><p>Força na união, glória em cada jornada.</p><span><GameSymbol kind="squad"/> Membros: {state.heroes.length}/12</span><span><GameSymbol kind="defense"/> Nível da Guilda: {Math.max(1,Math.ceil(state.fame/120))}</span></div>
       <aside><strong><GameSymbol kind="gold"/> Tesouro {fmt(state.gold)}</strong><strong><GameSymbol kind="fame"/> Renome {state.fame}</strong><strong><GameSymbol kind="league"/> Liga {rank(state)}</strong></aside>
+    </div>
+    <div className="arena-demo-entry">
+      <div><span><Sparkles size={15}/> NOVA EXPERIÊNCIA · DEMO V1</span><h3>Arena Cinematográfica 2.0</h3><p>Veja quatro heróis animados enfrentando lobos sombrios, com vídeos de magia e finalização. Teste à vontade: sua campanha permanece intacta.</p></div>
+      <button className="action-button gold" onClick={onArenaDemo}><Swords size={17}/> Jogar demonstração <ChevronRight size={16}/></button>
     </div>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
     <ParchmentTitle icon={<GameSymbol kind="guild"/>} title="Sede da Guilda" />
@@ -1115,7 +1120,7 @@ export default function Game() {
     <OfflineInstall />
     <div className="layout-frame">
       <aside className="nav-sidebar" aria-label="Navegação do jogo">
-        {screen !== "guild" && screen !== "equipment" && <TopNav screen={screen} go={go} />}
+        {screen !== "guild" && screen !== "equipment" && screen !== "arena-demo" && <TopNav screen={screen} go={go} />}
         <BottomNav screen={screen} go={go} />
       </aside>
       {error && <button className="error" onClick={() => setError("")}><X /> {error}</button>}
@@ -1128,7 +1133,8 @@ export default function Game() {
       {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} act={perform} busy={busy} />}
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
-      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} />} 
+      {screen === "arena-demo" && <ArenaDemo onExit={() => go("guild")} />}
+      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} onArenaDemo={() => go("arena-demo")} />} 
       </main>
     </div>
     <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />

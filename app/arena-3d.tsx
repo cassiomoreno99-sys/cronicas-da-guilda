@@ -78,6 +78,7 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
   useEffect(()=>{
     const host=containerRef.current;
     if(!host)return;
+    const canvasHost:HTMLDivElement=host;
     let renderer:THREE.WebGLRenderer;
     try{
       renderer=new THREE.WebGLRenderer({antialias:!lite,alpha:false,powerPreference:"low-power",stencil:false});
@@ -144,7 +145,7 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
     const setCamera=(v:number)=>{mode=v;camera.position.copy(home(v));controls.target.set(0,1.25,0);controls.update();};
     const setLite=(value:boolean)=>{low=value;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,value?1:1.5));renderer.shadowMap.enabled=!value;moon.castShadow=!value;resize();};
     function resize(){
-      const w=Math.max(240,host.clientWidth),h=Math.max(240,host.clientHeight);
+      const w=Math.max(240,canvasHost.clientWidth),h=Math.max(240,canvasHost.clientHeight);
       renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w<480?54:42;camera.updateProjectionMatrix();
     }
     const observer=new ResizeObserver(resize);observer.observe(host);resize();

@@ -12,7 +12,8 @@ import {
   heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, seasonBoss,
   teamPower, standings, leaguePrize, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
-  hqUpgradeCost, academySlots, negotiationQuote, rank,
+  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay,
+  ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rank,
   type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
   type Hero, type HQBuilding, type JourneyChoice, type JourneyDuration,
@@ -786,15 +787,56 @@ function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) 
   const slots = academySlots(state);
   const [draft,setDraft] = useState<string[]>(state.academy.trainees);
   useEffect(() => setDraft(state.academy.trainees), [state.academy.trainees.join(",")]);
-  if (!slots) return <div className="guild-mini parchment"><h3>Academia</h3>
-  <p>Melhore a Academia para liberar aprendizes.</p></div>;
-  const toggle = (id:string) => setDraft(old => old.includes(id) ? old.filter(x => x !== id) : old.length < slots ? [...old,id] : old);
-  return <div className="guild-mini parchment"><h3>Academia · {draft.length}/{slots}</h3>
-  <div className="academy-heroes">{state.heroes.slice(0,8).map(h => <button key={h.id} data-active={draft.includes(h.id)} onClick={() => toggle(h.id)}><HeroPortrait hero={h}/><span>{h.name.split(" ")[0]}</span></button>)}</div><button className="small-button" disabled={busy} onClick={() => act({type:"academy-trainees",heroIds:draft})}>Salvar aprendizes</button>
-    <select value={state.academy.mentorId || ""} onChange={e => act({type:"academy-mentor",heroId:e.target.value || undefined})}><option value="">Sem mentor</option>{state.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select>
+  const mentor = state.heroes.find(h => h.id === state.academy.mentorId && h.level >= 5);
+  const dailyXp = slots ? 8 + state.hq.academy * 7 + (mentor ? Math.min(18, mentor.level) : 0) : 0;
+  const classOpen = state.academy.candidateSeason === state.season;
+  const candidates = classOpen ? state.academy.candidates : [];
+  const canFocus = state.academy.lastFocusDay !== state.day && state.gold >= ACADEMY_FOCUS_COST;
+  function toggleStudent(id:string) {
+    setDraft(old => old.includes(id) ? old.filter(x => x !== id) : old.length < slots ? [...old,id] : old);
+  }
+  return <div className="guild-mini parchment academy-system">
+    <h3>Academia · Treinamento e Formação</h3>
+    <p><strong>Treinamento de heróis:</strong> seus heróis já contratados ganham experiência diariamente sem lutar, desde que estejam na sede. A Academia oferece até 4 vagas e um mentor aumenta o XP recebido.</p>
+    {!slots ? <p>Melhore a Academia na Sede (nível 1) para liberar o treinamento dos heróis e a seleção de pessoas comuns.</p> : <>
+      <h4>Heróis em treinamento · {draft.length}/{slots}</h4>
+      <small>Cada herói matriculado e disponível recebe {dailyXp} XP por dia. Heróis em expedição ou viagem não treinam.</small>
+      <div className="academy-heroes">{state.heroes.slice(0,12).map(h => <button key={h.id} data-active={draft.includes(h.id)} onClick={() => toggleStudent(h.id)}><HeroPortrait hero={h}/><span>{h.name.split(" ")[0]}</span></button>)}</div>
+      <button className="small-button" disabled={busy} onClick={() => act({type:"academy-trainees",heroIds:draft})}>Salvar heróis em treinamento</button>
+      <label className="academy-mentor-label">Mentor (herói de nível 5+):
+        <select value={state.academy.mentorId || ""} disabled={busy} onChange={e => act({type:"academy-mentor",heroId:e.target.value || undefined})}>
+          <option value="">Sem mentor</option>{state.heroes.filter(h=>h.level>=5).map(h=><option key={h.id} value={h.id}>{h.name} · Nv. {h.level}</option>)}
+        </select>
+      </label>
+    </>}
+    <details className="academy-civilians" open>
+      <summary>Formação de pessoas comuns · {candidates.length}/{ACADEMY_COMMONER_CAPACITY} candidatos</summary>
+      <p>Em cada temporada de 28 dias, a Academia pode acolher <strong>10 cidadãos comuns</strong>. Eles treinam conforme os dias passam. A chance de passar na prova depende de seu potencial oculto, do nível da Academia, do mentor e dos treinos dedicados.</p>
+      <p><strong>Somente os 2 melhores entre os que passarem na prova final se formam.</strong> Pode haver 0, 1 ou 2 formados. Gênios são raros e só revelam seu talento quando se formam.</p>
+      {!slots ? <small>Primeiro construa a Academia para iniciar uma turma.</small> : !classOpen ?
+        <button className="action-button green" disabled={busy || state.gold < ACADEMY_ENROLL_COST} onClick={() => act({type:"academy-open-class"})}>Selecionar 10 cidadãos · {ACADEMY_ENROLL_COST} ouro</button> :
+        <div className="academy-candidate-list">
+          <small>Temporada {state.season} · Dia {seasonDay(state)}/28 · Você pode dedicar um treino especial de {ACADEMY_FOCUS_COST} ouro por dia, a apenas um candidato.</small>
+          {candidates.map(candidate => <div key={candidate.id} className="academy-candidate">
+            <div><strong>{candidate.name}</strong><small>Vocação: {CLASSES[candidate.class].name} · Treinos dedicados: {candidate.practice}</small></div>
+            <div className="academy-candidate-chance"><strong>{academyCandidateChance(state,candidate)}%</strong><small>Chance na prova</small></div>
+            <button className="small-button" disabled={busy || !canFocus} onClick={() => act({type:"academy-focus",candidateId:candidate.id})}>Treinar · {ACADEMY_FOCUS_COST} ouro</button>
+          </div>)}
+        </div>}
+      {state.academy.lastGraduation && <div className="academy-results"><strong>Resultado da temporada {state.academy.lastGraduation.season}</strong>
+        <p>{state.academy.lastGraduation.approved.length} formados entre {state.academy.lastGraduation.evaluated} candidatos.
+        {state.academy.lastGraduation.approved.length ? " " + state.academy.lastGraduation.approved.map(x=>x.name+(x.genius?" — GÊNIO REVELADO!":"")).join(", ") : " Nenhum candidato foi aprovado."}</p>
+      </div>}
+      {!!state.academy.reserve.length && <div className="academy-reserve"><h4>Formados esperando vaga · {state.academy.reserve.length}</h4>
+        <small>A Guilda comporta 12 heróis. Formados aguardam na reserva até você admiti-los, sem pagar nova contratação.</small>
+        {state.academy.reserve.map(h=><div className="academy-candidate" key={h.id}>
+          <div><strong>{h.name}</strong><small>{CLASSES[h.class].name} · Nv. {h.level} · {h.trait}</small></div>
+          <button className="small-button" disabled={busy || state.heroes.length>=12} onClick={()=>act({type:"academy-admit",heroId:h.id})}>Admitir na Guilda</button>
+        </div>)}
+      </div>}
+    </details>
   </div>;
 }
-
 function RivalRecruitPanel({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
   const [guildId,setGuildId] = useState(state.rivals[0]?.id || "");
   const guild = state.rivals.find(g => g.id === guildId) || state.rivals[0];

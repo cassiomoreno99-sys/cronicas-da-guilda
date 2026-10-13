@@ -2618,3 +2618,29 @@ img.game-symbol.game-coin{
     padding: 6px 4px;
   }
 }
+
+/* Navegação explícita de combate para a seleção de heróis; não retira a equipe. */
+.battle-actions .battle-return-team,
+.cinema-actions .battle-return-team {
+  grid-column:1 / -1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  min-height:44px;
+  padding:9px 10px;
+  background:linear-gradient(180deg,#2d5168,#133047);
+  color:#fff0c9;
+  border:1px solid #b58d4b;
+  border-radius:7px;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.25;
+  text-align:center;
+}
+.battle-actions .battle-return-team svg,
+.cinema-actions .battle-return-team svg{width:18px;height:18px;flex:none}
+@media(max-width:430px){
+  .battle-actions .battle-return-team,
+  .cinema-actions .battle-return-team{min-height:46px;font-size:12px}
+}

@@ -1,4 +1,5 @@
 import { TEST_ITEMS, TEST_RECIPES, CATALOG_ITEMS, CATALOG_BY_ID } from "./catalog-test.ts";
+import { REGIONAL_CHAPTERS } from "./regional-missions.ts";
 import { performSupreme, type SupremeUnit } from "./supreme-abilities.ts";
 import { handleCatalogAction, awardCatalogLoot, setBonuses } from "./catalog-runtime.ts";
 import { CLASSIC_CLASS_IDS, V130_BASE_STATS, WORLD_REGIONS, HQ_BUILDINGS, HERO_SCARS, LEVEL_ABILITIES, V130_ITEMS, ITEM_SETS, CRAFT_RECIPES, uniqueAdventurerName } from "./v130-content.ts";
@@ -868,16 +869,17 @@ export function missions(s: Campaign): Mission[] {
   const regionOneTitles = ["Ritual sombrio na cripta", "Aranhas nas ruínas", "Escolta da caravana", "Exploração de masmorra", "O cofre do tesouro perdido", "Caçada no vale nebuloso"];
   const availableCount = seasonDay(s) >= 14 ? 6 : 5;
   return Array.from({ length: availableCount }, (_, i) => {
-    const enemy = region.enemies[(s.day + i) % region.enemies.length];
-    const kind = kinds[i];
+    const authored=regionIndex===0?undefined:REGIONAL_CHAPTERS[regionIndex]?.contracts[i];
+    const enemy=authored?.enemy||region.enemies[(s.day+i)%region.enemies.length];
+    const kind=authored?.kind||kinds[i];
     const difficulty = Math.min(5, i + 1);
     const forceBase = [30, 48, 68, 92, 125, 145][i];
     const rewardBase = [35, 58, 90, 135, 205, 245][i];
     return {
       id: "mission-" + s.day + "-" + regionIndex + "-" + i,
-      title: regionIndex === 0 ? regionOneTitles[i] : descriptors[i] + " " + region.name,
+      title: authored?.title||(regionIndex===0?regionOneTitles[i]:descriptors[i]+" "+region.name),
       location: region.name,
-      description: [
+      description: authored?.description||[
         "Interrompa um ritual hostil nos territórios de " + region.name + ".",
         "Elimine as criaturas que ocupam as ruínas de " + region.name + ".",
         "Proteja a caravana que atravessa " + region.name + ".",
@@ -888,11 +890,11 @@ export function missions(s: Campaign): Mission[] {
       rank: difficulty,
       force: Math.round(forceBase * scaling),
       reward: Math.round(rewardBase * (1 + regionIndex * .10 + (s.season - 1) * .04)),
-      enemy, count: i === 0 ? 3 : i >= 3 ? 4 : 3,
-      specialty: kind === "hunt" ? "ranger" : kind === "dungeon" ? "rogue" : "warrior",
-      flavor: kind === "hunt" ? "Arqueiros e Assassinos se destacam na perseguição."
-        : kind === "dungeon" ? "Assassinos ajudam contra armadilhas; Magos lidam bem com ameaças arcanas."
-        : "Mobilidade e uma linha de frente estável reduzem os riscos.",
+      enemy, count: authored?.count||(i===0?3:i>=3?4:3),
+      specialty: authored?.specialty||(kind==="hunt"?"ranger":kind==="dungeon"?"rogue":"warrior"),
+      flavor: authored?.flavor||(kind==="hunt"?"Arqueiros e Assassinos se destacam na perseguição."
+        :kind==="dungeon"?"Assassinos ajudam contra armadilhas; Magos lidam bem com ameaças arcanas."
+        :"Mobilidade e uma linha de frente estável reduzem os riscos."),
       kind,
       requiredFame: i === 3 ? 80 + regionIndex * 20 : i === 4 ? 180 + regionIndex * 30 : i === 5 ? 220 + regionIndex * 30 : 0,
     };
@@ -902,16 +904,17 @@ export function seasonBoss(s: Campaign): Mission | null {
   if (seasonDay(s) < 21 || s.bossSeasons?.includes(s.season)) return null;
   const regionIndex = Math.max(0, Math.min(WORLD_REGIONS.length - 1, (s.activeRegion || 1) - 1));
   const region = WORLD_REGIONS[regionIndex], enemy = region.enemies[region.enemies.length - 1];
+  const guardian=REGIONAL_CHAPTERS[regionIndex]?.guardian;
   return {
     id: "boss-" + s.season + "-" + regionIndex,
-    title: regionIndex === 0 ? "Chefe regional · Vale de Valen" : "Guardião de " + region.name,
-    location: region.name,
-    description: "Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
+    title:guardian?.title||(regionIndex===0?"Chefe regional · Vale de Valen":"Guardião de "+region.name),
+    location:region.name,
+    description:guardian?.description||"Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
     rank: 5,
     force: Math.round(135 * regionThreat(regionIndex) * (1 + (s.season - 1) * .045)),
     reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
     enemy, count: 3, specialty: "boss",
-    flavor: "Chefe regional: batalha de elite, renome e cicatrizes memoráveis.",
+    flavor:guardian?.flavor||"Chefe regional: batalha de elite, renome e cicatrizes memoráveis.",
     kind: "boss", requiredFame: 0, boss: regionIndex,
   };
 }

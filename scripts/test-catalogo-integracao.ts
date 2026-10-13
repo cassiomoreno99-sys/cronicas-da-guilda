@@ -56,9 +56,14 @@ for(const b of bookItems){
  s=applyAction(s,{type:"mission",missionId:active.id,team:heroes.map(h=>h.id),tactic:"balanced"});
  const exp=s.expeditions.at(-1)!;
  s=applyAction(s,{type:"battle-ability",heroId:heroes[0].id,abilityId:"supreme-CG-302",expeditionId:exp.id});
- s=applyAction(s,{type:"battle-round",expeditionId:exp.id});
- const battle=s.expeditions.at(-1)!.battle;
- ok(battle.log.some(x=>x.text.includes("Livro supremo ativado: CG-302")),"Livro nao executado no combate");
+ let activated=false;
+ for(let tick=0;tick<20;tick++){
+  const current=s.expeditions.find(e=>e.id===exp.id)!.battle;
+  if(current.status!=="active")break;
+  s=applyAction(s,{type:"battle-round",expeditionId:exp.id});
+  if(s.expeditions.find(e=>e.id===exp.id)!.battle.log.some(x=>x.text.includes("Livro supremo ativado: CG-302"))){activated=true;break;}
+ }
+ ok(activated,"Livro nao executado quando chegou o turno do heroi.");
  blocked(()=>applyAction(s,{type:"battle-ability",heroId:heroes[0].id,abilityId:"supreme-CG-302",expeditionId:exp.id}),"Livro ativado mais de uma vez");
 }
 console.log("INTEGRACAO-314: itens unicos, missoes, receitas, aprendizado, respec, backup e habilidades OK");

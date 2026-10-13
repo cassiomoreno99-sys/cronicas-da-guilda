@@ -46,3 +46,25 @@
  .arena-3d-unit{font-size:9px}
 }
 @media(min-width:1000px){.arena-3d-stage{height:560px}.arena-3d-side{padding:12px}}
+
+/* Feedback sobre o impacto calculado pelo motor — sobre o canvas, nunca pré-renderizado. */
+.arena-3d-strike{position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  z-index:3;width:min(94%,440px);pointer-events:none;display:grid;gap:4px;
+  padding:9px 12px;background:#081a28e8;border:1px solid #d7a24b;border-radius:7px;
+  box-shadow:0 5px 18px #000b;text-align:center;animation:arena-3d-strike-enter .23s ease-out both}
+.arena-3d-strike strong{color:#ffce79;font:900 11px system-ui,sans-serif;letter-spacing:.07em}
+.arena-3d-strike span{color:#fce5bc;font:700 12px Georgia,serif;line-height:1.35}
+.arena-3d-preview-note{position:absolute;left:8px;right:8px;top:9px;z-index:3;
+  pointer-events:none;text-align:center;padding:9px 11px;
+  background:#091929e9;border:1px solid #9ac6dc;border-radius:7px;
+  color:#e5f4f8;font:800 11px/1.4 system-ui,sans-serif}
+.arena-3d-toolbar .arena-3d-test-creature{grid-column:1/-1;
+  background:linear-gradient(105deg,#294555,#183b4b);
+  border-color:#91bed3;min-height:43px;font-size:12px}
+.arena-3d-toolbar .arena-3d-test-creature[aria-pressed="true"]{
+  color:#dcfff0;border-color:#80d9a6;background:#174533}
+@keyframes arena-3d-strike-enter{
+  from{opacity:0;transform:translate(-50%,-7px) scale(.98)}
+  to{opacity:1;transform:translate(-50%,0) scale(1)}
+}
+@media(prefers-reduced-motion:reduce){.arena-3d-strike{animation:none}}

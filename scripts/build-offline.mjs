@@ -186,6 +186,12 @@ self.addEventListener("fetch",event=>{
   event.respondWith((async()=>{
     const cache=await caches.open(CACHE_NAME);
     if(request.mode==="navigate"){
+      // Online primeiro: evita mostrar uma versão antiga por causa do HTML
+      // em cache; sem internet, continua permitindo jogar instalado.
+      try{
+        const online=await fetch(new Request(request,{cache:"no-store"}));
+        if(online.ok)return online;
+      }catch{}
       return await cache.match("/") || await cache.match("/index.html") || fetch(request);
     }
     const cached=await cache.match(request,{ignoreSearch:true});

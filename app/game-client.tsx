@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import OfflineInstall from "./offline-install";
-import Arena3D from "./arena-3d";
 import Arena2D from "./arena-2d";
 import soundtrackLibrary from "@/lib/music-playlist.json";
 import {
@@ -861,7 +860,7 @@ function GuildPage({
       <aside><strong><GameSymbol kind="gold"/> Tesouro {fmt(state.gold)}</strong><strong><GameSymbol kind="fame"/> Renome {state.fame}</strong><strong><GameSymbol kind="league"/> Liga {rank(state)}</strong></aside>
     </div>
     <div className="arena-demo-entry">
-      <div><span><Sparkles size={15}/> COMBATE REAL · ARENA 3D WEBGL</span><h3>Arena Tridimensional</h3><p>Gráficos 3D com personagens animados e cenários físicos. Usa as batalhas e resultados da sua expedição, sem roteiro de simulação. Abra os detalhes de uma expedição e escolha Arena 3D.</p></div>
+      <div><span><Sparkles size={15}/> COMBATE REAL · ARENA 2D LEVE</span><h3>Confrontos da Guilda</h3><p>As expedições usam retratos dos heróis, golpes animados em 2D e barras de vida reais. Acesse os detalhes de uma expedição para acompanhar a batalha sem gráficos 3D.</p></div>
       <button className="action-button gold" onClick={onArenaDemo}><Swords size={17}/> Ir às expedições <ChevronRight size={16}/></button>
     </div>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
@@ -913,8 +912,8 @@ const CINEMA_STATUS_LABELS: Record<string,string> = {
   bleed:"Sangramento",poison:"Envenenado",stun:"Atordoado",shield:"Escudo",
   regen:"Regeneração",taunt:"Provocação",inspired:"Inspirado",vulnerable:"Vulnerável"
 };
-function CinematicBattlePage({ expedition, act, close, back, open3d, returnToTeam, busy }: {
-  expedition: Expedition; act:(a:Action)=>void; close:()=>void; back:()=>void; open3d:()=>void; returnToTeam:()=>void; busy:boolean;
+function CinematicBattlePage({ expedition, act, close, back, returnToTeam, busy }: {
+  expedition: Expedition; act:(a:Action)=>void; close:()=>void; back:()=>void; returnToTeam:()=>void; busy:boolean;
 }) {
   const battle = expedition.battle;
   const fighters = battle.combat?.fighters || battle.fighters || [];
@@ -997,7 +996,6 @@ function CinematicBattlePage({ expedition, act, close, back, open3d, returnToTea
       </div>
     </section>
     <div className="cinema-actions">
-      <button type="button" className="action-button battle-open-3d" onClick={open3d}><Swords aria-hidden="true"/> Abrir Arena 3D real</button>
       <button type="button" className="action-button battle-return-team" onClick={returnToTeam}><ChevronLeft aria-hidden="true"/> Voltar à seleção de heróis</button>
       {active ? <>
         <button type="button" className="action-button blue" disabled={busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><GameSymbol kind="battle" aria-hidden="true"/> Pular para o resultado</button>
@@ -1012,7 +1010,6 @@ function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
   state: Campaign; expedition: Expedition; act: (a: Action) => void; close: () => void; returnToTeam: () => void; busy: boolean;
 }) {
   const [cinematic,setCinematic] = useState(false);
-  const [show3d,setShow3d] = useState(false);
   const [show2d,setShow2d] = useState(true);
   const battle = expedition.battle;
   const fighters = battle.combat?.fighters || battle.fighters || [];
@@ -1022,10 +1019,9 @@ function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
   const latest = battle.log.at(-1);
   const turnNumber=battle.combat?.liveCursor || 0;
   const turnTotal=battle.combat?.liveOrder?.length || 0;
-  if (show3d) return <div className="battle-overlay"><Arena3D key={expedition.id} expedition={expedition} act={act} close={()=>setShow3d(false)} returnToTeam={returnToTeam} busy={busy}/></div>;
   if (show2d) return <div className="battle-overlay"><Arena2D key={expedition.id} state={state} expedition={expedition} act={act} close={close}
-    returnToTeam={returnToTeam} openClassic={()=>setShow2d(false)} open3d={()=>setShow3d(true)} busy={busy}/></div>;
-  if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} open3d={() => setShow3d(true)} returnToTeam={returnToTeam} busy={busy}/></div>;
+    returnToTeam={returnToTeam} openClassic={()=>setShow2d(false)} busy={busy}/></div>;
+  if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} returnToTeam={returnToTeam} busy={busy}/></div>;
   return <div className="battle-overlay">
     <section className="battle-sheet">
       <div className="battle-top"><div><strong>{battle.title}</strong><span>Rodada {battle.rounds}{battle.objective?.targetRounds ? "/" + battle.objective.targetRounds : ""}</span></div><button onClick={close}><X /></button></div>
@@ -1043,7 +1039,6 @@ function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
       {!active&&!!battle.loot?.length&&<div className="battle-loot parchment"><strong><GameSymbol kind="treasure"/> Itens encontrados:</strong> {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</div>}
        <div className="battle-actions">
         <button type="button" className="action-button green" onClick={() => setShow2d(true)}><Swords aria-hidden="true"/> Abrir Arena 2D 4 × 4</button>
-        <button type="button" className="battle-open-3d" onClick={() => setShow3d(true)}><Swords aria-hidden="true"/> Entrar na Arena 3D <ChevronRight aria-hidden="true"/></button>
         <button type="button" className="cinema-open-button" onClick={() => setCinematic(true)}><GameSymbol kind="experience" aria-hidden="true"/> Abrir Arena Cinematográfica <ChevronRight aria-hidden="true"/></button>
         {active&&<div className="battle-item-actions">{state.chest.filter(i=>ITEMS[i.key]?.slot==="consumable"&&!/energia|após uma expedição|entre expedições/i.test(CATALOG_BY_ID[i.key]?.efeito||"")).slice(0,5).map(i=>
           <button key={i.id} className="action-button blue" disabled={busy||(battle.combat?.consumablesUsed||0)>=3}

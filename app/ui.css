@@ -2507,3 +2507,10 @@ img.game-symbol.game-coin{
 @media(prefers-reduced-motion:reduce){
   html:not(.guild-lite-mode) *,html:not(.guild-lite-mode) *::before,html:not(.guild-lite-mode) *::after{animation-duration:.001ms!important;transition:none!important}
 }
+
+/* Controle simples para trocar a faixa sem abrir o seletor do celular. */
+.guild-settings-controls button.music-next-button {
+ display:inline-flex;justify-content:flex-start;align-items:center;width:max-content;
+ font-size:12px;font-weight:700;margin-top:6px;padding:5px 10px;
+ border:1px solid #967640;background:#ecd09a;color:#512918;border-radius:4px;
+}

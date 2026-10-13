@@ -363,7 +363,7 @@ export function threshold(h: Hero) {
 export function regionThreat(regionIndex:number) {
   const i=Math.max(0,Math.min(WORLD_REGIONS.length-1,Math.floor(regionIndex)));
   const distance=WORLD_REGIONS[i].minLevel-1;
-  return 1+distance*.14+distance*distance*.0015;
+  return 1+Math.sqrt(distance)*.39;
 }
 export function missionSuggestedLevel(m:Pick<Mission,"location"|"rank"|"kind">) {
   const region=WORLD_REGIONS.find(r=>r.name===m.location);
@@ -901,7 +901,7 @@ export function seasonBoss(s: Campaign): Mission | null {
     location: region.name,
     description: "Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
     rank: 5,
-    force: Math.round(152 * regionThreat(regionIndex) * (1 + (s.season - 1) * .045)),
+    force: Math.round(135 * regionThreat(regionIndex) * (1 + (s.season - 1) * .045)),
     reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
     enemy, count: 3, specialty: "boss",
     flavor: "Chefe regional: batalha de elite, renome e cicatrizes memoráveis.",
@@ -1181,7 +1181,7 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   });
   for (let i = 0; i < m.count; i++) {
     const boss = m.kind === "boss" && i === 0, hp = Math.round((65 + m.rank * 48) * scaling * (boss ? 1.9 : 1));
-    fighters.push({ id: "enemy-" + i, name: boss ? m.title : m.enemy + " " + (i + 1), side: "enemy", hp, maxHp: hp, attack: (12 + m.rank * 9.5) * scaling * (boss ? 1.16 : 1), defense: (5 + m.rank * 4 + (boss ? 8 : 0)) * Math.sqrt(Math.max(1,scaling)), magic: 0, speed: boss ? 22 : 17, critical: .05, energy: 100, healing: 1, guarding: 0, statuses: [] });
+    fighters.push({ id: "enemy-" + i, name: boss ? m.title : m.enemy + " " + (i + 1), side: "enemy", hp, maxHp: hp, attack: (12 + m.rank * 9.5) * (1 + (scaling - 1) * .37) * (boss ? 1.16 : 1), defense: (5 + m.rank * 4 + (boss ? 8 : 0)) * Math.sqrt(Math.max(1,scaling)), magic: 0, speed: boss ? 22 : 17, critical: .05, energy: 100, healing: 1, guarding: 0, statuses: [] });
   }
   const agile = team.filter(h => ["rogue", "ranger"].includes(h.class)).length;
   const scout = team.some(h => h.class === "ranger" && h.talent?.path === "defense");

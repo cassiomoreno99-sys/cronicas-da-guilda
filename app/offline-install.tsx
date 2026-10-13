@@ -28,11 +28,23 @@ export default function OfflineInstall() {
     window.addEventListener("beforeinstallprompt",onInstallOffer);
     window.addEventListener("appinstalled",onInstalled);
     if("serviceWorker" in navigator){
-      // ready só resolve após o Service Worker baixar o jogo e todas as artes.
+      // Em instalações antigas o Service Worker anterior já está ativo.
+      // Espera o NOVO instalar todas as faixas, não mostra "offline pronto" cedo demais.
       navigator.serviceWorker.register("/sw.js",{updateViaCache:"none"}).then(async registration=>{
+        if(navigator.onLine)await registration.update();
+        const candidate=registration.installing || registration.waiting;
+        if(candidate && candidate.state!=="activated"){
+          await new Promise<void>((resolve,reject)=>{
+            const changed=()=>{
+              if(candidate.state==="activated"){candidate.removeEventListener("statechange",changed);resolve();}
+              else if(candidate.state==="redundant"){candidate.removeEventListener("statechange",changed);reject(new Error("Atualização offline interrompida"));}
+            };
+            candidate.addEventListener("statechange",changed);
+            changed();
+          });
+        }
         await navigator.serviceWorker.ready;
         if(alive)setReady(true);
-        if(navigator.onLine)void registration.update().catch(()=>{});
       }).catch(()=>{if(alive)setFailed(true);});
     }else setFailed(true);
     return ()=>{
@@ -54,9 +66,9 @@ export default function OfflineInstall() {
     }catch {setOffer(null);}
   };
   return <aside className="offline-mobile-bar" aria-live="polite">
-    {failed ? <span><WifiOff size={15}/> Para instalar offline, abra no Chrome.</span> :
+    {failed ? <span><WifiOff size={15}/> Não foi possível completar o download offline. Conecte ao Wi-Fi e reabra o jogo.</span> :
       ready ? <span><CheckCircle2 size={15}/> {online?"Jogo completo salvo · offline pronto":"Jogando sem internet"}</span> :
-      <span>Preparando modo offline… mantenha a internet ligada.</span>}
+      <span>Baixando jogo e trilha completa… mantenha o Wi-Fi ligado.</span>}
     {!installed && offer && ready && <button onClick={()=>void install()}><Download size={14}/> Instalar</button>}
     {!installed && ready && !offer && <small>Chrome ⋮ → Adicionar à tela inicial</small>}
   </aside>;

@@ -353,7 +353,23 @@ const templates = [
 function random(s: Campaign) { s.rng = (Math.imul(s.rng, 1664525) + 1013904223) >>> 0; return s.rng / 4294967296; }
 export function seasonDay(s: Campaign) { return ((s.day - 1) % 28) + 1; }
 export const MAX_HERO_LEVEL = 50;
-export function threshold(h: Hero) { return h.level >= MAX_HERO_LEVEL ? Number.POSITIVE_INFINITY : 55 + h.level * 20 + Math.floor(h.level / 10) * 25; }
+/** Curva 2026: subida inicial deliberada, sem reduzir o nível de saves antigos. */
+export function threshold(h: Hero) {
+  if(h.level >= MAX_HERO_LEVEL)return Number.POSITIVE_INFINITY;
+  return 85 + h.level*26 + Math.floor(h.level/5)*20 + Math.floor(h.level/10)*20;
+}
+/** Distância real entre territórios: a região não é uma cópia da anterior.
+ * Somente as NOVAS missões usam a curva; expedições salvas não são reescritas. */
+export function regionThreat(regionIndex:number) {
+  const i=Math.max(0,Math.min(WORLD_REGIONS.length-1,Math.floor(regionIndex)));
+  const distance=WORLD_REGIONS[i].minLevel-1;
+  return 1+distance*.14+distance*distance*.0015;
+}
+export function missionSuggestedLevel(m:Pick<Mission,"location"|"rank"|"kind">) {
+  const region=WORLD_REGIONS.find(r=>r.name===m.location);
+  const base=region?.minLevel||1;
+  return Math.min(MAX_HERO_LEVEL,base+[0,1,2,4,6][Math.min(4,Math.max(0,m.rank-1))]+(m.kind==="boss"?3:0));
+}
 export function activeJourney(s: Campaign, heroId: string) { return s.journeys?.find(j => j.heroId === heroId); }
 export function activeExpeditions(s: Campaign) { return (s.expeditions || []).filter(e => e.battle.status === "active" && !!e.battle.combat).toSorted((a, b) => a.slot - b.slot); }
 export function freeExpeditionSlots(s: Campaign): ExpeditionSlot[] {
@@ -445,7 +461,7 @@ export function missionLocks(s: Campaign, m: Mission) {
 }
 export function missionReadiness(s: Campaign, m: Mission, ids = s.team) {
   const team = s.heroes.filter(h => ids.includes(h.id));
-  const recommended = (m.kind === "boss" ? 5 : [2, 3, 5, 7, 9][m.rank - 1]) + Math.floor((s.season - 1) / 2);
+  const recommended = missionSuggestedLevel(m) + Math.floor((s.season - 1) / 3);
   const reference = "Referência: nível " + recommended + " e energia 60%+.";
   if (team.length < 3 || team.length > 4 || team.some(h => !available(h, s))) return { level: "risk", label: "Equipe incompleta ou indisponível", hint: "Escale 3 ou 4 heróis disponíveis, com pelo menos 25% de energia e sem ferimentos." };
   const average = team.reduce((n, h) => n + h.level, 0) / team.length;
@@ -837,7 +853,7 @@ export function newCampaign(seed = 381077): Campaign {
 export function missions(s: Campaign): Mission[] {
   const regionIndex = Math.max(0, Math.min(WORLD_REGIONS.length - 1, (s.activeRegion || 1) - 1));
   const region = WORLD_REGIONS[regionIndex], progression = Math.max(0, region.minLevel - 1);
-  const scaling = 1 + progression * .045 + (s.season - 1) * .055 + Math.floor((seasonDay(s) - 1) / 7) * .025;
+  const scaling = regionThreat(regionIndex) * (1 + (s.season - 1) * .045 + Math.floor((seasonDay(s) - 1) / 7) * .018);
   // Cada região possui seis missões próprias; o guardião regional é a sétima.
   // A sexta entra no quadro no dia 14; o guardião surge no dia 21.
   const kinds: MissionKind[] = ["dungeon", "hunt", "escort", "dungeon", "dungeon", "hunt"];
@@ -885,7 +901,7 @@ export function seasonBoss(s: Campaign): Mission | null {
     location: region.name,
     description: "Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
     rank: 5,
-    force: Math.round((78 + regionIndex * 12) * (1 + (s.season - 1) * .06)),
+    force: Math.round(152 * regionThreat(regionIndex) * (1 + (s.season - 1) * .045)),
     reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
     enemy, count: 3, specialty: "boss",
     flavor: "Chefe regional: batalha de elite, renome e cicatrizes memoráveis.",
@@ -1164,8 +1180,8 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
     return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy, guarding: h.talent?.path === "defense" && ["warrior", "paladin", "monk"].includes(h.class) ? h.talent.rank : 0 };
   });
   for (let i = 0; i < m.count; i++) {
-    const boss = m.kind === "boss" && i === 0, hp = Math.round((65 + m.rank * 48) * scaling * (boss ? 2.1 : 1));
-    fighters.push({ id: "enemy-" + i, name: boss ? m.title : m.enemy + " " + (i + 1), side: "enemy", hp, maxHp: hp, attack: (12 + m.rank * 9.5) * scaling * (boss ? 1.16 : 1), defense: 5 + m.rank * 4 + (boss ? 8 : 0), magic: 0, speed: boss ? 22 : 17, critical: .05, energy: 100, healing: 1, guarding: 0, statuses: [] });
+    const boss = m.kind === "boss" && i === 0, hp = Math.round((65 + m.rank * 48) * scaling * (boss ? 1.9 : 1));
+    fighters.push({ id: "enemy-" + i, name: boss ? m.title : m.enemy + " " + (i + 1), side: "enemy", hp, maxHp: hp, attack: (12 + m.rank * 9.5) * scaling * (boss ? 1.16 : 1), defense: (5 + m.rank * 4 + (boss ? 8 : 0)) * Math.sqrt(Math.max(1,scaling)), magic: 0, speed: boss ? 22 : 17, critical: .05, energy: 100, healing: 1, guarding: 0, statuses: [] });
   }
   const agile = team.filter(h => ["rogue", "ranger"].includes(h.class)).length;
   const scout = team.some(h => h.class === "ranger" && h.talent?.path === "defense");
@@ -1175,12 +1191,20 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
 }
 function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreated") {
   const c = b.combat!, m = c.mission, won = status === "won";
-  b.status = status; b.won = won; b.reward = won ? m.reward : 0; b.xp = status === "retreated" && !b.rounds ? 0 : (won ? 30 : status === "retreated" ? 8 : 12) + m.rank * (won ? 23 : 12);
+  b.status = status; b.won = won; b.reward = won ? m.reward : 0;
+  const regionIndex=Math.max(0,WORLD_REGIONS.findIndex(r=>r.name===m.location));
+  const xpBase=(won?24:status==="retreated"?8:12)+m.rank*(won?17:9);
+  const xpRegion=regionIndex*(won?18:9);
+  b.xp=status==="retreated"&&!b.rounds?0:xpBase+xpRegion+(m.kind==="boss"&&won?32:0);
   b.remaining = c.fighters.filter(f => f.side === "hero" && f.hp > 0).length;
   for (const f of c.fighters.filter(f => f.side === "hero")) {
     const h = s.heroes.find(h => h.id === f.id)!;
     h.energy = Math.max(0, h.energy - (status === "retreated" ? 12 : Math.round(c.fatigueTotal / Math.max(1, b.rounds))) - (f.hp === 0 ? 12 : 0));
-    if (gainXp(h, b.xp)) b.levelUps.push(h.name);
+    // Repetir desafios muito abaixo do próprio nível deixa de ser o melhor treino.
+    // O XP final por herói é menor nas missões antigas; o histórico da recompensa permanece.
+    const overlevel=Math.max(0,h.level-missionSuggestedLevel(m)-3);
+    const earned=Math.max(status==="retreated"&&!b.rounds?0:1,Math.round(b.xp*Math.max(.18,1-overlevel*.16)));
+    if (gainXp(h,earned)) b.levelUps.push(h.name);
     if (f.hp === 0 && random(s) < .45) {
       const injuryDays = Math.max(1, 3 - Math.floor((s.hq?.infirmary || 0) / 2));
       h.injuredUntil = s.day + injuryDays; b.wounded.push(h.name); addScar(s, h, m.kind === "boss" ? "boss" : "defeat");

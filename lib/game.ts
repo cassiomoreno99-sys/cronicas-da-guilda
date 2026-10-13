@@ -1490,7 +1490,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const candidates: AcademyCandidate[] = [];
       for (let i = 0; i < ACADEMY_COMMONER_CAPACITY; i++) {
         const id = "academia-" + s.season + "-" + i;
-        let idx = 900000 + s.season * ACADEMY_COMMONER_CAPACITY + i;
+        let idx = 100000 + s.season * ACADEMY_COMMONER_CAPACITY + i;
         let name = uniqueAdventurerName(idx);
         while (occupied.has(name)) name = uniqueAdventurerName(++idx + 900000);
         occupied.add(name);

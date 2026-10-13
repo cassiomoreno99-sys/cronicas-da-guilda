@@ -102,10 +102,10 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
     renderer.domElement.setAttribute("aria-label","Cena tridimensional real da batalha atual. Arraste para girar a câmera.");
     host.appendChild(renderer.domElement);
     const camera=new THREE.PerspectiveCamera(42,1,.1,90);
-    camera.position.set(6.4,6.4,10.7);
+    camera.position.set(4.6,4.0,7.9);
     const controls=new OrbitControls(camera,renderer.domElement);
     controls.target.set(0,1.25,0);controls.enableDamping=true;controls.dampingFactor=.075;
-    controls.enablePan=false;controls.minDistance=7.3;controls.maxDistance=16;
+    controls.enablePan=false;controls.minDistance=4.8;controls.maxDistance=15;
     controls.minPolarAngle=.47;controls.maxPolarAngle=1.44;
     const hemi=new THREE.HemisphereLight(0xc5dcff,0x31200f,2.1);scene.add(hemi);
     const moon=new THREE.DirectionalLight(0x9cbfff,3.3);
@@ -160,8 +160,8 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
     const loader=new GLTFLoader();
     const models=new Map<string,Awaited<ReturnType<GLTFLoader["loadAsync"]>>>();
     const load=(name:string)=>loader.loadAsync(MODELS+name+".glb").then(glb=>{models.set(name,glb);});
-    const home=(type:number)=>type===1?new THREE.Vector3(11.4,5.1,1.7):type===2?new THREE.Vector3(-5.2,8.5,8.3):new THREE.Vector3(6.4,6.4,10.7);
-    const setCamera=(v:number)=>{mode=v;camera.position.copy(home(v));controls.target.set(0,1.25,0);controls.update();};
+    const home=(type:number)=>type===1?new THREE.Vector3(9.1,3.5,1.4):type===2?new THREE.Vector3(-3.5,7.9,7.0):new THREE.Vector3(4.6,4.0,7.9);
+    const setCamera=(v:number)=>{mode=v;camera.position.copy(home(v));controls.target.set(0,1.15,0);controls.update();};
     const setLite=(value:boolean)=>{low=value;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,value?1:1.5));renderer.shadowMap.enabled=!value;moon.castShadow=!value;resize();};
     function resize(){
       const w=Math.max(240,canvasHost.clientWidth),h=Math.max(240,canvasHost.clientHeight);
@@ -195,8 +195,15 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
       }
       if(target){
         if(log.amount!==undefined&&log.amount>0){
-          if(log.kind==="fall"||log.targetHp===0)playClip(target,"death");
-          else playClip(target,healing?"cast":"hit");
+          if(log.kind==="fall"||log.targetHp===0) {
+            target.wolfDeathStart ??= moment;
+            playClip(target,"death");
+          } else if(!healing) {
+            target.reactionStart=moment;
+            playClip(target,"hit");
+          } else {
+            playClip(target,"cast");
+          }
         }
         if(healing||ranged||log.kind==="ability")visibleEffect(
           actor.pose.clone().add(new THREE.Vector3(0,1.5,0)),
@@ -208,13 +215,19 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
       for(const f of next){
         const actor=actors.get(f.id);
         if(!actor)continue;
-        if(actor.hp>0&&f.hp<=0)playClip(actor,"death");
+        if(actor.hp>0&&f.hp<=0){
+          actor.wolfDeathStart=moment;
+          playClip(actor,"death");
+        }
         actor.hp=f.hp;
       }
       if(log.length<lastLog.length)lastLog=[];
       const latest=actionFromRealLog(lastLog,log);
       lastLog=log.slice();
-      if(latest)animateEntry(latest);
+      if(latest){
+        animateEntry(latest);
+        onActionRef.current(latest);
+      }
     }
     ctrlRef.current={sync,setCamera,setLite,setPreview};
     setPreview(wolfPreview);
@@ -284,14 +297,45 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
       for(const actor of actors.values()){
         actor.mixer.update(dt);
         const u=(moment-actor.actionStart)/actor.actionDuration;
-        if(u>=0&&u<1&&actor.attackTarget&&actor.kind==="melee"){
-          const distance=Math.min(1.5,actor.pose.distanceTo(actor.attackTarget)*.52);
-          const offset=actor.attackTarget.clone().sub(actor.pose).setY(0).normalize().multiplyScalar(distance*Math.sin(Math.PI*u));
+        const strike=u>=0&&u<1&&actor.kind==="melee"&&actor.attackTarget;
+        if(strike){
+          const distance=Math.min(2.1,actor.pose.distanceTo(actor.attackTarget!)*.70);
+          const envelope=Math.sin(Math.PI*Math.pow(u,.73));
+          const offset=actor.attackTarget!.clone().sub(actor.pose).setY(0).normalize().multiplyScalar(distance*envelope);
           actor.root.position.copy(actor.pose).add(offset);
-        }else{
+        }else {
           actor.root.position.copy(actor.pose);
-          if(u>=1&&u<2&&actor.hp>0){playClip(actor,"idle");actor.actionStart=-100;}
+          if(u>=1&&u<2&&actor.hp>0){
+            playClip(actor,"idle");
+            actor.actionStart=-100;
+          }
         }
+        // Diferentemente do retrato antigo, o lobo move a própria geometria:
+        // patas durante a corrida, mandíbula no bote, reação ao golpe e morte.
+        if(actor.wolf){
+          let pose:WolfMove="idle",progress=0;
+          if(actor.hp<=0){
+            pose="death";progress=Math.min(1,(moment-(actor.wolfDeathStart??-2))/.95);
+          } else if(actor.reactionStart!==undefined && moment-actor.reactionStart<.55){
+            pose="hit";progress=(moment-actor.reactionStart)/.55;
+          } else if(strike){
+            pose=u<.55?"run":"attack";
+            progress=u<.55?u/.55:(u-.55)/.45;
+          }
+          actor.wolf.animate(moment,pose,progress);
+        }
+      }
+      if(showingPreview){
+        // Exibição do modelo em WebGL, não um golpe fictício da campanha.
+        const cycle=moment%8.6;
+        let pose:WolfMove="idle",progress=0;
+        if(cycle>=1.8&&cycle<4.0){pose="run";progress=(cycle-1.8)/2.2;}
+        else if(cycle>=4.0&&cycle<5.45){pose="attack";progress=(cycle-4.0)/1.45;}
+        else if(cycle>=5.45&&cycle<6.40){pose="hit";progress=(cycle-5.45)/.95;}
+        else if(cycle>=6.40&&cycle<8.2){pose="death";progress=(cycle-6.40)/1.8;}
+        wolfViewer.animate(moment,pose,progress);
+        wolfViewer.model.position.z=-.15+(pose==="run"?Math.sin(progress*Math.PI)*.9:0);
+        wolfViewer.model.rotation.y=-.35+Math.sin(moment*.65)*.18;
       }
       for(const light of lights)light.intensity=7+Math.sin(moment*7+light.position.x)*1.5;
       if(effectTime>0){effectTime-=dt;effectGroup.scale.setScalar(1+Math.max(0,.2-effectTime)*1.6);if(effectTime<=0){effectGroup.clear();effectGroup.scale.setScalar(1);}}
@@ -336,11 +380,19 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
         {renderStatus!=="loading"&&<p>{errorDetail}</p>}
         {renderStatus!=="loading"&&<button onClick={close}>Voltar à batalha clássica</button>}
       </div>}
+      {wolfPreview&&<div className="arena-3d-preview-note" role="status">MODELO 3D DE LOBO · corrida, ataque, reação e queda. Visualização sem alterar a missão.</div>}
+      {!wolfPreview&&lastStrike&&<div className="arena-3d-strike" key={lastStrike.count} role="status">
+        <strong>{lastStrike.kind==="heal"?"CURA":lastStrike.kind==="critical"?"CRÍTICO":"IMPACTO REAL"}</strong>
+        <span>{lastStrike.text}</span>
+      </div>}
       <div className="arena-3d-stage-caption">ARRASTE PARA GIRAR · PINÇA PARA ZOOM</div>
     </div>
     <div className="arena-3d-toolbar">
       <button onClick={()=>setCameraMode(v=>(v+1)%3)}><Camera size={16}/> Mudar câmera</button>
       <button onClick={()=>setLite(v=>!v)}><Zap size={16}/> {lite?"Modo leve ligado":"Gráficos completos"}</button>
+      <button className="arena-3d-test-creature" aria-pressed={wolfPreview} onClick={()=>setWolfPreview(v=>!v)}>
+        <Swords size={16}/> {wolfPreview?"Voltar ao combate real":"Ver lobo 3D em movimento"}
+      </button>
     </div>
     <div className="arena-3d-units" aria-label="Vida real dos combatentes">
       {[human,enemies].map((side,i)=><div className="arena-3d-side" key={i}>
@@ -362,6 +414,6 @@ export default function Arena3D({expedition,act,close,returnToTeam,busy}:{
       <button className="action-button red" disabled={busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}><Shield size={16}/> Retirar equipe</button></>}
       {!live&&<button className="action-button green" onClick={returnToTeam}>Voltar à equipe</button>}
     </div>
-    <p className="arena-3d-note">Modelos 3D animados e iluminação WebGL. Os números vêm exclusivamente do motor real da expedição. Visual estilizado em evolução, ainda não fotorrealista. Arquivos armazenados offline após a atualização.</p>
+    <p className="arena-3d-note">Combates de verdade: a animação acompanha o motor da missão, sem sorteios ou danos inventados. Lobos sombrios agora são criaturas 3D de quatro patas com ataque, corrida, reação e queda. O botão de visualização do lobo mostra apenas o modelo e não interfere nos resultados. Funciona offline após atualizar.</p>
   </section>;
 }

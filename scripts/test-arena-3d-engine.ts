@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 import {applyAction,missions,newCampaign} from "../lib/game.ts";
+import {createWolf3D} from "../app/arena-wolf.ts";
 const c=readFileSync("app/arena-3d.tsx","utf8");
 const main=readFileSync("app/game-client.tsx","utf8");
 const scene=readFileSync("app/arena-3d.css","utf8");
@@ -25,6 +26,30 @@ assert.match(wolfCode,/else if\\(move==="death"\\)/,"Falta animação de morte."
 assert.match(c,/isWolf\\(f\\)\\?createWolf3D\\(\\)/,"Monstro não está conectado à batalha real.");
 assert.match(c,/wolfViewer\\.animate/,"Visualização 3D de movimento não foi ligada.");
 assert.match(c,/actor\\.wolf\\.animate\\(moment,pose,progress\\)/,"Lobo da campanha não recebe animação.");
+const wolf3d=createWolf3D();
+let meshCount=0,armoredPieces=0;
+wolf3d.model.traverse((part:any)=>{
+ if(part.isMesh){meshCount++;if(part.geometry?.type==="ConeGeometry")armoredPieces++;}
+});
+assert.ok(meshCount>=60,"Lobo deve ser uma malha 3D composta por corpo, patas, cabeça e armadura.");
+assert.ok(armoredPieces>=12,"Garras/espinhos 3D ausentes.");
+const samplePose=()=>{
+ const angles:number[]=[];
+ wolf3d.model.traverse((part:any)=>{if(part.isGroup)angles.push(part.rotation.x,part.rotation.z);});
+ return angles;
+};
+wolf3d.animate(.1,"idle",0);const idlePose=samplePose();
+wolf3d.animate(1.7,"run",.5);const runningPose=samplePose();
+wolf3d.animate(2.5,"attack",.7);const bitingPose=samplePose();
+wolf3d.animate(3.3,"hit",.5);const woundedPose=samplePose();
+wolf3d.animate(4.2,"death",1);const deathPose=samplePose();
+const distinct=(x:number[],y:number[])=>x.some((value,i)=>Math.abs(value-y[i])>.07);
+assert.ok(distinct(idlePose,runningPose),"Patas não se movem na corrida.");
+assert.ok(distinct(runningPose,bitingPose),"Mordida não altera a postura 3D.");
+assert.ok(distinct(bitingPose,woundedPose),"Reação ao golpe não move o lobo.");
+assert.ok(distinct(woundedPose,deathPose),"Queda 3D não acontece.");
+console.log("LOBO 3D: "+meshCount+" peças tridimensionais, corrida, mordida, dano e morte animados.");
+
 const seed=newCampaign(20261013);seed.event=null;
 const mission=missions(seed)[0];
 const started=applyAction(seed,{type:"mission",missionId:mission.id,team:seed.team,tactic:"balanced",startedAt:1_700_000_000_000,expeditionSlot:1});

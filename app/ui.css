@@ -2644,3 +2644,18 @@ img.game-symbol.game-coin{
   .battle-actions .battle-return-team,
   .cinema-actions .battle-return-team{min-height:46px;font-size:12px}
 }
+
+/* Acesso rápido ao renderizador tridimensional a partir de ambas as arenas. */
+.battle-actions .battle-open-3d,
+.cinema-actions .battle-open-3d{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  grid-column:1/-1;min-height:46px;
+  background:linear-gradient(115deg,#133c55,#28556c,#193d43);
+  border:1px solid #8cc8d5; border-radius:7px;
+  box-shadow:0 0 13px #439ab63f;
+  font-size:13px;font-weight:850;color:#e8faf5;
+}
+.battle-actions .battle-open-3d svg,.cinema-actions .battle-open-3d svg{width:20px;height:20px}
+@media(max-width:430px){
+  .battle-actions .battle-open-3d,.cinema-actions .battle-open-3d{min-height:46px;font-size:12px}
+}

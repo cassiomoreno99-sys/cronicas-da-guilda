@@ -21,11 +21,13 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,openCla
  const enemies=all.filter(f=>f.side==="enemy").slice(0,4);
  const [heroId,setHeroId]=useState("");
  const [enemyId,setEnemyId]=useState("");
+ const [allyTargetId,setAllyTargetId]=useState("");
  const [openSkill,setOpenSkill]=useState(false);
  const [tip,setTip]=useState("");
  const active=battle.status==="active"&&!!battle.combat;
  const hero=heroes.find(f=>f.id===heroId&&f.hp>0)||heroes.find(f=>f.hp>0);
  const enemy=enemies.find(f=>f.id===enemyId&&f.hp>0)||enemies.find(f=>f.hp>0);
+ const allyTarget=heroes.find(f=>f.id===allyTargetId&&f.hp>0)||[...heroes].filter(f=>f.hp>0).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
  const heroData=state.heroes.find(h=>h.id===hero?.id);
  const abilities=heroData?availableAbilities(heroData):[];
  const queued=battle.combat?.pendingAbilities?.some(p=>p.heroId===hero?.id);
@@ -63,7 +65,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,openCla
  }
  function queueAbility(ability:ReturnType<typeof availableAbilities>[number]){
   if(!active||busy||!hero||queued)return;
-  const targetId=ability.target==="enemy"?enemy?.id:ability.target==="ally"?hero.id:undefined;
+  const targetId=ability.target==="enemy"?enemy?.id:ability.target==="ally"?allyTarget?.id:undefined;
   if((ability.target==="enemy"||ability.target==="ally")&&!targetId){setTip("Selecione um alvo vivo.");return;}
   act({type:"battle-ability",expeditionId:expedition.id,heroId:hero.id,abilityId:ability.id,...(targetId?{targetId}:{})});
   setTip("Ordem enviada: "+ability.name+" no próximo turno de "+hero.name+".");
@@ -92,7 +94,12 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,openCla
    <button type="button" className="guild2d-defend" disabled={!active||busy} onClick={()=>{setTip("Tática defensiva ativada para a equipe.");act({type:"battle-tactic",tactic:"defensive",expeditionId:expedition.id});}}><Shield size={19}/> Defender <small>Tática defensiva</small></button>
    <button type="button" className="guild2d-retreat" disabled={!active||busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}><ArrowLeft size={19}/> Retirar equipe <small>Encerrar missão</small></button>
   </div>
-  {openSkill&&active&&<div className="guild2d-skills"><b>Habilidades de {hero?.name}</b><p>Toque em um personagem para mudar o alvo, depois escolha uma habilidade.</p>
+  {openSkill&&active&&<div className="guild2d-skills"><b>Habilidades de {hero?.name}</b><p>Toque em um personagem para mudar quem usa a habilidade. Selecione abaixo quem recebe curas ou escudos. Inimigos tocados recebem golpes direcionados.</p>
+   <label className="guild2d-ally-selector">Alvo aliado para cura ou proteção
+    <select value={allyTarget?.id||""} onChange={event=>setAllyTargetId(event.target.value)} disabled={busy}>
+     {heroes.filter(f=>f.hp>0).map(f=><option key={f.id} value={f.id}>{f.name} · {f.hp}/{f.maxHp} PV</option>)}
+    </select>
+   </label>
    <div>{abilities.map(a=>{const cd=abilityCooldownRemaining(battle,hero!.id,a.id);return <button type="button" key={a.id} disabled={busy||!!queued||cd>0} onClick={()=>queueAbility(a)}>{a.name}{cd>0?" · recarga "+cd:""}<small>{a.description}</small></button>;})}</div>
   </div>}
   {tip&&<div className="guild2d-tip" role="status"><Check size={15}/>{tip}</div>}

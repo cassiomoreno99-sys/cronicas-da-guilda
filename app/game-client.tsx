@@ -893,8 +893,8 @@ const CINEMA_STATUS_LABELS: Record<string,string> = {
   bleed:"Sangramento",poison:"Envenenado",stun:"Atordoado",shield:"Escudo",
   regen:"Regeneração",taunt:"Provocação",inspired:"Inspirado",vulnerable:"Vulnerável"
 };
-function CinematicBattlePage({ expedition, act, close, back, busy }: {
-  expedition: Expedition; act:(a:Action)=>void; close:()=>void; back:()=>void; busy:boolean;
+function CinematicBattlePage({ expedition, act, close, back, returnToTeam, busy }: {
+  expedition: Expedition; act:(a:Action)=>void; close:()=>void; back:()=>void; returnToTeam:()=>void; busy:boolean;
 }) {
   const battle = expedition.battle;
   const fighters = battle.combat?.fighters || battle.fighters || [];
@@ -977,6 +977,7 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
       </div>
     </section>
     <div className="cinema-actions">
+      <button type="button" className="action-button battle-return-team" onClick={returnToTeam}><ChevronLeft aria-hidden="true"/> Voltar à seleção de heróis</button>
       {active ? <>
         <button type="button" className="action-button blue" disabled={busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><GameSymbol kind="battle" aria-hidden="true"/> Pular para o resultado</button>
         <button type="button" className="action-button red" disabled={busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button>
@@ -986,8 +987,8 @@ function CinematicBattlePage({ expedition, act, close, back, busy }: {
   </section>;
 }
 
-function BattleOverlay({ state, expedition, act, close, busy }: {
-  state: Campaign; expedition: Expedition; act: (a: Action) => void; close: () => void; busy: boolean;
+function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
+  state: Campaign; expedition: Expedition; act: (a: Action) => void; close: () => void; returnToTeam: () => void; busy: boolean;
 }) {
   const [cinematic,setCinematic] = useState(false);
   const battle = expedition.battle;
@@ -998,7 +999,7 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
   const latest = battle.log.at(-1);
   const turnNumber=battle.combat?.liveCursor || 0;
   const turnTotal=battle.combat?.liveOrder?.length || 0;
-  if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} busy={busy}/></div>;
+  if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} returnToTeam={returnToTeam} busy={busy}/></div>;
   return <div className="battle-overlay">
     <section className="battle-sheet">
       <div className="battle-top"><div><strong>{battle.title}</strong><span>Rodada {battle.rounds}{battle.objective?.targetRounds ? "/" + battle.objective.targetRounds : ""}</span></div><button onClick={close}><X /></button></div>
@@ -1029,6 +1030,7 @@ function BattleOverlay({ state, expedition, act, close, busy }: {
             <GameSymbol kind="book"/> {h.name} · {used?"Usado":pending?"Aguardando":CATALOG_BY_ID[h.supremeBook!]?.nome}
           </button>;
         })}</div>}
+        <button type="button" className="action-button battle-return-team" onClick={returnToTeam}><ChevronLeft aria-hidden="true"/> Voltar à seleção de heróis</button>
         {active ? <><button className="action-button blue" disabled={busy} onClick={() => act({type:"battle-auto",expeditionId:expedition.id})}>Pular para o resultado</button><button className="action-button red" disabled={busy} onClick={() => act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button></> : <button className="action-button green huge" onClick={close}>Voltar à guilda</button>}
       </div>
     </section>
@@ -1151,6 +1153,12 @@ export default function Game() {
       </main>
     </div>
     <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />
-    {battleExpedition && <BattleOverlay state={state} expedition={battleExpedition} act={perform} close={() => setBattleExpeditionId(null)} busy={busy} />}
+    {battleExpedition && <BattleOverlay state={state} expedition={battleExpedition} act={perform} close={() => setBattleExpeditionId(null)} returnToTeam={() => {
+      // Fecha apenas a interface do combate: a expedição permanece em andamento.
+      setBattleExpeditionId(null);
+      const availableSlots = freeExpeditionSlots(state);
+      if (availableSlots.length) setSlot(availableSlots[0]);
+      go("team");
+    }} busy={busy} />}
   </div>;
 }

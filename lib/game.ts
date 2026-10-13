@@ -40,7 +40,7 @@ export type BattleConsumableKey = "healing_potion" | "antidote" | "stun_bomb";
 export type PendingConsumable = { key: BattleConsumableKey; targetId: string };
 export type MissionKind = "escort" | "defense" | "dungeon" | "hunt" | "boss";
 export type Mission = { id: string; title: string; location: string; description: string; rank: number; force: number; reward: number; enemy: string; count: number; specialty: string; flavor: string; kind: MissionKind; requiredFame: number; requiredItem?: string; boss?: number };
-type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; healingItemsUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; supremeUsed?: Record<string,boolean>; revivedIds?: string[]; damageThis?: Record<string,number>; damagePrevious?: Record<string,number>; autoAbilities?: boolean; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
+type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; healingItemsUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; supremeUsed?: Record<string,boolean>; revivedIds?: string[]; damageThis?: Record<string,number>; damagePrevious?: Record<string,number>; autoAbilities?: boolean; liveOrder?: string[]; liveCursor?: number; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
 export type Battle = { title: string; day: number; won: boolean; reward: number; xp: number; rounds: number; log: BattleLog[]; levelUps: string[]; wounded: string[]; remaining: number; fighters?: BattleFighter[]; status?: "active" | "won" | "lost" | "retreated"; combat?: Combat; loot?: string[]; fameChange?: number; regionUnlocked?: number; objective?: { name: string; hp: number; maxHp: number; targetRounds: number } };
 export type ExpeditionSlot = 1 | 2 | 3;
 export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; level: number; xp: number; wins: number };
@@ -1211,9 +1211,14 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
 }
 function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
   const c = b.combat!, m = c.mission;
-  const round = ++b.rounds, log = b.log, heroes = () => c.fighters.filter(f => f.side === "hero" && f.hp > 0), enemies = () => c.fighters.filter(f => f.side === "enemy" && f.hp > 0);
+  // Uma atualização = um combatente. A iniciativa é preservada no save.
+  const newRound = !c.liveOrder?.length || !Number.isInteger(c.liveCursor);
+  const round = newRound ? ++b.rounds : b.rounds;
+  const log = b.log, heroes = () => c.fighters.filter(f => f.side === "hero" && f.hp > 0), enemies = () => c.fighters.filter(f => f.side === "enemy" && f.hp > 0);
   c.supremeUsed ??= {}; c.revivedIds ??= [];
-  c.damagePrevious={...(c.damageThis||{})};c.damageThis={};
+  if (newRound) {
+    c.damagePrevious={...(c.damageThis||{})}; c.damageThis={};
+  }
   const addStatus = (target: Combatant, kind: StatusKind, rounds: number, amount?: number, sourceId?: string) => {
     const existing = target.statuses.find(x => x.kind === kind && kind !== "shield");
     if (existing) { existing.rounds = Math.max(existing.rounds, rounds); if (amount !== undefined) existing.amount = Math.max(existing.amount || 0, amount); existing.sourceId = sourceId || existing.sourceId; }
@@ -1262,21 +1267,26 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     amount = Math.max(0, Math.min(target.maxHp - target.hp, Math.round(amount))); if (!amount) return 0; target.hp += amount;
     log.push({ round, text: text + amount + " PV.", kind, actorId, targetId: target.id, targetHp: target.hp, amount }); return amount;
   };
-  if (c.lastTactic !== c.tactic) { log.push({ round, text: "Nova ordem: tática " + TACTICS[c.tactic].name.toLowerCase() + ".", kind: "order" }); c.lastTactic = c.tactic; }
-  for (const f of c.fighters.filter(f => f.hp > 0)) {
-    for (const status of [...f.statuses]) {
-      if (status.kind === "bleed" || status.kind === "poison") hit(f, status.amount || 6, (status.kind === "bleed" ? "Sangramento" : "Veneno") + " afeta " + f.name + ": ", status.sourceId, false, true, "status");
-      if (status.kind === "regen" && f.hp > 0) heal(f, status.amount || 8, "Regeneração recupera " + f.name + ": ", status.sourceId, "status");
-      if (["bleed", "poison", "regen"].includes(status.kind)) status.rounds--;
-    }
-    f.statuses = f.statuses.filter(x => x.rounds > 0 && (x.kind !== "shield" || (x.amount || 0) > 0));
-  }
+  if (newRound && c.lastTactic !== c.tactic) { log.push({ round, text: "Nova ordem: tática " + TACTICS[c.tactic].name.toLowerCase() + ".", kind: "order" }); c.lastTactic = c.tactic; }
 
-  const t = TACTICS[c.tactic]; c.fatigueTotal += t.fatigue;
+  const t = TACTICS[c.tactic];
+  if(newRound) {
+    c.fatigueTotal += t.fatigue;
+    c.liveOrder = c.fighters.filter(f => f.hp > 0)
+      .map(f => ({ id:f.id, speed:f.speed*(1-(f.statuses.find(x=>x.kind==="slow")?.amount||0))+random(s)*12 }))
+      .sort((a,b)=>b.speed-a.speed).map(x=>x.id);
+    c.liveCursor=0;
+  }
   const livingIds = heroes().map(f => f.id);
   const frost = s.heroes.filter(h => livingIds.includes(h.id) && h.class === "mage" && h.talent?.path === "defense").reduce((n, h) => n + .05 * (h.talent?.rank || 0), 0);
   const bardPassive = Math.min(.12, s.heroes.filter(h => livingIds.includes(h.id) && h.class === "bard").length * .04);
-  const actors = c.fighters.filter(f => f.hp > 0).map(f => ({ fighter: f, speed: f.speed*(1-(f.statuses.find(x=>x.kind==="slow")?.amount||0))+random(s)*12 })).sort((a,b)=>b.speed-a.speed);
+  let nextActor: Combatant | undefined;
+  while ((c.liveCursor||0) < (c.liveOrder?.length||0)) {
+    const id=c.liveOrder![c.liveCursor!++];
+    const candidate=c.fighters.find(f=>f.id===id);
+    if(candidate && candidate.hp>0) {nextActor=candidate;break;}
+  }
+  const actors=nextActor?[{fighter:nextActor}]:[];
 
   const executeAbility = (a: Combatant, h: Hero, order: PendingAbility, ability: AbilitySpec) => {
     const allyTarget = heroes().find(f => f.id === order.targetId) || heroes().sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
@@ -1318,6 +1328,14 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
   for (const actor of actors) {
     if (!heroes().length || !enemies().length) break;
     const a = actor.fighter; if (a.hp <= 0) continue;
+    // Efeitos periódicos aplicados no turno do próprio personagem.
+    for(const status of [...a.statuses]){
+      if(status.kind==="bleed"||status.kind==="poison") hit(a,status.amount||6,(status.kind==="bleed"?"Sangramento":"Veneno")+" afeta "+a.name+": ",status.sourceId,false,true,"status");
+      if(status.kind==="regen"&&a.hp>0) heal(a,status.amount||8,"Regeneração recupera "+a.name+": ",status.sourceId,"status");
+      if(["bleed","poison","regen"].includes(status.kind))status.rounds--;
+    }
+    a.statuses=a.statuses.filter(x=>x.rounds>0 && (x.kind!=="shield"||(x.amount||0)>0));
+    if(a.hp<=0)continue;
     const stun = a.statuses.find(x => x.kind === "stun"); if (stun) { log.push({ round, text: a.name + " está atordoado e perde a ação.", kind: "status", actorId: a.id, targetId: a.id, targetHp: a.hp }); stun.rounds--; a.statuses = a.statuses.filter(x => x.rounds > 0); continue; }
     if (a.side === "hero") {
       const h = s.heroes.find(h => h.id === a.id)!;
@@ -1356,6 +1374,13 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     }
   }
 
+  // Aguarda a próxima atualização antes de permitir o próximo combatente agir.
+  if ((c.liveCursor||0) < (c.liveOrder?.length||0) && heroes().length && enemies().length) {
+    b.remaining=heroes().length;
+    return;
+  }
+  c.liveOrder=undefined;
+  c.liveCursor=undefined;
   if (heroes().length && enemies().length) {
     if (m.kind === "dungeon" && round % 3 === 0) {
       const rogues = s.heroes.filter(h => heroes().some(f => f.id === h.id) && h.class === "rogue"), reduction = rogues.length ? .55 / (1 + rogues.reduce((n, h) => n + (h.talent?.path === "defense" ? h.talent.rank * .2 : 0), 0)) : 1;
@@ -1432,7 +1457,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const locks = missionLocks(s, mission); requireRule(!locks.length, "Missão bloqueada: precisa de " + locks.join(" e ") + ".");
       const selected = selectTeam(s, action.team, action.tactic, action.formation);
       const battle = startBattle(s, mission, selected);
-      const expedition: Expedition = { id: "expedition-" + (++s.expeditionSequence), slot: expeditionSlot, team: selected.map(h => h.id), formation: { ...s.formation }, tactic: s.tactic, battle, startedDay: s.day, nextRoundAt: (Number.isFinite(action.startedAt) ? Number(action.startedAt) : Date.now()) + 2500 };
+      const expedition: Expedition = { id: "expedition-" + (++s.expeditionSequence), slot: expeditionSlot, team: selected.map(h => h.id), formation: { ...s.formation }, tactic: s.tactic, battle, startedDay: s.day, nextRoundAt: (Number.isFinite(action.startedAt) ? Number(action.startedAt) : Date.now()) + 1350 };
       s.expeditions.push(expedition); s.lastBattle = battle;
       const next = s.heroes.filter(h => available(h, s)).slice(0, 4);
       s.team = next.map(h => h.id); s.formation = normalizedFormation(s);
@@ -1591,8 +1616,10 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const now = Number.isFinite(action.now) ? action.now : Date.now();
       for (const expedition of activeExpeditions(s)) {
         let steps = 0;
-        while (expedition.battle.status === "active" && expedition.battle.combat && now >= expedition.nextRoundAt && steps < 30) {
-          stepBattle(s, expedition.battle); expedition.nextRoundAt += 5000; steps++;
+        while (expedition.battle.status === "active" && expedition.battle.combat && now >= expedition.nextRoundAt && steps < 1) {
+          stepBattle(s, expedition.battle);
+          expedition.nextRoundAt = now + 1350;
+          steps++;
         }
         if (expedition.battle.status !== "active") s.lastBattle = expedition.battle;
       }

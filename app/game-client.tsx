@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import OfflineInstall from "./offline-install";
 import {
   Archive, BookOpen, Check, ChevronLeft, ChevronRight, CircleHelp, Coins, Crown, Download,
   Flag, Footprints, Gem, Hammer, Hand, Heart, LockKeyhole, ScrollText, Shield, Shirt, Sparkles, Swords,
@@ -1154,6 +1155,7 @@ export default function Game() {
 
   return <div className="app-shell">
     <TopBar state={state} goGuild={() => go("guild")} musicEnabled={musicEnabled} toggleMusic={toggleMusic} />
+    <OfflineInstall />
     <div className="layout-frame">
       <aside className="nav-sidebar" aria-label="Navegação do jogo">
         {screen !== "guild" && screen !== "equipment" && <TopNav screen={screen} go={go} />}

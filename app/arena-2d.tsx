@@ -2,6 +2,7 @@ import {useState,type CSSProperties} from "react";
 import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide-react";
 import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
+import {battleSource,portraitSource} from "@/lib/portraits";
 import {portraitSource} from "@/lib/portraits";
 import {enemyArtKey,enemyArtSource} from "@/lib/enemy-art";
 import "./arena-2d.css";
@@ -28,20 +29,9 @@ function combatArt(f:BattleFighter,hero?:Hero):{src:string;full:boolean}{
   };
   return {src:"/battle/sprite-"+sprites[kind]+".webp",full:true};
  }
- const id=f.id.toLowerCase();
- const race=hero ? heroRace(hero) : undefined;
- // A aparência racial prevalece em heróis recrutados e em saves antigos.
- // O elenco canônico mantém a arte aprovada, exceto o anão e o bestial
- // que receberam sprites específicos coerentes com seus retratos.
- const byRace:Record<string,string>={
-   human:"aric",elf:hero?.class==="ranger"||hero?.class==="druid"?"eldrin":"lyria",
-   dwarf:"thorgar",orc:"orc",beastkin:"rhokar",umbral:"kaelith"
- };
- const canonical:Record<string,string>={aric:"aric",lyra:"lyria",elen:"thorgar",kael:"kaelith",sora:"eldrin",doran:"rhokar"};
- const expectedRace:Record<string,string>={aric:"human",lyra:"elf",elen:"dwarf",kael:"umbral",sora:"elf",doran:"beastkin"};
- const sprite=canonical[id]&&(!race||race===expectedRace[id])
-   ?canonical[id]:(race?byRace[race]:undefined)||"aric";
- return {src:"/battle/sprite-"+sprite+".webp",full:true};
+ const race=hero?heroRace(hero):"human";
+ if(!hero)return {src:portraitSource(f.name,f.id,f.class||"warrior",race),full:false};
+ return {src:battleSource(hero,race),full:true};
 }
 const recentHit=(logs:BattleLog[])=>[...logs].reverse().find(x=>x.actorId&&x.targetId&&["hit","critical","heal","fall","ability"].includes(x.kind)&&x.amount!==0);
 const hpWidth=(hp:number,max:number)=>(max?Math.max(0,Math.min(100,100*hp/max)):0)+"%";
@@ -99,7 +89,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" key={acting?evtKey:f.id} data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"}>
-     <img src={image.src} alt="" draggable={false} decoding="sync" loading="eager" fetchPriority="high" onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior"):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
+     <img src={image.src} alt="" draggable={false} decoding="sync" loading="eager" fetchPriority="high" onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
 
     </span>
 

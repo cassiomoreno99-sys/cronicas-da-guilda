@@ -3,7 +3,6 @@ import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide
 import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
-import {portraitSource} from "@/lib/portraits";
 import {enemyArtKey,enemyArtSource} from "@/lib/enemy-art";
 import "./arena-2d.css";
 

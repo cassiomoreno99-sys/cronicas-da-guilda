@@ -2734,3 +2734,26 @@ img.game-symbol.game-coin{
  .campaign-day-strip{font-size:14px;padding:7px 8px}
  .campaign-day-strip span{font-size:10px}
 }
+
+
+/* Revisão geral — legibilidade dos rankings, prêmios e instalações. */
+.heroes-top10{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;padding:12px}
+.hero-ranking-card{min-width:0;display:flex;align-items:center;gap:10px;border:1px solid #a78951;border-radius:7px;background:#122940;padding:10px;color:#ffe5ac}
+.hero-ranking-card>div{min-width:0;flex:1}
+.hero-ranking-card>b{font:800 17px Georgia;color:#ffdf8d}
+.hero-ranking-card .hero-portrait{width:58px;height:68px;flex:0 0 58px}
+.hero-ranking-card strong{display:block;overflow-wrap:anywhere;font:700 13px Georgia}
+.hero-ranking-card small{display:block;font:10px/1.4 system-ui;color:#c2d0d6}
+.hero-ranking-card>span{font:800 12px system-ui;text-align:right;min-width:70px}
+.hero-ranking-card[data-player="true"]{border-color:#66b9d4;box-shadow:inset 0 0 0 1px #66b9d442}
+.season-awards-history{margin:10px;padding:15px;display:grid;gap:5px}
+.season-awards-history strong{color:#b27a2b}.season-awards-history small{overflow-wrap:anywhere}
+.seasonal-forge-order{display:grid;gap:7px;padding:14px;margin:12px 0;border:2px solid #ba975b}
+.seasonal-forge-order strong{color:#be8d48}.seasonal-forge-order button{max-width:340px}
+.forge-capacity{padding:9px;background:#132b3a;color:#ffdaa5;border:1px solid #9b7746;border-radius:5px}
+.guild-building-effect{display:block;margin-top:8px;font:700 11px/1.5 system-ui;color:#237c77;background:#e9f5ed;border-left:3px solid #2f8988;padding:6px}
+.team-familiarity{display:grid;gap:5px;padding:9px;margin:9px 0;border:1px solid #a18455;border-radius:7px;background:#15334a}
+.team-familiarity strong{color:#ffe2a5;font:700 13px Georgia}
+.team-familiarity small{color:#c2d6df;font:11px system-ui}
+.team-familiarity span{color:#bde4bf;font:700 11px/1.6 system-ui}
+@media(max-width:640px){.heroes-top10{grid-template-columns:minmax(0,1fr);padding:8px}.hero-ranking-card{gap:7px;padding:8px}.hero-ranking-card .hero-portrait{width:42px;height:54px;flex-basis:42px}.hero-ranking-card>span{font-size:10px}.guild-building-effect{font-size:10px}}

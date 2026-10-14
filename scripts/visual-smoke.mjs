@@ -204,30 +204,20 @@ if (await missionAction.count()) {
     await send.click();
     await page.locator(".battle-overlay").waitFor({state:"visible",timeout:5000});
     await sanity("10-batalha");
-    const originalTitle = await page.locator(".battle-top strong").innerText();
-    const enterCinema = page.getByRole("button",{name:/Abrir Arena Cinematográfica/});
-    if(await enterCinema.count() !== 1) throw new Error("Botão para a página cinematográfica ausente.");
-    await enterCinema.click();
-    await page.locator(".cinema-screen").waitFor({state:"visible"});
-    if(await page.locator(".battle-stage").count() !== 0) throw new Error("A arena não é uma página independente.");
-    if(await page.locator(".cinema-ally").count() !== 4) throw new Error("A arena não mostrou os 4 heróis da batalha real.");
-    if(await page.locator(".cinema-foe").count() < 1) throw new Error("Inimigos reais não carregaram na arena.");
-    if((await page.locator(".cinema-mission-head h2").innerText()) !== originalTitle) throw new Error("Arena perdeu o título real da missão.");
-    const cinemaPortraits = page.locator(".cinema-fighter-art img");
-    if(await cinemaPortraits.count() < 5) throw new Error("Faltam imagens dos combatentes na Arena.");
-    for(const img of await cinemaPortraits.all()){
-      const ok = await img.evaluate(el => el.complete && el.naturalWidth > 100 && el.naturalHeight > 100);
-      if(!ok) throw new Error("Retrato cinematográfico não carregou.");
-    }
+    // Apenas a arena realista 2D, sem tela clássica/cinematográfica.
+    if(await page.locator(".guild2d-shell").count()!==1)throw new Error("Arena 2D não abriu como padrão.");
+    if(await page.locator(".cinema-screen,.battle-stage").count())throw new Error("Outra interface de combate permanece visível.");
+    if(await page.getByRole("button",{name:/Tela clássica|Abrir Arena Cinematográfica/}).count())throw new Error("Existem opções de batalhas antigas.");
+    const battleSrc=await page.locator(".guild2d-scene").evaluate(e=>getComputedStyle(e).backgroundImage);
+    if(!battleSrc.includes("/battle/arena-aprovada.webp"))throw new Error("Fundo aprovado da batalha não foi carregado.");
+    if(await page.locator(".guild2d-unit.guild2d-hero").count()!==4)throw new Error("Arena não mostrou os 4 heróis reais.");
+    if(await page.locator(".guild2d-unit.guild2d-enemy").count()<1)throw new Error("Arena não mostrou os inimigos reais.");
     await sanity("10a-arena-cinematografica");
-    await page.getByRole("button",{name:/Tela clássica/}).click();
-    if(await page.locator(".battle-stage").count() !== 1) throw new Error("Voltar para o combate clássico falhou.");
-    if((await page.locator(".battle-top strong").innerText()) !== originalTitle) throw new Error("Batalha mudou ao trocar de tela.");
-    await page.getByRole("button",{name:/Abrir Arena Cinematográfica/}).click();
-    if(await page.getByRole("button",{name:"Concluir combate"}).count() !== 1) throw new Error("Ação automática não foi preservada.");
-    await page.getByRole("button",{name:"Concluir combate"}).click();
-    await page.waitForTimeout(400);
-    if(await page.getByRole("button",{name:"Voltar à guilda"}).count() !== 1) throw new Error("Resultado do combate automático não apareceu na Arena.");
+    const auto=page.getByRole("button",{name:/Pular resultado/}).first();
+    if(await auto.count()!==1)throw new Error("Ação para concluir batalha indisponível.");
+    await auto.click();
+    await page.waitForTimeout(500);
+    if(await page.getByRole("button",{name:"Voltar à guilda"}).count()!==1)throw new Error("Resultado do combate não apareceu na Arena 2D.");
     await sanity("10b-arena-resultado");
     await page.getByRole("button",{name:"Voltar à guilda"}).click();
     if(await page.locator(".battle-overlay").count() !== 0) throw new Error("A página Arena não fechou após o combate.");

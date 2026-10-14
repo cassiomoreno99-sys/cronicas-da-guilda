@@ -838,7 +838,7 @@ img{display:block;max-width:100%}
 .recruit-grid article>span{font-size:8px}
 .recruit-grid article>small{font-size:8px;font-weight:700}
 .recruit-grid .action-button{margin:4px;min-height:29px;padding:2px;font-size:10px}
-.tavern-lower{display:grid;grid-template-columns:62% 38%;gap:5px}
+.tavern-lower{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:9px;align-items:start}
 .rumors{overflow:hidden}
 .rumors .parchment-title{border:0;border-radius:0}
 .rumors>button{
@@ -2579,7 +2579,7 @@ img.game-symbol.game-coin{
 /* Correção exclusiva para telas móveis: o botão do mercador nunca pode
    sobrepor nome, raridade ou nível dos itens no painel estreito da taverna. */
 @media (max-width: 900px) {
-  .tavern-screen .tavern-side .shop .catalog-shop > div {
+  .tavern-screen .tavern-market .shop .catalog-shop > div {
     display: grid;
     grid-template-columns: 34px minmax(0,1fr);
     grid-template-rows: auto auto;
@@ -2589,31 +2589,31 @@ img.game-symbol.game-coin{
     min-width: 0;
     padding: 9px 7px;
   }
-  .tavern-screen .tavern-side .shop .catalog-shop > div > .item-art {
+  .tavern-screen .tavern-market .shop .catalog-shop > div > .item-art {
     grid-column: 1;
     grid-row: 1;
     width: 32px;
     height: 32px;
     align-self: start;
   }
-  .tavern-screen .tavern-side .shop .catalog-shop > div > span:not(.item-art) {
+  .tavern-screen .tavern-market .shop .catalog-shop > div > span:not(.item-art) {
     grid-column: 2;
     grid-row: 1;
     min-width: 0;
     overflow-wrap: anywhere;
     word-break: normal;
   }
-  .tavern-screen .tavern-side .shop .catalog-shop > div > span:not(.item-art) strong {
+  .tavern-screen .tavern-market .shop .catalog-shop > div > span:not(.item-art) strong {
     font-size: 12px;
     line-height: 1.25;
     overflow-wrap: anywhere;
   }
-  .tavern-screen .tavern-side .shop .catalog-shop > div > span:not(.item-art) small {
+  .tavern-screen .tavern-market .shop .catalog-shop > div > span:not(.item-art) small {
     font-size: 10px;
     line-height: 1.3;
     overflow-wrap: anywhere;
   }
-  .tavern-screen .tavern-side .shop .catalog-shop > div > button {
+  .tavern-screen .tavern-market .shop .catalog-shop > div > button {
     position: static;
     grid-column: 1 / -1;
     grid-row: 2;
@@ -2656,3 +2656,39 @@ img.game-symbol.game-coin{
 }
 
 
+
+
+/* Fase 1 — Mercado à esquerda, rumores e bebidas à direita.
+   Somente a Taverna; demais telas e lógica do jogo não mudam. */
+.tavern-market,.tavern-side{min-width:0}
+.tavern-market .shop{padding:10px;min-width:0}
+.tavern-market .catalog-shop{max-height:650px;overflow-y:auto}
+.tavern-market .merchant-head{
+ display:grid;grid-template-columns:clamp(64px,11vw,120px) minmax(0,1fr);
+ text-align:left;align-items:center;gap:12px;padding:5px 0 12px
+}
+.tavern-market .merchant-portrait{width:100%;max-width:120px;aspect-ratio:1;height:auto}
+.tavern-market .catalog-shop>div{gap:9px;padding:11px 9px;min-width:0}
+.tavern-market .catalog-shop>div>span:not(.item-art){min-width:0;overflow-wrap:anywhere}
+.tavern-market .catalog-shop strong{font-size:13px;line-height:1.25}
+.tavern-market .catalog-shop small{font-size:11px;line-height:1.35}
+.tavern-side .rumors{min-width:0}
+.tavern-side .rumors>button{grid-template-columns:minmax(0,1fr);gap:5px;padding:9px}
+.tavern-side .rumors strong{font-size:12px;line-height:1.3}
+.tavern-side .rumors small{font-size:10px;line-height:1.35}
+.tavern-side .rumors em{font-size:10px}
+@media(max-width:900px){
+ .tavern-screen .tavern-market .shop .catalog-shop>div{grid-template-columns:36px minmax(0,1fr);gap:8px}
+ .tavern-screen .tavern-market .shop .catalog-shop>div>button{grid-column:1/-1;min-height:41px}
+ .tavern-market .merchant-head{grid-template-columns:minmax(0,1fr);text-align:center}
+ .tavern-market .merchant-portrait{max-width:160px;margin:auto}
+ .tavern-market .catalog-shop{max-height:720px}
+ .tavern-market .catalog-shop strong{font-size:12px}
+ .tavern-market .catalog-shop small{font-size:10px}
+ .tavern-side .rumors strong{font-size:11px}
+ .tavern-side .rumors small{font-size:9px}
+}
+@media(max-width:340px){
+ .tavern-lower{grid-template-columns:minmax(0,1fr);gap:9px}
+ .tavern-market .merchant-head{grid-template-columns:90px minmax(0,1fr);text-align:left}
+}

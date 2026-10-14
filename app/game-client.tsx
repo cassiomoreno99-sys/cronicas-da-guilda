@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import OfflineInstall from "./offline-install";
 import Arena2D from "./arena-2d";
-import {enemyArtKey} from "@/lib/enemy-art";
 import soundtrackLibrary from "@/lib/music-playlist.json";
 import {
   Archive, BookOpen, Check, ChevronLeft, ChevronRight, CircleHelp, Coins, Crown, Download,
@@ -836,7 +835,7 @@ function GuildPage({
       <aside><strong><GameSymbol kind="gold"/> Tesouro {fmt(state.gold)}</strong><strong><GameSymbol kind="fame"/> Renome {state.fame}</strong><strong><GameSymbol kind="league"/> Liga {rank(state)}</strong></aside>
     </div>
     <div className="arena-demo-entry">
-      <div><span><Sparkles size={15}/> COMBATE REAL · ARENA 2D LEVE</span><h3>Confrontos da Guilda</h3><p>As expedições usam retratos dos heróis, golpes animados em 2D e barras de vida reais. Acesse os detalhes de uma expedição para acompanhar a batalha sem gráficos 3D.</p></div>
+      <div><span><Sparkles size={15}/> COMBATE REAL · ARENA 2D REALISTA</span><h3>Confrontos da Guilda</h3><p>As expedições usam bonecos de corpo inteiro, cenário realista e golpes animados em 2D. Acesse os detalhes de uma expedição para acompanhar a batalha sem gráficos 3D.</p></div>
       <button className="action-button gold" onClick={onArenaDemo}><Swords size={17}/> Ir às expedições <ChevronRight size={16}/></button>
     </div>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
@@ -888,151 +887,16 @@ const CINEMA_STATUS_LABELS: Record<string,string> = {
   bleed:"Sangramento",poison:"Envenenado",stun:"Atordoado",shield:"Escudo",
   regen:"Regeneração",taunt:"Provocação",inspired:"Inspirado",vulnerable:"Vulnerável"
 };
-function CinematicBattlePage({ expedition, act, close, back, returnToTeam, busy }: {
-  expedition: Expedition; act:(a:Action)=>void; close:()=>void; back:()=>void; returnToTeam:()=>void; busy:boolean;
-}) {
-  const battle = expedition.battle;
-  const fighters = battle.combat?.fighters || battle.fighters || [];
-  const heroes = fighters.filter(f => f.side === "hero");
-  const enemies = fighters.filter(f => f.side === "enemy");
-  const active = battle.status === "active" && !!battle.combat;
-  const recent = battle.log.slice(-4).reverse();
-  const latest = recent[0];
-  const turnNumber=battle.combat?.liveCursor || 0;
-  const turnTotal=battle.combat?.liveOrder?.length || 0;
-  const mission = battle.combat?.mission;
-  const maxRounds = battle.objective?.targetRounds || battle.combat?.targetRounds;
-  const round = battle.rounds;
-  const health = (hp:number, max:number) => Math.max(0,Math.min(100,max ? hp/max*100 : 0));
-  const status = active ? "Combate automático" : battle.won ? "Vitória da guilda" : battle.status === "retreated" ? "Equipe retirada" : "Combate encerrado";
-  const event = latest?.kind === "critical" ? "critical" : latest?.kind === "heal" ? "heal" : latest?.kind === "ability" ? "magic" : "attack";
-  return <section className="battle-sheet cinema-screen" aria-label="Arena Cinematográfica" data-combat-state={active ? "active" : "finished"}>
-    <header className="cinema-header">
-      <button type="button" className="cinema-back" onClick={back}><ChevronLeft aria-hidden="true"/> Tela clássica</button>
-      <span className="cinema-header-label"><GameSymbol kind="battle" aria-hidden="true"/> ARENA CINEMATOGRÁFICA</span>
-      <button type="button" className="cinema-close" onClick={close} aria-label="Fechar batalha"><X aria-hidden="true"/></button>
-    </header>
-    <div className="cinema-mission-head">
-      <div><span className="cinema-eyebrow">MISSÃO EM ANDAMENTO</span><h2>{battle.title}</h2><p>{mission?.location || battle.objective?.name || "Terras da Guilda"}</p></div>
-      <div className="cinema-round"><span>RODADA</span><strong>{round}{maxRounds ? " / "+maxRounds : ""}</strong></div>
-    </div>
-    <div className="cinema-objective-line"><GameSymbol kind="objective" aria-hidden="true"/><span>{battle.objective?.name || mission?.description || "Derrote os inimigos"}</span><b>{status}</b></div>
-    <div className="battle-live-update cinema-live-update" role="status" aria-live="polite">
-      <div><GameSymbol kind="battle" size={17}/><strong>{active ? "AÇÃO AO VIVO" : "BATALHA ENCERRADA"}</strong>{active&&turnTotal>0&&<small>Ação {turnNumber}/{turnTotal}</small>}</div>
-      <p key={"action-"+battle.log.length}>{latest?.text || "Heróis e inimigos aguardam a primeira ação."}</p>
-    </div>
-    <div className="cinema-arena" role="region" aria-label="Campo de batalha com personagens e inimigos">
-      <div className="cinema-atmosphere" aria-hidden="true"/>
-      <div className="cinema-lightning" key={"beam-"+round+"-"+battle.log.length} aria-hidden="true"/>
-      <div className="cinema-fronts">
-        <div className="cinema-lineup cinema-heroes">
-          <div className="cinema-lineup-title"><GameSymbol kind="defense" aria-hidden="true"/> SUA EQUIPE</div>
-          {heroes.map((f,i) => <article className="cinema-fighter cinema-ally" key={f.id} data-defeated={f.hp <= 0} data-acting={latest?.actorId===f.id} data-targeted={latest?.targetId===f.id}>
-            <div className="cinema-fighter-art">
-              <img src={portraitSource(f.name,f.id,f.class || "warrior")} alt="" />
-              <span className="cinema-art-index">{i+1}</span>
-            </div>
-            <div className="cinema-fighter-info">
-              <strong>{f.name}</strong>
-              <small>{f.class ? CLASSES[f.class].name : "Herói"}</small>
-              <div className="cinema-health" role="progressbar" aria-label={"Vida de "+f.name} aria-valuenow={Math.max(0,f.hp)} aria-valuemin={0} aria-valuemax={f.maxHp}><i style={{width:health(f.hp,f.maxHp)+"%"}}/></div>
-              <span className="cinema-hp">{fmt(Math.max(0,f.hp))} / {fmt(f.maxHp)} PV</span>
-              {f.statuses && f.statuses.length > 0 && <span className="cinema-effects">{f.statuses.slice(0,2).map((s,j)=><em key={j} data-status={s.kind}>{CINEMA_STATUS_LABELS[s.kind] || s.kind}</em>)}</span>}
-            </div>
-          </article>)}
-        </div>
-        <div className="cinema-lineup cinema-enemies">
-          <div className="cinema-lineup-title"><GameSymbol kind="battle" aria-hidden="true"/> INIMIGOS</div>
-          {enemies.map((f,i)=><article className="cinema-fighter cinema-foe" key={f.id} data-defeated={f.hp <= 0} data-acting={latest?.actorId===f.id} data-targeted={latest?.targetId===f.id}>
-            <div className="cinema-fighter-art">
-              <img src={"/enemies/"+enemyArtKey(f.name)+".webp"} alt="" />
-              <span className="cinema-art-index">{i+1}</span>
-            </div>
-            <div className="cinema-fighter-info">
-              <strong>{f.name}</strong>
-              <small>{f.hp <= 0 ? "Derrotado" : "Hostil"}</small>
-              <div className="cinema-health" role="progressbar" aria-label={"Vida de "+f.name} aria-valuenow={Math.max(0,f.hp)} aria-valuemin={0} aria-valuemax={f.maxHp}><i style={{width:health(f.hp,f.maxHp)+"%"}}/></div>
-              <span className="cinema-hp">{fmt(Math.max(0,f.hp))} / {fmt(f.maxHp)} PV</span>
-              {f.statuses && f.statuses.length > 0 && <span className="cinema-effects">{f.statuses.slice(0,2).map((s,j)=><em key={j} data-status={s.kind}>{CINEMA_STATUS_LABELS[s.kind] || s.kind}</em>)}</span>}
-            </div>
-          </article>)}
-        </div>
-      </div>
-      <div className="cinema-clash" aria-hidden="true"><GameSymbol kind="battle"/></div>
-      {latest && <div key={"event-"+round+"-"+battle.log.length} className={"cinema-hit cinema-hit-"+event} aria-hidden="true">{latest.amount ? <><b>{event==="heal"?"+":"−"}{Math.abs(latest.amount)}</b><small>{event==="critical"?"CRÍTICO!":event==="heal"?"CURA":event==="magic"?"MAGIA":"DANO"}</small></> : <GameSymbol kind="experience"/>}</div>}
-    </div>
-    <div className="cinema-turn-bar">
-      <div className="cinema-turn-title"><GameSymbol kind="experience" aria-hidden="true"/><span>{active ? "Combate ao vivo · ação por ação" : status}</span></div>
-      <span>{TACTICS[expedition.tactic].name} · {heroes.length} heróis × {enemies.length} inimigos</span>
-    </div>
-    <section className="cinema-chronicle parchment" aria-label="Registro real da batalha">
-      <header><GameSymbol kind="objective" aria-hidden="true"/><h3>Crônica do combate</h3><small>Atualização automática</small></header>
-      <div className="cinema-chronicle-entries" aria-live="polite" aria-relevant="additions text">
-        {recent.length ? recent.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}><span className="cinema-log-icon"><GameSymbol kind={l.kind==="heal"?"healing":l.kind==="critical"?"critical":l.kind==="ability"?"magic":"battle"} size={16}/></span><span>{l.text}</span></p>) : <p><span className="cinema-log-icon"><GameSymbol kind="battle"/></span><span>Os combatentes tomam posição para a batalha.</span></p>}
-      </div>
-    </section>
-    <div className="cinema-actions">
-      <button type="button" className="action-button battle-return-team" onClick={returnToTeam}><ChevronLeft aria-hidden="true"/> Voltar à seleção de heróis</button>
-      {active ? <>
-        <button type="button" className="action-button blue" disabled={busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><GameSymbol kind="battle" aria-hidden="true"/> Pular para o resultado</button>
-        <button type="button" className="action-button red" disabled={busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button>
-      </> : <button type="button" className="action-button green huge" onClick={close}>Voltar à guilda</button>}
-    </div>
-    <p className="cinema-no-items">Cada combatente age uma vez conforme a iniciativa. Os PV mudam na hora do golpe; o botão azul encerra a simulação instantaneamente se você preferir.</p>
-  </section>;
-}
-
+/** Única interface de combate da campanha.
+ * Preserva o motor, as expedições, recompensas e salvamentos existentes.
+ * As antigas telas clássica, cinematográfica e de demonstração não são mais rotas de batalha.
+ */
 function BattleOverlay({ state, expedition, act, close, returnToTeam, busy }: {
   state: Campaign; expedition: Expedition; act: (a: Action) => void; close: () => void; returnToTeam: () => void; busy: boolean;
 }) {
-  const [cinematic,setCinematic] = useState(false);
-  const [show2d,setShow2d] = useState(true);
-  const battle = expedition.battle;
-  const fighters = battle.combat?.fighters || battle.fighters || [];
-  const heroes = fighters.filter(f => f.side === "hero");
-  const enemies = fighters.filter(f => f.side === "enemy");
-  const active = battle.status === "active" && !!battle.combat;
-  const latest = battle.log.at(-1);
-  const turnNumber=battle.combat?.liveCursor || 0;
-  const turnTotal=battle.combat?.liveOrder?.length || 0;
-  if (show2d) return <div className="battle-overlay"><Arena2D key={expedition.id} state={state} expedition={expedition} act={act} close={close}
-    returnToTeam={returnToTeam} openClassic={()=>setShow2d(false)} busy={busy}/></div>;
-  if (cinematic) return <div className="battle-overlay"><CinematicBattlePage expedition={expedition} act={act} close={close} back={() => setCinematic(false)} returnToTeam={returnToTeam} busy={busy}/></div>;
   return <div className="battle-overlay">
-    <section className="battle-sheet">
-      <div className="battle-top"><div><strong>{battle.title}</strong><span>Rodada {battle.rounds}{battle.objective?.targetRounds ? "/" + battle.objective.targetRounds : ""}</span></div><button onClick={close}><X /></button></div>
-      <div className="battle-objective"><span><GameSymbol kind="objective"/> {battle.objective?.name || "Objetivo"}</span><strong>{battle.status === "active" ? "Combate ao vivo" : battle.won ? "Vitória" : "Confronto encerrado"}</strong></div>
-      <div className="battle-live-update" role="status" aria-live="polite">
-        <div><GameSymbol kind="battle" size={17}/><strong>{active ? "AÇÃO AO VIVO" : "RESULTADO"}</strong>{active&&turnTotal>0&&<small>Ação {turnNumber}/{turnTotal}</small>}</div>
-        <p key={"live-"+battle.log.length}>{latest?.text || "Os combatentes tomam posição e aguardam a iniciativa."}</p>
-      </div>
-      <div className="battle-stage">
-        <div className="fighters allies">{heroes.map(f => <article key={f.id} data-acting={latest?.actorId===f.id} data-targeted={latest?.targetId===f.id}><HeroPortrait hero={{id:f.id,name:f.name,class:f.class || "warrior"}}/><div><strong>{f.name}</strong><small>{f.class ? CLASSES[f.class].name : "Herói"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
-        <div className="battle-center-mark"><GameSymbol kind="battle"/></div>
-        <div className="fighters enemies">{enemies.map(f => <article key={f.id} data-acting={latest?.actorId===f.id} data-targeted={latest?.targetId===f.id}><img src={"/enemies/" + enemyArtKey(f.name) + ".webp"} alt="" /><div><strong>{f.name}</strong><small>{f.statuses?.map(s=>s.kind).join(" · ") || "Inimigo"}</small><ProgressBar value={f.maxHp ? f.hp/f.maxHp*100 : 0} tone="red"/><span>{f.hp}/{f.maxHp}</span></div></article>)}</div>
-      </div>
-      <div className="battle-log parchment">{battle.log.slice(-5).map((l,i) => <p key={i} data-kind={l.kind}>{l.text}</p>)}{!battle.log.length && <p>Os combatentes tomam posição.</p>}</div>
-      {!active&&!!battle.loot?.length&&<div className="battle-loot parchment"><strong><GameSymbol kind="treasure"/> Itens encontrados:</strong> {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</div>}
-       <div className="battle-actions">
-        <button type="button" className="action-button green" onClick={() => setShow2d(true)}><Swords aria-hidden="true"/> Abrir Arena 2D 4 × 4</button>
-        <button type="button" className="cinema-open-button" onClick={() => setCinematic(true)}><GameSymbol kind="experience" aria-hidden="true"/> Abrir Arena Cinematográfica <ChevronRight aria-hidden="true"/></button>
-        {active&&<div className="battle-item-actions">{state.chest.filter(i=>ITEMS[i.key]?.slot==="consumable"&&!/energia|após uma expedição|entre expedições/i.test(CATALOG_BY_ID[i.key]?.efeito||"")).slice(0,5).map(i=>
-          <button key={i.id} className="action-button blue" disabled={busy||(battle.combat?.consumablesUsed||0)>=3}
-            onClick={()=>act({type:"battle-item",itemId:i.id,expeditionId:expedition.id})}><ItemArt itemKey={i.key}/>{ITEMS[i.key]?.name}</button>
-        )}</div>}
-        {active&&<div className="supreme-battle-actions">{heroes.filter(f=>state.heroes.some(h=>h.id===f.id&&h.supremeBook)).map(f=>{
-          const h=state.heroes.find(h=>h.id===f.id)!;
-          const used=battle.combat?.supremeUsed?.[f.id];
-          const pending=battle.combat?.pendingAbilities?.some(o=>o.heroId===f.id);
-          return <button key={f.id} className="action-button gold" disabled={busy||!!used||!!pending||f.hp<=0}
-            onClick={()=>act({type:"battle-ability",heroId:f.id,abilityId:"supreme-"+h.supremeBook,expeditionId:expedition.id})}>
-            <GameSymbol kind="book"/> {h.name} · {used?"Usado":pending?"Aguardando":CATALOG_BY_ID[h.supremeBook!]?.nome}
-          </button>;
-        })}</div>}
-        <button type="button" className="action-button battle-return-team" onClick={returnToTeam}><ChevronLeft aria-hidden="true"/> Voltar à seleção de heróis</button>
-        {active ? <><button className="action-button blue" disabled={busy} onClick={() => act({type:"battle-auto",expeditionId:expedition.id})}>Pular para o resultado</button><button className="action-button red" disabled={busy} onClick={() => act({type:"battle-retreat",expeditionId:expedition.id})}>Retirar equipe</button></> : <button className="action-button green huge" onClick={close}>Voltar à guilda</button>}
-      </div>
-    </section>
+    <Arena2D key={expedition.id} state={state} expedition={expedition}
+      act={act} close={close} returnToTeam={returnToTeam} busy={busy}/>
   </div>;
 }
 

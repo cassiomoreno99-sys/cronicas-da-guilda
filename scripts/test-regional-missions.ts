@@ -3,7 +3,7 @@ import {applyAction,missions,newCampaign,seasonBoss,type Campaign,type MissionKi
 import {WORLD_REGIONS} from "../lib/v130-content.ts";
 import {REGIONAL_CHAPTERS} from "../lib/regional-missions.ts";
 
-function at(index:number,day=21):Campaign{
+function at(index:number,day=45):Campaign{
  const s=newCampaign(3841+index*17+day);
  s.activeRegion=index+1;s.region=Math.max(index+1,s.region);s.day=day;s.season=1;
  s.fame=9999;s.event=null;
@@ -27,8 +27,8 @@ const report:{region:string;titles:string[];types:string;boss:string}[]=[];
 let count=0;
 for(let index=0;index<WORLD_REGIONS.length;index++){
  const region=WORLD_REGIONS[index],state=at(index),contract=missions(state),boss=seasonBoss(state);
- assert.equal(contract.length,6,region.name+" deve ter seis missões após o dia 14");
- assert.ok(boss,region.name+" deve ter guardião a partir do dia 21");
+ assert.equal(contract.length,6,region.name+" deve ter seis missões após o dia 30");
+ assert.ok(boss,region.name+" deve ter guardião a partir do dia 45");
  assert.equal(boss?.kind,"boss");assert.equal(boss?.location,region.name);
  const seenKinds=new Set<MissionKind>();
  const localNames=new Set<string>();

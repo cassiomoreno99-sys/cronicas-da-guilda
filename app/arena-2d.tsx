@@ -1,19 +1,48 @@
 import {useState,type CSSProperties} from "react";
 import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide-react";
-import {availableAbilities,abilityCooldownRemaining,TACTICS,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog} from "@/lib/game";
+import {availableAbilities,abilityCooldownRemaining,TACTICS,ITEMS,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog} from "@/lib/game";
+import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {portraitSource} from "@/lib/portraits";
-import {enemyArtSource} from "@/lib/enemy-art";
+import {enemyArtKey,enemyArtSource} from "@/lib/enemy-art";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
-const pos=(side:"hero"|"enemy",i:number)=>({x:side==="hero"?(i%2===0?16:28):(i%2===0?84:72),y:[15,39,63,87][Math.min(i,3)]});
+/** Posições aprovadas: quatro heróis à esquerda, quatro inimigos à direita. */
+const pos=(side:"hero"|"enemy",i:number)=>{
+ const positions=side==="hero"?[[27,37],[44,52],[14,68],[34,70]]:[[89,38],[72,53],[89,70],[76,71]];
+ const [x,y]=positions[Math.min(i,3)];return {x,y};
+};
+/** Ilustrações de corpo inteiro; para criaturas sem sprite completo,
+ * conserva-se a identidade da espécie pelo bestiário existente. */
+function combatArt(f:BattleFighter):{src:string;full:boolean}{
+ if(f.side==="enemy"){
+  const kind=enemyArtKey(f.name);
+  const sprites:Partial<Record<ReturnType<typeof enemyArtKey>,string>>={
+   cultist:"cultista",specter:"espectro",skeleton:"esqueleto",
+   spectral_knight:"esqueleto",ancient_guardian:"esqueleto"
+  };
+  const name=sprites[kind];
+  return name?{src:"/battle/sprite-"+name+".webp",full:true}:{src:enemyArtSource(f.name),full:false};
+ }
+ const id=f.id.toLowerCase(),name=f.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+ let sprite:string;
+ if(id==="aric"||name.includes("aric"))sprite="aric";
+ else if(id==="lyra"||name.includes("lyria")||name.includes("lyra"))sprite="lyria";
+ else if(id==="elen"||name.includes("thorgar"))sprite="thorgar";
+ else if(id==="kael"||name.includes("kaelith"))sprite="kaelith";
+ else{
+  const roles:Record<string,string>={warrior:"aric",paladin:"aric",monk:"aric",mage:"lyria",necromancer:"lyria",bard:"lyria",healer:"thorgar",ranger:"thorgar",druid:"thorgar",rogue:"kaelith"};
+  sprite=roles[f.class||""]||"aric";
+ }
+ return {src:"/battle/sprite-"+sprite+".webp",full:true};
+}
 const recentHit=(logs:BattleLog[])=>[...logs].reverse().find(x=>x.actorId&&x.targetId&&["hit","critical","heal","fall","ability"].includes(x.kind)&&x.amount!==0);
 const hpWidth=(hp:number,max:number)=>(max?Math.max(0,Math.min(100,100*hp/max)):0)+"%";
 type PosStyle=CSSProperties&{"--x":string;"--y":string;"--dash-x":string;"--dash-y":string};
 
-export default function Arena2D({state,expedition,act,close,returnToTeam,openClassic,busy}:{
+export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  state:Campaign;expedition:Expedition;act:(action:Action)=>void;close:()=>void;
- returnToTeam:()=>void;openClassic:()=>void;busy:boolean;
+ returnToTeam:()=>void;busy:boolean;
 }){
  const battle=expedition.battle;
  const all=battle.combat?.fighters||battle.fighters||[];
@@ -45,23 +74,31 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,openCla
   const p=pos(f.side,i),acting=actor?.id===f.id&&!!targetPos&&f.hp>0;
   const struck=target?.id===f.id&&!!evt;
   const style:PosStyle={"--x":p.x+"%","--y":p.y+"%","--dash-x":acting&&targetPos?((targetPos.x-p.x)*.7)+"cqw":"0cqw","--dash-y":acting&&targetPos?((targetPos.y-p.y)*.7)+"cqh":"0cqh"};
-  const image=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior"):enemyArtSource(f.name);
+  const image=combatArt(f);
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
-    style={style} data-dead={f.hp<=0} data-selected={selected}
+    style={style} data-dead={f.hp<=0} data-selected={selected} data-full-art={image.full}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" key={acting?evtKey:f.id} data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"}>
-     <img src={image} alt="" draggable={false} decoding="async" loading="eager" onError={e=>{if(f.side==="enemy"&&!e.currentTarget.src.endsWith("/fallback.webp"))e.currentTarget.src="/enemies/fallback.webp";}}/>
-     <i aria-hidden="true">{f.side==="hero"?"◆":"✦"}</i>
+     <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior"):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
+
     </span>
-    <span className="guild2d-unit-name">{f.name.split(" ").slice(0,2).join(" ")}</span>
-    <span className="guild2d-meter"><span style={{width:hpWidth(f.hp,f.maxHp)}}/></span>
-    <small>{Math.max(0,f.hp)} / {f.maxHp}</small>
-    {queuedUnit(f.id)&&f.side==="hero"&&<em>HABILIDADE</em>}
+
     {struck&&evt?.amount!=null&&evt.amount>0&&<span key={evtKey} className={"guild2d-number "+(evt.kind==="heal"?"guild2d-healed":"")}>{evt.kind==="heal"?"+":"−"}{evt.amount}</span>}
     {struck&&evt?.amount!=null&&evt.amount>0&&<span key={"spark-"+evtKey} className="guild2d-spark" aria-hidden="true"/>}
   </button>;
+ }
+ function hud(f:BattleFighter,i:number){
+  const p=pos(f.side,i);
+  const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
+  return <div key={f.id} className={"guild2d-hud "+(f.side==="hero"?"guild2d-hud-hero":"guild2d-hud-enemy")}
+    style={{"--x":p.x+"%","--y":p.y+"%"} as CSSProperties} data-dead={f.hp<=0} data-selected={selected}>
+     <strong>{f.name.split(" ").slice(0,2).join(" ")}</strong>
+     <div className="guild2d-meter"><span style={{width:hpWidth(f.hp,f.maxHp)}}/></div>
+     <small>{Math.max(0,f.hp)} / {f.maxHp} PV</small>
+     {queuedUnit(f.id)&&f.side==="hero"&&<em>HABILIDADE</em>}
+  </div>;
  }
  function queueAbility(ability:ReturnType<typeof availableAbilities>[number]){
   if(!active||busy||!hero||queued)return;
@@ -73,12 +110,13 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,openCla
  }
  const label=active?"AO VIVO":battle.won?"VITÓRIA":battle.status==="retreated"?"RETIRADA":"FIM DE BATALHA";
  return <section className="guild2d-shell battle-sheet" aria-label="Combate 2D real de até quatro contra quatro">
-  <header className="guild2d-header"><strong>⚔️ Crônicas da Guilda <small>ARENA 2D · LEVE</small></strong><button type="button" onClick={close} aria-label="Fechar arena"><X size={19}/></button></header>
+  <header className="guild2d-header"><strong>⚔️ Crônicas da Guilda <small>COMBATE 2D · ARENA REALISTA</small></strong><button type="button" onClick={close} aria-label="Fechar arena"><X size={19}/></button></header>
   <div className="guild2d-mission"><h2>{battle.title}</h2><span>Rodada {battle.rounds}{battle.objective?.targetRounds?"/"+battle.objective.targetRounds:""}</span><small>{battle.combat?.mission.location||battle.objective?.name||"Terras da Guilda"}</small></div>
   <div className="guild2d-stage" role="group" aria-label={heroes.length+" heróis contra "+enemies.length+" inimigos"}>
-   <div className="guild2d-scene"/><div className="guild2d-banner guild2d-banner-left"/><div className="guild2d-banner guild2d-banner-right"/>
+   <div className="guild2d-scene"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
+   <div className="guild2d-hud-layer">{heroes.map(hud)}{enemies.map(hud)}</div>
    <div className="guild2d-ground"/>
    {!active&&<div className="guild2d-result"><strong>{battle.won?"🏆 VITÓRIA":battle.status==="retreated"?"EQUIPE RETIRADA":"☠️ DERROTA"}</strong></div>}
    <div className="guild2d-help">Toque em um herói e em um inimigo para selecionar</div>
@@ -103,12 +141,19 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,openCla
    <div>{abilities.map(a=>{const cd=abilityCooldownRemaining(battle,hero!.id,a.id);return <button type="button" key={a.id} disabled={busy||!!queued||cd>0} onClick={()=>queueAbility(a)}>{a.name}{cd>0?" · recarga "+cd:""}<small>{a.description}</small></button>;})}</div>
   </div>}
   {tip&&<div className="guild2d-tip" role="status"><Check size={15}/>{tip}</div>}
+  {active&&<div className="guild2d-consumables">
+    <strong>Itens de combate</strong>
+    {state.chest.filter(item=>ITEMS[item.key]?.slot==="consumable"&&!/energia|após uma expedição|entre expedições/i.test(CATALOG_BY_ID[item.key]?.efeito||"")).slice(0,5).map(item=>
+      <button type="button" key={item.id} disabled={busy||(battle.combat?.consumablesUsed||0)>=3}
+        onClick={()=>act({type:"battle-item",itemId:item.id,expeditionId:expedition.id})}>{ITEMS[item.key]?.name}</button>
+    )}
+  </div>}
   <div className="guild2d-options">
    <button type="button" disabled={!active||busy} onClick={()=>{setTip("Tática agressiva ativada.");act({type:"battle-tactic",tactic:"aggressive",expeditionId:expedition.id});}}><Zap size={15}/> Agressivo</button>
    <button type="button" disabled={!active||busy} onClick={()=>{setTip("Tática equilibrada ativada.");act({type:"battle-tactic",tactic:"balanced",expeditionId:expedition.id});}}>Tática: {TACTICS[expedition.tactic].name}</button>
    <button type="button" disabled={!active||busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><ChevronsRight size={15}/> Pular resultado</button>
   </div>
-  <div className="guild2d-nav"><button type="button" onClick={returnToTeam}>← Seleção de heróis</button><button type="button" onClick={openClassic}>Tela clássica</button>{!active&&<button type="button" onClick={close}>Voltar à guilda</button>}</div>
-  <p className="guild2d-footnote">Os golpes, danos, habilidades, pontos de vida e resultados são os mesmos da sua campanha. Não existe simulação paralela; esta arena apenas mostra o combate real em 2D.</p>
+  <div className="guild2d-nav"><button type="button" onClick={returnToTeam}>← Seleção de heróis</button>{!active&&<button type="button" onClick={close}>Voltar à guilda</button>}</div>
+  <p className="guild2d-footnote">Arena visual oficial. Os PV, dano, habilidades, missões e recompensas são registrados pelo motor real da campanha.</p>
  </section>;
 }

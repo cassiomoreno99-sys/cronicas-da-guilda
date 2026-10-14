@@ -85,12 +85,12 @@ const lowTraining=applyAction(lowAcademy,{type:"next-day"}),highTraining=applyAc
 assert.ok(highTraining.heroes[0].xp>lowTraining.heroes[0].xp,"Academia de nível 10 não aumentou treino");
 const warroom0=newState(),warroom10=newState();warroom10.hq.warroom=10;
 const escort=missions(warroom0)[2];
-const init=(x)=>applyAction(x,{type:"mission",missionId:escort.id,team:x.team,tactic:"balanced",expeditionSlot:1,startedAt:100000});
+const init=(x:typeof warroom0)=>applyAction(x,{type:"mission",missionId:escort.id,team:x.team,tactic:"balanced",expeditionSlot:1,startedAt:100000});
 const normalBattle=init(warroom0).expeditions[0].battle;
 const strategyBattle=init(warroom10).expeditions[0].battle;
-assert.ok(strategyBattle.combat.fighters[0].attack>normalBattle.combat.fighters[0].attack,"Sala de Guerra não reforçou o ataque");
+assert.ok(strategyBattle.combat!.fighters[0].attack>normalBattle.combat!.fighters[0].attack,"Sala de Guerra não reforçou o ataque");
 const fastTravel=structuredClone(warroom0);fastTravel.hq.stables=10;
-assert.ok(init(fastTravel).expeditions[0].battle.combat.targetRounds<normalBattle.combat.targetRounds,"Estábulos não abreviaram escoltas");
+assert.ok(init(fastTravel).expeditions[0].battle.combat!.targetRounds<normalBattle.combat!.targetRounds,"Estábulos não abreviaram escoltas");
 let racial=newState();
 racial.chest=[{id:"item-racial",key:"RX-HUMAN"}];
 assert.throws(()=>applyAction(racial,{type:"equip",itemId:"item-racial",heroId:racial.heroes[1].id}),/raça/i,"Herói de outra raça vestiu prêmio humano");

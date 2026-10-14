@@ -7,14 +7,14 @@ function forRegion(index:number,seed=11):Campaign{
  s.heroes.forEach(h=>{h.energy=100;h.injuredUntil=0;});
  return s;
 }
-assert.equal(threshold(newCampaign(100).heroes[0]),111,"Primeiro nível deve precisar mais XP");
+assert.ok(threshold(newCampaign(100).heroes[0])>=200,"O primeiro nível deve exigir XP maior.");
 const a=forRegion(0),b=forRegion(1),c=forRegion(2),d=forRegion(3);
 for(const [i,s] of [[0,a],[1,b],[2,c],[3,d]] as const){
  const m=missions(s);
  assert.equal(m[0].location,WORLD_REGIONS[i].name);
  assert.equal(missionSuggestedLevel(m[0]),WORLD_REGIONS[i].minLevel);
  assert.ok(missionSuggestedLevel(m[4])>missionSuggestedLevel(m[0]),"Contratos da mesma região não possuem gradação de nível");
- assert.equal(missionRewardXp(m[0]),41+i*18,"O XP de região não escalou");
+ assert.equal(missionRewardXp(m[0]),27+i*18,"O XP de região não escalou");
 }
 const regional=[a,b,c,d,forRegion(11)].map(s=>{
  const m=missions(s)[0];

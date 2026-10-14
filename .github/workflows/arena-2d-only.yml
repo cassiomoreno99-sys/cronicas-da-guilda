@@ -24,8 +24,8 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Iniciar jogo
         run: |
-          npm run dev -- --host 127.0.0.1 > /tmp/guilda-vite.log 2>&1 &
-          for i in {1..40}; do curl -fsS http://127.0.0.1:5173 >/dev/null && exit 0; sleep 1; done
+          npm run preview -- --host 127.0.0.1 > /tmp/guilda-vite.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173 >/dev/null && exit 0; sleep 1; done
           cat /tmp/guilda-vite.log
           exit 1
       - name: Testar combate único no computador e celular
@@ -45,3 +45,5 @@ jobs:
 # Revisão 4: atualizar smoke do combate ao vivo para nova interface.
 
 # Revisão 5: teste UI libera conselho inicial da campanha.
+
+# Revisão 6: validar build final em vez do servidor de desenvolvimento.

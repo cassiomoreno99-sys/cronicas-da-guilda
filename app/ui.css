@@ -2719,12 +2719,7 @@ img.game-symbol.game-coin{
  background:#112d42;border:1px solid #a17e4f;border-radius:7px;
  font:700 12px/1.4 system-ui;
 }
-.warehouse-room{
- display:grid!important;place-items:center;min-height:115px;
- background:radial-gradient(circle,#28465c,#071c2b)!important;
- border:1px solid #aa894f!important;border-radius:9px!important;
- color:#f0bd71!important;
-}
+
 .equipment-slot-icon .item-art{display:block;width:100%;height:100%;max-width:72px;max-height:72px;object-fit:contain}
 .equipment-slot[data-selected="true"] .equipment-slot-icon .item-art{filter:drop-shadow(0 0 7px #f2d89a)}
 .equipment-slot-copy small{overflow-wrap:anywhere}

@@ -51,8 +51,8 @@ jobs:
       - name: Diagnóstico de tipos primeiro
         run: npm run typecheck
         continue-on-error: true
-      - name: Todas as regressões e build de produção
-        run: npm run build
+      - name: Compilar somente a interface para auditoria visual
+        run: npx vite build
       - name: Navegador real Chromium
         run: |
           npm install --no-save --no-package-lock playwright@1.55.0
@@ -65,6 +65,8 @@ jobs:
           exit 1
       - name: Conferir quatro heróis REALMENTE visíveis, não apenas etiquetas
         run: node scripts/test-revisao-browser.mjs
+      - name: Todas as regressões e build de produção
+        run: npm run build
       - name: Capturas e auditoria
         if: always()
         uses: actions/upload-artifact@v4

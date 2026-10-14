@@ -877,7 +877,7 @@ export function missions(s: Campaign): Mission[] {
   const region = WORLD_REGIONS[regionIndex], progression = Math.max(0, region.minLevel - 1);
   const scaling = regionThreat(regionIndex) * (1 + (s.season - 1) * .045 + Math.floor((seasonDay(s) - 1) / 7) * .018);
   // Cada região possui seis missões próprias; o guardião regional é a sétima.
-  // A sexta entra no quadro no dia 14; o guardião surge no dia 21.
+  // A sexta entra no dia 30; o guardião regional surge no dia 45 da temporada de 60 dias.
   const kinds: MissionKind[] = ["dungeon", "hunt", "escort", "dungeon", "dungeon", "hunt"];
   const descriptors = ["Ritual oculto nas ruínas de", "Infestação nas ruínas de", "Escolta pelas estradas de", "Exploração das profundezas de", "O tesouro perdido de", "Caçada nos arredores de"];
   const regionOneTitles = ["Ritual sombrio na cripta", "Aranhas nas ruínas", "Escolta da caravana", "Exploração de masmorra", "O cofre do tesouro perdido", "Caçada no vale nebuloso"];
@@ -925,7 +925,7 @@ export function seasonBoss(s: Campaign): Mission | null {
     location:region.name,
     description:guardian?.description||"Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
     rank: 5,
-    force: Math.round(135 * regionThreat(regionIndex) * (1 + (s.season - 1) * .045)),
+    force: Math.max(Math.round(135 * regionThreat(regionIndex) * (1 + (s.season - 1) * .045)),Math.round(missions(s)[4].force * 1.13)),
     reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
     enemy, count: 3, specialty: "boss",
     flavor:guardian?.flavor||"Chefe regional: batalha de elite, renome e cicatrizes memoráveis.",

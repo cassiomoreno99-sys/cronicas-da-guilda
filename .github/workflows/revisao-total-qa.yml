@@ -69,3 +69,5 @@ jobs:
           name: revisao-fases-1-4-e-provas
           path: visual-report/
           if-no-files-found: ignore
+
+# Revisão 2: adaptar teste de teto da progressão à nova curva de XP.

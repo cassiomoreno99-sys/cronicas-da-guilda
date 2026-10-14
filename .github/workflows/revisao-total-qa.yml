@@ -78,3 +78,5 @@ jobs:
 # Revisão 3: validar catálogo legado e benefícios da Forja juntos.
 
 # Revisão 4: verificar o novo catálogo e tipos antes do build.
+
+# Revisão 5: corrigir verificação do padrão CG-001..314.

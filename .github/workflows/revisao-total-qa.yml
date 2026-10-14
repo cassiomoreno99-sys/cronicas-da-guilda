@@ -71,3 +71,5 @@ jobs:
           if-no-files-found: ignore
 
 # Revisão 2: adaptar teste de teto da progressão à nova curva de XP.
+
+# Revisão 3: validar catálogo legado e benefícios da Forja juntos.

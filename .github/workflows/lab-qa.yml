@@ -1,0 +1,32 @@
+name: Laboratório 2D - testar combate jogável
+on:
+  push:
+    branches: [laboratorio-combate-2d-visual-corrigido]
+    paths: ['.github/workflows/lab-qa.yml']
+permissions:
+  contents: write
+jobs:
+  validar-combate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar navegador de teste
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Testar arena, ações e mobile em Chromium
+        run: |
+          python3 -m http.server 8123 --bind 127.0.0.1 > /tmp/lab-server.log 2>&1 &
+          sleep 2
+          node scripts/test-lab-v5.mjs
+      - name: Guardar capturas para conferência visual
+        if: always()
+        run: |
+          git config user.name "Guilda QA Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add visual-report/lab-v5-*.jpg visual-report/lab-v5-*.b64.txt || true
+          git diff --cached --quiet || git commit -m "Capturas da arena 2D para verificação visual"
+          git push origin HEAD:laboratorio-combate-2d-visual-corrigido

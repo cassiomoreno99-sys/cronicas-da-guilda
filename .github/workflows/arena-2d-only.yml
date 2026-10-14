@@ -43,3 +43,5 @@ jobs:
 # Revisão 3: remover dependências de testes legados do combate e validar o resultado.
 
 # Revisão 4: atualizar smoke do combate ao vivo para nova interface.
+
+# Revisão 5: teste UI libera conselho inicial da campanha.

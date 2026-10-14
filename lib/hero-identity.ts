@@ -29,11 +29,13 @@ const family:Record<HeroRace,readonly string[]>={
 const origins=["de Valen","das Ruínas","do Ocaso","da Fronteira","do Norte","da Coroa","do Abismo","do Sol","das Cinzas","da Lua","de Brumavale","do Horizonte"];
 const familyEndings=["","al","ar","el","en","or","an","is","ir","on","ash","uin","dor","rin","yn","iel","ith","nar","dar","far","kar","rad","tar","mir","anor","eth","nor","tar","ior","aris","onar","ovan","ath","avor","uar","as","er","andar","orim","etur","avel","azin","udor","ivan","aran","iran","onal","ovar"];
 export const HERO_CANONICAL_SEX:Record<string,HeroSex>={aric:"male",lyra:"female",elen:"male",kael:"female",sora:"male",doran:"male"};
+const legacyFemaleFirst=new Set(["seris","maev","kaora","nym","vaela","ysra","ilara","selyne","talia","nyx","kora","mirael","asha","zaira","liora","nera","ilyra","saela","veyra","melys","nalia","eira","arwenna","iria","vessa","mara","tessa","neris","rhea","cyria","ormira","thalira","zephira","nivara","sylwen","belmira","mavira","avelis","ylvara","isolde","mireth","druska"]);
 export function stableHeroHash(s:string):number{let n=2166136261;for(const c of s)n=Math.imul(n^c.charCodeAt(0),16777619);return n>>>0;}
 export function heroSex(hero:{id:string;name:string;sex?:HeroSex}):HeroSex{
  if(hero.sex==="male"||hero.sex==="female")return hero.sex;
  if(hero.id in HERO_CANONICAL_SEX)return HERO_CANONICAL_SEX[hero.id];
  const first=hero.name.trim().split(/\s+/)[0].toLocaleLowerCase("pt-BR");
+ if(legacyFemaleFirst.has(first))return "female";
  for(const race of HERO_VISUAL_RACES)for(const sex of HERO_SEXES)if(given[race][sex].some(n=>n.toLocaleLowerCase("pt-BR")===first))return sex;
  // Nomes de saves legados são preservados, sem mudar identidade ou progresso.
  return /(?:a|ia|yne|wen|eth|ys)$/.test(first)?"female":"male";

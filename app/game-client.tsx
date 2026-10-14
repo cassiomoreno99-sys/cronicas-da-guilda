@@ -15,7 +15,7 @@ import {
   heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss,
   teamPower, standings, leaguePrize, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
-  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay,
+  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS,
   ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rank,
   type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
@@ -27,6 +27,7 @@ import {
   type LocalSave
 } from "@/lib/local-save";
 import { portraitSource } from "@/lib/portraits";
+import { chestCapacity, storageUsed } from "@/lib/storage";
 import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
@@ -535,15 +536,16 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
       </label>
     </section>
 
-    <p className="equipment-intro">Versão de teste: selecione um espaço para equipar ou remover itens. A versão principal permanece inalterada.</p>
+    <p className="equipment-intro">Equipamentos vestidos ficam nos espaços abaixo e não ocupam posições do baú. Desequipe para devolver o item ao armazenamento.</p>
     <div className="equipment-slot-grid" role="group" aria-label="12 espaços de equipamento">
       {EQUIPMENT_SLOTS.map((slot, i) => {
         const Icon = EQUIPMENT_ICONS[slot.id];
+        const wearing=used.find(x=>(x.equippedSlot||equippedPosition(x.key))===slot.id);
         return <button type="button" key={slot.id} className="equipment-slot" data-slot={slot.id}
           data-selected={selectedSlot === slot.id} aria-pressed={selectedSlot === slot.id}
           onClick={() => setSelectedSlot(slot.id)}>
-          <span className="equipment-slot-icon"><Icon aria-hidden="true"/></span>
-          <span className="equipment-slot-copy"><strong>{i + 1}. {slot.label}</strong><small>{used.find(x=>(x.equippedSlot||equippedPosition(x.key))===slot.id)?.key ? ITEMS[used.find(x=>(x.equippedSlot||equippedPosition(x.key))===slot.id)!.key]?.name : "Vazio"}</small></span>
+          <span className="equipment-slot-icon">{wearing?<ItemArt itemKey={wearing.key}/>:<Icon aria-hidden="true"/>}</span>
+          <span className="equipment-slot-copy"><strong>{i + 1}. {slot.label}</strong><small>{wearing ? ITEMS[wearing.key]?.name : "Vazio"}</small></span>
         </button>;
       })}
     </div>
@@ -564,10 +566,10 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const [showCatalog,setShowCatalog] = useState(false);
   const [catalogPage,setCatalogPage] = useState(0);
   const [catalogSelection,setCatalogSelection] = useState("CG-001");
-  const [selectedId,setSelectedId] = useState(state.chest[0]?.id || "");
+  const [selectedId,setSelectedId] = useState(state.chest.find(i=>!i.equippedTo)?.id || "");
   const [recipient,setRecipient] = useState(state.heroes[0]?.id || "");
   const [useHero,setUseHero] = useState(state.heroes[0]?.id || "");
-  const filtered = state.chest.filter(i => {
+  const filtered = state.chest.filter(i => !i.equippedTo).filter(i => {
     const slot = ITEMS[i.key]?.slot;
     if (filter === "all") return slot !== "material";
     if (filter === "weapons") return slot === "weapon" || slot === "offhand";
@@ -614,7 +616,8 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
     </section>;
   }
   return <section className="screen chest-screen">
-    <div className="inventory-top"><button data-active><GameSymbol kind="inventory"/> Inventário</button><button onClick={()=>setShowCatalog(true)}><GameSymbol kind="book"/> Ver 314 itens</button><button onClick={() => setFilter("material")} data-active={filter === "material"}><GameSymbol kind="forge"/> Materiais</button><span><GameSymbol kind="inventory"/> {state.chest.length}/120</span></div>
+    <div className="inventory-top"><button data-active><GameSymbol kind="inventory"/> Inventário</button><button onClick={()=>setShowCatalog(true)}><GameSymbol kind="book"/> Ver 314 itens</button><button onClick={() => setFilter("material")} data-active={filter === "material"}><GameSymbol kind="forge"/> Materiais</button><span><GameSymbol kind="inventory"/> {storageUsed(state.chest)}/{chestCapacity(state)}</span></div>
+    <p className="inventory-capacity-note">Armazém Nv. {state.hq.warehouse} · {storageUsed(state.chest)} guardados · {state.chest.filter(i=>!!i.equippedTo).length} equipados nos heróis · {Math.max(0,chestCapacity(state)-storageUsed(state.chest))} espaços livres</p>
     <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>
     <div className="inventory-layout">
       <div className="item-grid">{filtered.slice(0,40).map(item => <button key={item.id} data-active={selected?.id === item.id} className={"item-tile rarity-" + ITEMS[item.key].rarity} onClick={() => setSelectedId(item.id)}>
@@ -665,7 +668,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
   <div className="catalog-shop">
   {testShop(state).map(d=>{
     const sold=state.shopPurchases.includes(Math.floor((state.day-1)/7)+":"+state.activeRegion+":"+d.id);
-    return <div key={d.id}><ItemArt itemKey={d.id}/><span><strong>{d.nome}</strong><small>{d.id} · {d.raridade} · Nv. {d.nivel}</small></span><button className="small-button gold" disabled={busy||sold||state.chest.length>=120||state.gold<(d.preco_compra||0)} onClick={()=>act({type:"buy",key:d.id})}>{!sold&&<GameSymbol kind="gold"/>}{sold?"Esgotado":fmt(d.preco_compra||0)+" ouro"}</button></div>;
+    return <div key={d.id}><ItemArt itemKey={d.id}/><span><strong>{d.nome}</strong><small>{d.id} · {d.raridade} · Nv. {d.nivel}</small></span><button className="small-button gold" disabled={busy||sold||storageUsed(state.chest)>=chestCapacity(state)||state.gold<(d.preco_compra||0)} onClick={()=>act({type:"buy",key:d.id})}>{!sold&&<GameSymbol kind="gold"/>}{sold?"Esgotado":fmt(d.preco_compra||0)+" ouro"}</button></div>;
   })}
   {!testShop(state).length&&<small>Sem mercadorias nesta região.</small>}
   </div></section>
@@ -685,8 +688,10 @@ const GUILD_ROOM_IMAGES:Record<HQBuilding,string>={
   library:"/guild/rooms/library.webp",
   stables:"/guild/rooms/stables.webp",
   warroom:"/guild/rooms/warroom.webp",
+  warehouse:"",
 };
 function GuildRoomArt({room,label,compact=false}:{room:HQBuilding;label:string;compact?:boolean}){
+ if(room==="warehouse")return <div className="guild-room-art warehouse-room" role="img" aria-label={label}><GameSymbol kind="inventory" size={64}/></div>;
  return <img className={compact?"guild-room-art compact":"guild-room-art"}
   src={GUILD_ROOM_IMAGES[room]} alt={label} width={1280} height={720} loading="lazy"/>;
 }
@@ -724,7 +729,7 @@ function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) 
       {!slots ? <small>Primeiro construa a Academia para iniciar uma turma.</small> : !classOpen ?
         <button className="action-button green" disabled={busy || state.gold < ACADEMY_ENROLL_COST} onClick={() => act({type:"academy-open-class"})}>Selecionar 10 cidadãos · {ACADEMY_ENROLL_COST} ouro</button> :
         <div className="academy-candidate-list">
-          <small>Temporada {state.season} · Dia {seasonDay(state)}/28 · Você pode dedicar um treino especial de {ACADEMY_FOCUS_COST} ouro por dia, a apenas um candidato.</small>
+          <small>Temporada {state.season} · Dia {seasonDay(state)}/{SEASON_DAYS} · Você pode dedicar um treino especial de {ACADEMY_FOCUS_COST} ouro por dia, a apenas um candidato.</small>
           {candidates.map(candidate => <div key={candidate.id} className="academy-candidate">
             <div><strong>{candidate.name}</strong><small>Vocação: {CLASSES[candidate.class].name} · Treinos dedicados: {candidate.practice}</small></div>
             <div className="academy-candidate-chance"><strong>{academyCandidateChance(state,candidate)}%</strong><small>Chance na prova</small></div>
@@ -795,7 +800,7 @@ function SupremeLibraryPanel({state,act,busy}:{state:Campaign;act:(a:Action)=>vo
     const price=Math.round((d.preco_compra||0)*.7);
     const res=(d.materiais||[]).map(mat=>({...mat,owned:state.chest.filter(i=>i.key===mat.id&&!i.equippedTo).length}));
     const ready=!!h&&h.level>=d.nivel&&h.storyStage===3&&state.hq.library>=3&&state.bossSeasons.length>0&&
-      res.every(r=>r.owned>=r.quantidade)&&state.gold>=price&&state.chest.length<120;
+      res.every(r=>r.owned>=r.quantidade)&&state.gold>=price&&storageUsed(state.chest)<chestCapacity(state);
     return <div key={d.id}><ItemArt itemKey={d.id}/><span><strong>{d.nome}</strong>
        <small>Nível {d.nivel} · {d.efeito}</small><small>{res.map(r=>r.quantidade+"× "+CATALOG_BY_ID[r.id]?.nome+" ("+r.owned+")").join(" + ")}</small></span>
        <button className="small-button gold" disabled={busy||!ready||!h} onClick={()=>h&&act({type:"scribe-book",bookId:d.id,heroId:h.id})}><GameSymbol kind="gold"/> Transcrever · {fmt(price)} ouro</button>
@@ -837,6 +842,15 @@ function GuildPage({
       <aside><strong><GameSymbol kind="gold"/> Tesouro {fmt(state.gold)}</strong><strong><GameSymbol kind="fame"/> Renome {state.fame}</strong><strong><GameSymbol kind="league"/> Liga {rank(state)}</strong></aside>
     </div>
 
+    <div className="guild-calendar parchment" aria-label="Controle de dias da temporada">
+      <div><strong>Temporada {state.season} · Dia {String(seasonDay(state)).padStart(2,"0")}/{SEASON_DAYS}</strong>
+        <small>O calendário só avança por sua decisão. Batalhas, equipamentos, compras e treinos acontecem dentro do dia atual.</small></div>
+      <button type="button" className="action-button green guild-next-day"
+        disabled={busy||activeExpeditions(state).length>0||!!state.event}
+        title={state.event?"Resolva o conselho para encerrar o dia.":activeExpeditions(state).length?"Conclua as expedições em andamento.":"Encerrar o dia atual"}
+        onClick={()=>{if(window.confirm("Encerrar o dia "+seasonDay(state)+"/"+SEASON_DAYS+"? Salários, liga, viagens e recuperação diária serão processados."))act({type:"next-day"});}}>
+        Próximo dia <ChevronRight size={18}/></button>
+    </div>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
     <ParchmentTitle icon={<GameSymbol kind="guild"/>} title="Sede da Guilda" />
     <div className="building-list parchment">{buildings.map(([key,spec],index) => {
@@ -854,7 +868,7 @@ function GuildPage({
     <div className="catalog-shop">{TEST_RECIPES.filter(r=>r.forge>0&&r.forge<=state.hq.forge).slice(0,16).map(r=>{
       const enough=Object.entries(r.materials).every(([k,q])=>state.chest.filter(i=>i.key===k&&!i.equippedTo).length>=q);
       return <div key={r.id}><ItemArt itemKey={r.result}/><span><strong>{ITEMS[r.result]?.name}</strong><small>{Object.entries(r.materials).map(([k,q])=>q+"× "+(ITEMS[k]?.name||k)).join(" + ")}</small></span>
-      <button className="small-button" disabled={busy||!enough||state.gold<r.cost||state.chest.length>=120} onClick={()=>act({type:"craft",recipeId:r.id})}><GameSymbol kind="gold"/> Forjar · {fmt(r.cost)}</button></div>;
+      <button className="small-button" disabled={busy||!enough||state.gold<r.cost||storageUsed(state.chest)>=chestCapacity(state)} onClick={()=>act({type:"craft",recipeId:r.id})}><GameSymbol kind="gold"/> Forjar · {fmt(r.cost)}</button></div>;
     })}{!state.hq.forge&&<p>Melhore a Forja para liberar receitas.</p>}</div></section>
     <SupremeLibraryPanel state={state} act={act} busy={busy}/>
     <div className="guild-grid">
@@ -994,6 +1008,7 @@ export default function Game() {
 
   return <div className="app-shell">
     <TopBar state={state} goGuild={() => go("guild")} goSettings={openSettings} />
+    <div className="campaign-day-strip" role="status">Temporada {state.season} · Dia {String(seasonDay(state)).padStart(2,"0")}/{SEASON_DAYS} <span>· Próximo dia na Guilda</span></div>
     <OfflineInstall />
     <div className="layout-frame">
       <aside className="nav-sidebar" aria-label="Navegação do jogo">

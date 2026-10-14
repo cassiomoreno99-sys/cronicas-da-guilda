@@ -1,5 +1,5 @@
 import { CATALOG_BY_ID, CATALOG_ITEMS, RECIPE_BY_ID, testShop, equippedPosition, isTwoHanded, SETS } from "./catalog-test.ts";
-import type {Campaign,Action,HeroClass,Mission} from "./game.ts";
+import { heroRace, type Campaign,type Action,type HeroClass,type Mission } from "./game.ts";
 import { chestCapacity, storageUsed } from "./storage.ts";
 type AddEntry=(s:Campaign,title:string,delta:number)=>void;
 function ensure(v:unknown,message:string):asserts v {if(!v)throw Error(message);}
@@ -45,6 +45,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   ensure(!s.journeys.some(j=>j.heroId===hero.id&&j.remaining>0),"Herói em viagem.");
   const def=CATALOG_BY_ID[item.key],slot=equippedPosition(item.key);
   ensure(def&&slot,"Objeto não equipável.");ensure(def.classes.some(c=>NAMES[c]===hero.class),"Classe incompatível.");
+  ensure(!def.race || heroRace(hero)===def.race,"Esta relíquia é exclusiva de outra raça.");
   ensure(hero.level>=def.nivel,"Nível "+def.nivel+" necessário.");
   const owned=s.chest.filter(x=>x.equippedTo===hero.id);
   const used=owned.map(x=>x.equippedSlot||equippedPosition(x.key));
@@ -65,14 +66,16 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   const d=CATALOG_BY_ID[recipe.result];ensure(d,"Item não cadastrado.");
   ensure(s.hq.forge>=recipe.forge,"Forja nível "+recipe.forge+" necessária.");
   ensure(REGIONS.includes(d.regiao as typeof REGIONS[number])&&s.region>=REGIONS.indexOf(d.regiao as typeof REGIONS[number])+1,"Região do projeto não liberada.");
-  ensure(s.gold>=recipe.cost,"Ouro insuficiente.");
+  const cost=Math.max(1,Math.round(recipe.cost*(1-Math.min(.2,s.hq.forge*.02))));
+  ensure(s.gold>=cost,"Ouro insuficiente.");
   ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Armazém da Guilda.");
   for(const [key,qty] of Object.entries(recipe.materials))ensure(own(s,key)>=qty,"Material insuficiente: "+key);
   for(const [key,qty] of Object.entries(recipe.materials)){
    let remaining=qty;
    s.chest=s.chest.filter(i=>{if(i.key===key&&!i.equippedTo&&remaining>0){remaining--;return false;}return true;});
   }
-  entry(s,"Forja · "+d.nome,-recipe.cost);add(s,d.id);break;
+  entry(s,"Forja · "+d.nome,-cost);add(s,d.id);
+  s.chest[s.chest.length-1].forgedPower=Math.min(10,Math.floor(s.hq.forge*.8));break;
  }
  case "scribe-book":{
   const d=CATALOG_BY_ID[action.bookId],hero=s.heroes.find(h=>h.id===action.heroId);

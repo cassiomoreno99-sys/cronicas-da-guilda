@@ -3,6 +3,7 @@ import { REGIONAL_CHAPTERS } from "./regional-missions.ts";
 import { performSupreme, type SupremeUnit } from "./supreme-abilities.ts";
 import { handleCatalogAction, awardCatalogLoot, setBonuses } from "./catalog-runtime.ts";
 import { chestCapacity, storageUsed } from "./storage.ts";
+import { familiarityBonus, registerTeamExpedition } from "./team-familiarity.ts";
 import { CLASSIC_CLASS_IDS, V130_BASE_STATS, WORLD_REGIONS, HQ_BUILDINGS, HERO_SCARS, LEVEL_ABILITIES, V130_ITEMS, ITEM_SETS, CRAFT_RECIPES, uniqueAdventurerName } from "./v130-content.ts";
 export type HeroClass = "warrior" | "mage" | "healer" | "rogue" | "ranger" | "paladin" | "monk" | "necromancer" | "druid" | "bard";
 export type HeroRace = "human" | "elf" | "dwarf" | "orc" | "beastkin" | "umbral";
@@ -58,7 +59,7 @@ export type LeagueMatch = { season: number; day: number; opponentId: string; opp
 export type Rivalry = { guildId: string; heat: number; sinceSeason: number; lastReason: string };
 export type CupStage = "oitavas" | "quartas" | "semifinal" | "final" | "champion" | "eliminated";
 export type CupState = { season: number; stage: CupStage; wins: number; history: LeagueMatch[] };
-export type Campaign = { schema: 1; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
+export type Campaign = { schema: 1; teamFamiliarity?: Record<string,number>; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
 export type Action =
   | { type: "mission"; missionId: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine>; startedAt?: number; expeditionSlot?: ExpeditionSlot }
   | { type: "save-squad"; specialty: MissionKind; name: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
@@ -696,7 +697,7 @@ function createEvent(s: Campaign): GuildEvent {
   // Eventos antigos de mapa/poção foram retirados; nenhum oferece itens.
   return villageEvent(id);
 }
-type AddedFields = "calendarVersion" | "dailyActions" | "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "activeRegion" | "bossSeasons" | "claimedQuestItems" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads" | "balanceVersion" | "hq" | "academy" | "raidHistory" | "rivalBattleHistory";
+type AddedFields = "teamFamiliarity" | "calendarVersion" | "dailyActions" | "chest" | "itemSequence" | "event" | "nextEventDay" | "eventSequence" | "region" | "activeRegion" | "bossSeasons" | "claimedQuestItems" | "shopPurchases" | "rivalAttempts" | "lastNegotiation" | "formation" | "leagueTier" | "leagueWins" | "leagueDraws" | "leagueLosses" | "leagueHistory" | "rivalries" | "cup" | "journeys" | "journeySequence" | "expeditions" | "expeditionSequence" | "hqActionDay" | "squads" | "balanceVersion" | "hq" | "academy" | "raidHistory" | "rivalBattleHistory";
 type StoredRival = Pick<RivalGuild, "id" | "name" | "points" | "victories"> & Partial<RivalGuild>;
 type StoredCampaign = Omit<Campaign, AddedFields | "rivals"> & Partial<Pick<Campaign, AddedFields>> & { rivals: StoredRival[] };
 function normalizedFormation(s: Pick<Campaign, "heroes" | "team"> & Partial<Pick<Campaign, "formation">>) {
@@ -735,6 +736,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     s.calendarVersion=2;
   }
   s.dailyActions ??= {};
+  s.teamFamiliarity ??= {};
   s.hq ??= { infirmary: 0, forge: 0, academy: 0, library: 0, stables: 0, warroom: 0 };
   for (const key of Object.keys(HQ_BUILDINGS) as HQBuilding[]) s.hq[key] = Math.max(0, Math.min(HQ_BUILDINGS[key].max, s.hq[key] || 0));
   s.academy ??= { trainees: [], candidates: [], reserve: [] };
@@ -1195,12 +1197,13 @@ function selectTeam(s: Campaign, ids: string[], tactic: Tactic, formation?: Reco
 }
 function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   const scaling = m.force / [30, 48, 68, 92, 125][m.rank - 1], cohesion = squadBonus(s, team.map(h => h.id));
+  const familiarity=familiarityBonus(s.teamFamiliarity,team.map(h=>h.id));
   const fighters: Combatant[] = team.map(h => {
     const base = heroStats(h, s), position = s.formation[h.id] || defaultFormationLine(h.class);
     const missionBoost=Math.min(.15,h.nextMissionBoost||0);
-    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion, attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost), magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost), speed: base.speed + (position === "back" ? 2 : 0) };
+    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion * (1+familiarity.defense), attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage), magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage), speed: base.speed + (position === "back" ? 2 : 0), critical: Math.min(.48,base.critical+familiarity.critical),healing:base.healing*(1+familiarity.healing) };
     delete h.nextMissionBoost;
-    const hp = Math.round(80 + n.defense * 3 + h.level * 15 + n.hp);
+    const hp = Math.round((80 + n.defense * 3 + h.level * 15 + n.hp)*(1+familiarity.hp));
     return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy, guarding: h.talent?.path === "defense" && ["warrior", "paladin", "monk"].includes(h.class) ? h.talent.rank : 0 };
   });
   for (let i = 0; i < m.count; i++) {
@@ -1234,6 +1237,7 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   const before = s.fame;
   const battleTeam = c.fighters.filter(f => f.side === "hero").map(f => f.id);
   awardSquadExperience(s, battleTeam, m.kind, won);
+  registerTeamExpedition(s.teamFamiliarity!,battleTeam);
   if (won) {
     entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s,m);
     if (m.kind === "boss") {

@@ -37,3 +37,5 @@ jobs:
           name: comparacao-arena-2d
           path: visual-report/single-battle-*.jpg
           if-no-files-found: ignore
+
+# Revisão 2: testes atualizados para interface única, sem arena cinematográfica.

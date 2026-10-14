@@ -28,6 +28,7 @@ import {
 } from "@/lib/local-save";
 import { portraitSource } from "@/lib/portraits";
 import { chestCapacity, storageUsed } from "@/lib/storage";
+import { familiarityBonus } from "@/lib/team-familiarity";
 import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
@@ -373,6 +374,8 @@ function TeamPage({
       <div className="team-bonus">
         <h3>Bônus de Equipe</h3>
         <p>{readiness.label}</p><small>{readiness.hint}</small>
+        {(()=>{const f=familiarityBonus(state.teamFamiliarity,team);return <div className="team-familiarity" aria-label="Entrosamento da equipe"><strong>Entrosamento: nível {f.level}/5</strong><small>{f.expeditions} expedições juntos · {f.next?f.next+" até o próximo bônus":"Entrosamento máximo"}</small>
+        <span>Crítico +{(f.critical*100).toFixed(1)}% · Defesa +{(f.defense*100).toFixed(1)}% · Vida +{(f.hp*100).toFixed(1)}% · Dano +{(f.damage*100).toFixed(1)}% · Cura +{(f.healing*100).toFixed(1)}%</span></div>})()}
         <div className="tactic-row">{(Object.keys(TACTICS) as Tactic[]).map(t => <button key={t} data-active={tactic === t} onClick={() => setTactic(t)}>{TACTICS[t].name}</button>)}</div>
         <div className="team-power"><GameSymbol kind="battle"/><span>Poder da Equipe</span><strong>{fmt(power)}</strong></div>
       </div>

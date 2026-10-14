@@ -39,3 +39,5 @@ jobs:
           name: fase2-capturas
           path: visual-report/fase2-*.jpg
           if-no-files-found: ignore
+
+# Revisão 2: teste da Academia passa XP no Próximo dia.

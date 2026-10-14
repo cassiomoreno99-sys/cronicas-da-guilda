@@ -1453,7 +1453,9 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
 }
 function releaseHero(s: Campaign, h: Hero, amount: number, rivalId?: string) {
   requireRule(!heroOnExpedition(s, h.id), h.name + " está em expedição e não pode ser transferido agora.");
-  entry(s, "Transferência · " + h.name, amount); s.heroes = s.heroes.filter(x => x.id !== h.id); s.journeys = s.journeys.filter(j => j.heroId !== h.id); s.chest.forEach(i => { if (i.equippedTo === h.id) delete i.equippedTo; });
+  const returned=s.chest.filter(i=>i.equippedTo===h.id).length;
+  requireRule(storageUsed(s.chest)+returned<=chestCapacity(s),"Abra espaço no baú antes de dispensar um herói equipado.");
+  entry(s, "Transferência · " + h.name, amount); s.heroes = s.heroes.filter(x => x.id !== h.id); s.journeys = s.journeys.filter(j => j.heroId !== h.id); s.chest.forEach(i => { if (i.equippedTo === h.id) { delete i.equippedTo; delete i.equippedSlot; } });
   s.team = s.team.filter(id => id !== h.id); for (const x of s.heroes) if (s.team.length < 4 && !s.team.includes(x.id)) s.team.push(x.id);
   s.formation = normalizedFormation(s);
   const target = s.rivals.find(r => r.id === rivalId) || s.rivals[Math.floor(random(s) * s.rivals.length)];

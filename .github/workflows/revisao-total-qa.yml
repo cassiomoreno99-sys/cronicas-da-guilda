@@ -47,7 +47,9 @@ jobs:
           out.save("visual-report/sprites-7-audit.png")
           PY
       - name: Testes integrados de regras
-        run: node --experimental-strip-types scripts/test-revisao-total.ts
+        run: |
+          node --experimental-strip-types scripts/test-fase2.ts
+          node --experimental-strip-types scripts/test-revisao-total.ts
       - name: Diagnóstico de tipos primeiro
         run: npm run typecheck
         continue-on-error: true
@@ -88,3 +90,5 @@ jobs:
 # Revisão 7: novo XP inicial 207, XP de missão inicial 27.
 
 # Revisão 8: resolver evento do Conselho no teste visual.
+
+# Auditoria final: inclui as seis instalações, Forge e validação completa do baú.

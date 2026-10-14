@@ -11,32 +11,42 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Instalar ferramentas de imagem
+      - name: Instalar Pillow
         run: python3 -m pip install --user pillow
-      - name: Baixar imagens aprovadas e produzir arquivos do jogo
+      - name: Gerar sprites recortados e transparentes da arte aprovada
         run: |
-          curl --connect-timeout 15 --max-time 120 -fsSL 'https://at.adobe.com/pcedz2Thvnc6yrh6' -o /tmp/reference-source
-          curl --connect-timeout 15 --max-time 120 -fsSL 'https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:3536164e-7482-46e7-985b-c95bf909feda' -o /tmp/clean-stage
           python3 - <<'PY'
-          from PIL import Image
           from pathlib import Path
-          p=Path('laboratorio-combate-2d/art')
-          p.mkdir(parents=True,exist_ok=True)
-          src=Image.open('/tmp/reference-source').convert('RGB')
-          assert src.size==(1672,941),f'Imagem aprovada mudou de resolução: {src.size}'
-          bounds={"aric":[328,209,563,459],"lyria":[522,283,790,625],"thorgar":[143,295,417,645],"kaelith":[339,443,692,680],"cultista":[1172,257,1391,521],"espectro":[948,273,1193,541],"esqueleto":[981,429,1293,689],"necromante":[1267,362,1493,683]}
-          for hero,box in bounds.items():
-              src.crop(box).save(p/('crop-'+hero+'.png'), optimize=True)
-          stage=Image.open('/tmp/clean-stage').convert('RGB')
-          assert stage.width>700 and stage.height>350
-          stage.save(p/'arena-aprovada.webp', format='WEBP', quality=87, method=6)
-          print('ARTES IMPORTADAS', list(p.iterdir()))
-          
+          from urllib.request import urlopen, Request
+          from io import BytesIO
+          from PIL import Image, ImageStat
+          base=Path("laboratorio-combate-2d/art")
+          base.mkdir(parents=True,exist_ok=True)
+          sources={"aric":"https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:258282bf-297f-4294-a34b-927b479a1646","lyria":"https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:7391aeae-98ec-4ec2-bf46-856116689da0","thorgar":"https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:fde3f2df-da88-4574-8b9b-5f4e5d076a35","kaelith":"https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:195c9b7b-637a-4aee-b3dc-6c18e6e0a7bc","cultista":"https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:4370e47c-bb36-4d17-811b-e3403defb281","espectro":"https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:e8441e12-5788-455b-a4e6-cb15a59968e6","esqueleto":"https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:381a6509-236f-47be-840d-6b45ab97a11a","necromante":"https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:b77cf7f6-0727-4bcb-926e-305c692bc051"}
+          for name,url in sources.items():
+              print("Baixando personagem:",name,flush=True)
+              req=Request(url,headers={"User-Agent":"Guilda-RPG-Assets/1.0"})
+              with urlopen(req,timeout=100) as res:
+                  raw=res.read()
+              src=Image.open(BytesIO(raw)).convert("RGBA")
+              alpha=src.getchannel("A")
+              if alpha.getextrema()[0] >= 250:
+                  raise RuntimeError(f"Imagem sem transparencia: {name}")
+              bbox=alpha.getbbox()
+              if bbox is None:
+                  raise RuntimeError(f"Imagem transparente vazia: {name}")
+              l,t,r,b=bbox
+              pad=12
+              box=(max(0,l-pad),max(0,t-pad),min(src.width,r+pad),min(src.height,b+pad))
+              sprite=src.crop(box)
+              target=base/("sprite-"+name+".webp")
+              sprite.save(target,format="WEBP",quality=92,method=6,exact=True)
+              print(name, sprite.size, target.stat().st_size,"bytes",flush=True)
           PY
-      - name: Versionar as imagens reais do laboratório
+      - name: Salvar sprites reais no ramo independente
         run: |
           git config user.name "Guilda Assets Bot"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add laboratorio-combate-2d/art
-          git commit -m "Adicionar cena realista e recortes da arte aprovada para laboratório 2D" || true
+          git add laboratorio-combate-2d/art/sprite-*.webp
+          git commit -m "Adicionar oito personagens reais com transparencia para animações do RPG 2D"
           git push origin HEAD:laboratorio-combate-2d-visual-corrigido

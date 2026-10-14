@@ -122,6 +122,11 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <div className="guild2d-help">Toque em um herói e em um inimigo para selecionar</div>
   </div>
   <div className="guild2d-chosen"><span>🛡️ {hero?.name||"Sem heróis vivos"}</span><span>⚔️</span><span>🐺 {enemy?.name||"Sem inimigos vivos"}</span></div>
+  {!active&&<section className="guild2d-rewards" aria-label="Resultado e recompensas">
+    <strong>{battle.won?"Vitória e recompensas":battle.status==="retreated"?"Equipe retirada":"Resultado do confronto"}</strong>
+    <span>Ouro: {battle.reward||0} · Experiência: {battle.xp||0}</span>
+    {!!battle.loot?.length&&<p>Itens encontrados: {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</p>}
+  </section>}
   <p className="guild2d-target-tip">O inimigo selecionado é usado nas habilidades direcionadas. O ataque comum obedece à ordem de iniciativa e à escolha automática do motor, não ao alvo tocado.</p>
   <div className="guild2d-log" aria-live="polite"><b>CRÔNICA · {active?"COMBATE REAL":"RESULTADO"}</b>
    {log.length?log.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}>{l.text}</p>):<p>Os combatentes tomam suas posições.</p>}

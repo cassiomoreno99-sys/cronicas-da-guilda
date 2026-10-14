@@ -387,9 +387,9 @@ $("guard").onclick=()=>actor?.side==="hero"&&!auto&&runAction({type:"guard",targ
 for(const [id,index] of [["skillA",0],["skillB",1]])$(id).onclick=()=>{const u=actor;if(!u||u.side!=="hero"||auto)return;const sk=u.skills[index];
  const t=sk.target==="enemy"?selectedFoe():sk.target==="ally"?selectedFriend():u;
  runAction({type:"skill",index,skill:sk,target:t});};
-$("auto").onclick=()=>{auto=!auto;clearTimeout(timer);if(!busy&&!paused){if(actor&&(auto||actor.side==="enemy"))scheduleAuto();else if(!actor)nextTime(advance,150);}addLog(auto?"▶ Combate automático ativado.":"⏹ Controle manual ativado para os heróis.");drawUI();};
-$("pause").onclick=()=>{paused=!paused;clearTimeout(timer);if(!paused&&!over){if(actor){if(auto||actor.side==="enemy")scheduleAuto();}else if(!busy)nextTime(advance,220);}drawUI();};
-$("speed").onclick=()=>{speed=speed===1?2:speed===2?3:1;clearTimeout(timer);if(!paused&&!busy&&!over){if(actor&&(auto||actor.side==="enemy"))scheduleAuto();else if(!actor)nextTime(advance,250);}drawUI();};
+$("auto").onclick=()=>{auto=!auto;if(!busy){clearTimeout(timer);if(!paused){if(actor&&(auto||actor.side==="enemy"))scheduleAuto();else if(!actor)nextTime(advance,150);}}addLog(auto?"▶ Combate automático ativado.":"⏹ Controle manual ativado para os heróis.");drawUI();};
+$("pause").onclick=()=>{paused=!paused;if(!busy){clearTimeout(timer);if(!paused&&!over){if(actor){if(auto||actor.side==="enemy")scheduleAuto();}else nextTime(advance,220);}}drawUI();};
+$("speed").onclick=()=>{speed=speed===1?2:speed===2?3:1;if(!busy){clearTimeout(timer);if(!paused&&!over){if(actor&&(auto||actor.side==="enemy"))scheduleAuto();else if(!actor)nextTime(advance,250);}}drawUI();};
 $("restart").onclick=reset;$("resultRestart").onclick=reset;$("region").onchange=reset;
 window.addEventListener("pagehide",()=>clearTimeout(timer));
 reset();

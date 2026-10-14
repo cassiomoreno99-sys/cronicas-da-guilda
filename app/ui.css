@@ -2692,3 +2692,45 @@ img.game-symbol.game-coin{
  .tavern-lower{grid-template-columns:minmax(0,1fr);gap:9px}
  .tavern-market .merchant-head{grid-template-columns:90px minmax(0,1fr);text-align:left}
 }
+
+
+/* Fase 2 — calendário manual de 60 dias e Armazém de 30 a 300 itens. */
+.campaign-day-strip{
+ display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:5px;
+ background:linear-gradient(90deg,#091c2d,#18384e,#091c2d);
+ color:#ffe7b4;border-bottom:1px solid #a17d45;
+ font:700 clamp(12px,2.8vw,18px) Georgia,serif;text-align:center;
+ letter-spacing:.02em;padding:8px 12px;min-height:35px;
+}
+.campaign-day-strip span{font:600 11px system-ui;color:#a9ccdc}
+.guild-calendar{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(155px,225px);
+ align-items:center;gap:14px;padding:16px 18px;
+ margin:14px 4px;border:2px solid #a8864b;border-radius:9px;
+ background:linear-gradient(115deg,#132b3b,#17253b);
+ color:#ffe5b2;
+}
+.guild-calendar strong{font:700 clamp(18px,3.4vw,27px) Georgia,serif;color:#f7d38b}
+.guild-calendar small{display:block;margin-top:8px;color:#c4d6d8;font:12px/1.5 system-ui}
+.guild-next-day{font-size:18px!important;min-height:62px;gap:6px}
+.guild-next-day:disabled{opacity:.6}
+.inventory-capacity-note{
+ margin:8px 11px;padding:10px 13px;color:#fff0c9;
+ background:#112d42;border:1px solid #a17e4f;border-radius:7px;
+ font:700 12px/1.4 system-ui;
+}
+.warehouse-room{
+ display:grid!important;place-items:center;min-height:115px;
+ background:radial-gradient(circle,#28465c,#071c2b)!important;
+ border:1px solid #aa894f!important;border-radius:9px!important;
+ color:#f0bd71!important;
+}
+.equipment-slot-icon .item-art{display:block;width:100%;height:100%;max-width:72px;max-height:72px;object-fit:contain}
+.equipment-slot[data-selected="true"] .equipment-slot-icon .item-art{filter:drop-shadow(0 0 7px #f2d89a)}
+.equipment-slot-copy small{overflow-wrap:anywhere}
+@media(max-width:620px){
+ .guild-calendar{grid-template-columns:1fr;margin:9px 3px;gap:11px;padding:12px}
+ .guild-next-day{width:100%;min-height:54px}
+ .campaign-day-strip{font-size:14px;padding:7px 8px}
+ .campaign-day-strip span{font-size:10px}
+}

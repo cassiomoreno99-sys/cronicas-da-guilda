@@ -1,0 +1,40 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import {applyAction, missions, newCampaign} from "../lib/game.ts";
+
+const initial=newCampaign(20161009);
+initial.event=null;
+const mission=missions(initial)[0];
+const started=applyAction(initial,{type:"mission",missionId:mission.id,team:initial.team,tactic:"balanced",expeditionSlot:1,startedAt:1_700_000_000_000});
+const expedition=started.expeditions.find(e=>e.slot===1);
+assert.ok(expedition && expedition.battle.status==="active"&&expedition.battle.combat,"Missão real não iniciou");
+const startingHP=new Map(expedition.battle.combat.fighters.map(f=>[f.id,f.hp]));
+const finishedState=applyAction(started,{type:"battle-auto",expeditionId:expedition.id});
+const battle=finishedState.expeditions.find(e=>e.id===expedition.id)?.battle;
+assert.ok(battle,"Expedição desapareceu");
+assert.notEqual(battle.status,"active");
+assert.equal(battle.combat,undefined,"Motor ativo permaneceu após batalha");
+assert.ok(battle.fighters && battle.fighters.length>=5,"Dados dos personagens foram apagados");
+assert.equal(new Set(battle.fighters.map(f=>f.id)).size,battle.fighters.length);
+assert.ok(battle.fighters.some(f=>f.hp!==startingHP.get(f.id)),"PV final não foi preservado");
+assert.ok(battle.fighters.every(f=>f.hp>=0&&f.hp<=f.maxHp),"Vida fora dos limites");
+const ui=fs.readFileSync("app/game-client.tsx","utf8");
+const arena=fs.readFileSync("app/arena-2d.tsx","utf8");
+const css=fs.readFileSync("app/arena-2d.css","utf8");
+const files=fs.readdirSync("public/battle");
+assert.ok(ui.includes("function BattleOverlay(")&&ui.includes("<Arena2D key={expedition.id}"),"Única interface 2D não é usada pela campanha");
+assert.ok(!ui.includes("function CinematicBattlePage(")&&!ui.includes("setCinematic(true)")&&!ui.includes("className=\"battle-stage\""),"Outra interface de combate continua ativa");
+assert.ok(!arena.includes("Tela clássica")&&!arena.includes("openClassic"),"A arena ainda oferece alternativa antiga");
+assert.ok(arena.includes('type:"battle-round"')&&arena.includes('type:"battle-auto"')&&arena.includes('type:"battle-ability"')&&arena.includes('type:"battle-item"'),"Ações originais não foram preservadas");
+assert.ok(arena.includes("returnToTeam={")===false,"A própria arena deve receber a função de retorno como prop");
+assert.ok(ui.includes("returnToTeam={returnToTeam}"),"Retorno para equipe não foi conectado");
+assert.ok(css.includes("/battle/arena-aprovada.webp"),"Cenário aprovado não foi implementado");
+for(const name of ["arena-aprovada.webp","sprite-aric.webp","sprite-lyria.webp","sprite-thorgar.webp","sprite-kaelith.webp","sprite-cultista.webp","sprite-espectro.webp","sprite-esqueleto.webp","sprite-necromante.webp"]){
+ assert.ok(files.includes(name),"Sprite ausente: "+name);
+ assert.ok(fs.statSync("public/battle/"+name).size>12000,"Sprite inválido: "+name);
+}
+for(const name of ["app/arena-demo.tsx","app/arena-demo.css"])assert.ok(!fs.existsSync(name),"Tela antiga ainda presente: "+name);
+const returnHandler=ui.split('returnToTeam={() => {')[1]?.split('}} busy={busy}')[0];
+assert.ok(returnHandler,"Retorno à equipe ausente");
+assert.doesNotMatch(returnHandler,/perform\(|applyAction\(|battle-auto|battle-retreat|reset|retire/i,"O retorno modifica a expedição");
+console.log("ÚNICA ARENA 2D: visual aprovado, combate da campanha, salvamentos, retorno, habilidades e itens OK");

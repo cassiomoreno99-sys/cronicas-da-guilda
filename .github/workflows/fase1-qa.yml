@@ -39,3 +39,5 @@ jobs:
           name: fase1-capturas
           path: visual-report/fase1-*.jpg
           if-no-files-found: ignore
+
+# 2ª execução: atualizar teste antigo do Mercador para a nova coluna esquerda

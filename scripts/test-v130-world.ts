@@ -261,12 +261,13 @@ console.log("v1.3.0: iniciando bateria ampla...");
       s.event=null; s.gold=1_000_000_000;
       for(const h of s.heroes){ if(h.injuredUntil<=s.day) h.energy=Math.max(h.energy,40); }
       let ready=s.heroes.filter(h=>available(h,s)).slice(0,4);
-      if(ready.length<3){ s.event=null; s=applyAction(s,{type:"rest"}); continue; }
+      if(ready.length<3){ s.event=null; s=applyAction(s,{type:"next-day"}); continue; }
       const m=missions(s)[0];
       const team=ready.slice(0,Math.min(4,ready.length)).map(h=>h.id);
       s=applyAction(s,{type:"mission",missionId:m.id,team,tactic:"balanced",expeditionSlot:1,startedAt:1_700_000_000_000+cycle*100000});
       const id=s.expeditions[s.expeditions.length-1].id;
       s=applyAction(s,{type:"battle-auto",expeditionId:id}); battles++;
+      s.event=null;s=applyAction(s,{type:"next-day"});
       ok(Number.isFinite(s.gold)&&Number.isFinite(s.fame)&&s.heroes.every(h=>h.level>=1&&h.level<=50), "Estado inválido no stress seed "+seed);
       ok(market(s).every(h=>h.level>=1&&h.level<=50), "Mercado gerou nível inválido.");
     }

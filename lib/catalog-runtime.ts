@@ -1,10 +1,11 @@
 import { CATALOG_BY_ID, CATALOG_ITEMS, RECIPE_BY_ID, testShop, equippedPosition, isTwoHanded, SETS } from "./catalog-test.ts";
 import type {Campaign,Action,HeroClass,Mission} from "./game.ts";
+import { chestCapacity, storageUsed } from "./storage.ts";
 type AddEntry=(s:Campaign,title:string,delta:number)=>void;
 function ensure(v:unknown,message:string):asserts v {if(!v)throw Error(message);}
 function own(s:Campaign,key:string){return s.chest.filter(i=>i.key===key&&!i.equippedTo).length;}
 const NAMES:Record<string,HeroClass>={"Guerreiro":"warrior","Cavaleiro":"paladin","Arqueiro":"ranger","Assassino":"rogue","Mago":"mage","Sacerdote":"healer","Pierrô":"bard"};
-export function addCatalogItem(s:Campaign,key:string){ensure(CATALOG_BY_ID[key],"Item não cadastrado.");ensure(s.chest.length<120,"Inventário cheio.");s.chest.push({id:"item-"+(++s.itemSequence),key});}
+export function addCatalogItem(s:Campaign,key:string){ensure(CATALOG_BY_ID[key],"Item não cadastrado.");ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Armazém da Guilda.");s.chest.push({id:"item-"+(++s.itemSequence),key});}
 const add=addCatalogItem;
 const REGIONS=["Vale de Valen","Terras de Brumavale","Ruínas de Ashen","Fronteira dos Dragões","Deserto de Sahir","Costa de Namar","Bosque de Elarin","Picos de Kharum","Pântano de Morn","Império de Solkar","Abismo de Nhal","Coroa do Mundo"] as const;
 function roll(s:Campaign){s.rng=(Math.imul(s.rng,1664525)+1013904223)>>>0;return s.rng/4294967296;}
@@ -29,7 +30,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   const stock=Math.floor((s.day-1)/7)+":"+s.activeRegion+":"+d.id;
   ensure(!s.shopPurchases.includes(stock),"Estoque esgotado nesta semana.");
   ensure(s.gold>=d.preco_compra,"Ouro insuficiente.");
-  ensure(s.chest.length<120,"Inventário cheio.");
+  ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Armazém da Guilda.");
   entry(s,"Compra · "+d.nome,-d.preco_compra);add(s,d.id);s.shopPurchases.push(stock);break;
  }
  case "sell":{
@@ -56,6 +57,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
  case "unequip":{
   const item=s.chest.find(x=>x.id===action.itemId);ensure(item&&item.equippedTo,"Item não equipado.");
   ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(item.equippedTo!)),"Não é possível desequipar durante combate.");
+  ensure(storageUsed(s.chest)<chestCapacity(s),"Não há espaço no baú para guardar o equipamento. Melhore o Armazém.");
   delete item.equippedTo;delete item.equippedSlot;break;
  }
  case "craft":{
@@ -64,7 +66,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   ensure(s.hq.forge>=recipe.forge,"Forja nível "+recipe.forge+" necessária.");
   ensure(REGIONS.includes(d.regiao as typeof REGIONS[number])&&s.region>=REGIONS.indexOf(d.regiao as typeof REGIONS[number])+1,"Região do projeto não liberada.");
   ensure(s.gold>=recipe.cost,"Ouro insuficiente.");
-  ensure(s.chest.length<120,"Inventário cheio.");
+  ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Armazém da Guilda.");
   for(const [key,qty] of Object.entries(recipe.materials))ensure(own(s,key)>=qty,"Material insuficiente: "+key);
   for(const [key,qty] of Object.entries(recipe.materials)){
    let remaining=qty;
@@ -80,7 +82,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(hero.id)),"Herói ocupado em combate.");
   ensure(s.hq.library>=3,"A biblioteca da sede precisa alcançar nível 3.");
   ensure(s.bossSeasons.length>=1,"Derrote um chefe regional para desbloquear provas supremas.");
-  ensure(s.chest.length<120,"Inventário cheio.");
+  ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Armazém da Guilda.");
   const cost=Math.round((d.preco_compra||0)*.7);
   ensure(cost>0&&s.gold>=cost,"Ouro insuficiente para a transcrição.");
   for(const mat of d.materiais||[])ensure(own(s,mat.id)>=mat.quantidade,"Material insuficiente: "+CATALOG_BY_ID[mat.id]?.nome);
@@ -111,15 +113,15 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
  * Loot só é concedido pelo chamador após uma vitória.
  */
 export function awardCatalogLoot(s:Campaign,m:Mission):string[]{
- if(s.chest.length>=120)return [];
+ if(storageUsed(s.chest)>=chestCapacity(s))return [];
  const won:string[]=[];
  const pick=(candidates:typeof CATALOG_ITEMS)=>candidates[Math.floor(roll(s)*candidates.length)];
  const material=CATALOG_ITEMS.filter(d=>d.categoria==="Materiais"&&d.regiao===m.location);
- if(material.length&&s.chest.length<120){const d=pick(material);add(s,d.id);won.push(d.id);}
+ if(material.length&&storageUsed(s.chest)<chestCapacity(s)){const d=pick(material);add(s,d.id);won.push(d.id);}
  const index=m.kind==="boss"?6:Number(m.id.split("-").at(-1));
  const quest=CATALOG_ITEMS.filter(d=>d.categoria==="Outros"&&d.preco_compra===null&&d.regiao===m.location&&questMissionIndex(d.id,m.location)===index);
  for(const d of quest){
-  if(s.chest.length>=120)break;
+  if(storageUsed(s.chest)>=chestCapacity(s))break;
   if(s.claimedQuestItems.includes(d.id))continue;
   add(s,d.id);won.push(d.id);s.claimedQuestItems.push(d.id);
  }
@@ -129,7 +131,7 @@ export function awardCatalogLoot(s:Campaign,m:Mission):string[]{
  const candidates=eligible.filter(d=>m.kind==="boss"||d.raridade!=="LENDÁRIO");
  // No máximo um item extra, com probabilidade de raridade condicionada à missão.
  const gated=candidates.filter(d=>roll(s)<(probability[d.raridade]||0)*(m.kind==="boss"?1.5:1));
- if(gated.length&&s.chest.length<120){const d=pick(gated);add(s,d.id);won.push(d.id);}
+ if(gated.length&&storageUsed(s.chest)<chestCapacity(s)){const d=pick(gated);add(s,d.id);won.push(d.id);}
  return won;
 }
 export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[]){

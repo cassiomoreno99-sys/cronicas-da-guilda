@@ -89,6 +89,8 @@ while(activeExpeditions(state).length>0&&iterations++<500){
 }
 check(iterations<500,"Batalha em turnos individuais não terminou.");
 check(activeExpeditions(state).length === 0, "As expedições não concluíram após todas as ações ao vivo.");
-check(state.day === beforeDay + 1, "O dia deveria avançar uma única vez após o lote de expedições terminar.");
+check(state.day === beforeDay, "Nenhum combate pode avançar o dia automaticamente.");
+state=applyAction(state,{type:"next-day"});
+check(state.day===beforeDay+1,"Somente Próximo dia avança o calendário.");
 
 console.log("Smoke multi-expedições: OK");

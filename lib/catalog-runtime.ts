@@ -5,7 +5,7 @@ type AddEntry=(s:Campaign,title:string,delta:number)=>void;
 function ensure(v:unknown,message:string):asserts v {if(!v)throw Error(message);}
 function own(s:Campaign,key:string){return s.chest.filter(i=>i.key===key&&!i.equippedTo).length;}
 const NAMES:Record<string,HeroClass>={"Guerreiro":"warrior","Cavaleiro":"paladin","Arqueiro":"ranger","Assassino":"rogue","Mago":"mage","Sacerdote":"healer","Pierrô":"bard"};
-export function addCatalogItem(s:Campaign,key:string){ensure(CATALOG_BY_ID[key],"Item não cadastrado.");ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Armazém da Guilda.");s.chest.push({id:"item-"+(++s.itemSequence),key});}
+export function addCatalogItem(s:Campaign,key:string){ensure(CATALOG_BY_ID[key],"Item não cadastrado.");ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Forja da Guilda.");s.chest.push({id:"item-"+(++s.itemSequence),key});}
 const add=addCatalogItem;
 const REGIONS=["Vale de Valen","Terras de Brumavale","Ruínas de Ashen","Fronteira dos Dragões","Deserto de Sahir","Costa de Namar","Bosque de Elarin","Picos de Kharum","Pântano de Morn","Império de Solkar","Abismo de Nhal","Coroa do Mundo"] as const;
 function roll(s:Campaign){s.rng=(Math.imul(s.rng,1664525)+1013904223)>>>0;return s.rng/4294967296;}
@@ -30,7 +30,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   const stock=Math.floor((s.day-1)/7)+":"+s.activeRegion+":"+d.id;
   ensure(!s.shopPurchases.includes(stock),"Estoque esgotado nesta semana.");
   ensure(s.gold>=d.preco_compra,"Ouro insuficiente.");
-  ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Armazém da Guilda.");
+  ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Forja da Guilda.");
   entry(s,"Compra · "+d.nome,-d.preco_compra);add(s,d.id);s.shopPurchases.push(stock);break;
  }
  case "sell":{
@@ -58,7 +58,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
  case "unequip":{
   const item=s.chest.find(x=>x.id===action.itemId);ensure(item&&item.equippedTo,"Item não equipado.");
   ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(item.equippedTo!)),"Não é possível desequipar durante combate.");
-  ensure(storageUsed(s.chest)<chestCapacity(s),"Não há espaço no baú para guardar o equipamento. Melhore o Armazém.");
+  ensure(storageUsed(s.chest)<chestCapacity(s),"Não há espaço no baú para guardar o equipamento. Melhore o Forja.");
   delete item.equippedTo;delete item.equippedSlot;break;
  }
  case "craft":{
@@ -68,7 +68,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   ensure(REGIONS.includes(d.regiao as typeof REGIONS[number])&&s.region>=REGIONS.indexOf(d.regiao as typeof REGIONS[number])+1,"Região do projeto não liberada.");
   const cost=Math.max(1,Math.round(recipe.cost*(1-Math.min(.2,s.hq.forge*.02))));
   ensure(s.gold>=cost,"Ouro insuficiente.");
-  ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Armazém da Guilda.");
+  ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Forja da Guilda.");
   for(const [key,qty] of Object.entries(recipe.materials))ensure(own(s,key)>=qty,"Material insuficiente: "+key);
   for(const [key,qty] of Object.entries(recipe.materials)){
    let remaining=qty;
@@ -85,7 +85,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(hero.id)),"Herói ocupado em combate.");
   ensure(s.hq.library>=3,"A biblioteca da sede precisa alcançar nível 3.");
   ensure(s.bossSeasons.length>=1,"Derrote um chefe regional para desbloquear provas supremas.");
-  ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Armazém da Guilda.");
+  ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Forja da Guilda.");
   const cost=Math.round((d.preco_compra||0)*.7);
   ensure(cost>0&&s.gold>=cost,"Ouro insuficiente para a transcrição.");
   for(const mat of d.materiais||[])ensure(own(s,mat.id)>=mat.quantidade,"Material insuficiente: "+CATALOG_BY_ID[mat.id]?.nome);

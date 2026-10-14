@@ -17,12 +17,20 @@ const pos=(side:"hero"|"enemy",i:number)=>{
 function combatArt(f:BattleFighter):{src:string;full:boolean}{
  if(f.side==="enemy"){
   const kind=enemyArtKey(f.name);
-  const sprites:Partial<Record<ReturnType<typeof enemyArtKey>,string>>={
-   cultist:"cultista",specter:"espectro",skeleton:"esqueleto",
-   spectral_knight:"esqueleto",ancient_guardian:"esqueleto"
+  // Uma única apresentação 2D para todos os encontros. Enquanto não há
+  // sprite exclusivo de cada criatura, usa os bonecos de corpo inteiro
+  // da arte aprovada. Os nomes, atributos e PV continuam do motor real.
+  const sprites:Record<ReturnType<typeof enemyArtKey>,string>={
+   ambusher:"cultista",ancient_guardian:"esqueleto",bandit:"cultista",
+   border_lord:"necromante",cultist:"cultista",draconic_raider:"cultista",
+   drake_warrior:"esqueleto",fallback:"cultista",goblin:"cultista",
+   matriarch:"necromante",obsidian_guardian:"esqueleto",orc:"esqueleto",
+   panther:"espectro",raider:"cultista",skeleton:"esqueleto",
+   specter:"espectro",spectral_knight:"esqueleto",spider:"espectro",
+   troll:"esqueleto",watcher:"espectro",wild_drake:"espectro",wolf:"espectro"
   };
-  const name=sprites[kind];
-  return name?{src:"/battle/sprite-"+name+".webp",full:true}:{src:enemyArtSource(f.name),full:false};
+  const body=sprites[kind];
+  return {src:"/battle/sprite-"+body+".webp",full:true};
  }
  const id=f.id.toLowerCase(),name=f.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
  let sprite:string;

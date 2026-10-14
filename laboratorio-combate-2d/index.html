@@ -187,7 +187,7 @@ body[data-sound=on] #sound{background:#346152}
 "use strict";
 const imgs=HERO_IMAGES;
 const PAINTED=window.GUILD_LAB_ART||{};
-const PAINTED_SCENE={ashen:{aric:"aric",lyria:"lyria",thorgar:"thorgar",kaelith:"kaelith",ashen_cult:"cult",specter:"wraith",warden:"warlock",knight:"skeleton"},crypt:{aric:"aric",lyria:"lyria",thorgar:"thorgar",kaelith:"kaelith",bone:"skeleton",cult:"cult",golem:"skeleton"},bruma:{aric:"aric",lyria:"lyria",thorgar:"thorgar",kaelith:"kaelith"}};
+const PAINTED_SCENE={ashen:{aric:"aric",lyria:"lyria",thorgar:"thorgar",kaelith:"kaelith",ashen_cult:"cult",specter:"wraith",warden:"warlock",knight:"skeleton"},crypt:{aric:"aric",lyria:"lyria",thorgar:"thorgar",kaelith:"kaelith",bone:"skeleton",cult:"cult"},bruma:{aric:"aric",lyria:"lyria",thorgar:"thorgar",kaelith:"kaelith"}};
 const stageKey=u=>(PAINTED_SCENE[document.getElementById("region").value]||{})[u.id];
 const stageArt=u=>PAINTED[stageKey(u)]||art(u);
 const painted=u=>!!PAINTED[stageKey(u)];
@@ -218,8 +218,8 @@ const scenes={
  ashen:{title:"Ashen · Cinzas do Reino",difficulty:3,enemies:[
   {id:"ashen_cult",name:"Cultista das Cinzas",short:"Cultista",art:"cultist",hp:183,attack:32,armor:7,speed:20,kind:"cultist"},
   {id:"specter",name:"Espectro de Ashen",short:"Espectro",art:"specter",hp:185,attack:29,armor:5,speed:24,kind:"specter"},
-  {id:"warden",name:"Guardião Antigo",short:"Guardião",art:"ancient_guardian",hp:244,attack:32,armor:15,speed:13,kind:"golem"},
-  {id:"knight",name:"Cavaleiro Espectral",short:"Cavaleiro",art:"spectral_knight",hp:270,attack:36,armor:14,speed:17,kind:"knight"}]}
+  {id:"warden",name:"Necromante das Cinzas",short:"Necromante",art:"cultist",hp:244,attack:32,armor:12,speed:13,kind:"cultist"},
+  {id:"knight",name:"Guerreiro Esqueleto",short:"Esqueleto",art:"skeleton",hp:270,attack:36,armor:14,speed:17,kind:"skeleton"}]}
 };
 let units=[],order=[],actor=null,round=0,busy=false,paused=false,auto=true,speed=1,over=false,selectedEnemy=null,selectedAlly=null,timer=null,sequence=0,logs=[],stats={damage:0,healing:0,actions:0},rngState=1,createdAt=0;
 const random=()=>{rngState=(Math.imul(1664525,rngState)+1013904223)>>>0;return rngState/4294967296;};

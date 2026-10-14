@@ -17,7 +17,8 @@ for(const name of names){
 const portraits = fs.readFileSync("lib/portraits.ts", "utf8");
 for(const name of names)assert.ok(portraits.includes("portrait-art/"+name), "Retrato ausente: "+name);
 assert.ok(portraits.includes('doran:"sora",kael:"kael",elen:"doran",sora:"elen"'), "Associação de Thorgar/Eldrin incorreta");
-assert.ok(portraits.includes('bard:"pierro"'));
+assert.ok(portraits.includes("heroArtPlaceholder"),"Retratos ainda precisam de placeholders por identidade.");
+assert.ok(portraits.includes('officialHeroArt("portrait"'),"Falta registrar arte por raça/classe/sexo.");
 const heroPage = fs.readFileSync("app/game-client.tsx", "utf8");
 assert.ok(heroPage.includes("portraitSource(hero.name"));
 assert.ok(!heroPage.includes("portraitPosition("));

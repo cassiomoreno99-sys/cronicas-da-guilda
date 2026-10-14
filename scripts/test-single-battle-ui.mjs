@@ -11,6 +11,12 @@ async function probe(width,height,name){
  page.on("console",m=>{if(m.type()==="error")issues.push(name+": "+m.text());});
  try{
   await page.goto(base,{waitUntil:"networkidle",timeout:60000});
+  // O início normal da campanha apresenta um conselho pendente que bloqueia
+  // o envio de missões. Resolver pela interface, sem manipular o save.
+  await page.getByRole("button",{name:"Guilda",exact:true}).last().click();
+  const decision=page.locator(".council-actions button:not([disabled])").first();
+  if(await decision.count())await decision.click();
+  await page.getByRole("button",{name:"Missões",exact:true}).last().click();
   const mission=page.locator(".mission-card .action-button:not([disabled])").first();
   await mission.waitFor({state:"visible",timeout:15000});
   await mission.click();

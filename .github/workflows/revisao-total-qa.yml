@@ -1,0 +1,71 @@
+name: Revisão geral - Fases 1 a 4
+on:
+  push:
+    branches: [revisao-final-fases-1-a-4-20261014]
+    paths: ['.github/workflows/revisao-total-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rigoroso:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Instalar bibliotecas
+        run: |
+          npm install --no-audit --no-fund
+          pip install --quiet pillow
+      - name: Inspecionar alfa e proporção de cada boneco de combate
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from PIL import Image,ImageDraw
+          names=["aric","lyria","thorgar","kaelith","eldrin","rhokar","orc"]
+          out=Image.new("RGB",(250*len(names),440),"#122033")
+          for n,name in enumerate(names):
+              file=Path(f"public/battle/sprite-{name}.webp")
+              im=Image.open(file).convert("RGBA")
+              alpha=im.getchannel("A")
+              box=alpha.getbbox()
+              hist=alpha.histogram()
+              opaque=sum(hist[190:])/max(1,im.width*im.height)
+              assert im.width>100 and im.height>100 and box, (name,"imagem inválida")
+              print(f"SPRITE_{name}: size={im.size}, nonTransparentBox={box}, opaqueFraction={opaque:.3f}")
+              assert opaque>0.05,(name,"boneco praticamente invisível")
+              thumb=im.copy()
+              thumb.thumbnail((235,395))
+              left=n*250+(250-thumb.width)//2;top=35+(395-thumb.height)//2
+              out.paste(thumb,(left,top),thumb)
+              ImageDraw.Draw(out).text((n*250+10,10),name,fill="white")
+          Path("visual-report").mkdir(exist_ok=True)
+          out.save("visual-report/sprites-7-audit.png")
+          PY
+      - name: Testes integrados de regras
+        run: node --experimental-strip-types scripts/test-revisao-total.ts
+      - name: Todas as regressões e build de produção
+        run: npm run build
+      - name: Navegador real Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Ligar jogo compilado
+        run: |
+          npm run preview -- --host 127.0.0.1 >/tmp/revisao-vite.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:4173 >/dev/null && exit 0; sleep 1; done
+          cat /tmp/revisao-vite.log
+          exit 1
+      - name: Conferir quatro heróis REALMENTE visíveis, não apenas etiquetas
+        run: node scripts/test-revisao-browser.mjs
+      - name: Capturas e auditoria
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: revisao-fases-1-4-e-provas
+          path: visual-report/
+          if-no-files-found: ignore

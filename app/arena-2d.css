@@ -213,3 +213,7 @@
  .guild2d-sprite{animation:none}
  .guild2d-number,.guild2d-spark{animation-duration:.1s!important}
 }
+
+.guild2d-rewards{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:10px;margin:8px;border-radius:7px;border:1px solid #a38756;background:#142e35;color:#fce1a8;font:700 12px system-ui}
+.guild2d-rewards strong{color:#ffeab8;font:700 15px Georgia,serif}
+.guild2d-rewards p{width:100%;margin:0;color:#e4d8c0;font:11px system-ui}

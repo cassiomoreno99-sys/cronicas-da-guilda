@@ -27,12 +27,11 @@ export const WORLD_REGIONS = [
 
 export const HQ_BUILDINGS = {
   infirmary: { name: "Enfermaria", max: 10, baseCost: 220, description: "Reduz duração de ferimentos e melhora recuperação de energia." },
-  forge: { name: "Forja", max: 10, baseCost: 260, description: "Indisponível enquanto não houver itens." },
+  forge: { name: "Forja", max: 10, baseCost: 260, description: "Melhora a criação de equipamentos e amplia o baú em dois módulos de 15 espaços por nível, até 300." },
   academy: { name: "Academia", max: 10, baseCost: 240, description: "Treina heróis da Guilda e forma até 10 cidadãos por temporada. Até 2 podem se tornar heróis; mentor e dedicação aumentam as chances." },
   library: { name: "Biblioteca Arcana", max: 10, baseCost: 250, description: "Aumenta magia, cura e evolução de habilidades." },
   stables: { name: "Estábulos", max: 10, baseCost: 200, description: "Melhora escoltas, viagens e recuperação entre expedições." },
   warroom: { name: "Sala de Guerra", max: 10, baseCost: 300, description: "Melhora equipes prontas, raids e batalhas contra guildas." },
-  warehouse: { name: "Armazém", max: 10, baseCost: 240, description: "Nível 1: 30 espaços. Cada nível instala dois módulos de 15, até 300 espaços no nível 10." },
 } as const;
 
 export const HERO_SCARS = [

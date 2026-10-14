@@ -1,6 +1,6 @@
 import {useState,type CSSProperties} from "react";
 import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide-react";
-import {availableAbilities,abilityCooldownRemaining,TACTICS,ITEMS,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog} from "@/lib/game";
+import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {portraitSource} from "@/lib/portraits";
 import {enemyArtKey,enemyArtSource} from "@/lib/enemy-art";
@@ -14,12 +14,9 @@ const pos=(side:"hero"|"enemy",i:number)=>{
 };
 /** Ilustrações de corpo inteiro; para criaturas sem sprite completo,
  * conserva-se a identidade da espécie pelo bestiário existente. */
-function combatArt(f:BattleFighter):{src:string;full:boolean}{
+function combatArt(f:BattleFighter,hero?:Hero):{src:string;full:boolean}{
  if(f.side==="enemy"){
   const kind=enemyArtKey(f.name);
-  // Uma única apresentação 2D para todos os encontros. Enquanto não há
-  // sprite exclusivo de cada criatura, usa os bonecos de corpo inteiro
-  // da arte aprovada. Os nomes, atributos e PV continuam do motor real.
   const sprites:Record<ReturnType<typeof enemyArtKey>,string>={
    ambusher:"cultista",ancient_guardian:"esqueleto",bandit:"cultista",
    border_lord:"necromante",cultist:"cultista",draconic_raider:"cultista",
@@ -29,19 +26,21 @@ function combatArt(f:BattleFighter):{src:string;full:boolean}{
    specter:"espectro",spectral_knight:"esqueleto",spider:"espectro",
    troll:"esqueleto",watcher:"espectro",wild_drake:"espectro",wolf:"espectro"
   };
-  const body=sprites[kind];
-  return {src:"/battle/sprite-"+body+".webp",full:true};
+  return {src:"/battle/sprite-"+sprites[kind]+".webp",full:true};
  }
- const id=f.id.toLowerCase(),name=f.name.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
- let sprite:string;
- if(id==="aric"||name.includes("aric"))sprite="aric";
- else if(id==="lyra"||name.includes("lyria")||name.includes("lyra"))sprite="lyria";
- else if(id==="elen"||name.includes("thorgar"))sprite="thorgar";
- else if(id==="kael"||name.includes("kaelith"))sprite="kaelith";
- else{
-  const roles:Record<string,string>={warrior:"aric",paladin:"aric",monk:"aric",mage:"lyria",necromancer:"lyria",bard:"lyria",healer:"thorgar",ranger:"thorgar",druid:"thorgar",rogue:"kaelith"};
-  sprite=roles[f.class||""]||"aric";
- }
+ const id=f.id.toLowerCase();
+ const race=hero ? heroRace(hero) : undefined;
+ // A aparência racial prevalece em heróis recrutados e em saves antigos.
+ // O elenco canônico mantém a arte aprovada, exceto o anão e o bestial
+ // que receberam sprites específicos coerentes com seus retratos.
+ const byRace:Record<string,string>={
+   human:"aric",elf:hero?.class==="ranger"||hero?.class==="druid"?"eldrin":"lyria",
+   dwarf:"thorgar",orc:"orc",beastkin:"rhokar",umbral:"kaelith"
+ };
+ const canonical:Record<string,string>={aric:"aric",lyra:"lyria",elen:"thorgar",kael:"kaelith",sora:"eldrin",doran:"rhokar"};
+ const expectedRace:Record<string,string>={aric:"human",lyra:"elf",elen:"dwarf",kael:"umbral",sora:"elf",doran:"beastkin"};
+ const sprite=canonical[id]&&(!race||race===expectedRace[id])
+   ?canonical[id]:(race?byRace[race]:undefined)||"aric";
  return {src:"/battle/sprite-"+sprite+".webp",full:true};
 }
 const recentHit=(logs:BattleLog[])=>[...logs].reverse().find(x=>x.actorId&&x.targetId&&["hit","critical","heal","fall","ability"].includes(x.kind)&&x.amount!==0);
@@ -93,7 +92,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const p=pos(f.side,i),acting=actor?.id===f.id&&!!targetPos&&f.hp>0;
   const struck=target?.id===f.id&&!!evt;
   const style:PosStyle={"--x":p.x+"%","--y":p.y+"%","--dash-x":acting&&targetPos?((targetPos.x-p.x)*.7)+"cqw":"0cqw","--dash-y":acting&&targetPos?((targetPos.y-p.y)*.7)+"cqh":"0cqh"};
-  const image=combatArt(f);
+  const image=combatArt(f,f.side==="hero"?state.heroes.find(h=>h.id===f.id):undefined);
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={style} data-dead={f.hp<=0} data-selected={selected} data-full-art={image.full}

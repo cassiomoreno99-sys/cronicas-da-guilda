@@ -54,8 +54,19 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
 }){
  const battle=expedition.battle;
  const all=battle.combat?.fighters||battle.fighters||[];
- const heroes=all.filter(f=>f.side==="hero").slice(0,4);
- const enemies=all.filter(f=>f.side==="enemy").slice(0,4);
+ // A formação salva na expedição é a única fonte de participantes visuais.
+ // Rejeita herói extra ou duplicado em registros de combate antigos.
+ const sent=new Set(expedition.team.slice(0,4));
+ const rendered=new Set<string>();
+ const heroes=all.filter(f=>{
+   if(f.side!=="hero"||!sent.has(f.id)||rendered.has(f.id))return false;
+   rendered.add(f.id);return true;
+ });
+ const seenEnemies=new Set<string>();
+ const enemies=all.filter(f=>{
+   if(f.side!=="enemy"||seenEnemies.has(f.id))return false;
+   seenEnemies.add(f.id);return true;
+ }).slice(0,4);
  const [heroId,setHeroId]=useState("");
  const [enemyId,setEnemyId]=useState("");
  const [allyTargetId,setAllyTargetId]=useState("");

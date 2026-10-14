@@ -1,0 +1,25 @@
+name: Laboratório 2D - preparar arte aprovada
+on:
+  push:
+    branches:
+      - laboratorio-combate-2d-visual-corrigido
+    paths:
+      - .github/workflows/lab-assets.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Conferir disponibilidade do arquivo de referência
+        run: |
+          curl --connect-timeout 15 --max-time 90 -fL 'https://at.adobe.com/pcedz2Thvnc6yrh6' -o /tmp/reference-source
+          file /tmp/reference-source
+          python3 - <<'PY'
+          from PIL import Image
+          im=Image.open('/tmp/reference-source')
+          print('ARTE DISPONÍVEL', im.size, im.mode, im.format)
+          im.verify()
+          PY

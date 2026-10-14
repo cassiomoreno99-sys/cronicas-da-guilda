@@ -39,3 +39,5 @@ jobs:
           if-no-files-found: ignore
 
 # Revisão 2: testes atualizados para interface única, sem arena cinematográfica.
+
+# Revisão 3: remover dependências de testes legados do combate e validar o resultado.

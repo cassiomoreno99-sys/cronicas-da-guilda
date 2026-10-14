@@ -103,3 +103,66 @@
 @media(prefers-reduced-motion:reduce){
   .arena .unit[data-paint="true"] .body-art{animation:none!important}
 }
+
+/* Referência aprovada: dar precedência ao cenário fotorrealista de Ashen. */
+.arena[data-region="ashen"] .backdrop{
+ background-image:linear-gradient(180deg,rgba(2,9,16,.10) 0%,rgba(2,9,16,.02) 55%,rgba(2,9,16,.16) 100%),url('./art/arena-aprovada.webp')!important;
+ background-position:center center!important;
+ background-size:100% 100%!important;
+ background-repeat:no-repeat!important;
+ opacity:1!important;
+}
+/* HUD separado dos sprites: nomes e PV nunca podem ser cobertos por um corpo. */
+#stageHud{position:absolute;inset:0;z-index:25;pointer-events:none}
+.arena .unit[data-paint="true"] .unit-name,
+.arena .unit[data-paint="true"] .unit-hp,
+.arena .unit[data-paint="true"] .unit-numbers{
+ display:none!important;
+}
+.arena .unit[data-paint="true"] .body-art{height:100%!important;flex:1!important}
+.stage-hud{
+ position:absolute;
+ transform:translate(-50%,-50%);
+ width:clamp(110px,13.2cqw,177px);
+ display:flex;
+ align-items:center;
+ flex-direction:column;
+ gap:2px;
+ z-index:2;
+ filter:drop-shadow(0 2px 5px #000d);
+}
+.stage-hud-name{
+ width:100%;
+ text-align:center;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis;
+ padding:3px 5px;
+ color:#ffdeb0;
+ font:700 clamp(12px,1.45cqw,17px) Georgia,serif;
+ background:linear-gradient(105deg,rgba(3,12,23,.97),rgba(8,23,39,.96))!important;
+ border:1px solid #cfaa67;
+ border-radius:4px;
+ box-shadow:inset 0 1px 0 #f8c97633;
+ text-shadow:0 1px 3px #000;
+}
+.stage-hud[data-side="enemy"] .stage-hud-name{border-color:#bd7771}
+.stage-hud[data-current="true"] .stage-hud-name{box-shadow:0 0 11px #edd38cba}
+.stage-hud[data-select="true"] .stage-hud-name{outline:1px solid #f5d784}
+.stage-hud-bar{height:7px;width:98%;overflow:hidden;border-radius:8px;background:#4a2430;border:1px solid #0b1021}
+.stage-hud-bar i{display:block;width:100%;height:100%;background:linear-gradient(90deg,#45a97d,#dfec9b);transition:width .4s}
+.stage-hud[data-side="enemy"] .stage-hud-bar i{background:linear-gradient(90deg,#9f2540,#ee9779)}
+.stage-hud small{font:700 10px system-ui;color:#fff3df;text-shadow:0 1px 4px #000,0 1px 8px #000}
+.stage-hud[data-dead="true"]{opacity:.4;filter:grayscale(1)}
+#result{z-index:99!important}
+@media(max-width:750px){
+ .stage-hud{width:clamp(60px,18cqw,108px);gap:1px}
+ .stage-hud-name{font-size:9px!important;padding:2px 3px}
+ .stage-hud-bar{height:5px}
+ .stage-hud small{font-size:8px}
+}
+@media(max-width:400px){
+ .stage-hud{width:17.5cqw}
+ .stage-hud-name{font-size:8px!important;padding:2px 2px}
+ .stage-hud small{font-size:7.5px}
+}

@@ -80,3 +80,5 @@ jobs:
 # Revisão 4: verificar o novo catálogo e tipos antes do build.
 
 # Revisão 5: corrigir verificação do padrão CG-001..314.
+
+# Revisão 6: stress simula comando manual Próximo dia após cada combate.

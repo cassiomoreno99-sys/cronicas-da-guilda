@@ -161,6 +161,8 @@ console.log("v1.3.0: iniciando bateria ampla...");
   const before = s.heroes.find(h => h.id === trainee.id)!.xp;
   s.event = null;
   s = applyAction(s, { type:"rest" });
+  ok(s.heroes.find(h=>h.id===trainee.id)!.xp === before,"Descanso não deve passar dia nem conceder XP da Academia.");
+  s = applyAction(s, { type:"next-day" });
   const afterHero = s.heroes.find(h => h.id === trainee.id)!;
   ok(afterHero.xp > before || afterHero.level > 1, "Academia não concedeu XP ao aprendiz.");
 }

@@ -249,9 +249,10 @@ function updateStageHud(){
  for(const u of units){
   const unitNode=unitElement(u),hud=$("hud-"+u.id);
   if(!unitNode||!hud)continue;
-  const box=unitNode.getBoundingClientRect();
-  hud.style.left=(box.left+box.width/2-rect.left)+"px";
-  hud.style.top=(box.bottom-rect.top-45)+"px";
+  // Coordenadas estáticas: não arrastar o HUD durante o avanço do boneco.
+  // offsetLeft/offsetTop ignoram as animações do Web Animations API.
+  hud.style.left=unitNode.offsetLeft+"px";
+  hud.style.top=(unitNode.offsetTop+unitNode.offsetHeight/2-45)+"px";
   hud.dataset.dead=String(u.hp<=0);
   hud.dataset.select=String((u.side==="enemy"?selectedEnemy:selectedAlly)===u.id);
   hud.dataset.current=String(actor?.id===u.id);

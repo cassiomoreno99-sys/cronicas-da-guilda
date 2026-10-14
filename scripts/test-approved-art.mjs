@@ -35,7 +35,7 @@ assert(ui.includes('LEAGUE_PLAYER_CREST = "/league/crest-alvorecer.webp"'),"Bras
 // REGRESSÃO MOBILE: compra do mercador em segunda linha, sem sobreposição.
 assert(css.includes("Correção exclusiva para telas móveis: o botão do mercador"),"Mercador mobile perdeu ajuste de compra");
 assert(css.includes("@media (max-width: 900px)"),"Regra mobile não está isolada em media query");
-assert(css.includes(".tavern-screen .tavern-side .shop .catalog-shop > div > button"),"Botão da taverna sem alvo de CSS específico");
+assert(css.includes(".tavern-screen .tavern-market .shop .catalog-shop > div > button"),"Botão da taverna sem alvo de CSS específico");
 assert(css.includes("grid-column: 1 / -1"),"Botão deve usar toda a largura abaixo dos detalhes");
 assert(css.includes("grid-row: 2"),"Botão do mercador deve ficar na segunda linha");
 

@@ -1,0 +1,196 @@
+/* Crônicas da Guilda — Laboratório 2D: revisão visual V4.
+   Só afeta o laboratório independente. Sem mudança nas regras de combate. */
+:root{--gold:#e8be7d;--paper:#fbebd1}
+html,body{min-height:100%;background:#060c17}
+body{background:radial-gradient(ellipse at 50% 12%,#203448 0%,#090f1d 62%,#040913 100%)}
+#game{max-width:1260px;background:#071322;border-color:#b28a54;box-shadow:0 20px 100px #000c}
+.masthead{background:linear-gradient(110deg,#08152a,#162c44 54%,#1c1a29);border-bottom:2px solid #bd985a}
+.brand{letter-spacing:.024em;text-shadow:0 1px 12px #e4ac5370}
+.toolbar{background:#0a1a2e}
+.timeline{min-height:78px;background:linear-gradient(105deg,#152b40,#101a30)}
+.chip{max-width:57px;width:49px;height:51px;border-color:#907451;background:#102338}
+.chip img{object-fit:contain;object-position:center center;filter:drop-shadow(0 1px 2px #05070ecc)}
+.chip span{background:#040b17db;text-shadow:0 1px 3px #000}
+.arena{
+  height:clamp(540px,69dvh,740px)!important;
+  min-height:540px;
+  border-top:2px solid #ad925c;
+  border-bottom:3px solid #c39b5c;
+  background:#152333;
+  position:relative;
+  contain:layout paint;
+}
+.arena .backdrop{
+  inset:0;
+  background-image:linear-gradient(180deg,rgba(2,8,21,.08),transparent 31%,rgba(5,11,21,.10) 71%,rgba(5,10,18,.26)),url('./cenario-cripta.svg')!important;
+  background-size:cover!important;
+  background-position:center center!important;
+  background-repeat:no-repeat!important;
+  filter:none!important;
+  opacity:1!important;
+}
+.arena[data-region="bruma"] .backdrop{
+  background-image:linear-gradient(180deg,rgba(2,12,16,.03),transparent 42%,rgba(2,11,13,.24)),url('./cenario-bruma.svg')!important;
+}
+.arena[data-region="ashen"] .backdrop{
+  background-image:linear-gradient(180deg,rgba(11,8,18,.04),transparent 45%,rgba(12,8,18,.18)),url('./cenario-ashen.svg')!important;
+}
+.arena .backdrop::before,.arena .backdrop::after{display:none!important}
+.arena .floor{
+  inset:auto 0 0 0!important;
+  height:37%!important;
+  top:auto!important;
+  background:linear-gradient(180deg,transparent 0%,rgba(5,9,18,.05) 45%,rgba(2,5,12,.42) 100%)!important;
+  filter:none!important;
+  transform:none!important;
+  pointer-events:none;
+}
+.arena .scene-glow{
+  background:linear-gradient(90deg,rgba(29,116,158,.11),transparent 37%,transparent 63%,rgba(182,66,41,.12))!important;
+  filter:none!important;
+}
+.arena .arena-vignette{
+  background:radial-gradient(ellipse at 50% 49%,transparent 52%,rgba(4,9,18,.27) 80%,rgba(3,7,14,.68) 100%)!important;
+}
+.arena .stage-heading{
+  background:linear-gradient(90deg,rgba(6,18,31,.95),rgba(7,21,33,.78),rgba(19,13,26,.92))!important;
+  border-bottom:1px solid #b6945a;
+  height:37px!important;
+  letter-spacing:.09em;
+  font-size:clamp(10px,1.15vw,13px);
+  text-shadow:0 1px 4px #000;
+}
+.arena .stage-heading span:first-child{color:#b4e9ff}
+.arena .stage-heading span:last-child{color:#ffb3a7}
+.arena .lane{display:none!important}
+.arena .unit{
+  width:clamp(98px,16.1cqw,186px)!important;
+  height:clamp(148px,31cqh,220px)!important;
+  filter:drop-shadow(0 12px 11px #030711dd)!important;
+  transition:opacity .35s,filter .3s,transform .3s!important;
+  z-index:5;
+}
+.arena .unit[data-paint="true"]{min-width:0!important;max-height:none!important;min-height:0!important}
+.arena .unit::before{
+  content:"";
+  position:absolute;
+  width:85%;
+  height:15px;
+  left:8%;
+  bottom:12px;
+  border-radius:50%;
+  background:#010817b0;
+  box-shadow:0 2px 16px 5px #0007;
+  transform:scale(1.05);
+  pointer-events:none;
+  z-index:-1;
+}
+.arena .unit[data-side="hero"]::before{box-shadow:0 1px 20px 2px #3b8db160}
+.arena .unit[data-side="enemy"]::before{box-shadow:0 1px 20px 2px #b8534f55}
+.arena .unit .body-art{
+  width:100%!important;
+  flex:1!important;
+  min-height:0!important;
+  background:transparent!important;
+  border:0!important;
+  overflow:visible!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  animation:painted-idle 3s ease-in-out infinite alternate!important;
+}
+.arena .unit .body-art img{
+  width:100%;height:100%;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  border:0;
+  mask-image:linear-gradient(180deg,#000 0%,#000 86%,transparent 100%)!important;
+  -webkit-mask-image:linear-gradient(180deg,#000 0%,#000 86%,transparent 100%)!important;
+  filter:drop-shadow(1px 5px 4px #0009) contrast(1.08) saturate(1.09);
+}
+.arena .unit[data-paint="true"] .body-art img{
+  mask-image:none!important;
+  -webkit-mask-image:none!important;
+}
+.arena .unit .body-art::after{display:none!important}
+.arena .unit .unit-name{
+  position:relative;
+  z-index:7;
+  width:94%!important;
+  max-width:190px!important;
+  min-height:24px;
+  border:1px solid #c9a36b!important;
+  border-radius:5px!important;
+  background:linear-gradient(105deg,rgba(5,13,26,.95),rgba(19,26,40,.96))!important;
+  color:#ffe4b5;
+  margin-top:-8px!important;
+  padding:3px 4px;
+  box-shadow:0 1px 0 #f5d58f33 inset,0 3px 10px #000b!important;
+  font:bold clamp(10px,1.35cqw,14px) Georgia,serif!important;
+  text-shadow:0 1px 4px #000;
+}
+.arena .unit[data-side="enemy"] .unit-name{border-color:#b36e6c!important}
+.arena .unit .unit-hp{
+  width:91%!important;
+  height:7px!important;
+  background:#261924;
+  border:1px solid #050b15;
+  margin-top:3px!important;
+  box-shadow:0 1px 4px #000!important;
+}
+.arena .unit .unit-numbers{
+  font-size:10px;
+  margin-top:2px!important;
+  color:#f6eddf;
+  text-shadow:0 1px 5px #000,0 1px 1px #000;
+}
+.arena .unit[data-current="true"]{z-index:10}
+.arena .unit[data-current="true"] .body-art{filter:drop-shadow(0 0 12px #fff0b5ad)!important}
+.arena .unit[data-current="true"]::after{top:-19px;font-size:17px;z-index:9}
+.arena .unit[data-select="true"] .body-art{outline:0!important;filter:drop-shadow(0 0 9px #eac36e99)}
+.arena .unit[data-dead="true"]{opacity:.30!important}
+.arena .unit[data-dead="true"] .body-art{animation:none!important;filter:grayscale(1) brightness(.65)!important}
+.arena .unit.shaking .body-art{animation:shake .32s ease-in-out!important}
+.arena .unit-effects{top:7px!important}
+.arena .stage-caption{
+  bottom:0!important;
+  padding:5px 8px 7px;
+  background:linear-gradient(transparent,rgba(1,7,16,.67));
+  font-size:11px;color:#fff2dd;
+}
+.legend{background:#0a1c2f;border-bottom:1px solid #557289}
+.rosters{background:#091625}
+.roster{background:#11293b}
+.roster.enemy{background:#30222c}
+.member img{
+  object-fit:contain!important;
+  object-position:center!important;
+  background:#172d42!important;
+  border-radius:5px;
+  border:1px solid #46637a;
+  padding:1px;
+}
+.roster.enemy .member img{background:#34232f!important;border-color:#6f4e58}
+.member{min-height:49px!important}
+.log,.turn-panel{box-shadow:inset 0 1px 0 #fcdd9c0b}
+@media(min-width:1300px){.arena{height:min(71dvh,760px)!important}}
+@media(max-width:760px){
+  .masthead{min-height:70px}
+  .brand{font-size:clamp(16px,3.3vw,22px)}
+  .arena{height:clamp(490px,69dvh,640px)!important;min-height:490px}
+  .arena .unit{width:clamp(75px,22cqw,130px)!important;height:clamp(126px,25.5cqh,177px)!important}
+  .arena .unit .unit-name{min-height:20px!important;font-size:clamp(9px,2.3cqw,12px)!important;padding:2px 3px}
+  .arena .unit .unit-hp{height:6px!important}
+  .arena .unit .unit-numbers{font-size:9px!important}
+  .arena .stage-heading{font-size:9px}
+  .arena .stage-caption{font-size:9px}
+  .chip{width:40px;height:44px}
+  .rosters{gap:6px}
+  .member{min-height:42px!important}
+}
+@media(max-width:400px){
+  .arena{height:500px!important;min-height:500px!important}
+  .arena .unit{width:23.5cqw!important;height:135px!important}
+  .arena .unit .unit-name{font-size:8.5px!important;letter-spacing:-.015em}
+  .arena .unit .unit-numbers{font-size:8px!important}
+}
+@media(prefers-reduced-motion:reduce){.arena .unit .body-art{animation:none!important}}

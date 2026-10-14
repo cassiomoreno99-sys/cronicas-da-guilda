@@ -365,7 +365,7 @@ export const MAX_HERO_LEVEL = 50;
 /** Curva 2026: subida inicial deliberada, sem reduzir o nível de saves antigos. */
 export function threshold(h: Hero) {
   if(h.level >= MAX_HERO_LEVEL)return Number.POSITIVE_INFINITY;
-  return 85 + h.level*26 + Math.floor(h.level/5)*20 + Math.floor(h.level/10)*20;
+  return 165 + h.level*42 + Math.floor(h.level/5)*32 + Math.floor(h.level/10)*32;
 }
 /** Distância real entre territórios: a região não é uma cópia da anterior.
  * Somente as NOVAS missões usam a curva; expedições salvas não são reescritas. */
@@ -383,7 +383,7 @@ export function missionSuggestedLevel(m:Pick<Mission,"location"|"rank"|"kind">) 
  * Ajuste por nível individual ocorre separadamente (repetição rende menos). */
 export function missionRewardXp(m:Pick<Mission,"location"|"rank"|"kind">,won=true) {
   const regionIndex=Math.max(0,WORLD_REGIONS.findIndex(r=>r.name===m.location));
-  const base=(won?24:12)+m.rank*(won?17:9);
+  const base=(won?16:8)+m.rank*(won?11:6);
   return base+regionIndex*(won?18:9)+(m.kind==="boss"&&won?32:0);
 }
 export function activeJourney(s: Campaign, heroId: string) { return s.journeys?.find(j => j.heroId === heroId); }
@@ -403,8 +403,8 @@ function expeditionBattle(s: Campaign, expeditionId?: string) {
   const expedition = (expeditionId ? active.find(e => e.id === expeditionId) : undefined) || active[0];
   return expedition ? { expedition, battle: expedition.battle } : s.lastBattle?.status === "active" && s.lastBattle.combat ? { expedition: undefined, battle: s.lastBattle } : null;
 }
-export function talentPoints(h: Hero) { return Math.max(0, Math.min(3, Math.floor((h.level - 1) / 3)) - (h.talent?.rank || 0)); }
-export function racialPoints(h: Hero) { return Math.max(0, Math.min(3, Math.floor(h.level / 3)) - (h.racial?.rank || 0)); }
+export function talentPoints(h: Hero) { return Math.max(0,[8,16,28].filter(l=>h.level>=l).length-(h.talent?.rank||0)); }
+export function racialPoints(h: Hero) { return Math.max(0,[6,15,27].filter(l=>h.level>=l).length-(h.racial?.rank||0)); }
 export function storyProgress(h: Hero) {
   const stage = (h.storyStage || 0) as StoryStage;
   if (stage === 0) return { stage, label: "Treino", requirement: "Disponível agora", cost: 60, energy: 10 };
@@ -441,13 +441,13 @@ export function heroStats(h: Hero, s?: Campaign) {
   }
   if (h.talent) {
     const bonus = SPECIALIZATIONS[h.class][h.talent.path].bonus;
-    for (const key of ["attack", "defense", "magic", "hp", "speed", "critical", "healing"] as const) n[key] += (bonus[key] || 0) * h.talent.rank;
+    for (const key of ["attack", "defense", "magic", "hp", "speed", "critical", "healing"] as const) n[key] += (bonus[key] || 0) * h.talent.rank * 1.35;
     if (h.talent.branch && h.talent.rank >= 2) {
       const branchBonus = SPECIALIZATION_BRANCHES[h.class][h.talent.path][h.talent.branch].bonus;
-      for (const key of ["attack", "defense", "magic", "hp", "speed", "critical", "healing"] as const) n[key] += (branchBonus[key] || 0) * (h.talent.rank - 1);
+      for (const key of ["attack", "defense", "magic", "hp", "speed", "critical", "healing"] as const) n[key] += (branchBonus[key] || 0) * (h.talent.rank - 1) * 1.3;
     }
   }
-  if (s?.hq?.library) n.magic += Math.floor(s.hq.library / 2);
+  if (s?.hq?.library){n.magic += Math.ceil(s.hq.library*.8);n.healing *= 1+s.hq.library*.02;}
   if(s){
     const extra=setBonuses(s,h.class,equipped.map(i=>i.key));
     for(const key of ["attack","defense","magic","hp","speed","critical","healing","luck"] as const)n[key]+=extra[key];
@@ -892,7 +892,7 @@ export function newCampaign(seed = 381077): Campaign {
 export function missions(s: Campaign): Mission[] {
   const regionIndex = Math.max(0, Math.min(WORLD_REGIONS.length - 1, (s.activeRegion || 1) - 1));
   const region = WORLD_REGIONS[regionIndex], progression = Math.max(0, region.minLevel - 1);
-  const scaling = regionThreat(regionIndex) * (1 + (s.season - 1) * .045 + Math.floor((seasonDay(s) - 1) / 7) * .018);
+  const scaling = regionThreat(regionIndex) * (1 + (s.season - 1) * .06 + Math.floor((seasonDay(s) - 1) / 7) * .024);
   // Cada região possui seis missões próprias; o guardião regional é a sétima.
   // A sexta entra no dia 30; o guardião regional surge no dia 45 da temporada de 60 dias.
   const kinds: MissionKind[] = ["dungeon", "hunt", "escort", "dungeon", "dungeon", "hunt"];
@@ -951,7 +951,7 @@ export function seasonBoss(s: Campaign): Mission | null {
 }
 export function trainingPlan(s: Campaign, h: Hero) {
   const gap = Math.max(0, Math.max(...s.heroes.map(hero => hero.level)) - h.level);
-  return { cost: 90, xp: 90 + Math.min(4, gap) * 35, energy: 15, catchup: Math.min(4, gap) * 35 };
+  return { cost: 90, xp: 40 + Math.min(4, gap) * 18, energy: 17, catchup: Math.min(4, gap) * 18 };
 }
 // Reservas numéricas exclusivas: rivais ocupam os primeiros 6.400 índices,
 // e o mercado começa em 7.000. Cada índice gera nome diferente.
@@ -1227,7 +1227,7 @@ function selectTeam(s: Campaign, ids: string[], tactic: Tactic, formation?: Reco
   s.team = [...ids]; s.formation = chosen; s.tactic = tactic; return team as Hero[];
 }
 function startBattle(s: Campaign, m: Mission, team: Hero[]) {
-  const scaling = m.force / [30, 48, 68, 92, 125][m.rank - 1], cohesion = squadBonus(s, team.map(h => h.id));
+  const scaling = m.force / [30, 48, 68, 92, 125][m.rank - 1], cohesion = squadBonus(s, team.map(h => h.id)) * (1+(s.hq.warroom||0)*.012);
   const familiarity=familiarityBonus(s.teamFamiliarity,team.map(h=>h.id));
   const fighters: Combatant[] = team.map(h => {
     const base = heroStats(h, s), position = s.formation[h.id] || defaultFormationLine(h.class);
@@ -1238,13 +1238,13 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
     return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy, guarding: h.talent?.path === "defense" && ["warrior", "paladin", "monk"].includes(h.class) ? h.talent.rank : 0 };
   });
   for (let i = 0; i < m.count; i++) {
-    const boss = m.kind === "boss" && i === 0, hp = Math.round((65 + m.rank * 48) * scaling * (boss ? 1.9 : 1));
-    fighters.push({ id: "enemy-" + i, name: boss ? m.title : m.enemy + " " + (i + 1), side: "enemy", hp, maxHp: hp, attack: (12 + m.rank * 9.5) * (1 + (scaling - 1) * .37) * (boss ? 1.16 : 1), defense: (5 + m.rank * 4 + (boss ? 8 : 0)) * Math.sqrt(Math.max(1,scaling)), magic: 0, speed: boss ? 22 : 17, critical: .05, energy: 100, healing: 1, guarding: 0, statuses: [] });
+    const boss = m.kind === "boss" && i === 0, hp = Math.round((65 + m.rank * 48) * scaling * (boss ? 2.25 : 1.24));
+    fighters.push({ id: "enemy-" + i, name: boss ? m.title : m.enemy + " " + (i + 1), side: "enemy", hp, maxHp: hp, attack: (12 + m.rank * 9.5) * (1 + (scaling - 1) * .43) * (boss ? 1.28 : 1.13), defense: (5 + m.rank * 4 + (boss ? 8 : 0)) * Math.sqrt(Math.max(1,scaling)) * 1.14, magic: 0, speed: boss ? 22 : 17, critical: .05, energy: 100, healing: 1, guarding: 0, statuses: [] });
   }
   const agile = team.filter(h => ["rogue", "ranger"].includes(h.class)).length;
   const scout = team.some(h => h.class === "ranger" && h.talent?.path === "defense");
   const objectiveMax = m.kind === "escort" ? 170 + m.rank * 25 : m.kind === "defense" ? 200 + Math.round(fighters.filter(f => f.side === "hero").reduce((n, f) => n + f.defense, 0) * .6) : 0;
-  const targetRounds = m.kind === "escort" ? Math.max(3, 6 - (agile >= 2 ? 1 : 0) - (scout ? 1 : 0)) : m.kind === "defense" ? 6 : m.kind === "hunt" ? 12 : 24;
+  const targetRounds = m.kind === "escort" ? Math.max(3, 7 - (agile >= 2 ? 1 : 0) - (scout ? 1 : 0) - Math.floor((s.hq.stables||0)/5)) : m.kind === "defense" ? 6 : m.kind === "hunt" ? 12 : 24;
   return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, consumablesUsed: 0, pendingAbilities: [], abilityCooldowns: {}, autoAbilities: true, healingItemsUsed:0, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
 }
 function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreated") {
@@ -1254,7 +1254,7 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   b.remaining = c.fighters.filter(f => f.side === "hero" && f.hp > 0).length;
   for (const f of c.fighters.filter(f => f.side === "hero")) {
     const h = s.heroes.find(h => h.id === f.id)!;
-    h.energy = Math.max(0, h.energy - (status === "retreated" ? 12 : Math.round(c.fatigueTotal / Math.max(1, b.rounds))) - (f.hp === 0 ? 12 : 0));
+    h.energy = Math.max(0, h.energy - Math.max(5,Math.round((status === "retreated" ? 12 : c.fatigueTotal / Math.max(1,b.rounds))/(1+(s.hq.stables||0)*.035))) - (f.hp === 0 ? 12 : 0));
     // Repetir desafios muito abaixo do próprio nível deixa de ser o melhor treino.
     // O XP final por herói é menor nas missões antigas; o histórico da recompensa permanece.
     const overlevel=Math.max(0,h.level-missionSuggestedLevel(m)-3);
@@ -1768,7 +1768,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "buy": handleCatalogAction(s,action,entry); break;
     case "specialize": {
       const h = s.heroes.find(h => h.id === action.heroId); requireRule(h && ["offense", "healing", "defense"].includes(action.path), "Escolha uma especialização válida para o herói."); requireRule(!heroOnExpedition(s, h.id), "Esse herói está em expedição.");
-      requireRule(talentPoints(h) > 0, "Esse herói precisa alcançar os níveis 4, 7 ou 10 para ganhar um ponto de evolução.");
+      requireRule(talentPoints(h) > 0, "A evolução por classe desbloqueia pontos nos níveis 8, 16 e 28.");
       if (!h.talent) {
         requireRule(!action.branch, "Escolha primeiro o caminho principal no nível 4."); h.talent = { path: action.path, rank: 1 };
         note(s, h.name + " escolheu " + SPECIALIZATIONS[h.class][action.path].name + ". No nível 7 esse caminho se divide em dois subcaminhos.");
@@ -1789,7 +1789,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     }
     case "racial-specialize": {
       const h = s.heroes.find(h => h.id === action.heroId); requireRule(h && ["heritage", "spirit", "war"].includes(action.path), "Escolha um caminho racial válido."); requireRule(!heroOnExpedition(s, h.id), "Esse herói está em expedição.");
-      requireRule(racialPoints(h) > 0, "A evolução racial libera etapas nos níveis 3, 6 e 9.");
+      requireRule(racialPoints(h) > 0, "A evolução racial libera etapas nos níveis 6, 15 e 27.");
       if (!h.racial) { h.racial = { path: action.path, rank: 1 }; note(s, h.name + " iniciou a árvore racial " + RACE_TREES[heroRace(h)][action.path].name + "."); }
       else {
         requireRule(h.racial.path === action.path, "O caminho racial escolhido é permanente.");

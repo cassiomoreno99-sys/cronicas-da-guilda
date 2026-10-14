@@ -23,7 +23,7 @@ assert.ok(arenaUI.includes("Ator e alvo automáticos"),"Botão básico engana so
 assert.equal(WORLD_REGIONS.length,12);
 for(const key of ENEMY_ART_KEYS){assert.ok(existsSync("public/enemies/"+key+".webp"),"Arte ausente: "+key);}
 for(let i=0;i<12;i++){
- const s=newCampaign(3000+i);s.day=21;s.activeRegion=i+1;s.region=i+1;s.season=1;s.event=null;
+ const s=newCampaign(3000+i);s.day=45;s.activeRegion=i+1;s.region=i+1;s.season=1;s.event=null;
  const region=WORLD_REGIONS[i];
  for(const enemy of region.enemies){
   const key=enemyArtKey(enemy+" 1");

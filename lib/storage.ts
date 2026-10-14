@@ -14,11 +14,9 @@ export function storageCapacity(level: number): number {
 export function storageUsed<T extends StoredItem>(items: readonly T[]): number {
   return items.filter(item=>!item.equippedTo).length;
 }
-export function warehouseLevel(s: {hq?: {warehouse?: number}}):number {
-  return Math.max(1,Math.min(STORAGE_MAX_LEVEL,s.hq?.warehouse||1));
-}
-export function chestCapacity(s: {hq?: {warehouse?:number}}):number {
-  return storageCapacity(warehouseLevel(s));
+export function chestCapacity(s: {hq?: {forge?:number}}):number {
+  // A cada melhoria da Forja, dois módulos de 15 espaços; máximo 300.
+  return Math.min(300,STORAGE_BASE+Math.max(0,Math.min(10,s.hq?.forge||0))*STORAGE_MODULE*2);
 }
 export function chestFree(s: {hq?: {warehouse?:number};chest:readonly StoredItem[]}):number {
   return Math.max(0,chestCapacity(s)-storageUsed(s.chest));

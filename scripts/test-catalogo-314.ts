@@ -7,7 +7,8 @@ const fresh=(seed:number)=>{const s=newCampaign(seed);s.event=null;return s;};
  const ids=CATALOG_ITEMS.map(x=>x.id), names=new Set(ids);
  ok(ids.length===314&&names.size===314,"O catálogo não contém 314 IDs exclusivos");
  ok(ids.every((x,i)=>x==="CG-"+String(i+1).padStart(3,"0")),"Ordem de IDs inválida");
- ok(Object.keys(ITEMS).length===314,"Faltam registros equipáveis.");
+ ok(Object.keys(ITEMS).filter(id=>/^CG-\\d{3}$/.test(id)).length===314,"Faltam registros equipáveis do catálogo original.");
+ ok(Object.keys(ITEMS).length===332,"Relíquias exclusivas não foram cadastradas.");
  ok(CATALOG_ITEMS.filter(x=>x.categoria==="Livro de magia suprema").length===14,"Faltam livros.");
  ok(TEST_RECIPES.every(r=>Object.keys(r.materials).length&&Object.entries(r.materials).every(([k,v])=>CATALOG_BY_ID[k]?.categoria==="Materiais"&&v>0)),"Receita usa insumos fantasmas");
  ok(TEST_RECIPES.every(r=>r.cost>=(CATALOG_BY_ID[r.result]?.preco_venda||0)),"Receita gera lucro automático.");
@@ -56,7 +57,7 @@ const fresh=(seed:number)=>{const s=newCampaign(seed);s.event=null;return s;};
  const start=s.gold;
  s=applyAction(s,{type:"craft",recipeId:recipe!.id});
  ok(s.chest.some(x=>x.key===recipe!.result),"Forja não gerou equipamento");
- ok(s.gold===start-recipe!.cost,"Forja não debitou o valor correto");
+ ok(s.gold===start-Math.max(1,Math.round(recipe!.cost*(1-Math.min(.2,s.hq.forge*.02)))),"Forja não debitou o custo melhorado corretamente");
  ok(Object.entries(recipe!.materials).every(([key])=>!s.chest.some(x=>x.key===key)),"Forja não consumiu ingredientes");
  blocked(()=>applyAction(s,{type:"craft",recipeId:recipe!.id}),"Forja repetida sem materiais foi permitida");
 }

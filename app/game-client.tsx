@@ -13,7 +13,7 @@ import {
   HQ_DEFINITIONS, WORLD_MAP, NEGOTIATION_MODES, JOURNEY_CHOICES,
   activeExpeditions, freeExpeditionSlots, available, activeJourney, heroOnExpedition,
   heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss,
-  teamPower, standings, leaguePrize, market, talentPoints, racialPoints,
+  teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
   hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS,
   ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rank,
@@ -29,6 +29,7 @@ import {
 import { portraitSource } from "@/lib/portraits";
 import { chestCapacity, storageUsed } from "@/lib/storage";
 import { familiarityBonus } from "@/lib/team-familiarity";
+import { EXCLUSIVE_BY_ID } from "@/lib/exclusive-gear";
 import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
@@ -190,7 +191,8 @@ function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" 
 
 function ItemArt({ itemKey }: { itemKey: string }) {
  const item=CATALOG_BY_ID[itemKey];
- const index=/^CG-\d{3}$/.test(itemKey)?Number(itemKey.slice(3))-1:-1;
+ const artKey=EXCLUSIVE_BY_ID[itemKey]?.icon||itemKey;
+ const index=/^CG-\d{3}$/.test(artKey)?Number(artKey.slice(3))-1:-1;
  if(item && index>=0 && index<314) {
    const sheet=index<300?Math.floor(index/100)+1:4;
    const position=index<300?index%100:index-300;
@@ -403,10 +405,18 @@ function LeaguePage({ state, team, act, busy }: { state: Campaign; team: string[
     <ParchmentTitle icon={<img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={31} height={31}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
     <div className="league-table parchment">
       <div className="league-head"><b>#</b><b>Guilda</b><b><img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={18} height={18}/> Pontos</b><b><GameSymbol kind="reward"/> Recompensa</b></div>
-      {table.slice(0,5).map((g,i) => <div key={g.id} className="league-row" data-player={g.id === "player"}>
+      {table.slice(0,10).map((g,i) => <div key={g.id} className="league-row" data-player={g.id === "player"}>
         <strong>{i+1}</strong><span><img className="league-rival-crest" src={leagueCrest(g)} alt={"Brasão de "+g.name} width={42} height={48}/>{g.name}</span><b><img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={25} height={25}/> {g.points}</b><small><GameSymbol kind="reward"/> {leaguePrize(i+1, state.leagueTier)} ouro</small>
       </div>)}
     </div>
+    <ParchmentTitle icon={<GameSymbol kind="squad"/>} title="Ranking dos 10 Melhores Heróis" side={<span>Equipamentos e evolução contam no poder</span>}/>
+    <section className="heroes-top10 parchment" aria-label="Ranking dos 10 melhores heróis">
+      {heroLeaderboard(state).slice(0,10).map((h,i)=><article key={h.id} className="hero-ranking-card" data-player={h.owned}>
+        <b>{i+1}º</b><HeroPortrait hero={h.hero}/><div><strong>{h.name}</strong><small>{h.guild} · {RACES[h.race].name} · Nv. {h.hero.level}</small></div>
+        <span>{fmt(h.score)} poder{i<3&&<small>Top 3: ouro + relíquia racial</small>}</span>
+      </article>)}
+    </section>
+    {state.seasonAwards?.[0]&&<div className="season-awards-history parchment"><strong>Premiação da temporada {state.seasonAwards[0].season}</strong><small>Guildas: {state.seasonAwards[0].guildWinners.map(g=>g.name).join(" · ")}</small><small>Heróis: {state.seasonAwards[0].heroWinners.map(h=>h.name+" ("+RACES[h.race].name+")").join(" · ")}</small></div>}
     <ParchmentTitle icon={<GameSymbol kind="battle"/>} title="Desafio de Guilda" side={<span>Equipe: {team.length}/4</span>} />
     <div className="guild-challenge parchment">
       <img className="guild-challenge-art" src="/reference/olho-rubro-report-2026.webp" alt="Relatório completo do Olho Rubro: estandarte, reduto inimigo e informações da missão." width={1536} height={1024} />
@@ -769,12 +779,13 @@ function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) 
   </div>;
 }
 function RivalRecruitPanel({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
-  const [guildId,setGuildId] = useState(state.rivals[0]?.id || "");
-  const guild = state.rivals.find(g => g.id === guildId) || state.rivals[0];
+  const availableGuilds=rivalRecruitCandidates(state);
+  const [guildId,setGuildId] = useState(availableGuilds[0]?.id || "");
+  const guild = availableGuilds.find(g => g.id === guildId) || availableGuilds[0];
   const [heroId,setHeroId] = useState(guild?.heroes[0]?.id || "");
   useEffect(() => { if (guild && !guild.heroes.some(h => h.id === heroId)) setHeroId(guild.heroes[0]?.id || ""); }, [guildId, guild?.heroes.length]);
   const hero = guild?.heroes.find(h => h.id === heroId) || guild?.heroes[0];
-  return <div className="rival-recruit parchment"><h3>Recrutar de outra Guilda</h3><select value={guild?.id || ""} onChange={e => setGuildId(e.target.value)}>{state.rivals.slice(0,12).map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
+  return <div className="rival-recruit parchment"><h3>Recrutar de outra Guilda · Top 10</h3><select value={guild?.id || ""} onChange={e => setGuildId(e.target.value)}>{availableGuilds.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
     {guild && hero && <><div className="rival-hero"><HeroPortrait hero={hero}/><span><strong>{hero.name}</strong><small>{CLASSES[hero.class].name} · Nv. {hero.level}</small></span><select value={hero.id} onChange={e => setHeroId(e.target.value)}>{guild.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select></div>
       <div className="negotiation-grid">{(Object.keys(NEGOTIATION_MODES) as NegotiationMode[]).map(mode => {
         const q = negotiationQuote(state,guild,hero,mode);
@@ -856,10 +867,26 @@ function GuildPage({
     <ParchmentTitle icon={<GameSymbol kind="guild"/>} title="Sede da Guilda" />
     <div className="building-list parchment">{buildings.map(([key,spec],index) => {
       const lvl = state.hq[key] || 0, max = spec.max, cost = hqUpgradeCost(state,key);
+      const effects:Record<HQBuilding,string>={
+       infirmary:"Recuperação diária +"+(lvl*3)+" energia · ferimento reduzido até "+Math.floor(lvl/2)+" dias",
+       forge:"Baú "+chestCapacity(state)+"/300 espaços · criação com até "+Math.min(20,lvl*2)+"% de desconto · itens reforçados",
+       academy:"Até "+academySlots(state)+" aprendizes · treinamento diário +"+(lvl*7)+" XP",
+       library:"Magia +"+Math.ceil(lvl*.8)+" · cura +"+(lvl*2)+"%",
+       stables:"Recuperação diária +"+(lvl*2)+" energia · menos fadiga e escoltas mais rápidas",
+       warroom:"Poder de expedição +"+(lvl*1.2).toFixed(1)+"% · bônus nas batalhas entre guildas"
+      };
       return <article className="guild-building-card" key={key}>
-        <GuildRoomArt room={key} compact label={spec.name+": local medieval da Sede da Guilda."}/><div><h3>{spec.name} <small>Nv. {lvl}</small></h3><p>{spec.description}</p></div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
+        <GuildRoomArt room={key} compact label={spec.name+": local medieval da Sede da Guilda."}/><div><h3>{spec.name} <small>Nv. {lvl}/10</small></h3><p>{spec.description}</p><small className="guild-building-effect">{effects[key]}</small></div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
     <section className="parchment catalog-forge"><h3><GameSymbol kind="forge" size={18}/> Forja · Nv. {state.hq.forge}</h3>
+    <p className="forge-capacity">Capacidade do Baú: <strong>{storageUsed(state.chest)}/{chestCapacity(state)}</strong> · Forja Nv. {state.hq.forge}/10</p>
+    {state.seasonForgePlans?.filter(plan=>!plan.crafted).map(plan=><div className="seasonal-forge-order parchment" key={plan.season}>
+      <strong><GameSymbol kind="reward"/> Relíquia exclusiva · Temporada {plan.season}</strong>
+      <p>{CATALOG_BY_ID[plan.itemKey]?.nome} — prêmio por ficar entre as três melhores guildas.</p>
+      <small>Materiais exatos para um único item: {Object.entries(plan.materials).map(([key,qty])=>qty+"× "+CATALOG_BY_ID[key]?.nome).join(" · ")}</small>
+      <button className="action-button green" disabled={busy||state.hq.forge<2||Object.entries(plan.materials).some(([key,qty])=>state.chest.filter(i=>!i.equippedTo&&i.key===key).length<qty)}
+        onClick={()=>act({type:"craft-seasonal",season:plan.season})}>Forjar item único {state.hq.forge<2?"(Forja Nv. 2)":"✓"}</button>
+    </div>)}
     <div className="guild-forjador">
       <img src="/guild/forjador.webp" alt="O Forjador, mestre artesão da guilda, trabalhando com martelo e bigorna diante da fornalha." width={720} height={960} loading="lazy"/>
       <div><strong>O Forjador</strong><p>O mestre artesão da guilda transforma recursos raros em armas e equipamentos. Traga seus materiais, pague a taxa e escolha sua encomenda.</p>

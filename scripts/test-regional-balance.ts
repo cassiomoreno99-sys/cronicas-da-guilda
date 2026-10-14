@@ -30,7 +30,7 @@ for(let i=1;i<regional.length;i++){
 }
 const one=forRegion(0),five=missions(one)[4];
 assert.ok(five.force>missions(one)[0].force,"Missões de elite devem escalar dentro da região");
-const bossCampaign=forRegion(0);bossCampaign.day=21;
+const bossCampaign=forRegion(0);bossCampaign.day=45;
 const boss=seasonBoss(bossCampaign)!;
 assert.ok(boss && boss.kind==="boss" && boss.force>missions(bossCampaign)[4].force,"O chefe regional não é mais forte que a missão de elite");
 assert.ok(missionSuggestedLevel(boss)>missionSuggestedLevel(missions(bossCampaign)[4]),"Chefe sem nível de elite");

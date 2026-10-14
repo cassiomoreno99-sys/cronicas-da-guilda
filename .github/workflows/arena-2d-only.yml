@@ -41,3 +41,5 @@ jobs:
 # Revisão 2: testes atualizados para interface única, sem arena cinematográfica.
 
 # Revisão 3: remover dependências de testes legados do combate e validar o resultado.
+
+# Revisão 4: atualizar smoke do combate ao vivo para nova interface.

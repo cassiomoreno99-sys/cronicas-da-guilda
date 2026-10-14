@@ -735,8 +735,8 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     s.calendarVersion=2;
   }
   s.dailyActions ??= {};
-  s.hq ??= { infirmary: 0, forge: 0, academy: 0, library: 0, stables: 0, warroom: 0, warehouse: 1 };
-  for (const key of Object.keys(HQ_BUILDINGS) as HQBuilding[]) s.hq[key] = Math.max(key==="warehouse"?1:0, Math.min(HQ_BUILDINGS[key].max, s.hq[key] || (key==="warehouse"?1:0)));
+  s.hq ??= { infirmary: 0, forge: 0, academy: 0, library: 0, stables: 0, warroom: 0 };
+  for (const key of Object.keys(HQ_BUILDINGS) as HQBuilding[]) s.hq[key] = Math.max(0, Math.min(HQ_BUILDINGS[key].max, s.hq[key] || 0));
   s.academy ??= { trainees: [], candidates: [], reserve: [] };
   s.academy.trainees ??= [];
   s.academy.candidates = Array.isArray(s.academy.candidates) ? s.academy.candidates.slice(0, ACADEMY_COMMONER_CAPACITY) : [];

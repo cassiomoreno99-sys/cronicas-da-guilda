@@ -147,7 +147,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
 // 8) Sede até nível máximo e bloqueio de upgrade extra.
 {
   let s = prep(newCampaign(1007));
-  for (let i=0;i<5;i++) s = applyAction(s, { type:"upgrade-hq", building:"infirmary" });
+  for (let i=0;i<10;i++) s = applyAction(s, { type:"upgrade-hq", building:"infirmary" });
   ok(s.hq.infirmary === HQ_DEFINITIONS.infirmary.max, "Enfermaria não atingiu nível máximo.");
   expectRule(() => applyAction(s, { type:"upgrade-hq", building:"infirmary" }), "Foi possível ultrapassar nível máximo da sede.");
 }
@@ -271,31 +271,31 @@ console.log("v1.3.0: iniciando bateria ampla...");
 
 console.log("v1.3.0: TODOS OS TESTES DE LÓGICA PASSARAM.");
 
-// Validação da exibição cronológica: 5 missões no início, sexta no dia 14,
-// e a sétima (chefe) somente a partir do dia 21.
+// Validação de temporada com 60 dias: sexta missão no dia 30,
+// e a sétima (chefe) a partir do dia 45.
 {
   const s = newCampaign(20261011);
   s.activeRegion = 1;
   s.day = 1;
   ok(missions(s).length === 5, "No dia 1 devem existir cinco missões comuns.");
-  s.day = 13;
-  ok(missions(s).length === 5, "Missão 6 foi liberada antes do dia 14.");
-  s.day = 14;
-  ok(missions(s).length === 6, "Missão 6 não apareceu no dia 14.");
-  s.day = 20;
+  s.day = 29;
+  ok(missions(s).length === 5, "Missão 6 foi liberada antes do dia 30.");
+  s.day = 30;
+  ok(missions(s).length === 6, "Missão 6 não apareceu no dia 30.");
+  s.day = 44;
   ok(missions(s).length === 6, "Missão 6 desapareceu antes do chefe regional.");
-  s.day = 21;
+  s.day = 45;
   ok(missions(s).length === 6, "As seis missões comuns devem permanecer disponíveis.");
   const { seasonBoss } = await import("../lib/game.ts");
   const boss = seasonBoss(s);
-  ok(!!boss && boss.kind === "boss", "Missão 7 não apareceu no dia 21.");
-  ok(missions(s).length + (boss ? 1 : 0) === 7, "O quadro não contém sete missões no dia 21.");
+  ok(!!boss && boss.kind === "boss", "Missão 7 não apareceu no dia 45.");
+  ok(missions(s).length + (boss ? 1 : 0) === 7, "O quadro não contém sete missões no dia 45.");
   s.bossSeasons = [s.season];
   ok(seasonBoss(s) === null, "Chefe derrotado apareceu novamente.");
   s.bossSeasons = [];
   s.activeRegion = 2;
   ok(missions(s).length === 6 && !!seasonBoss(s), "Região 2 não acompanhou o calendário de missões.");
-  s.day = 29;
+  s.day = 61;
   s.season = 2;
   ok(missions(s).length === 5 && !seasonBoss(s), "Início da nova temporada não reiniciou a programação.");
 }

@@ -1,15 +1,24 @@
 /** Catálogo experimental CG-001…CG-314. NUNCA importar na versão principal antes da validação. */
 import raw from "./catalogo-314.json" with { type: "json" };
-import type { HeroClass, ItemDef, ItemSlot, Campaign } from "./game.ts";
+import type { HeroClass, ItemDef, ItemSlot, Campaign, HeroRace } from "./game.ts";
+import { EXCLUSIVE_GEAR } from "./exclusive-gear.ts";
 export type CatalogEntry = {
- id:string; nome:string; raridade:string; categoria:string; subcategoria:string; classes:string[];
+ id:string; nome:string; raridade:string; categoria:string; subcategoria:string; classes:string[]; race?:HeroRace;
  nivel:number; regiao:string; slot:string; atributos:Record<string,number>;
  efeito:string; preco_compra:number|null; preco_venda:number;
  criacao?:string|null; obtencao:string; conjunto?:string|null;
  materiais?:Array<{id:string;quantidade:number}>;
 };
 export const CATALOG_ITEMS = (raw.itens as CatalogEntry[]);
-export const CATALOG_BY_ID:Record<string,CatalogEntry> = Object.fromEntries(CATALOG_ITEMS.map(i=>[i.id,i]));
+const EXCLUSIVE_ITEMS:CatalogEntry[]=EXCLUSIVE_GEAR.map(x=>({
+ id:x.id,nome:x.nome,raridade:"SUPREMO",categoria:"Equipamentos exclusivos",
+ subcategoria:x.race?"Relíquia racial":"Relíquia de temporada",classes:["Guerreiro","Cavaleiro","Arqueiro","Assassino","Mago","Sacerdote","Pierrô"],
+ nivel:1,regiao:"Todas as regiões",slot:x.slot,atributos:x.attributes,
+ efeito:x.race?"Equipamento exclusivo da raça "+x.race:"Prêmio exclusivo de liga, forjado com materiais sazonais",
+ preco_compra:null,preco_venda:0,obtencao:x.race?"Ranking dos melhores heróis":"Forja após prêmio das três melhores guildas",
+ race:x.race
+}));
+export const CATALOG_BY_ID:Record<string,CatalogEntry> = Object.fromEntries([...CATALOG_ITEMS,...EXCLUSIVE_ITEMS].map(i=>[i.id,i]));
 export const CATALOG_RULES=raw.regras;
 const CLASS_NAMES:Record<string,HeroClass> = {
  "Guerreiro":"warrior","Cavaleiro":"paladin","Arqueiro":"ranger","Assassino":"rogue",
@@ -47,8 +56,8 @@ function legacySlot(d:CatalogEntry):ItemSlot {
 function rarity(r:string):ItemDef["rarity"] {
  return ({COMUM:"common",INCOMUM:"uncommon",RARO:"rare", "ÉPICO":"epic","LENDÁRIO":"legendary",SUPREMO:"legendary"} as const)[r as "COMUM"]||"common";
 }
-export const TEST_ITEMS:Record<string,ItemDef>=Object.fromEntries(CATALOG_ITEMS.map(d=>[d.id,{
- name:d.nome,slot:legacySlot(d),rarity:rarity(d.raridade),
+export const TEST_ITEMS:Record<string,ItemDef>=Object.fromEntries(Object.values(CATALOG_BY_ID).map(d=>[d.id,{
+ name:d.nome,slot:legacySlot(d),rarity:rarity(d.raridade),race:d.race,
  value:d.preco_venda??0,description:d.efeito+" | "+d.obtencao,
  attack:d.atributos.ATQ||0,defense:d.atributos.DEF||0,
  magic:d.atributos.MAG||0,hp:d.atributos.PV||0,

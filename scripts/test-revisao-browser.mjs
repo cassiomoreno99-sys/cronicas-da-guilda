@@ -8,6 +8,8 @@ async function audit(width,height,label){
  try{
  await page.goto("http://127.0.0.1:4173",{waitUntil:"networkidle",timeout:60000});
  await page.getByRole("button",{name:"Guilda",exact:true}).last().click();
+ const decision=page.locator(".council-actions button:not([disabled])").first();
+ if(await decision.count())await decision.click();
  if(await page.locator(".arena-demo-entry").count())throw Error("Bloco azul continua na Guilda");
  if(await page.locator(".guild-building-card").count()!==6)throw Error("Seis instalações antigas deveriam ser exibidas, sem Armazém");
  if(await page.getByText("Armazém",{exact:true}).count())throw Error("Armazém criado por engano ainda aparece");
@@ -28,7 +30,7 @@ async function audit(width,height,label){
   const specialist=page.getByRole("button",{name:"Montar especialista"});
   if(await specialist.count())await specialist.click();
  }
- if(!(await send.isEnabled()))throw Error("Não foi possível selecionar os quatro heróis");
+ if(!(await send.isEnabled()))throw Error("Não foi possível iniciar a missão: "+await page.locator(".send-row").innerText()+" | formação: "+await page.locator(".formation-list").innerText());
  await send.click();
  await page.locator(".guild2d-stage").waitFor();
  const spriteAudit=await page.locator(".guild2d-hero").evaluateAll(nodes=>nodes.map(node=>{

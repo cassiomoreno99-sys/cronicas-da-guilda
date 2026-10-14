@@ -48,6 +48,9 @@ jobs:
           PY
       - name: Testes integrados de regras
         run: node --experimental-strip-types scripts/test-revisao-total.ts
+      - name: Diagnóstico de tipos primeiro
+        run: npm run typecheck
+        continue-on-error: true
       - name: Todas as regressões e build de produção
         run: npm run build
       - name: Navegador real Chromium
@@ -73,3 +76,5 @@ jobs:
 # Revisão 2: adaptar teste de teto da progressão à nova curva de XP.
 
 # Revisão 3: validar catálogo legado e benefícios da Forja juntos.
+
+# Revisão 4: verificar o novo catálogo e tipos antes do build.

@@ -10,6 +10,10 @@ async function checkViewport(width,height,label){
  await page.waitForTimeout(2700);
  const images=await page.locator('#figures .body-art img').evaluateAll(els=>els.map(x=>({src:x.src,loaded:x.complete&&x.naturalWidth>0,width:x.naturalWidth})));
  if(images.length!==8)throw new Error(label+' figuras '+images.length);
+ const bg=await page.locator('.arena .backdrop').evaluate(el=>getComputedStyle(el).backgroundImage);
+ if(!bg.includes('arena-aprovada.webp'))throw new Error(label+' fundo aprovado ausente: '+bg.slice(0,180));
+ const count=await page.locator('#stageHud .stage-hud').count();
+ if(count!==8)throw new Error(label+' HUD separado incorreto: '+count);
  if(images.some(x=>!x.loaded))throw new Error(label+' sprite não carregou: '+JSON.stringify(images));
  const metrics=await page.evaluate(()=>{
   const stage=document.querySelector('.arena').getBoundingClientRect();
@@ -29,7 +33,7 @@ async function checkViewport(width,height,label){
   if(before===after)throw new Error('Ataque manual não alterou PV: '+before+' / '+after);
   const chosen=page.locator('#arena .unit[data-side="enemy"]').first();
   await chosen.click({force:true});
-  if(!await chosen.getAttribute('data-select'))throw new Error('Seleção alvo falhou');
+  if((await chosen.getAttribute('data-select'))!=='true')throw new Error('Seleção alvo falhou');
   console.log('ATAQUE MANUAL REAL',before,'=>',after);
  }
  console.log('VERIFICADO '+label,JSON.stringify(metrics));

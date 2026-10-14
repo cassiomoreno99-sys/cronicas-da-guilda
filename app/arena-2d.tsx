@@ -99,7 +99,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" key={acting?evtKey:f.id} data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"}>
-     <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior"):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
+     <img src={image.src} alt="" draggable={false} decoding="sync" loading="eager" fetchPriority="high" onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior"):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
 
     </span>
 

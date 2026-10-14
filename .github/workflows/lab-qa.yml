@@ -30,3 +30,5 @@ jobs:
           git add visual-report/lab-v5-*.jpg visual-report/lab-v5-*.b64.txt || true
           git diff --cached --quiet || git commit -m "Capturas da arena 2D para verificação visual"
           git push origin HEAD:laboratorio-combate-2d-visual-corrigido
+
+# Validacao visual V2: fundo fotorealista e oito faixas de PV independentes

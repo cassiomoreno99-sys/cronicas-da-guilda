@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import fs from "node:fs/promises";
 const browser=await chromium.launch({headless:true,args:["--no-sandbox"]});
-const base="http://127.0.0.1:5173";
+const base="http://127.0.0.1:4173";
 const issues=[];
 await fs.mkdir("visual-report",{recursive:true});
 
@@ -36,7 +36,7 @@ async function probe(width,height,name){
   if(!background.includes("/battle/arena-aprovada.webp"))throw Error("Imagem aprovada ausente");
   const images=await page.locator(".guild2d-unit img").evaluateAll(nodes=>nodes.map(n=>({name:n.closest(".guild2d-unit")?.getAttribute("aria-label"),src:n.getAttribute("src"),ok:n.complete&&n.naturalWidth>0})));
   if(images.some(i=>!i.ok))throw Error("Imagens com erro: "+JSON.stringify(images));
-  if(!images.some(i=>i.src?.includes("/battle/sprite-")))throw Error("Sprites de corpo inteiro não aparecem");
+  if(images.some(i=>!i.src?.includes("/battle/sprite-")))throw Error("Algum personagem continua com retrato em vez de boneco 2D: "+JSON.stringify(images));
   if(await page.locator(".guild2d-hud").count()!==await page.locator(".guild2d-unit").count())throw Error("HUD separado por personagem falhou");
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   if(overflow>3)throw Error(name+": overflow horizontal "+overflow);

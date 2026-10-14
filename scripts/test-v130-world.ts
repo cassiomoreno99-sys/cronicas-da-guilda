@@ -65,6 +65,8 @@ console.log("v1.3.0: iniciando bateria ampla...");
   while (s.heroes.find(h => h.id === id)!.level < MAX_HERO_LEVEL && guard++ < 700) {
     s.event = null; s.day = 1; s.gold = 1_000_000_000;
     s.heroes.find(h => h.id === id)!.energy = 100;
+    // Testa o teto de nível sem simular milhares de treinos: injeta XP de teste.
+    const hero=s.heroes.find(h=>h.id===id)!;hero.xp=Math.max(hero.xp,threshold(hero)-1);
     s = applyAction(s, { type: "train-hero", heroId: id });
   }
   ok(s.heroes.find(h => h.id === id)!.level === 50, "Herói não alcançou nível 50 no teste de progressão.");

@@ -27,6 +27,7 @@ const family:Record<HeroRace,readonly string[]>={
  umbral:["Sombria","Véunegro","Noitelume","Corvoalto","Névoaroxa","Sombravéu","Abismoazul","Ecofundo","Ruinalva","Luaferro","Ocasonegro","Estrelafria"]
 };
 const origins=["de Valen","das Ruínas","do Ocaso","da Fronteira","do Norte","da Coroa","do Abismo","do Sol","das Cinzas","da Lua","de Brumavale","do Horizonte"];
+const familyEndings=["","al","ar","el","en","or","an","is","ir","on","ash","uin","dor","rin","yn","iel","ith","nar","dar","far","kar","rad","tar","mir"];
 export const HERO_CANONICAL_SEX:Record<string,HeroSex>={aric:"male",lyra:"female",elen:"male",kael:"female",sora:"male",doran:"male"};
 export function stableHeroHash(s:string):number{let n=2166136261;for(const c of s)n=Math.imul(n^c.charCodeAt(0),16777619);return n>>>0;}
 export function heroSex(hero:{id:string;name:string;sex?:HeroSex}):HeroSex{
@@ -41,12 +42,13 @@ export function generatedHeroSex(id:string):HeroSex{return HERO_SEXES[stableHero
 export function generatedHeroRace(id:string):HeroRace{return HERO_VISUAL_RACES[stableHeroHash(id+":raca")%HERO_VISUAL_RACES.length];}
 export function identityName(index:number,race:HeroRace,sex:HeroSex):string{
  if(!Number.isSafeInteger(index)||index<0)throw new RangeError("Índice de personagem inválido.");
- const a=given[race][sex],b=family[race],span=a.length*b.length;
+ const a=given[race][sex],b=family[race],span=a.length*b.length*familyEndings.length;
  const pos=((index%span)*65537+7919)%span;
  const tier=Math.floor(index/span);
  const origin=tier>0?" "+origins[(tier-1)%origins.length]:"";
  const cycle=tier>origins.length?" "+Math.ceil(tier/origins.length):"";
- return a[pos%a.length]+" "+b[Math.floor(pos/a.length)]+origin+cycle;
+ const middle=Math.floor(pos/a.length);
+ return a[pos%a.length]+" "+b[middle%b.length]+familyEndings[Math.floor(middle/b.length)]+origin+cycle;
 }
 export function portraitAssetKey(race:HeroRace,heroClass:HeroClass,sex:HeroSex){return race+"/"+heroClass+"-"+sex;}
 export function isActiveHeroClass(cl:HeroClass){return HERO_VISUAL_CLASSES.includes(cl);}

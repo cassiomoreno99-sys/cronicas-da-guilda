@@ -1,0 +1,105 @@
+/* Cena ilustrada da referência APROVADA, agora jogável em 2D.
+   O HUD e as regras do laboratório original permanecem inalterados. */
+.arena{
+  height:clamp(560px,75dvh,745px)!important;
+  min-height:560px!important;
+  background:#131926!important;
+  overflow:hidden!important;
+}
+.arena .backdrop{
+  background:linear-gradient(180deg,rgba(2,10,18,.07),rgba(2,10,18,.12) 65%,rgba(2,10,18,.32)),url('./art/arena-aprovada.webp') center center / 100% 100% no-repeat!important;
+  filter:none!important;
+  opacity:1!important;
+}
+.arena .backdrop::before,.arena .backdrop::after{display:none!important}
+.arena .floor{background:linear-gradient(180deg,transparent 34%,rgba(6,10,17,.03),rgba(6,9,17,.17))!important}
+.arena .scene-glow{background:linear-gradient(90deg,rgba(38,101,173,.04) 0%,transparent 44%,transparent 64%,rgba(199,43,35,.055))!important}
+.arena .arena-vignette{background:radial-gradient(ellipse at 50% 52%,transparent 49%,rgba(3,6,14,.26) 85%,rgba(3,5,11,.46) 100%)!important}
+.arena .unit[data-paint="true"]{
+  --sprite-size:clamp(176px,21cqw,270px);
+  width:var(--sprite-size)!important;
+  height:clamp(240px,53cqh,380px)!important;
+  min-height:0!important;
+  max-height:none!important;
+  max-width:none!important;
+  z-index:5;
+  cursor:pointer;
+  filter:drop-shadow(0 13px 9px rgba(0,0,0,.8))!important;
+  will-change:transform;
+}
+.arena .unit[data-paint="true"][data-side="hero"]{z-index:6}
+.arena .unit[data-paint="true"][data-current="true"]{z-index:11}
+.arena .unit[data-paint="true"][data-select="true"]{z-index:10}
+.arena .unit[data-paint="true"]::before{
+  position:absolute;content:"";left:13%;bottom:17px;width:74%;height:15px;
+  transform:rotate(-3deg);border-radius:50%;z-index:-1;
+  background:rgba(1,5,12,.72);
+  box-shadow:0 2px 12px 2px rgba(0,0,0,.66);
+}
+.arena .unit[data-paint="true"] .body-art,
+.arena .unit[data-paint="true"][data-paint="true"] .body-art{
+  display:block;width:100%!important;flex:1 1 auto!important;
+  border:0!important;background:transparent!important;
+  box-shadow:none!important;border-radius:0!important;
+  overflow:visible!important;min-height:0!important;
+  animation:guild-idle 3.2s ease-in-out infinite alternate!important;
+  transform-origin:50% 86%;
+}
+.arena .unit[data-paint="true"] .body-art img{
+  width:100%!important;height:100%!important;object-fit:contain!important;
+  object-position:center bottom!important;
+  -webkit-mask-image:none!important;mask-image:none!important;
+  image-rendering:auto;
+  filter:drop-shadow(0 5px 5px rgba(0,0,0,.7)) saturate(1.06) contrast(1.05)!important;
+}
+.arena .unit[data-paint="true"] .body-art::after{display:none!important}
+.arena .unit[data-paint="true"] .unit-name{
+  background:linear-gradient(105deg,#071322f2,#0a2031eb)!important;
+  border:1px solid #d3af73!important;
+  width:78%!important;min-width:95px;max-width:190px!important;
+  margin-top:-9px!important;padding:3px 6px!important;
+  border-radius:5px!important;box-shadow:0 3px 13px #01040bf0!important;
+  font:700 clamp(12px,1.5cqw,17px) Georgia,serif!important;
+  z-index:12;
+}
+.arena .unit[data-paint="true"][data-side="enemy"] .unit-name{border-color:#ba6c61!important}
+.arena .unit[data-paint="true"] .unit-hp{width:76%!important;height:8px!important;background:#1b1120!important}
+.arena .unit[data-paint="true"] .unit-numbers{font:700 11px system-ui!important;color:#fff2dc;text-shadow:0 1px 4px #010409,0 1px 8px #010409}
+.arena .unit[data-paint="true"] .unit-effects{top:5%!important}
+.arena .unit[data-paint="true"][data-current="true"] .body-art{filter:drop-shadow(0 0 17px #fbdca99c)}
+.arena .unit[data-paint="true"][data-select="true"] .unit-name{outline:2px solid #f5d59d}
+.arena .unit[data-paint="true"][data-dead="true"],
+.arena .unit[data-paint="true"].unit-fallen{
+  filter:grayscale(.93) brightness(.45) drop-shadow(0 6px 4px #0008)!important;
+}
+.arena .unit[data-paint="true"].unit-attacking .body-art{animation:guild-attack 0.54s ease-in-out!important}
+.arena .unit[data-paint="true"].unit-casting .body-art{animation:guild-cast 0.86s ease-in-out!important}
+.arena .unit[data-paint="true"].unit-hit .body-art{animation:guild-hit 0.4s cubic-bezier(.34,.07,.64,1)!important}
+.arena .unit[data-paint="true"].unit-healing .body-art img{filter:drop-shadow(0 0 13px #4cffc7) drop-shadow(0 0 27px #8fffca)!important}
+.arena .unit[data-paint="true"].unit-fallen .body-art{
+  animation:guild-fall .95s ease-in forwards!important;
+  transform-origin:50% 95%;
+}
+.arena .projectile{box-shadow:0 0 27px 9px rgba(48,149,247,.95)!important}
+.arena .projectile.red{box-shadow:0 0 27px 9px rgba(237,54,62,.98)!important}
+@keyframes guild-idle{0%{transform:translateY(2px) rotate(-.55deg) scale(1)}100%{transform:translateY(-5px) rotate(.55deg) scale(1.015)}}
+@keyframes guild-attack{0%{transform:translateX(0) rotate(0deg)}40%{transform:translateX(24px) rotate(5deg) scale(1.09)}62%{transform:translateX(25px) rotate(-3deg) scale(1.07)}100%{transform:translateX(0) rotate(0deg)}}
+@keyframes guild-cast{0%{transform:translateY(0) scale(1);filter:drop-shadow(0 0 0 #7ad7fc)}40%{transform:translateY(-17px) scale(1.055);filter:drop-shadow(0 0 17px #91daff)}68%{transform:translateY(-12px) scale(1.07)}100%{transform:translateY(0) scale(1)}}
+@keyframes guild-hit{0%{transform:translateX(0);filter:brightness(1)}28%{transform:translateX(-13px) rotate(-5deg);filter:brightness(2.15)}55%{transform:translateX(9px) rotate(4deg);filter:brightness(1.55)}100%{transform:translateX(0);filter:brightness(1)}}
+@keyframes guild-fall{0%{transform:rotate(0) translateY(0);opacity:1}65%{transform:rotate(55deg) translateY(40px);opacity:.85}100%{transform:rotate(72deg) translateY(74px);opacity:.30}}
+@media(max-width:750px){
+  .arena{height:clamp(490px,75dvh,645px)!important;min-height:490px!important}
+  .arena .unit[data-paint="true"]{--sprite-size:clamp(92px,22cqw,154px);height:clamp(145px,34cqh,210px)!important}
+  .arena .unit[data-paint="true"] .unit-name{min-width:70px;width:87%!important;font-size:10px!important;padding:2px 3px!important}
+  .arena .unit[data-paint="true"] .unit-numbers{font-size:9px!important}
+  .arena .unit[data-paint="true"] .unit-hp{height:6px!important}
+  .arena .stage-heading{font-size:10px!important}
+}
+@media(max-width:420px){
+  .arena{height:500px!important;min-height:500px!important}
+  .arena .unit[data-paint="true"]{--sprite-size:23.5cqw;height:145px!important}
+  .arena .unit[data-paint="true"] .unit-name{min-width:54px;font-size:8.5px!important}
+}
+@media(prefers-reduced-motion:reduce){
+  .arena .unit[data-paint="true"] .body-art{animation:none!important}
+}

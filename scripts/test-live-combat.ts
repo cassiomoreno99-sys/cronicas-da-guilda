@@ -60,6 +60,8 @@ const again=applyAction(initial,{type:"mission",missionId:mission.id,team:initia
 const instant=applyAction(again,{type:"battle-auto",expeditionId:again.expeditions[0].id});
 assert.notEqual(instant.expeditions[0].battle.status,"active");
 const ui=fs.readFileSync("app/game-client.tsx","utf8");
-assert.ok(ui.includes("AÇÃO AO VIVO") && ui.includes("data-targeted={latest?.targetId===f.id}"));
-assert.ok(ui.includes("Pular para o resultado"));
+const arena=fs.readFileSync("app/arena-2d.tsx","utf8");
+assert.ok(ui.includes("<Arena2D key={expedition.id}")&&!ui.includes("function CinematicBattlePage("),"Tela de combate não usa a única arena real.");
+assert.ok(arena.includes('data-hit={struck}')&&arena.includes('className="guild2d-log"'),"Dano ao vivo não chega aos bonecos nem ao registro.");
+assert.ok(arena.includes('type:"battle-auto"')&&arena.includes("Pular resultado"),"Pular resultado não é acessível na arena.");
 console.log("COMBATE AO VIVO OK: 1 ator/tick, cronômetro, retomar no save, iniciativa, PV e pular resultado.");

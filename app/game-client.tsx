@@ -895,8 +895,9 @@ function GuildPage({
     <small>Consome materiais e taxa em ouro. Sem itens gratuitos.</small>
     <div className="catalog-shop">{TEST_RECIPES.filter(r=>r.forge>0&&r.forge<=state.hq.forge).slice(0,16).map(r=>{
       const enough=Object.entries(r.materials).every(([k,q])=>state.chest.filter(i=>i.key===k&&!i.equippedTo).length>=q);
+      const discounted=Math.max(1,Math.round(r.cost*(1-Math.min(.2,state.hq.forge*.02))));
       return <div key={r.id}><ItemArt itemKey={r.result}/><span><strong>{ITEMS[r.result]?.name}</strong><small>{Object.entries(r.materials).map(([k,q])=>q+"× "+(ITEMS[k]?.name||k)).join(" + ")}</small></span>
-      <button className="small-button" disabled={busy||!enough||state.gold<r.cost||storageUsed(state.chest)>=chestCapacity(state)} onClick={()=>act({type:"craft",recipeId:r.id})}><GameSymbol kind="gold"/> Forjar · {fmt(r.cost)}</button></div>;
+      <button className="small-button" disabled={busy||!enough||state.gold<discounted||storageUsed(state.chest)>=chestCapacity(state)} onClick={()=>act({type:"craft",recipeId:r.id})}><GameSymbol kind="gold"/> Forjar · {fmt(discounted)}</button></div>;
     })}{!state.hq.forge&&<p>Melhore a Forja para liberar receitas.</p>}</div></section>
     <SupremeLibraryPanel state={state} act={act} busy={busy}/>
     <div className="guild-grid">

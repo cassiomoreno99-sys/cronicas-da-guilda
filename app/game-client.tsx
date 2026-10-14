@@ -617,7 +617,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   }
   return <section className="screen chest-screen">
     <div className="inventory-top"><button data-active><GameSymbol kind="inventory"/> Inventário</button><button onClick={()=>setShowCatalog(true)}><GameSymbol kind="book"/> Ver 314 itens</button><button onClick={() => setFilter("material")} data-active={filter === "material"}><GameSymbol kind="forge"/> Materiais</button><span><GameSymbol kind="inventory"/> {storageUsed(state.chest)}/{chestCapacity(state)}</span></div>
-    <p className="inventory-capacity-note">Armazém Nv. {state.hq.warehouse} · {storageUsed(state.chest)} guardados · {state.chest.filter(i=>!!i.equippedTo).length} equipados nos heróis · {Math.max(0,chestCapacity(state)-storageUsed(state.chest))} espaços livres</p>
+    <p className="inventory-capacity-note">Forja Nv. {state.hq.forge} · {storageUsed(state.chest)} guardados · {state.chest.filter(i=>!!i.equippedTo).length} equipados nos heróis · {Math.max(0,chestCapacity(state)-storageUsed(state.chest))} espaços livres</p>
     <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>
     <div className="inventory-layout">
       <div className="item-grid">{filtered.slice(0,40).map(item => <button key={item.id} data-active={selected?.id === item.id} className={"item-tile rarity-" + ITEMS[item.key].rarity} onClick={() => setSelectedId(item.id)}>
@@ -688,10 +688,8 @@ const GUILD_ROOM_IMAGES:Record<HQBuilding,string>={
   library:"/guild/rooms/library.webp",
   stables:"/guild/rooms/stables.webp",
   warroom:"/guild/rooms/warroom.webp",
-  warehouse:"",
 };
 function GuildRoomArt({room,label,compact=false}:{room:HQBuilding;label:string;compact?:boolean}){
- if(room==="warehouse")return <div className="guild-room-art warehouse-room" role="img" aria-label={label}><GameSymbol kind="inventory" size={64}/></div>;
  return <img className={compact?"guild-room-art compact":"guild-room-art"}
   src={GUILD_ROOM_IMAGES[room]} alt={label} width={1280} height={720} loading="lazy"/>;
 }

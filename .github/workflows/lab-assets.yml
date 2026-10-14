@@ -1,10 +1,8 @@
 name: Laboratório 2D - preparar arte aprovada
 on:
   push:
-    branches:
-      - laboratorio-combate-2d-visual-corrigido
-    paths:
-      - .github/workflows/lab-assets.yml
+    branches: [laboratorio-combate-2d-visual-corrigido]
+    paths: ['.github/workflows/lab-assets.yml']
   workflow_dispatch:
 permissions:
   contents: write
@@ -13,13 +11,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Conferir disponibilidade do arquivo de referência
+      - name: Instalar ferramentas de imagem
+        run: python3 -m pip install --user pillow
+      - name: Baixar imagens aprovadas e produzir arquivos do jogo
         run: |
-          curl --connect-timeout 15 --max-time 90 -fL 'https://at.adobe.com/pcedz2Thvnc6yrh6' -o /tmp/reference-source
-          file /tmp/reference-source
+          curl --connect-timeout 15 --max-time 120 -fsSL 'https://at.adobe.com/pcedz2Thvnc6yrh6' -o /tmp/reference-source
+          curl --connect-timeout 15 --max-time 120 -fsSL 'https://photoshop-api.adobe.io/v2/short-url/urn:aaid:ps:US:3536164e-7482-46e7-985b-c95bf909feda' -o /tmp/clean-stage
           python3 - <<'PY'
-          from PIL import Image
-          im=Image.open('/tmp/reference-source')
-          print('ARTE DISPONÍVEL', im.size, im.mode, im.format)
-          im.verify()
+            from PIL import Image
+            from pathlib import Path
+            p=Path('laboratorio-combate-2d/art')
+            p.mkdir(parents=True,exist_ok=True)
+            src=Image.open('/tmp/reference-source').convert('RGB')
+            assert src.size==(1672,941),f'Imagem aprovada mudou de resolução: {src.size}'
+            bounds={"aric":[328,209,563,459],"lyria":[522,283,790,625],"thorgar":[143,295,417,645],"kaelith":[339,443,692,680],"cultista":[1172,257,1391,521],"espectro":[948,273,1193,541],"esqueleto":[981,429,1293,689],"necromante":[1267,362,1493,683]}
+            for hero,box in bounds.items():
+                src.crop(box).save(p/('crop-'+hero+'.png'), optimize=True)
+            stage=Image.open('/tmp/clean-stage').convert('RGB')
+            assert stage.width>700 and stage.height>350
+            stage.save(p/'arena-aprovada.webp', format='WEBP', quality=87, method=6)
+            print('ARTES IMPORTADAS', list(p.iterdir()))
+            
           PY
+      - name: Versionar as imagens reais do laboratório
+        run: |
+          git config user.name "Guilda Assets Bot"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add laboratorio-combate-2d/art
+          git commit -m "Adicionar cena realista e recortes da arte aprovada para laboratório 2D" || true
+          git push origin HEAD:laboratorio-combate-2d-visual-corrigido

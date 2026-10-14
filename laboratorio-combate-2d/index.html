@@ -235,7 +235,7 @@ const p=document.createElement("div");p.className="particle "+(mode==="heal"?"he
 function ring(u,type){const node=unitElement(u);if(!node)return;const r=node.getBoundingClientRect(),b=arena.getBoundingClientRect(),p=document.createElement("div");p.className="slash-effect "+(type==="heal"?"heal":type==="spell"?"spell":"");p.style.left=r.left-b.left+r.width*.5+"px";p.style.top=r.top-b.top+r.height*.45+"px";$("effects").append(p);setTimeout(()=>p.remove(),650);node.classList.add("shaking");setTimeout(()=>node.classList.remove("shaking"),370);}
 function unitElement(u){return document.getElementById("unit-"+u.id);}
 function drawFigures(){
- $("figures").innerHTML=units.map(u=>{const positions=u.side==="hero"?[[27,44],[44,58],[13,81],[34,85]]:[[90,45],[72,58],[90,85],[77,84]];const [x,y]=positions[u.slot];
+ $("figures").innerHTML=units.map(u=>{const positions=u.side==="hero"?[[27,37],[44,52],[14,68],[34,70]]:[[89,38],[72,53],[89,70],[76,71]];const [x,y]=positions[u.slot];
  return '<button type="button" class="unit" id="unit-'+u.id+'" data-pick="'+u.id+'" data-side="'+u.side+'" data-paint="'+painted(u)+'" style="--x:'+x+'%;--y:'+y+'%" aria-label="'+escape(u.name)+'"><span class="body-art"><img loading="eager" decoding="async" draggable="false" src="'+stageArt(u)+'" alt=""></span><span class="unit-effects"></span><span class="unit-name">'+escape(u.short)+'</span><span class="unit-hp"><i></i></span><span class="unit-numbers"></span></button>';}).join("");
  arena.querySelectorAll(".body-art img").forEach(img=>img.addEventListener("error",()=>{
   const node=img.closest(".unit"),who=units.find(u=>node?.id==="unit-"+u.id);

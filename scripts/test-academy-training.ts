@@ -20,14 +20,14 @@ const before = academyCandidateChance(s,s.academy.candidates[0]);
 s = applyAction(s,{type:"academy-focus",candidateId:first});
 assert.ok(academyCandidateChance(s,s.academy.candidates[0]) > before, "Treino dedicado aumenta a chance");
 assert.throws(()=>applyAction(s,{type:"academy-focus",candidateId:first}), /hoje/i);
-for(let day=0;day<28;day++){
+for(let day=0;day<60;day++){
   if(s.event){
     const choice = s.event.choices.find(c=>["charge","refuse","counter"].includes(c.id)) || s.event.choices.find(c=>!c.cost) || s.event.choices[0];
     s = applyAction(s,{type:"event",eventId:s.event.id,choiceId:choice.id});
   }
-  s = applyAction(s,{type:"rest"});
+  s = applyAction(s,{type:"next-day"});
 }
-assert.equal(s.season, 2, "A formação ocorre no encerramento de 28 dias");
+assert.equal(s.season, 2, "A formação ocorre no encerramento de 60 dias");
 assert.equal(s.academy.lastGraduation?.season, 1);
 assert.equal(s.academy.lastGraduation?.evaluated, 10);
 assert.ok((s.academy.lastGraduation?.approved.length||0)<=2,"Nunca formar mais que dois");
@@ -56,7 +56,7 @@ assert.equal(s.academy.reserve.length,reserveCount,"Reserva preservada ao abrir 
   const levelBefore = campaign.heroes[0].level;
   let loaded = normalizeCampaign(structuredClone(campaign));
   for (let i = 0; i < 4; i++) {
-    loaded.day += 28;
+    loaded.day += 60;
     loaded.season += 1;
     loaded = normalizeCampaign(structuredClone(loaded));
   }

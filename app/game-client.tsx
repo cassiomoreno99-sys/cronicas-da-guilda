@@ -27,6 +27,8 @@ import {
   type LocalSave
 } from "@/lib/local-save";
 import { portraitSource } from "@/lib/portraits";
+import {heroSex,HERO_SEX_LABEL} from "@/lib/hero-identity";
+import {heroArtProgress} from "@/lib/hero-art";
 import { chestCapacity, storageUsed } from "@/lib/storage";
 import { familiarityBonus } from "@/lib/team-familiarity";
 import { EXCLUSIVE_BY_ID } from "@/lib/exclusive-gear";
@@ -86,10 +88,7 @@ const specialtyNames: Record<string,string> = {
   undead:"Mago / Paladino", boss:"Equipe completa"
 };
 const specialtyName = (value: string) => specialtyNames[value] || value;
-const CORE_RACE_NAMES: Record<string,string> = {
-  aric:"Humano", lyra:"Elfa", elen:"Anão", kael:"Meio-Elfa", sora:"Elfo", doran:"Draconato"
-};
-const raceLabel = (hero: Pick<Hero,"id"|"name"|"class"|"race">): string => CORE_RACE_NAMES[hero.id] || RACES[heroRace(hero)].name;
+const raceLabel = (hero: Pick<Hero,"id"|"name"|"class"|"race">): string => RACES[heroRace(hero)].name;
 /** Tema orquestral CC0: reprodução nativa com volume controlado pelo Android.
  * Sem dezenas de osciladores WebAudio; reduz CPU/bateria durante o jogo offline. */
 const RPG_MUSIC_TRACKS = soundtrackLibrary.tracks;
@@ -180,10 +179,10 @@ function useAmbientRpgMusic() {
   return {musicEnabled,toggleMusic,musicIndex,nextTrack,trackCount:RPG_MUSIC_TRACKS.length};
 }
 
-function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" | "class" | "race">; large?: boolean }) {
+function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" | "class" | "race" | "sex">; large?: boolean }) {
   return <span
     className={"hero-portrait" + (large ? " hero-portrait-large" : "")}
-    style={{ backgroundImage: `url("${portraitSource(hero.name, hero.id, hero.class, heroRace(hero))}")` }}
+    style={{ backgroundImage: `url("${portraitSource(hero.name, hero.id, hero.class, heroRace(hero),hero.sex)}")` }}
     role="img"
     aria-label={"Retrato de " + hero.name}
   />;
@@ -477,7 +476,7 @@ function HeroPage({ state, selectedId, selectHero, openEquipment, act, busy }: {
       <article className="hero-sheet parchment">
         <div className="hero-feature"><div className="feature-portrait"><HeroPortrait hero={hero} large /></div><div><h2>{hero.name}</h2><p>{hero.trait}</p></div></div>
         <div className="hero-level"><strong>Nv. {hero.level}</strong><ProgressBar value={hero.level >= 50 ? 100 : hero.xp / threshold(hero) * 100} tone="gold" /><span>{hero.xp}/{hero.level >= 50 ? "MAX" : threshold(hero)} XP</span></div>
-        <div className="hero-core"><div><span>Classe</span><strong>{CLASSES[hero.class].name}</strong></div><div><span>Raça</span><strong>{raceLabel(hero)}</strong></div><div><span>Força</span><strong>{fmt(teamPower(state,[hero.id]))}</strong></div></div>
+        <div className="hero-core"><div><span>Classe</span><strong>{CLASSES[hero.class].name}</strong></div><div><span>Raça</span><strong>{raceLabel(hero)}</strong></div><div><span>Sexo</span><strong>{HERO_SEX_LABEL[heroSex(hero)]}</strong></div><div><span>Força</span><strong>{fmt(teamPower(state,[hero.id]))}</strong></div></div>
         <section className="sheet-section"><label>Atributos</label><div className="stat-grid">
           <b><GameSymbol kind="health"/> Vida <em>{stats.hp}</em></b><b><GameSymbol kind="attack"/> Ataque <em>{stats.attack}</em></b><b><GameSymbol kind="defense"/> Defesa <em>{stats.defense}</em></b><b><GameSymbol kind="magic"/> Magia <em>{stats.magic}</em></b><b><GameSymbol kind="critical"/> Crítico <em>{Math.round(stats.critical*100)}%</em></b><b><GameSymbol kind="speed"/> Velocidade <em>{stats.speed}</em></b>
         </div></section>
@@ -674,7 +673,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
   return <section className="screen tavern-screen">
     <div className="tavern-hero"><img src={tavernArtwork} alt="Taverneira sorrindo e erguendo um caneco em brinde na Taverna da Guilda" /></div>
     <ParchmentTitle icon={<GameSymbol kind="squad"/>} title="Heróis para Recrutar" side={<span>Renova semanalmente</span>} />
-    <div className="recruit-grid parchment">{recruits.map(h => <article key={h.id}><HeroPortrait hero={h} large /><h3>{h.name}</h3><span>{CLASSES[h.class].name}</span><small><GameSymbol kind="gold"/> {h.value} Ouro</small><button className="action-button red" disabled={busy || state.gold < h.value} onClick={() => act({type:"hire",heroId:h.id})}>Recrutar</button></article>)}</div>
+    <div className="recruit-grid parchment">{recruits.map(h => <article key={h.id}><HeroPortrait hero={h} large /><h3>{h.name}</h3><span>{CLASSES[h.class].name} · {raceLabel(h)} · {HERO_SEX_LABEL[heroSex(h)]}</span><small><GameSymbol kind="gold"/> {h.value} Ouro</small><button className="action-button red" disabled={busy || state.gold < h.value} onClick={() => act({type:"hire",heroId:h.id})}>Recrutar</button></article>)}</div>
     <div className="tavern-lower">
       <section className="tavern-market" aria-label="Mercado Regional">
         <section className="parchment shop"><div className="merchant-head"><img className="merchant-portrait" src={merchantPortrait} alt="Mercador da taverna medieval" /><span><h3><GameSymbol kind="merchant"/> Mercador Regional</h3><small>Estoque regional renovado semanalmente</small></span></div>
@@ -786,7 +785,7 @@ function RivalRecruitPanel({ state, act, busy }: { state: Campaign; act: (a: Act
   useEffect(() => { if (guild && !guild.heroes.some(h => h.id === heroId)) setHeroId(guild.heroes[0]?.id || ""); }, [guildId, guild?.heroes.length]);
   const hero = guild?.heroes.find(h => h.id === heroId) || guild?.heroes[0];
   return <div className="rival-recruit parchment"><h3>Recrutar de outra Guilda · Top 10</h3><select value={guild?.id || ""} onChange={e => setGuildId(e.target.value)}>{availableGuilds.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
-    {guild && hero && <><div className="rival-hero"><HeroPortrait hero={hero}/><span><strong>{hero.name}</strong><small>{CLASSES[hero.class].name} · Nv. {hero.level}</small></span><select value={hero.id} onChange={e => setHeroId(e.target.value)}>{guild.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select></div>
+    {guild && hero && <><div className="rival-hero"><HeroPortrait hero={hero}/><span><strong>{hero.name}</strong><small>{CLASSES[hero.class].name} · {raceLabel(hero)} · {HERO_SEX_LABEL[heroSex(hero)]} · Nv. {hero.level}</small></span><select value={hero.id} onChange={e => setHeroId(e.target.value)}>{guild.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select></div>
       <div className="negotiation-grid">{(Object.keys(NEGOTIATION_MODES) as NegotiationMode[]).map(mode => {
         const q = negotiationQuote(state,guild,hero,mode);
         return <button key={mode} disabled={busy || !q.eligible} onClick={() => act({type:"negotiate-rival",guildId:guild.id,heroId:hero.id,mode})}><strong>{NEGOTIATION_MODES[mode].title}</strong><small><GameSymbol kind="gold"/> {q.price} ouro · {q.chance}%</small>{q.reason && <em>{q.reason}</em>}</button>;
@@ -864,6 +863,10 @@ function GuildPage({
         Próximo dia <ChevronRight size={18}/></button>
     </div>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
+    <div className="hero-art-library parchment" aria-label="Biblioteca de artes dos heróis">
+      <strong>Biblioteca Visual dos Heróis</strong><small>{heroArtProgress().portraits}/84 retratos e {heroArtProgress().battle}/84 sprites completos.
+      Novas imagens serão reconhecidas automaticamente pela raça, classe e sexo depois de adicionadas ao projeto e publicadas. Nenhum retrato de outra identidade será utilizado.</small>
+    </div>
     <ParchmentTitle icon={<GameSymbol kind="guild"/>} title="Sede da Guilda" />
     <div className="building-list parchment">{buildings.map(([key,spec],index) => {
       const lvl = state.hq[key] || 0, max = spec.max, cost = hqUpgradeCost(state,key);

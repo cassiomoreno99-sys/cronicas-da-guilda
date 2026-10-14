@@ -6,6 +6,7 @@ import { chestCapacity, storageUsed } from "./storage.ts";
 import { familiarityBonus, registerTeamExpedition } from "./team-familiarity.ts";
 import { EXCLUSIVE_BY_ID, GUILD_EXCLUSIVE_GEAR, seasonalMaterialBundle } from "./exclusive-gear.ts";
 import { CLASSIC_CLASS_IDS, V130_BASE_STATS, WORLD_REGIONS, HQ_BUILDINGS, HERO_SCARS, LEVEL_ABILITIES, V130_ITEMS, ITEM_SETS, CRAFT_RECIPES, uniqueAdventurerName } from "./v130-content.ts";
+import {heroSex,generatedHeroSex,generatedHeroRace,identityName,type HeroSex} from "./hero-identity.ts";
 export type HeroClass = "warrior" | "mage" | "healer" | "rogue" | "ranger" | "paladin" | "monk" | "necromancer" | "druid" | "bard";
 export type HeroRace = "human" | "elf" | "dwarf" | "orc" | "beastkin" | "umbral";
 export type Tactic = "balanced" | "aggressive" | "defensive";
@@ -20,7 +21,7 @@ export type StoryStage = 0 | 1 | 2 | 3;
 export type JourneyDuration = 3 | 5 | 7;
 export type JourneyChoice = "camp" | "explore" | "shortcut";
 export type HeroJourney = { id: string; heroId: string; startedDay: number; duration: JourneyDuration; remaining: number; choice: JourneyChoice; xpEarned: number; loot: string[] };
-export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean; scars?: string[]; supremeBook?: string; supremeRespecced?: boolean; nextMissionBoost?: number };
+export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; sex?: HeroSex; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean; scars?: string[]; supremeBook?: string; supremeRespecced?: boolean; nextMissionBoost?: number };
 export type Ledger = { id: number; day: number; label: string; amount: number };
 export type ItemSlot = "weapon" | "offhand" | "helmet" | "armor" | "gloves" | "boots" | "accessory" | "consumable" | "material" | "quest" | "treasure";
 export type ItemDef = { name: string; slot: ItemSlot; race?: HeroRace; rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"; value: number; description: string; attack?: number; defense?: number; magic?: number; hp?: number; speed?: number; critical?: number; luck?: number; set?: string; classes?: HeroClass[]; levelReq?: number; material?: string };
@@ -49,7 +50,7 @@ export type Battle = { title: string; day: number; won: boolean; reward: number;
 export type ExpeditionSlot = 1 | 2 | 3;
 export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; level: number; xp: number; wins: number };
 export type HQBuilding = keyof typeof HQ_BUILDINGS;
-export type AcademyCandidate = { id: string; name: string; class: HeroClass; aptitude: number; genius: boolean; practice: number; joinedDay: number };
+export type AcademyCandidate = { id: string; name: string; class: HeroClass; race?:HeroRace; sex?:HeroSex; aptitude: number; genius: boolean; practice: number; joinedDay: number };
 export type AcademyGraduation = { season: number; evaluated: number; approved: Array<{ name: string; class: HeroClass; genius: boolean }>; passedExam: number };
 export type AcademyState = { trainees: string[]; mentorId?: string; candidates: AcademyCandidate[]; candidateSeason?: number; lastFocusDay?: number; reserve: Hero[]; lastGraduation?: AcademyGraduation };
 export type GuildRaidResult = { id: string; day: number; rivalId?: string; title: string; teams: string[][]; fronts: { name: string; won: boolean; playerPower: number; enemyPower: number }[]; won: boolean; reward: number; loot: string[] };
@@ -107,7 +108,7 @@ export const RACES: Record<HeroRace, { name: string; short: string; description:
   elf: { name: "Elfo", short: "EL", description: "Ágil e afinado com magia. Usa armas lunares e armaduras leves." },
   dwarf: { name: "Anão", short: "AN", description: "Resistente e forjado para a linha de frente. Usa metal e runas." },
   orc: { name: "Orc", short: "OR", description: "Brutal e resistente. Prefere armas pesadas e proteção tribal." },
-  beastkin: { name: "Bestial", short: "BE", description: "Instintivo e veloz. Usa garras, couro e totens de caça." },
+  beastkin: { name: "Bestial / Dracônico", short: "BE", description: "Linhagens bestiais e dracônicas, de força instintiva e traços próprios. Nos 84 retratos desta fase, o visual bestial usa a linhagem dracônica." },
   umbral: { name: "Sombrio", short: "SO", description: "Ligado às sombras e à magia obscura. Usa lâminas e mantos umbrais." },
 };
 const CLASS_RACE_POOLS: Record<HeroClass, HeroRace[]> = {
@@ -592,7 +593,7 @@ function graduateAcademyClass(s: Campaign) {
   for (const candidate of winners) {
     const prodigy = candidate.genius;
     const hero = levelOneHero(candidate.id, candidate.name, candidate.class,
-      prodigy ? "Gênio formado na Academia" : "Revelado pela Academia");
+      prodigy ? "Gênio formado na Academia" : "Revelado pela Academia", candidate.race, candidate.sex);
     if (prodigy) {
       if (["mage","healer","bard"].includes(hero.class)) hero.magic += 3;
       else if (["warrior","ranger","rogue"].includes(hero.class)) hero.attack += 3;
@@ -671,10 +672,11 @@ function resolveRivalBattle(s: Campaign, guildId: string, team: string[]) {
 function entry(s: Campaign, label: string, amount: number) { s.transaction++; s.ledger.unshift({ id: s.transaction, day: s.day, label, amount }); s.ledger = s.ledger.slice(0, 80); s.gold += amount; }
 function note(s: Campaign, text: string) { s.journal.unshift({ day: s.day, text }); s.journal = s.journal.slice(0, 40); }
 function addItem(_s: Campaign, _key: string) { /* Catálogo desativado: nenhum item pode ser criado. */ }
-function levelOneHero(id: string, name: string, heroClass: HeroClass, trait: string, race?: HeroRace): Hero {
+function levelOneHero(id: string, name: string, heroClass: HeroClass, trait: string, race?: HeroRace, sex?: HeroSex): Hero {
   const b = V130_BASE_STATS[heroClass] || { attack: 4, defense: 4, magic: 2 };
   const h: Hero = { id, name, class: heroClass, level: 1, attack: b.attack, defense: b.defense, magic: b.magic, energy: 100, xp: 0, salary: 8, value: 120, trait, injuredUntil: 0, scars: [] };
   h.race = race || heroRace(h);
+  h.sex = sex || heroSex(h);
   return h;
 }
 /**
@@ -758,7 +760,15 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.academy.trainees ??= [];
   s.academy.candidates = Array.isArray(s.academy.candidates) ? s.academy.candidates.slice(0, ACADEMY_COMMONER_CAPACITY) : [];
   s.academy.reserve = Array.isArray(s.academy.reserve) ? s.academy.reserve : [];
-  for (const hero of s.academy.reserve) hero.race ??= heroRace(hero);
+  for (const hero of s.academy.reserve) {hero.race ??= heroRace(hero);hero.sex ??= heroSex(hero);}
+  for (const candidate of s.academy.candidates) {
+    if (!candidate.race || !candidate.sex) {
+      candidate.race ??= generatedHeroRace(candidate.id);
+      candidate.sex ??= generatedHeroSex(candidate.id);
+      // Candidatos antigos ainda não formados são NPCs; alinha o nome à identidade.
+      candidate.name=identityName(100000+stableHeroIndex(candidate.id),candidate.race,candidate.sex);
+    }
+  }
   if (s.academy.candidateSeason !== s.season) s.academy.candidates = [];
   s.raidHistory ??= []; s.rivalBattleHistory ??= [];
   s.region ??= 1; s.region = Math.max(1, Math.min(WORLD_REGIONS.length, s.region));
@@ -797,6 +807,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   if (s.cup.season !== s.season) s.cup = { season: s.season, stage: "oitavas", wins: 0, history: [] };
   for (const h of s.heroes) {
     h.race ??= heroRace(h);
+    h.sex ??= heroSex(h);
     if ((h.talent as { path: string } | undefined)?.path === "support") h.talent!.path = h.class === "healer" ? "healing" : "defense";
     if (h.talent && h.talent.rank >= 2 && !h.talent.branch) h.talent.branch = "a";
     if (h.racial && !["heritage", "spirit", "war"].includes(h.racial.path)) delete h.racial;
@@ -853,7 +864,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.rivals = s.rivals.slice(0, LEAGUE_SIZE - 1).map((r, i) => r.heroes?.length && r.strength && r.recruitSequence !== undefined ? r : { ...createRival(i, s), ...r });
   const ids = new Set(s.rivals.map(r => r.id));
   for (let i = 0; s.rivals.length < LEAGUE_SIZE - 1; i++) if (!ids.has("rival-" + i)) { const r = createRival(i, s); s.rivals.push(r); ids.add(r.id); }
-  for (const rival of s.rivals) for (const h of rival.heroes) { h.race ??= heroRace(h); if (h.talent && h.talent.rank >= 2 && !h.talent.branch) h.talent.branch = (stableNumber(h.id + ":branch") % 2 ? "b" : "a"); }
+  for (const rival of s.rivals) for (const h of rival.heroes) { h.race ??= heroRace(h);h.sex ??= heroSex(h); if (h.talent && h.talent.rank >= 2 && !h.talent.branch) h.talent.branch = (stableNumber(h.id + ":branch") % 2 ? "b" : "a"); }
   if (s.balanceVersion < 5) {
     // Rebatiza apenas personagens das guildas rivais que vieram de saves antigos.
     // Nunca altera o nome de um herói que o jogador já contratou.
@@ -872,6 +883,23 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
       }
     }
     s.balanceVersion = 5;
+  }
+  if (s.balanceVersion < 6) {
+    // Troca somente a identidade de NPCs rivais gerados; heróis contratados
+    // permanecem com seu nome, classe, raça e progresso originais.
+    const occupied = new Set(s.heroes.map(h=>h.name));
+    let collision=0;
+    for (let gi=0;gi<s.rivals.length;gi++) {
+      const rival=s.rivals[gi];
+      for (let hi=0;hi<rival.heroes.length;hi++) {
+        const h=rival.heroes[hi];h.race ??= heroRace(h);h.sex=generatedHeroSex(h.id);
+        const idx=rivalNameIndex(Number(rival.id.split("-")[1])||gi,Number(h.id.split("-hero-")[1]??hi));
+        let name=identityName(idx,h.race,h.sex);
+        while(occupied.has(name))name=identityName(250000+collision++,h.race,h.sex);
+        h.name=name;occupied.add(name);
+      }
+    }
+    s.balanceVersion=6;
   }
   s.nextEventDay ??= s.day + 4; s.eventSequence ??= 0;
   if (s.event === undefined) s.event = createEvent(s);
@@ -968,9 +996,10 @@ export function market(s: Campaign): Hero[] {
   const occupied = new Set([...s.heroes.map(h => h.name), ...s.rivals.flatMap(r => r.heroes.map(h => h.name))]);
   return [0, 1, 2, 3].map(i => {
     const c = classes[(week * 4 + i) % classes.length], id = "hire-" + week + "-" + i;
-    const hero = levelOneHero(id, uniqueAdventurerName(MARKET_NAME_OFFSET + week * 4 + i), c, c === "bard" ? "Afortunado" : c === "healer" ? "Devoto" : c === "rogue" ? "Discreto" : "Aventureiro");
+    const race=generatedHeroRace(id),sex=generatedHeroSex(id);
+    const hero = levelOneHero(id,identityName(week*4+i,race,sex),c,c==="bard"?"Afortunado":c==="healer"?"Devoto":c==="rogue"?"Discreto":"Aventureiro",race,sex);
     let fallback = 0;
-    while (occupied.has(hero.name)) hero.name = uniqueAdventurerName(250000 + (week * 4 + i) * 16 + fallback++);
+    while (occupied.has(hero.name)) hero.name = identityName(250000 + (week * 4 + i) * 16 + fallback++, race, sex);
     occupied.add(hero.name);
     const targetLevel = Math.min(MAX_HERO_LEVEL, 1 + Math.floor((s.day - 1) / 14));
     while (hero.level < targetLevel) gainXp(hero, threshold(hero));
@@ -978,6 +1007,7 @@ export function market(s: Campaign): Hero[] {
     return hero;
   }).filter(h => !s.hired.includes(h.id));
 }
+function stableHeroIndex(id:string){let n=0;for(const char of id)n=(Math.imul(n,33)+char.charCodeAt(0))>>>0;return n%100000;}
 function stableNumber(text: string) { let n = 2166136261; for (const c of text) n = Math.imul(n ^ c.charCodeAt(0), 16777619); return n >>> 0; }
 const guildNames = ["Lobos de Ferro", "Ordem da Aurora", "Corvos de Ashen", "Sentinelas do Norte", "Chama Eterna"];
 const guildOrders = ["Guardiões", "Cavaleiros", "Vigias", "Filhos", "Dragões", "Escudos", "Andarilhos", "Arautos", "Caçadores", "Juramentados"];
@@ -992,7 +1022,8 @@ function developRival(h: RivalHero, index: number) {
 }
 function rivalAdventurer(guild: Pick<RivalGuild, "id" | "strength">, sequence: number, season: number, rookie = false): RivalHero {
   const index = Number(guild.id.split("-")[1]) || 0, c = CLASSIC_CLASSES[(index * 3 + sequence) % CLASSIC_CLASSES.length];
-  const base = levelOneHero(guild.id + "-hero-" + sequence, uniqueAdventurerName(rivalNameIndex(index,sequence)), c, c === "bard" ? "Sortudo" : "Rival");
+  const id=guild.id+"-hero-"+sequence,race=generatedHeroRace(id),sex=generatedHeroSex(id);
+  const base=levelOneHero(id,identityName(rivalNameIndex(index,sequence),race,sex),c,c==="bard"?"Sortudo":"Rival",race,sex);
   const targetLevel = Math.min(MAX_HERO_LEVEL, rookie ? 1 : 1 + Math.floor((season - 1) / 2) + Math.floor(guild.strength / 2));
   while (base.level < targetLevel) gainXp(base, threshold(base));
   const h: RivalHero = { ...base, salary: 8 + targetLevel * 3, value: 120 + targetLevel * 55, loyalty: 35 + stableNumber(guild.id + ":" + sequence) % 56 };
@@ -1611,10 +1642,11 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       for (let i = 0; i < ACADEMY_COMMONER_CAPACITY; i++) {
         const id = "academia-" + s.season + "-" + i;
         let idx = 100000 + s.season * ACADEMY_COMMONER_CAPACITY + i;
-        let name = uniqueAdventurerName(idx);
-        while (occupied.has(name)) name = uniqueAdventurerName(++idx + 900000);
+        const race=generatedHeroRace(id),sex=generatedHeroSex(id);
+        let name=identityName(idx,race,sex);
+        while(occupied.has(name))name=identityName(++idx+900000,race,sex);
         occupied.add(name);
-        candidates.push({id, name, class: CLASSIC_CLASSES[stableNumber(id + ":classe") % CLASSIC_CLASSES.length],
+        candidates.push({id,name,race,sex,class:CLASSIC_CLASSES[stableNumber(id+":classe")%CLASSIC_CLASSES.length],
           aptitude: stableNumber(id + ":aptidao") % 19, genius: (stableNumber(id + ":dom") % 100) < 8,
           practice: 0, joinedDay: s.day});
       }

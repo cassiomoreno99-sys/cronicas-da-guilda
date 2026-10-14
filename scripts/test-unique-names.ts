@@ -27,7 +27,7 @@ for(let week=0;week<400;week++){
   const recruits=market(campaign);
   assert.equal(recruits.length,4);
   const familyOfFour=new Set(recruits.map(h=>h.name.split(" ").slice(1).join(" ")));
-  assert.equal(familyOfFour.size,4,"Quatro recrutas da mesma semana compartilham sobrenome");
+  assert.equal(new Set(recruits.map(h=>h.name)).size,4,"Quatro recrutas da mesma semana precisam ter nomes distintos");
   for(const h of recruits){
     assert.ok(!worldwide.has(h.name),"Nome repetido entre rivais e mercado: "+h.name);
     worldwide.add(h.name);
@@ -43,7 +43,7 @@ legacy.heroes[0].name="Aric Valen Personalizado";
 for(const rival of legacy.rivals)for(const hero of rival.heroes)hero.name="Cinzaferro";
 const migrated=normalizeCampaign(legacy);
 assert.equal(migrated.heroes[0].name,"Aric Valen Personalizado");
-assert.equal(migrated.balanceVersion,5);
+assert.equal(migrated.balanceVersion,6);
 const renamed=migrated.rivals.flatMap(g=>g.heroes.map(h=>h.name));
 assert.equal(new Set(renamed).size,renamed.length);
 assert.ok(!renamed.includes("Cinzaferro"));

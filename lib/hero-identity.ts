@@ -27,7 +27,7 @@ const family:Record<HeroRace,readonly string[]>={
  umbral:["Sombria","Véunegro","Noitelume","Corvoalto","Névoaroxa","Sombravéu","Abismoazul","Ecofundo","Ruinalva","Luaferro","Ocasonegro","Estrelafria"]
 };
 const origins=["de Valen","das Ruínas","do Ocaso","da Fronteira","do Norte","da Coroa","do Abismo","do Sol","das Cinzas","da Lua","de Brumavale","do Horizonte"];
-const familyEndings=["","al","ar","el","en","or","an","is","ir","on","ash","uin","dor","rin","yn","iel","ith","nar","dar","far","kar","rad","tar","mir"];
+const familyEndings=["","al","ar","el","en","or","an","is","ir","on","ash","uin","dor","rin","yn","iel","ith","nar","dar","far","kar","rad","tar","mir","anor","eth","nor","tar","ior","aris","onar","ovan","ath","avor","uar","as","er","andar","orim","etur","avel","azin","udor","ivan","aran","iran","onal","ovar"];
 export const HERO_CANONICAL_SEX:Record<string,HeroSex>={aric:"male",lyra:"female",elen:"male",kael:"female",sora:"male",doran:"male"};
 export function stableHeroHash(s:string):number{let n=2166136261;for(const c of s)n=Math.imul(n^c.charCodeAt(0),16777619);return n>>>0;}
 export function heroSex(hero:{id:string;name:string;sex?:HeroSex}):HeroSex{

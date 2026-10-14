@@ -23,6 +23,8 @@ const coreRaces:Record<string,HeroRace>={
 export function portraitSource(_name:string,id?:string,heroClass?:HeroClass,race?:HeroRace):string {
   const known = id && core[id];
   if(known && (!race || coreRaces[id!]===race))return art[known];
+  if(race==="orc")return "/battle/sprite-orc.webp";
+  if(race==="beastkin")return "/battle/sprite-rhokar.webp";
   const key = (race && races[race]) || (heroClass && classes[heroClass]) || "aric";
   return art[key];
 }

@@ -157,7 +157,7 @@ body[data-sound=on] #sound{background:#346152}
 <div class="backdrop"></div><div class="floor"></div><div class="scene-glow"></div><div class="arena-vignette"></div>
 <div class="stage-heading"><span>◆ GUILDA · 4</span><span id="fightStatus">BATALHA 4 × 4</span><span>4 · INIMIGOS ✦</span></div>
 <div class="lane" style="top:25%"></div><div class="lane" style="top:48%"></div><div class="lane" style="top:71%"></div>
-<div id="figures"></div><div id="effects" aria-hidden="true"></div>
+<div id="figures"></div><div id="stageHud" aria-hidden="true"></div><div id="effects" aria-hidden="true"></div>
 <div class="stage-caption">Toque no inimigo para escolher o alvo · toque no aliado para curá-lo</div>
 <div id="result" aria-live="assertive"><div class="result-card"><h2 id="resultTitle"></h2><p id="resultText"></p><button id="resultRestart" type="button">⚔ Jogar novamente</button></div></div>
 </section>
@@ -237,12 +237,29 @@ function unitElement(u){return document.getElementById("unit-"+u.id);}
 function drawFigures(){
  $("figures").innerHTML=units.map(u=>{const positions=u.side==="hero"?[[27,37],[44,52],[14,68],[34,70]]:[[89,38],[72,53],[89,70],[76,71]];const [x,y]=positions[u.slot];
  return '<button type="button" class="unit" id="unit-'+u.id+'" data-pick="'+u.id+'" data-side="'+u.side+'" data-paint="'+painted(u)+'" style="--x:'+x+'%;--y:'+y+'%" aria-label="'+escape(u.name)+'"><span class="body-art"><img loading="eager" decoding="async" draggable="false" src="'+stageArt(u)+'" alt=""></span><span class="unit-effects"></span><span class="unit-name">'+escape(u.short)+'</span><span class="unit-hp"><i></i></span><span class="unit-numbers"></span></button>';}).join("");
+ $("stageHud").innerHTML=units.filter(painted).map(u=>'<div class="stage-hud" id="hud-'+u.id+'" data-side="'+u.side+'" data-dead="false"><div class="stage-hud-name">'+escape(u.short)+'</div><div class="stage-hud-bar"><i></i></div><small></small></div>').join("");
  arena.querySelectorAll(".body-art img").forEach(img=>img.addEventListener("error",()=>{
   const node=img.closest(".unit"),who=units.find(u=>node?.id==="unit-"+u.id);
   if(!who||img.dataset.fallback==="1")return;
   img.dataset.fallback="1";node.dataset.paint="false";img.src=art(who);
  }));
 }
+function updateStageHud(){
+ const rect=arena.getBoundingClientRect();
+ for(const u of units){
+  const unitNode=unitElement(u),hud=$("hud-"+u.id);
+  if(!unitNode||!hud)continue;
+  const box=unitNode.getBoundingClientRect();
+  hud.style.left=(box.left+box.width/2-rect.left)+"px";
+  hud.style.top=(box.bottom-rect.top-45)+"px";
+  hud.dataset.dead=String(u.hp<=0);
+  hud.dataset.select=String((u.side==="enemy"?selectedEnemy:selectedAlly)===u.id);
+  hud.dataset.current=String(actor?.id===u.id);
+  hud.querySelector(".stage-hud-bar i").style.width=Math.max(0,100*u.hp/u.maxHp)+"%";
+  hud.querySelector("small").textContent=fmt(u.hp)+"/"+u.maxHp+" PV";
+ }
+}
+window.addEventListener("resize",()=>requestAnimationFrame(updateStageHud));
 function pick(id){if(over)return;const u=unit(id);if(!u||u.hp<=0)return;
  if(u.side==="enemy"){selectedEnemy=id;addLog("🎯 Alvo escolhido: "+u.name+".");}
  else{selectedAlly=id;addLog("✚ Aliado para cura: "+u.name+".");}
@@ -262,7 +279,7 @@ function drawUI(){
  el.querySelector(".unit-hp i").style.width=Math.max(0,100*u.hp/u.maxHp)+"%";el.querySelector(".unit-numbers").textContent=fmt(u.hp)+"/"+u.maxHp+(u.side==="hero"?" PV":"");
  el.querySelector(".unit-effects").innerHTML=(u.shield>0?"<b title='Escudo'>🛡</b>":"")+u.effects.map(x=>"<b title='"+escape(x.type)+"'>"+iconStatus(x)+"</b>").join("");
  }
- visualRoster("hero");visualRoster("enemy");
+ updateStageHud();visualRoster("hero");visualRoster("enemy");
  const list=[...(actor&&actor.hp>0?[actor]:[]),...order.map(unit).filter(u=>u&&u.hp>0)].slice(0,7);
  $("timelineMembers").innerHTML=list.map((u,i)=>'<div class="chip" data-current="'+(i===0)+'" data-side="'+u.side+'" title="'+escape(u.name)+'"><img src="'+art(u)+'" alt=""><span>'+escape(u.short)+'</span></div>').join("");
  $("turnTitle").textContent=over?"Fim de combate":actor?(actor.side==="hero"?"◆ "+actor.name+" — "+actor.mana+" MP":"✦ "+actor.name+" — inimigo"):"Preparando batalha...";

@@ -86,3 +86,5 @@ jobs:
 # Revisão 6: stress simula comando manual Próximo dia após cada combate.
 
 # Revisão 7: novo XP inicial 207, XP de missão inicial 27.
+
+# Revisão 8: resolver evento do Conselho no teste visual.

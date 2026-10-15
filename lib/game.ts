@@ -57,7 +57,7 @@ export type GuildRaidResult = { id: string; day: number; rivalId?: string; title
 export type RivalBattleResult = { id: string; day: number; rivalId: string; rivalName: string; playerPower: number; rivalPower: number; won: boolean; reward: number; fameChange: number };
 export type Expedition = { id: string; missionId?:string; slot: ExpeditionSlot; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; battle: Battle; startedDay: number; nextRoundAt: number };
 export type LeagueResult = "win" | "draw" | "loss";
-export type LeagueMatch = { season: number; day: number; opponentId: string; opponentName: string; playerScore: number; opponentScore: number; result: LeagueResult; playerPower: number; opponentPower: number; rivalry: boolean; cup?: boolean; stage?: string };
+export type LeagueMatch = { season: number; day: number; opponentId: string; opponentName: string; playerScore: number; opponentScore: number; result: LeagueResult; playerPower: number; opponentPower: number; rivalry: boolean; cup?: boolean; stage?: string; forfeit?: boolean; tactic?: Tactic };
 export type Rivalry = { guildId: string; heat: number; sinceSeason: number; lastReason: string };
 export type CupStage = "oitavas" | "quartas" | "semifinal" | "final" | "champion" | "eliminated";
 export type CupState = { season: number; stage: CupStage; wins: number; history: LeagueMatch[] };
@@ -70,6 +70,7 @@ export type Action =
   | { type: "rename-squad"; specialty: MissionKind; name: string }
   | { type: "upgrade-hq"; building: HQBuilding }
   | { type: "next-day" }
+  | { type: "league-lineup"; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
   | { type: "academy-trainees"; heroIds: string[] }
   | { type: "academy-mentor"; heroId?: string }
   | { type: "academy-open-class" } | { type: "academy-focus"; candidateId: string } | { type: "academy-admit"; heroId: string } | { type: "academy-dismiss"; heroId: string }
@@ -474,6 +475,11 @@ export function rating(h: Hero, arsenal = 0, s?: Campaign) {
   return Math.round((n.attack * .45 + n.defense * .3 + n.magic * .35 + h.level * 3 + (s ? 0 : arsenal * 2)) * (.55 + .45 * h.energy / 100));
 }
 export function teamPower(s: Campaign, ids = s.team) { return s.heroes.filter(h => ids.includes(h.id)).reduce((n, h) => n + rating(h, s.arsenal, s), 0); }
+/** Escalação oficial da Liga: apenas heróis prontos e realmente selecionados. */
+export function leagueLineup(s: Campaign) {
+  const ids = [...new Set(s.team)].filter(id => s.heroes.some(h => h.id === id && available(h,s))).slice(0,4);
+  return { ids, ready: ids.length >= 3, missing: Math.max(0,3-ids.length), power: teamPower(s,ids) };
+}
 export function payroll(s: Campaign) { return s.heroes.reduce((n, h) => n + h.salary, 0); }
 export function rank(s: Campaign) { return s.fame >= 600 ? "Ouro" : s.fame >= 220 ? "Prata" : "Bronze"; }
 export function standings(s: Campaign) { return [{ id: "player", name: s.name, points: s.points, victories: s.leagueWins || 0 }, ...s.rivals].sort((a, b) => b.points - a.points || b.victories - a.victories || a.name.localeCompare(b.name, "pt-BR")); }
@@ -1126,10 +1132,16 @@ function raiseRivalry(s: Campaign, guildId: string, amount: number, reason: stri
   if (!rivalry) { rivalry = { guildId, heat: 0, sinceSeason: s.season, lastReason: reason }; s.rivalries.push(rivalry); }
   rivalry.heat = Math.max(0, Math.min(100, rivalry.heat + amount)); rivalry.lastReason = reason;
 }
-function formationLeagueBonus(s: Campaign) {
-  const ids = s.team, map = normalizedFormation(s), front = ids.filter(id => map[id] === "front").length;
+function formationLeagueBonus(s: Campaign, ids: string[]) {
+  const map = normalizedFormation(s), front = ids.filter(id => map[id] === "front").length;
   const backlineSupport = s.heroes.filter(h => ids.includes(h.id) && map[h.id] === "back" && ["mage", "healer", "ranger", "druid", "bard", "necromancer"].includes(h.class)).length;
   return front >= 1 && front <= 3 ? 1 + Math.min(.06, backlineSupport * .015) : .92;
+}
+/** Bônus tático pequeno e previsível; escolher a abordagem altera a partida. */
+function leagueTacticBonus(s: Campaign, ownPower: number, opponentPower: number) {
+  if(s.tactic==="aggressive") return ownPower >= opponentPower ? 1.06 : .97;
+  if(s.tactic==="defensive") return ownPower < opponentPower ? 1.06 : .97;
+  return 1.02;
 }
 function duelOutcome(s: Campaign, playerPower: number, opponentPower: number, allowDraw: boolean): { result: LeagueResult; playerScore: number; opponentScore: number } {
   const diff = playerPower - opponentPower, winChance = Math.max(.18, Math.min(.78, .5 + diff / 420)), drawChance = allowDraw ? .18 : 0;
@@ -1141,18 +1153,21 @@ function duelOutcome(s: Campaign, playerPower: number, opponentPower: number, al
 }
 function resolveLeagueDay(s: Campaign) {
   const day = seasonDay(s), opponent = scheduledLeagueOpponent(s, day), heat = rivalryHeat(s, opponent.id), rivalry = heat >= 30;
-  const playerPower = Math.round(teamPower(s) * formationLeagueBonus(s));
+  const lineup=leagueLineup(s);
   const opponentPower = rivalPower(opponent) + LEAGUE_TIERS[s.leagueTier].rivalBonus * 4;
-  const outcome = duelOutcome(s, playerPower, opponentPower, true);
+  const basePower=lineup.power * formationLeagueBonus(s,lineup.ids);
+  const playerPower = lineup.ready ? Math.round(basePower * leagueTacticBonus(s,basePower,opponentPower)) : 0;
+  const outcome = lineup.ready ? duelOutcome(s, playerPower, opponentPower, true)
+    : {result:"loss" as LeagueResult,playerScore:0,opponentScore:2};
   if (outcome.result === "win") { s.points += 3; s.leagueWins++; } else if (outcome.result === "draw") { s.points++; s.leagueDraws++; } else s.leagueLosses++;
   if (outcome.result === "loss") { opponent.points += 3; opponent.victories++; } else if (outcome.result === "draw") opponent.points++; else if (outcome.result === "win") { /* rival receives zero */ }
-  const match: LeagueMatch = { season: s.season, day, opponentId: opponent.id, opponentName: opponent.name, playerScore: outcome.playerScore, opponentScore: outcome.opponentScore, result: outcome.result, playerPower, opponentPower, rivalry };
+  const match: LeagueMatch = { season: s.season, day, opponentId: opponent.id, opponentName: opponent.name, playerScore: outcome.playerScore, opponentScore: outcome.opponentScore, result: outcome.result, playerPower, opponentPower, rivalry, forfeit:!lineup.ready, tactic:s.tactic };
   s.leagueHistory.unshift(match); s.leagueHistory = s.leagueHistory.slice(0, 120);
   if (rivalry) { const delta = outcome.result === "win" ? 3 : outcome.result === "loss" ? -2 : 0; s.fame = Math.max(0, s.fame + delta); }
-  note(s, (rivalry ? "Clássico da liga" : "Liga") + " · " + s.name + " " + outcome.playerScore + " × " + outcome.opponentScore + " " + opponent.name + ". " + (outcome.result === "win" ? "+3 pontos." : outcome.result === "draw" ? "+1 ponto." : "Sem pontos."));
+  note(s, (rivalry ? "Clássico da liga" : "Liga") + " · " + s.name + " " + outcome.playerScore + " × " + outcome.opponentScore + " " + opponent.name + ". " + (!lineup.ready ? "Derrota por W.O.: menos de 3 heróis disponíveis." : outcome.result === "win" ? "+3 pontos." : outcome.result === "draw" ? "+1 ponto." : "Sem pontos."));
   for (const r of s.rivals) if (r.id !== opponent.id) { const p = random(s), win = rivalWinChance(r, s); if (p < win) { r.points += 3; r.victories++; } else if (p < win + .18) r.points++; }
 }
-const CUP_DAYS = [15,30,45,60];
+export const CUP_DAYS = [15,30,45,60];
 const CUP_STAGE_ORDER: CupStage[] = ["oitavas", "quartas", "semifinal", "final"];
 const CUP_LABELS: Record<CupStage, string> = { oitavas: "Oitavas de final", quartas: "Quartas de final", semifinal: "Semifinal", final: "Final", champion: "Campeão", eliminated: "Eliminado" };
 export function cupStageLabel(stage: CupStage) { return CUP_LABELS[stage]; }
@@ -1160,15 +1175,19 @@ function resolveCupDay(s: Campaign) {
   const day = seasonDay(s), slot = CUP_DAYS.indexOf(day);
   if (slot < 0 || s.cup.stage === "eliminated" || s.cup.stage === "champion" || s.cup.stage !== CUP_STAGE_ORDER[slot]) return;
   const opponent = s.rivals[((s.season - 1) * 41 + day * 17 + 11) % s.rivals.length];
-  const playerPower = Math.round(teamPower(s) * formationLeagueBonus(s) * 1.02), opponentPower = rivalPower(opponent) + LEAGUE_TIERS[s.leagueTier].rivalBonus * 4;
-  const outcome = duelOutcome(s, playerPower, opponentPower, false), stage = s.cup.stage;
-  const match: LeagueMatch = { season: s.season, day, opponentId: opponent.id, opponentName: opponent.name, playerScore: outcome.playerScore, opponentScore: outcome.opponentScore, result: outcome.result, playerPower, opponentPower, rivalry: rivalryHeat(s, opponent.id) >= 30, cup: true, stage: CUP_LABELS[stage] };
+  const lineup=leagueLineup(s), opponentPower = rivalPower(opponent) + LEAGUE_TIERS[s.leagueTier].rivalBonus * 4;
+  const basePower=lineup.power * formationLeagueBonus(s,lineup.ids) * 1.02;
+  const playerPower=lineup.ready ? Math.round(basePower * leagueTacticBonus(s,basePower,opponentPower)) : 0;
+  const outcome = lineup.ready ? duelOutcome(s, playerPower, opponentPower, false)
+    : {result:"loss" as LeagueResult,playerScore:0,opponentScore:2};
+  const stage = s.cup.stage;
+  const match: LeagueMatch = { season: s.season, day, opponentId: opponent.id, opponentName: opponent.name, playerScore: outcome.playerScore, opponentScore: outcome.opponentScore, result: outcome.result, playerPower, opponentPower, rivalry: rivalryHeat(s, opponent.id) >= 30, cup: true, stage: CUP_LABELS[stage], forfeit:!lineup.ready, tactic:s.tactic };
   s.cup.history.unshift(match);
   if (outcome.result === "win") {
     s.cup.wins++; const reward = [80, 120, 180, 350][slot]; entry(s, "Copa das Guildas · " + CUP_LABELS[stage], reward); s.fame += [4, 7, 12, 25][slot];
     s.cup.stage = slot === 3 ? "champion" : CUP_STAGE_ORDER[slot + 1];
     note(s, "Copa das Guildas · " + CUP_LABELS[stage] + ": vitória por " + outcome.playerScore + " × " + outcome.opponentScore + " contra " + opponent.name + ". +" + reward + " ouro.");
-  } else { s.cup.stage = "eliminated"; note(s, "Copa das Guildas · " + CUP_LABELS[stage] + ": eliminação por " + outcome.playerScore + " × " + outcome.opponentScore + " contra " + opponent.name + "."); }
+  } else { s.cup.stage = "eliminated"; note(s, "Copa das Guildas · " + CUP_LABELS[stage] + ": eliminação por " + outcome.playerScore + " × " + outcome.opponentScore + " contra " + opponent.name + (lineup.ready ? "." : " (W.O.: menos de 3 heróis disponíveis).")); }
 }
 function createRetaliationEvent(s: Campaign): GuildEvent | null {
   if (s.heroes.length <= 4) return null;
@@ -1590,6 +1609,12 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
   if (["mission", "next-day", "rest", "train", "train-hero", "story-step", "start-journey"].includes(action.type)) requireRule(!s.event, "Resolva o evento do conselho antes de avançar ou organizar viagens.");
   if (battleActive(s) && ["rest", "train"].includes(action.type)) requireRule(false, "Há expedições em andamento. Administre a sede ou treine individualmente os heróis que ficaram; descanso e treino de equipe voltam quando as equipes retornarem.");
   switch (action.type) {
+    case "league-lineup": {
+      requireRule(!battleActive(s),"Conclua as expedições ativas antes de salvar a equipe da Liga.");
+      const selected=selectTeam(s,action.team,action.tactic,action.formation);
+      note(s,"Escalação da Liga salva: "+selected.map(h=>h.name).join(", ")+" · "+TACTICS[s.tactic].name+".");
+      break;
+    }
     case "next-day": {
       requireRule(!battleActive(s),"Conclua as expedições ativas antes de passar para o próximo dia.");
       advance(s,[]);

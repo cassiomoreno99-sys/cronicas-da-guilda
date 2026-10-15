@@ -13,7 +13,7 @@ import {
   HQ_DEFINITIONS, WORLD_MAP, NEGOTIATION_MODES, JOURNEY_CHOICES,
   activeExpeditions, freeExpeditionSlots, available, activeJourney, heroOnExpedition,
   heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss,
-  teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, market, talentPoints, racialPoints,
+  teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, leagueLineup, leagueCalendar, CUP_DAYS, cupStageLabel, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
   hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, dailyContractsUsed, DAILY_CONTRACT_LIMIT,
   ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rank,
@@ -321,6 +321,9 @@ function TeamPage({
     if (!formationValid(next, map)) map[next[0]] = "front";
     setTeam(next); setFormation(map);
   };
+  const canSaveLeague = team.length >= 3 && team.length <= 4 && new Set(team).size === team.length && !running.length && team.every(id=>{
+    const h=state.heroes.find(x=>x.id===id);return !!h&&available(h,state);
+  });
   const canSend = !state.event && free.includes(slot) && !missionLocks(state, selectedMission).length && team.length >= 3 && team.length <= 4 && team.every(id => {
     const h = state.heroes.find(x => x.id === id); return !!h && available(h, state);
   });
@@ -382,6 +385,10 @@ function TeamPage({
         <div className="team-power"><GameSymbol kind="battle"/><span>Poder da Equipe</span><strong>{fmt(power)}</strong></div>
       </div>
     </div>
+    <div className="league-team-save parchment"><div><strong>Equipe oficial da Liga e Copa</strong><small>Monte 3 ou 4 heróis, escolha a formação e a tática e salve. Esta equipe jogará ao encerrar o dia.</small></div>
+      <button type="button" className="action-button blue" disabled={!canSaveLeague||busy}
+        onClick={()=>act({type:"league-lineup",team,tactic,formation})}>Salvar para Liga e Copa</button>
+    </div>
     <div className="send-row">
       <div><strong>{state.event ? "Conselho pendente" : "Pronto para a Expedição?"}</strong><span>{state.event ? "Resolva a decisão do conselho na Guilda antes de partir." : selectedMission.title + " · vaga " + slot}</span></div>
       <button className="action-button green huge" disabled={!canSend || busy} onClick={() => act({
@@ -391,16 +398,29 @@ function TeamPage({
   </section>;
 }
 
-function LeaguePage({ state, team, act, busy }: { state: Campaign; team: string[]; act: (a: Action) => void; busy: boolean }) {
+function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; team: string[]; act: (a: Action) => void; busy: boolean; openTeam:()=>void }) {
   const table = standings(state);
   const place = table.findIndex(g => g.id === "player") + 1;
   const rival = table.find(g => g.id !== "player");
   const rivalData = rival ? state.rivals.find(r => r.id === rival.id) : undefined;
+  const lineup=leagueLineup(state);
+  const fixtures=leagueCalendar(state,7);
+  const latest=state.leagueHistory.filter(m=>m.season===state.season).slice(0,5);
+  const closeRank=table.slice(Math.max(0,place-4),Math.min(table.length,place+2));
+  const nextCup=state.cup.stage==="eliminated"||state.cup.stage==="champion"
+    ? undefined : CUP_DAYS.find(day=>day>=seasonDay(state)&&!state.cup.history.some(m=>m.day===day));
   return <section className="screen league-screen">
     <div className="league-summary parchment">
       <div><span>Nossa Posição</span><strong>{place}º</strong></div>
       <div className="big-crest"><img src={LEAGUE_PLAYER_CREST} alt={"Brasão de "+state.name} width={90} height={104}/></div>
       <div><h2>{state.name}</h2><p><img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={28} height={28}/> {state.points} Pontos da Liga</p><small><GameSymbol kind="fame"/> Prestígio: {state.fame} · Divisão {rank(state)}</small></div>
+    </div>
+    <div className="league-fase2-brief parchment" aria-label="Próxima partida da Liga">
+      <div><strong>Próximo jogo · Dia {seasonDay(state)}/60</strong>
+        <span>{fixtures[0]?.opponent.name||"Adversário ainda não definido"}</span>
+        <small>A partida acontece ao encerrar o dia na Guilda.</small></div>
+      <div><strong>Escalação {lineup.ids.length}/4</strong><small>{lineup.ready?"Pronta para Liga e Copa · "+TACTICS[state.tactic].name:"ATENÇÃO: menos de 3 heróis prontos. Derrota por W.O. se encerrar o dia."}</small></div>
+      <button type="button" className="action-button blue" onClick={openTeam}>Preparar equipe</button>
     </div>
     <ParchmentTitle icon={<img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={31} height={31}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
     <div className="league-table parchment">
@@ -408,6 +428,26 @@ function LeaguePage({ state, team, act, busy }: { state: Campaign; team: string[
       {table.slice(0,10).map((g,i) => <div key={g.id} className="league-row" data-player={g.id === "player"}>
         <strong>{i+1}</strong><span><img className="league-rival-crest" src={leagueCrest(g)} alt={"Brasão de "+g.name} width={42} height={48}/>{g.name}</span><b><img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={25} height={25}/> {g.points}</b><small><GameSymbol kind="reward"/> {leaguePrize(i+1, state.leagueTier)} ouro</small>
       </div>)}
+    </div>
+    {place>10&&<div className="league-close-ranking parchment" aria-label="Sua posição na classificação"><strong>Sua posição no ranking completo · {place}º/100</strong>
+      {closeRank.map(g=><div key={g.id} data-player={g.id==="player"}><span>{table.indexOf(g)+1}º · {g.name}</span><b>{g.points} pontos</b></div>)}
+    </div>}
+    <div className="league-fase2-grid">
+      <section className="league-fase2-calendar parchment" aria-label="Calendário da Liga">
+        <h3>Próximos jogos da Liga</h3><small>Um confronto por dia; confira o adversário antes de encerrar a rodada.</small>
+        {fixtures.map(f=><div className="league-fixture" key={f.day}><b>Dia {String(f.day).padStart(2,"0")}</b><span>{f.opponent.name}{f.rivalry?" · Rivalidade":""}</span><strong>{f.match?f.match.playerScore+" × "+f.match.opponentScore:"A jogar"}</strong></div>)}
+        <h4>Últimos resultados</h4>
+        {latest.length?latest.map(m=><div className="league-fixture" key={m.season+"-"+m.day}><b>Dia {m.day}</b><span>{m.opponentName}</span><strong>{m.forfeit?"W.O.":m.playerScore+" × "+m.opponentScore}</strong></div>):<p>Nenhuma partida disputada nesta temporada.</p>}
+      </section>
+      <section className="league-fase2-cup parchment" aria-label="Chaveamento da Copa das Guildas">
+        <h3>Copa das Guildas</h3><p>Situação: <strong>{cupStageLabel(state.cup.stage)}</strong></p>
+        <small>{nextCup?"Próxima fase no dia "+nextCup+"/60. Prepare sua escalação na tela Equipe.":state.cup.stage==="champion"?"Título conquistado!":"Participação encerrada nesta temporada."}</small>
+        {CUP_DAYS.map((day,i)=>{
+          const match=state.cup.history.find(m=>m.day===day);
+          const stage=["Oitavas","Quartas","Semifinal","Final"][i];
+          return <div className="cup-stage" key={day} data-result={match?.result||"pending"}><b>{stage} · Dia {day}</b><span>{match?match.opponentName:state.cup.stage==="eliminated"?"Não disputada":"A definir"}</span><strong>{match?(match.forfeit?"W.O.":match.playerScore+" × "+match.opponentScore)+" · "+(match.result==="win"?"Vitória":"Eliminação"):"—"}</strong></div>;
+        })}
+      </section>
     </div>
     <ParchmentTitle icon={<GameSymbol kind="squad"/>} title="Ranking dos 10 Melhores Heróis" side={<span>Equipamentos e evolução contam no poder</span>}/>
     <section className="heroes-top10 parchment" aria-label="Ranking dos 10 melhores heróis">
@@ -860,7 +900,7 @@ function GuildPage({
       <button type="button" className="action-button green guild-next-day"
         disabled={busy||activeExpeditions(state).length>0||!!state.event}
         title={state.event?"Resolva o conselho para encerrar o dia.":activeExpeditions(state).length?"Conclua as expedições em andamento.":"Encerrar o dia atual"}
-        onClick={()=>{if(window.confirm("Encerrar o dia "+seasonDay(state)+"/"+SEASON_DAYS+"? Salários, liga, viagens e recuperação diária serão processados."))act({type:"next-day"});}}>
+        onClick={()=>{const warning=leagueLineup(state).ready?"":" ATENÇÃO: sua escalação da Liga possui menos de 3 heróis disponíveis. Você perderá por W.O. na Liga e, se houver Copa hoje, também será eliminado.";if(window.confirm("Encerrar o dia "+seasonDay(state)+"/"+SEASON_DAYS+"? Salários, liga, viagens e recuperação diária serão processados."+warning))act({type:"next-day"});}}>
         Próximo dia <ChevronRight size={18}/></button>
     </div>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
@@ -1052,7 +1092,7 @@ export default function Game() {
       <main className="game-content">
       {screen === "mission" && <MissionPage state={state} selectedId={selectedMission.id} selectMission={setSelectedMissionId} goTeam={() => go("team")} />}
       {screen === "team" && <TeamPage state={state} selectedMission={selectedMission} team={team} formation={formation} tactic={tactic} slot={slot} busy={busy} setTeam={setTeam} setFormation={setFormation} setTactic={setTactic} setSlot={setSlot} act={perform} openBattle={setBattleExpeditionId} />}
-      {screen === "league" && <LeaguePage state={state} team={team} act={perform} busy={busy} />}
+      {screen === "league" && <LeaguePage state={state} team={team} act={perform} busy={busy} openTeam={()=>go("team")} />}
       {screen === "rest" && <RestPage state={state} act={perform} busy={busy} />}
       {screen === "heroes" && <HeroPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} openEquipment={() => go("equipment")} act={perform} busy={busy} />}
       {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} act={perform} busy={busy} />}

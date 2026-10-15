@@ -2817,3 +2817,34 @@ img.game-symbol.game-coin{
 .mission-daily-budget strong{color:#fff;font-size:14px}
 .mission-daily-budget svg{width:18px;height:18px}
 @media(max-width:430px){.mission-daily-budget{font-size:11px;padding:8px}}
+
+/* Fase 2: painel competitivo e escalação persistida, mobile-first. */
+.league-team-save{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px;margin:10px 0;border:1px solid #9a733a}
+.league-team-save>div{display:grid;gap:5px;min-width:0}
+.league-team-save strong{font:700 15px Georgia;color:#67321e}
+.league-team-save small{font:12px/1.5 system-ui}
+.league-team-save .action-button{min-height:44px;flex-shrink:0}
+.league-fase2-brief{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:center;margin:12px 0;padding:12px;border:2px solid #ae8345}
+.league-fase2-brief>div{display:grid;gap:4px;min-width:0}
+.league-fase2-brief strong{font:700 14px Georgia;color:#703718}
+.league-fase2-brief span{font:700 13px system-ui}
+.league-fase2-brief small{font:11px/1.4 system-ui}
+.league-fase2-brief button{min-height:44px}
+.league-fase2-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+.league-fase2-grid>section{min-width:0;padding:12px;border:1px solid #99713f}
+.league-fase2-grid h3{font:700 19px Georgia;color:#6b2c1b;margin:0 0 6px}
+.league-fase2-grid h4{font:700 15px Georgia;color:#6b2c1b;margin:15px 0 8px}
+.league-fase2-grid section>small{display:block;font:11px/1.45 system-ui;margin:5px 0 12px}
+.league-fixture,.cup-stage{display:grid;grid-template-columns:65px minmax(0,1fr) auto;gap:8px;align-items:center;padding:9px 5px;border-bottom:1px solid #b99b6e;font:12px/1.35 system-ui}
+.league-fixture b,.cup-stage b{color:#683626}
+.league-fixture strong,.cup-stage strong{font-weight:800;white-space:nowrap}
+.league-fixture span,.cup-stage span{overflow-wrap:anywhere;min-width:0}
+.cup-stage{grid-template-columns:105px minmax(0,1fr) auto}
+.cup-stage[data-result="win"]{background:#dae9d7}
+.cup-stage[data-result="loss"]{background:#f0d4c7}
+.league-close-ranking{margin:9px 0;padding:12px}
+.league-close-ranking>strong{display:block;color:#6a291b;margin-bottom:7px}
+.league-close-ranking>div{display:flex;justify-content:space-between;gap:8px;padding:7px;border-bottom:1px solid #b99b6e;font-size:12px}
+.league-close-ranking>div[data-player="true"]{background:#edcf87;font-weight:800}
+@media(max-width:680px){.league-fase2-grid{grid-template-columns:minmax(0,1fr)}.league-fase2-brief{grid-template-columns:minmax(0,1fr)}.league-fase2-brief button{width:100%}.league-team-save{flex-direction:column;align-items:stretch}.league-team-save .action-button{width:100%}}
+@media(max-width:390px){.league-fixture,.cup-stage{font-size:10px;gap:5px}.cup-stage{grid-template-columns:78px minmax(0,1fr) auto}.league-fase2-grid>section{padding:8px}}

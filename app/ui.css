@@ -2752,3 +2752,60 @@ img.game-symbol.game-coin{
 .team-familiarity small{color:#c2d6df;font:11px system-ui}
 .team-familiarity span{color:#bde4bf;font:700 11px/1.6 system-ui}
 @media(max-width:640px){.heroes-top10{grid-template-columns:minmax(0,1fr);padding:8px}.hero-ranking-card{gap:7px;padding:8px}.hero-ranking-card .hero-portrait{width:42px;height:54px;flex-basis:42px}.hero-ranking-card>span{font-size:10px}.guild-building-effect{font-size:10px}}
+
+
+/* Recrutamento: todos os preços e botões ocupam a mesma linha horizontal.
+   O cartão mais alto define a altura da fileira, independentemente do nome,
+   raça, classe, sexo ou quebra de texto em celulares. */
+.recruit-grid{align-items:stretch}
+.recruit-grid article{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  height:100%;
+  min-width:0;
+  min-height:0;
+}
+.recruit-grid .hero-portrait{flex:none}
+.recruit-grid h3{
+  flex:none;
+  height:auto;
+  max-height:none;
+  overflow:visible;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.16;
+}
+.recruit-grid article>span{
+  flex:none;
+  display:block;
+  min-width:0;
+  height:auto;
+  white-space:normal;
+  overflow-wrap:anywhere;
+  line-height:1.2;
+  padding-inline:2px;
+}
+.recruit-grid article>small{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:2px;
+  flex:none;
+  margin-top:auto;
+  min-height:26px;
+  line-height:1.1;
+  white-space:nowrap;
+}
+.recruit-grid .action-button{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex:none;
+  align-self:stretch;
+  box-sizing:border-box;
+  height:35px;
+  min-height:35px;
+  margin:4px;
+  text-align:center;
+}

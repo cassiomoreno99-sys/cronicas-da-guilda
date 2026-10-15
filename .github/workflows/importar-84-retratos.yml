@@ -1,0 +1,56 @@
+name: Importar 84 retratos aprovados - staging
+on:
+  push:
+    branches: [artes-84-import-20261015]
+permissions:
+  contents: write
+jobs:
+  importar:
+    if: "!contains(github.event.head_commit.message, '[assets staged]')"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Baixar pacote das imagens aprovadas
+        env:
+          KIT_URL: "https://at.adobe.com/lkNlpsjODvvQAver"
+        run: |
+          curl -fLsS --retry 3 --connect-timeout 20 --max-time 180 "$KIT_URL" -o /tmp/herois.zip
+          file /tmp/herois.zip
+          unzip -t /tmp/herois.zip
+          unzip -oq /tmp/herois.zip -d .
+      - name: Validar todos os retratos e nomes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import sys
+          root=Path("public/heroes/portraits")
+          races=["human","elf","dwarf","orc","beastkin","umbral"]
+          classes=["warrior","paladin","ranger","rogue","mage","healer","bard"]
+          sexes=["male","female"]
+          expected={root/r/(cl+"-"+sex+".webp") for r in races for cl in classes for sex in sexes}
+          found=set(root.rglob("*.webp"))
+          assert found==expected,(len(found), sorted(str(x) for x in expected-found)[:5],sorted(str(x) for x in found-expected)[:5])
+          assert len(found)==84
+          for f in found:
+            assert f.stat().st_size>10000,f
+            assert f.open("rb").read(4)==b"RIFF",f
+          print("84 retratos únicos validados.")
+          PY
+      - name: Executar testes e compilação
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Commitar as 84 artes exclusivamente no ramo de staging
+        run: |
+          git config user.name "Crônicas da Guilda - Integração"
+          git config user.email "actions@users.noreply.github.com"
+          git add public/heroes/portraits
+          test "$(git diff --cached --name-only | wc -l)" -eq 84
+          git commit -m "[assets staged] 84 retratos oficiais revisados"
+          git push origin "HEAD:artes-84-import-20261015"

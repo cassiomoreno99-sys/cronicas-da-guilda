@@ -1167,7 +1167,7 @@ function resolveLeagueDay(s: Campaign) {
   note(s, (rivalry ? "Clássico da liga" : "Liga") + " · " + s.name + " " + outcome.playerScore + " × " + outcome.opponentScore + " " + opponent.name + ". " + (!lineup.ready ? "Derrota por W.O.: menos de 3 heróis disponíveis." : outcome.result === "win" ? "+3 pontos." : outcome.result === "draw" ? "+1 ponto." : "Sem pontos."));
   for (const r of s.rivals) if (r.id !== opponent.id) { const p = random(s), win = rivalWinChance(r, s); if (p < win) { r.points += 3; r.victories++; } else if (p < win + .18) r.points++; }
 }
-export const CUP_DAYS = [15,30,45,60] as const;
+export const CUP_DAYS = [15,30,45,60];
 const CUP_STAGE_ORDER: CupStage[] = ["oitavas", "quartas", "semifinal", "final"];
 const CUP_LABELS: Record<CupStage, string> = { oitavas: "Oitavas de final", quartas: "Quartas de final", semifinal: "Semifinal", final: "Final", champion: "Campeão", eliminated: "Eliminado" };
 export function cupStageLabel(stage: CupStage) { return CUP_LABELS[stage]; }

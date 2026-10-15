@@ -83,6 +83,7 @@ assert.ok(!ui.includes("CORE_RACE_NAMES"),"Nome de raça em tela contradiz o cad
 const mkdir="public/heroes/portraits/dwarf",file=mkdir+"/mage-female.webp",original="public/battle/sprite-thorgar.webp";
 const generated="lib/hero-art-manifest.ts";
 const previous=fs.readFileSync(generated,"utf8");
+const originalPortrait=fs.existsSync(file)?fs.readFileSync(file):null;
 try{
  fs.mkdirSync(mkdir,{recursive:true});fs.copyFileSync(original,file);
  execFileSync(process.execPath,["scripts/generate-hero-art-manifest.mjs"],{stdio:"pipe"});
@@ -90,10 +91,13 @@ try{
  assert.ok(manifest.includes('dwarf/mage-female'));
  assert.ok(manifest.includes('/heroes/portraits/dwarf/mage-female.webp'));
 }finally{
- if(fs.existsSync(file))fs.unlinkSync(file);
+ if(originalPortrait)fs.writeFileSync(file,originalPortrait);
+ else if(fs.existsSync(file))fs.unlinkSync(file);
  fs.writeFileSync(generated,previous);
  execFileSync(process.execPath,["scripts/generate-hero-art-manifest.mjs"],{stdio:"pipe"});
 }
 assert.equal(heroArtProgress().total,84);
-assert.equal(officialHeroArt("portrait","dwarf" as HeroRace,"mage","female"),undefined);
+const hasPortrait=fs.existsSync("public/heroes/portraits/dwarf/mage-female.webp");
+assert.equal(officialHeroArt("portrait","dwarf" as HeroRace,"mage","female"),hasPortrait?"/heroes/portraits/dwarf/mage-female.webp":undefined);
+if(hasPortrait)assert.equal(heroArtProgress().portraits,84,"O kit completo deve registrar 84 retratos.");
 console.log("BIBLIOTECA DE HERÓIS: 84 identidades únicas, nomes/raças/sexo, saves preservados e inclusão automática de arquivos OK.");

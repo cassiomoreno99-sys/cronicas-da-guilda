@@ -423,7 +423,7 @@ function LeaguePage({ state, team, act, busy }: { state: Campaign; team: string[
       <div><h2>{rivalData?.name || "Guilda Rival"}</h2><p>Uma guilda rival disputa influência e prestígio. Derrote-a para fortalecer sua posição.</p>
         <span><GameSymbol kind="league"/> {rivalData?.points || 0} pontos</span><span><GameSymbol kind="attack"/> Força {rivalData?.strength || 0}</span>
       </div>
-      <button className="action-button red huge" disabled={busy || !rivalData || team.length < 3 || activeExpeditions(state).length > 0}
+      <button className="action-button red huge" disabled={busy || !rivalData || team.length < 3 || activeExpeditions(state).length > 0 || state.raidHistory.some(r=>r.day===state.day) || state.rivalBattleHistory.some(r=>r.day===state.day)}
         onClick={() => rivalData && act({ type:"rival-battle", guildId:rivalData.id, team })}>Desafiar</button>
     </div>
   </section>;
@@ -447,7 +447,7 @@ function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => v
         <div><h3>{h.name}</h3><span className={injured ? "danger-text" : "ok-text"}>{injured ? "Ferido" : h.energy < 100 ? "Recuperando" : "Pronto"}</span>
           <ProgressBar value={h.energy} tone={injured ? "red" : "green"} /><small><GameSymbol kind="energy"/> Energia {h.energy}% · Nv. {h.level}</small>
         </div>
-        <button className="action-button blue" disabled={busy || injured || h.energy < 15} onClick={() => act({ type:"train-hero", heroId:h.id })}>Treinar +{plan.xp} XP</button>
+        <button className="action-button blue" disabled={busy || injured || h.energy < 15 || state.hqActionDay[h.id]===state.day} onClick={() => act({ type:"train-hero", heroId:h.id })}>Treinar +{plan.xp} XP</button>
       </article>;
     })}</div>
         <button className="action-button green rest-all" disabled={busy} onClick={() => act({ type:"rest" })}><GameSymbol kind="sanctuary"/> Descansar toda a guilda</button>
@@ -493,14 +493,14 @@ function HeroPage({ state, selectedId, selectHero, openEquipment, act, busy }: {
           : <div className="talent-box"><h3>{RACE_TREES[heroRace(hero)][hero.racial.path].name} · Grau {hero.racial.rank}</h3><p>{RACE_TREES[heroRace(hero)][hero.racial.path].description}</p>{racePts > 0 && hero.racial.rank < 3 && <button className="small-button gold" disabled={busy || !canAct} onClick={() => act({type:"racial-specialize",heroId:hero.id,path:hero.racial!.path})}>Avançar árvore racial</button>}</div>}
         </section>
         <section className="sheet-section"><label>História Pessoal</label><h3>{story.title}</h3><p>{story.stages[Math.min(2, hero.storyStage || 0)]}</p>
-          <button className="small-button" disabled={busy || !canAct || (hero.storyStage || 0) >= 3} onClick={() => act({type:"story-step",heroId:hero.id})}>{(hero.storyStage || 0) >= 3 ? "História concluída" : "Avançar história"}</button>
+          <button className="small-button" disabled={busy || !canAct || state.hqActionDay[hero.id]===state.day || (hero.storyStage || 0) >= 3} onClick={() => act({type:"story-step",heroId:hero.id})}>{(hero.storyStage || 0) >= 3 ? "História concluída" : "Avançar história"}</button>
         </section>
         <section className="sheet-section"><label>Viagem</label>
           {journey ? <div className="journey-box"><strong>{journey.remaining} dia(s) restantes · +{journey.xpEarned} XP</strong><div className="choice-grid">{(Object.keys(JOURNEY_CHOICES) as JourneyChoice[]).map(c => <button data-active={journey.choice === c} key={c} onClick={() => act({type:"journey-choice",journeyId:journey.id,choice:c})}>{JOURNEY_CHOICES[c].name}</button>)}</div></div>
           : <div className="choice-grid">{([3,5,7] as JourneyDuration[]).map(d => <button key={d} disabled={busy || !canAct} onClick={() => act({type:"start-journey",heroId:hero.id,duration:d})}><strong>{d} dias</strong><small>Desenvolvimento individual</small></button>)}</div>}
         </section>
         <section className="sheet-section"><label>Equipamentos</label><div className="equipment-row">{equipped.length ? equipped.map(i => <ItemArt key={i.id} itemKey={i.key} />) : <small>Nenhum equipamento.</small>}</div><button type="button" className="hero-equipment-link" onClick={openEquipment}><GameSymbol kind="defense" aria-hidden="true"/> Ver equipamentos · 12 espaços <ChevronRight aria-hidden="true" /></button></section>
-        <button className="action-button blue huge" disabled={busy || !canAct || hero.energy < 15} onClick={() => act({type:"train-hero",heroId:hero.id})}>Treino Individual · +{trainingPlan(state,hero).xp} XP</button>
+        <button className="action-button blue huge" disabled={busy || !canAct || hero.energy < 15 || state.hqActionDay[hero.id]===state.day} onClick={() => act({type:"train-hero",heroId:hero.id})}>Treino Individual · +{trainingPlan(state,hero).xp} XP</button>
       </article>
     </div>
   </section>;
@@ -908,7 +908,7 @@ function GuildPage({
       <section className="guild-mini parchment"><h3>Mapa do Mundo</h3><div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}><strong>{i+1}. {r.name}</strong><small>{r.theme}</small></button>)}</div></section>
       <AcademyPanel state={state} act={act} busy={busy} />
       <section className="guild-mini parchment"><h3>Sala de Guerra · Guerra de Guildas</h3>
-        <p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
+        <p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0 || state.raidHistory.some(r=>r.day===state.day) || state.rivalBattleHistory.some(r=>r.day===state.day)} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
     </div>
     <RivalRecruitPanel state={state} act={act} busy={busy} />
     <SymbolGuide />

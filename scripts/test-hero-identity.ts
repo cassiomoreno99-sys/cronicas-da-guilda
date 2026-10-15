@@ -95,5 +95,7 @@ try{
  execFileSync(process.execPath,["scripts/generate-hero-art-manifest.mjs"],{stdio:"pipe"});
 }
 assert.equal(heroArtProgress().total,84);
-assert.equal(officialHeroArt("portrait","dwarf" as HeroRace,"mage","female"),undefined);
+const hasPortrait=fs.existsSync("public/heroes/portraits/dwarf/mage-female.webp");
+assert.equal(officialHeroArt("portrait","dwarf" as HeroRace,"mage","female"),hasPortrait?"/heroes/portraits/dwarf/mage-female.webp":undefined);
+if(hasPortrait)assert.equal(heroArtProgress().portraits,84,"O kit completo deve registrar 84 retratos.");
 console.log("BIBLIOTECA DE HERÓIS: 84 identidades únicas, nomes/raças/sexo, saves preservados e inclusão automática de arquivos OK.");

@@ -1910,7 +1910,8 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "train": {
       const team = selectTeam(s, action.team, action.tactic), cost = 50 * team.length; requireRule(s.gold >= cost, "O treino da equipe custa " + cost + " de ouro.");
       requireRule(s.dailyActions!.teamTrainDay!==s.day,"A equipe já treinou hoje.");
-      entry(s, "Treino da equipe", -cost); team.forEach(h => { h.energy -= 12; gainXp(h, 65); }); note(s, "A equipe treinou: +65 XP por herói e −12 energia."); s.dailyActions!.teamTrainDay=s.day; break;
+      requireRule(team.every(h=>s.hqActionDay[h.id]!==s.day),"Um dos heróis já treinou ou avançou sua história hoje.");
+      entry(s, "Treino da equipe", -cost); team.forEach(h => { h.energy -= 12; gainXp(h, 65); s.hqActionDay[h.id]=s.day; }); note(s, "A equipe treinou: +65 XP por herói e −12 energia."); s.dailyActions!.teamTrainDay=s.day; break;
     }
     case "train-hero": {
       const h = s.heroes.find(h => h.id === action.heroId); requireRule(h, "Herói não encontrado na guilda.");

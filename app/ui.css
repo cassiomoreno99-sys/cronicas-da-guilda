@@ -2809,3 +2809,11 @@ img.game-symbol.game-coin{
   margin:4px;
   text-align:center;
 }
+
+/* Fase 1: limite de missões do dia à vista sem alterar o visual aprovado. */
+.mission-daily-budget{display:flex;align-items:center;flex-wrap:wrap;gap:5px;
+ padding:9px 12px;margin:5px 0 12px;border:1px solid #a77a36;border-radius:6px;
+ background:#112d42;color:#ffe6af;font:600 12px/1.4 system-ui}
+.mission-daily-budget strong{color:#fff;font-size:14px}
+.mission-daily-budget svg{width:18px;height:18px}
+@media(max-width:430px){.mission-daily-budget{font-size:11px;padding:8px}}

@@ -286,7 +286,7 @@ function MissionPage({
               className={"action-button " + (index % 3 === 0 ? "red" : index % 3 === 1 ? "green" : "blue")}
               disabled={!!locks.length}
               onClick={() => { selectMission(m.id); goTeam(); }}
-            >{locks.length ? (state.dailyActions?.missionIds?.includes(m.id) && state.dailyActions?.missionDay===state.day ? "Realizada" : "Bloqueada") : selected ? "Preparar" : "Aceitar"}</button>
+            >{locks.length ? (state.dailyActions?.missionIds?.includes(m.id) && state.dailyActions?.missionDay===state.day ? "Tentada" : "Bloqueada") : selected ? "Preparar" : "Aceitar"}</button>
           </div>
         </article>;
       })}

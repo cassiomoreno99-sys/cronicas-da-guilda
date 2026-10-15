@@ -11,6 +11,7 @@ function ready(state:ReturnType<typeof fresh>){
  // Equipe recuperada para um ensaio de estresse que isola as regras econômicas.
  state.heroes.forEach(h=>{h.energy=100;h.injuredUntil=0;});
  state.event=null;
+ state.team=state.heroes.slice(0,4).map(h=>h.id);
  return state;
 }
 function start(s:ReturnType<typeof fresh>,index:number,slot:1|2|3=1){

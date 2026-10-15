@@ -55,7 +55,7 @@ export type AcademyGraduation = { season: number; evaluated: number; approved: A
 export type AcademyState = { trainees: string[]; mentorId?: string; candidates: AcademyCandidate[]; candidateSeason?: number; lastFocusDay?: number; reserve: Hero[]; lastGraduation?: AcademyGraduation };
 export type GuildRaidResult = { id: string; day: number; rivalId?: string; title: string; teams: string[][]; fronts: { name: string; won: boolean; playerPower: number; enemyPower: number }[]; won: boolean; reward: number; loot: string[] };
 export type RivalBattleResult = { id: string; day: number; rivalId: string; rivalName: string; playerPower: number; rivalPower: number; won: boolean; reward: number; fameChange: number };
-export type Expedition = { id: string; slot: ExpeditionSlot; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; battle: Battle; startedDay: number; nextRoundAt: number };
+export type Expedition = { id: string; missionId?:string; slot: ExpeditionSlot; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; battle: Battle; startedDay: number; nextRoundAt: number };
 export type LeagueResult = "win" | "draw" | "loss";
 export type LeagueMatch = { season: number; day: number; opponentId: string; opponentName: string; playerScore: number; opponentScore: number; result: LeagueResult; playerPower: number; opponentPower: number; rivalry: boolean; cup?: boolean; stage?: string };
 export type Rivalry = { guildId: string; heat: number; sinceSeason: number; lastReason: string };
@@ -63,7 +63,7 @@ export type CupStage = "oitavas" | "quartas" | "semifinal" | "final" | "champion
 export type CupState = { season: number; stage: CupStage; wins: number; history: LeagueMatch[] };
 export type SeasonForgePlan = {season:number;itemKey:string;materials:Record<string,number>;crafted?:boolean};
 export type SeasonAward = {season:number;guildWinners:Array<{id:string;name:string}>;heroWinners:Array<{id:string;name:string;race:HeroRace;guild:string}>;guildPlace:number};
-export type Campaign = { schema: 1; seasonForgePlans?:SeasonForgePlan[]; seasonAwards?:SeasonAward[]; teamFamiliarity?: Record<string,number>; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
+export type Campaign = { schema: 1; seasonForgePlans?:SeasonForgePlan[]; seasonAwards?:SeasonAward[]; teamFamiliarity?: Record<string,number>; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number;missionDay?:number;missionIds?:string[]}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
 export type Action =
   | { type: "mission"; missionId: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine>; startedAt?: number; expeditionSlot?: ExpeditionSlot }
   | { type: "save-squad"; specialty: MissionKind; name: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
@@ -361,6 +361,17 @@ const templates = [
 ];
 function random(s: Campaign) { s.rng = (Math.imul(s.rng, 1664525) + 1013904223) >>> 0; return s.rng / 4294967296; }
 export const SEASON_DAYS=60;
+/** Controla o orçamento diário da Guilda sem avançar automaticamente o calendário. */
+export const DAILY_CONTRACT_LIMIT=3;
+export function dailyContractsUsed(s:Pick<Campaign,"day"|"dailyActions">):number{
+ return s.dailyActions?.missionDay===s.day?Math.min(DAILY_CONTRACT_LIMIT,s.dailyActions.missionIds?.length||0):0;
+}
+export function dailyContractsLeft(s:Pick<Campaign,"day"|"dailyActions">):number{
+ return Math.max(0,DAILY_CONTRACT_LIMIT-dailyContractsUsed(s));
+}
+function guildConfrontationToday(s:Campaign):boolean {
+ return s.raidHistory?.some(r=>r.day===s.day)||s.rivalBattleHistory?.some(r=>r.day===s.day)||false;
+}
 export function seasonDay(s: Pick<Campaign,"day">){return ((s.day-1)%SEASON_DAYS)+1;}
 export const MAX_HERO_LEVEL = 50;
 /** Curva 2026: subida inicial deliberada, sem reduzir o nível de saves antigos. */
@@ -482,7 +493,9 @@ export function hasItem(s: Campaign, key: string) { return s.chest.some(i => i.k
 export function missionLocks(s: Campaign, m: Mission) {
   const locks: string[] = [];
   if (s.fame < m.requiredFame) locks.push(m.requiredFame + " de renome (atual: " + s.fame + ")");
-  if (activeExpeditions(s).some(e => e.battle.combat?.mission.id === m.id)) locks.push("essa expedição já está em andamento");
+  if (s.dailyActions?.missionDay===s.day && s.dailyActions.missionIds?.includes(m.id)) locks.push("Contrato já tentado hoje. Volte no próximo dia.");
+  if (dailyContractsLeft(s)===0) locks.push("Limite de 3 expedições no dia. Use Próximo dia na Guilda.");
+  if (activeExpeditions(s).some(e => (e.missionId||e.battle.combat?.mission.id) === m.id)) locks.push("essa expedição já está em andamento");
   if (activeExpeditions(s).length >= 3) locks.push("limite de 3 expedições simultâneas");
   return locks;
 }
@@ -625,6 +638,7 @@ function addScar(s: Campaign, h: Hero, source: "defeat" | "boss" = "defeat") {
 }
 function resolveGuildRaid(s: Campaign, teams: string[][], rivalId?: string) {
   requireRule(!battleActive(s), "Conclua as expedições antes de iniciar uma raid.");
+  requireRule(!guildConfrontationToday(s),"A Guilda já participou de um confronto contra rivais hoje. Volte no próximo dia.");
   requireRule(teams.length === 3 && teams.every(team => team.length >= 3 && team.length <= 4), "A raid exige três equipes de 3 ou 4 heróis.");
   const all = teams.flat(); requireRule(new Set(all).size === all.length, "Um herói não pode participar de duas frentes da mesma raid.");
   requireRule(all.every(id => s.heroes.some(h => h.id === id && available(h, s))), "Todos os heróis da raid precisam estar disponíveis.");
@@ -654,6 +668,7 @@ function resolveGuildRaid(s: Campaign, teams: string[][], rivalId?: string) {
 }
 function resolveRivalBattle(s: Campaign, guildId: string, team: string[]) {
   requireRule(!battleActive(s), "Conclua as expedições antes de desafiar outra guilda.");
+  requireRule(!guildConfrontationToday(s),"A Guilda já participou de um confronto contra rivais hoje. Volte no próximo dia.");
   const rival = s.rivals.find(r => r.id === guildId); requireRule(rival, "Guilda rival não encontrada.");
   requireRule(team.length >= 3 && team.length <= 4 && new Set(team).size === team.length, "Escale 3 ou 4 heróis.");
   requireRule(team.every(id => s.heroes.some(h => h.id === id && available(h, s))), "A equipe precisa estar disponível.");
@@ -847,6 +862,25 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     }
   }
   s.expeditions = s.expeditions.filter(e => e.team.length >= 3 || e.battle.status !== "active").slice(-9);
+  // Saves antigos: reconhecer contratos iniciados hoje, incluindo batalhas encerradas.
+  for(const e of s.expeditions) if(!e.missionId && e.battle.combat?.mission.id)e.missionId=e.battle.combat.mission.id;
+  if(s.dailyActions!.missionDay!==s.day){
+    const ids=new Set<string>(),known=missions(s);
+    for(const e of s.expeditions.filter(e=>e.startedDay===s.day)){
+      const found=known.find(m=>m.title===e.battle.title);
+      ids.add(e.missionId||found?.id||"legado:"+e.id);
+    }
+    if(!ids.size && s.lastBattle?.day===s.day && s.lastBattle.status!=="active"){
+      const found=known.find(m=>m.title===s.lastBattle?.title);
+      ids.add(found?.id||"legado:ultima-batalha");
+    }
+    s.dailyActions!.missionDay=s.day;
+    s.dailyActions!.missionIds=[...ids].slice(0,DAILY_CONTRACT_LIMIT);
+  }else{
+    s.dailyActions!.missionIds=Array.isArray(s.dailyActions!.missionIds)
+      ? [...new Set(s.dailyActions!.missionIds.filter(id=>typeof id==="string"))].slice(0,DAILY_CONTRACT_LIMIT)
+      : [];
+  }
   const deployed = new Set(activeExpeditions(s).flatMap(e => e.team));
   s.team = (s.team || []).filter(id => !deployed.has(id) && s.heroes.some(h => h.id === id)).slice(0, 4);
   for (const h of s.heroes) if (s.team.length < 4 && !deployed.has(h.id) && !s.team.includes(h.id) && h.energy >= 25 && h.injuredUntil <= s.day && !activeJourney(s, h.id)) s.team.push(h.id);
@@ -1572,8 +1606,11 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const locks = missionLocks(s, mission); requireRule(!locks.length, "Missão bloqueada: precisa de " + locks.join(" e ") + ".");
       const selected = selectTeam(s, action.team, action.tactic, action.formation);
       const battle = startBattle(s, mission, selected);
-      const expedition: Expedition = { id: "expedition-" + (++s.expeditionSequence), slot: expeditionSlot, team: selected.map(h => h.id), formation: { ...s.formation }, tactic: s.tactic, battle, startedDay: s.day, nextRoundAt: (Number.isFinite(action.startedAt) ? Number(action.startedAt) : Date.now()) + 1350 };
+      const expedition: Expedition = { id: "expedition-" + (++s.expeditionSequence), missionId:mission.id, slot: expeditionSlot, team: selected.map(h => h.id), formation: { ...s.formation }, tactic: s.tactic, battle, startedDay: s.day, nextRoundAt: (Number.isFinite(action.startedAt) ? Number(action.startedAt) : Date.now()) + 1350 };
       s.expeditions.push(expedition); s.lastBattle = battle;
+      s.dailyActions!.missionDay=s.day;
+      s.dailyActions!.missionIds ??=[];
+      s.dailyActions!.missionIds.push(mission.id);
       const next = s.heroes.filter(h => available(h, s)).slice(0, 4);
       s.team = next.map(h => h.id); s.formation = normalizedFormation(s);
       note(s, "Expedição enviada: " + mission.title + " com " + expedition.team.length + " heróis. A sede continua disponível.");
@@ -1833,7 +1870,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "story-step": {
       const h = s.heroes.find(h => h.id === action.heroId); requireRule(h, "Herói não encontrado na guilda.");
       requireRule(available(h, s), "O herói precisa estar disponível para avançar sua história pessoal.");
-      if (battleActive(s)) requireRule(s.hqActionDay[h.id] !== s.day, "Esse herói já realizou uma atividade na sede hoje enquanto as expedições estão fora.");
+      requireRule(s.hqActionDay[h.id] !== s.day, "Esse herói já realizou uma atividade de história ou treino hoje.");
       const stage = (h.storyStage || 0) as StoryStage, spec = HERO_STORIES[h.class];
       requireRule(stage < 3, "A história pessoal desse herói já foi concluída.");
       if (stage === 0) {
@@ -1878,7 +1915,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     case "train-hero": {
       const h = s.heroes.find(h => h.id === action.heroId); requireRule(h, "Herói não encontrado na guilda.");
       requireRule(available(h, s), "O herói precisa estar na sede, sem ferimentos e ter pelo menos 25% de energia.");
-      if (battleActive(s)) requireRule(s.hqActionDay[h.id] !== s.day, "Esse herói já treinou ou avançou sua história hoje enquanto as expedições estão fora.");
+      requireRule(s.hqActionDay[h.id] !== s.day, "Esse herói já treinou ou avançou sua história hoje.");
       const plan = trainingPlan(s, h); requireRule(s.gold >= plan.cost, "O treino individual custa " + plan.cost + " ouro.");
       entry(s, "Treino individual · " + h.name, -plan.cost); h.energy -= plan.energy; gainXp(h, plan.xp);
       note(s, h.name + " concluiu treino individual: +" + plan.xp + " XP, −" + plan.energy + " energia. Nível " + h.level + ".");

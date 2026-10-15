@@ -15,7 +15,7 @@ import {
   heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss,
   teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
-  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS,
+  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, dailyContractsUsed, DAILY_CONTRACT_LIMIT,
   ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rank,
   type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
@@ -261,6 +261,7 @@ function MissionPage({
   const boss = seasonBoss(state);
   const cards = [...board, ...(boss ? [boss] : [])];
   return <section className="screen mission-screen">
+    <div className="mission-daily-budget" role="status"><GameSymbol kind="scouting"/> Expedições do dia: <strong>{dailyContractsUsed(state)}/{DAILY_CONTRACT_LIMIT}</strong> · Um contrato pode ser tentado apenas uma vez por dia. Próximo dia libera novos contratos.</div>
     <div className="mission-list">
       {cards.map((m, index) => {
         const locks = missionLocks(state, m);
@@ -285,7 +286,7 @@ function MissionPage({
               className={"action-button " + (index % 3 === 0 ? "red" : index % 3 === 1 ? "green" : "blue")}
               disabled={!!locks.length}
               onClick={() => { selectMission(m.id); goTeam(); }}
-            >{locks.length ? "Bloqueada" : selected ? "Preparar" : "Aceitar"}</button>
+            >{locks.length ? (state.dailyActions?.missionIds?.includes(m.id) && state.dailyActions?.missionDay===state.day ? "Realizada" : "Bloqueada") : selected ? "Preparar" : "Aceitar"}</button>
           </div>
         </article>;
       })}

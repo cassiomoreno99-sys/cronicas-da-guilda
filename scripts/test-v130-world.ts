@@ -65,6 +65,8 @@ console.log("v1.3.0: iniciando bateria ampla...");
   while (s.heroes.find(h => h.id === id)!.level < MAX_HERO_LEVEL && guard++ < 700) {
     s.event = null; s.day = 1; s.gold = 1_000_000_000;
     s.heroes.find(h => h.id === id)!.energy = 100;
+    // O ensaio injeta XP e ignora o calendário de propósito; libera o dia sintético.
+    s.hqActionDay[id] = 0;
     // Testa o teto de nível sem simular milhares de treinos: injeta XP de teste.
     const hero=s.heroes.find(h=>h.id===id)!;hero.xp=Math.max(hero.xp,threshold(hero)-1);
     s = applyAction(s, { type: "train-hero", heroId: id });
@@ -72,6 +74,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
   ok(s.heroes.find(h => h.id === id)!.level === 50, "Herói não alcançou nível 50 no teste de progressão.");
   for (let i=0;i<20;i++) {
     s.event = null; s.day = 1; s.gold = 1_000_000_000; s.heroes.find(h => h.id === id)!.energy = 100;
+    s.hqActionDay[id] = 0;
     s = applyAction(s, { type: "train-hero", heroId: id });
   }
   ok(s.heroes.find(h => h.id === id)!.level === 50, "Nível ultrapassou 50.");

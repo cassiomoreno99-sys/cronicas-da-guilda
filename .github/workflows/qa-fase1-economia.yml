@@ -1,0 +1,22 @@
+name: Fase 1 - Economia 60 dias QA
+on:
+  push:
+    branches: [main, fase1-balanceamento-60dias-20261015]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  economy-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Instalar e verificar toda a compilacao
+        run: |
+          npm install --no-audit --no-fund --package-lock=false
+          npm run build
+      - name: Simular 12 temporadas de 60 dias e verificar economia, exploits e saves
+        run: node --experimental-strip-types scripts/test-fase1-economia.ts

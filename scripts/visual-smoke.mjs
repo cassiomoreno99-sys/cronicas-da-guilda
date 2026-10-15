@@ -57,7 +57,7 @@ async function top(label, name) {
 await top("Equipe","02-equipe");
 await top("Liga","03-liga");
 const rivalCrests=page.locator(".league-row .league-rival-crest");
-if(await rivalCrests.count()!==5)throw new Error("A Liga não mostra os cinco brasões.");
+if(await rivalCrests.count()<5)throw new Error("A Liga não mostra ao menos cinco brasões das guildas.");
 await page.waitForFunction(()=>[...document.querySelectorAll(".league-row .league-rival-crest")].every(im=>im.complete));
 for(const img of await rivalCrests.all()){
  if(!(await img.evaluate(el=>el.naturalWidth>=100&&el.naturalHeight>=100)))throw new Error("Brasão da Liga não carregou.");

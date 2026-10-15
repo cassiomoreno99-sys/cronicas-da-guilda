@@ -83,6 +83,7 @@ assert.ok(!ui.includes("CORE_RACE_NAMES"),"Nome de raça em tela contradiz o cad
 const mkdir="public/heroes/portraits/dwarf",file=mkdir+"/mage-female.webp",original="public/battle/sprite-thorgar.webp";
 const generated="lib/hero-art-manifest.ts";
 const previous=fs.readFileSync(generated,"utf8");
+const originalPortrait=fs.existsSync(file)?fs.readFileSync(file):null;
 try{
  fs.mkdirSync(mkdir,{recursive:true});fs.copyFileSync(original,file);
  execFileSync(process.execPath,["scripts/generate-hero-art-manifest.mjs"],{stdio:"pipe"});
@@ -90,7 +91,8 @@ try{
  assert.ok(manifest.includes('dwarf/mage-female'));
  assert.ok(manifest.includes('/heroes/portraits/dwarf/mage-female.webp'));
 }finally{
- if(fs.existsSync(file))fs.unlinkSync(file);
+ if(originalPortrait)fs.writeFileSync(file,originalPortrait);
+ else if(fs.existsSync(file))fs.unlinkSync(file);
  fs.writeFileSync(generated,previous);
  execFileSync(process.execPath,["scripts/generate-hero-art-manifest.mjs"],{stdio:"pipe"});
 }

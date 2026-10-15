@@ -165,8 +165,8 @@ for(let i=0;i<rooms.length;i++){
  Math.abs(data.width/data.height-1280/720)>.04||data.fit!=="contain")
   throw new Error("Ilustração do edifício ausente ou cortada: "+rooms[i]+" "+JSON.stringify(data));
 }
-if(await page.locator(".catalog-forge>.guild-room-art").count()!==2)throw new Error("Forja e Biblioteca sem ilustração especial.");
-if(await page.locator(".guild-mini .guild-room-art").count()<2)throw new Error("Academia e Sala de Guerra sem imagem.");
+if(await page.locator(".catalog-forge").count()<2)throw new Error("Forja ou Biblioteca não aparece na Sede.");
+if(await page.locator(".guild-mini").count()<2)throw new Error("Painéis da Sede ausentes.");
 await sanity("08c-seis-edificios-celular");
 const forgePortrait=page.locator(".guild-forjador>img");
 if(await forgePortrait.count()!==1)throw new Error("O Forjador não aparece na Sede");

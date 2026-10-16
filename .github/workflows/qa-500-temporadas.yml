@@ -61,6 +61,8 @@ jobs:
         run: node --experimental-strip-types scripts/test-liga-escalacao-isolada.ts
       - name: Premiações garantidas com baú cheio
         run: node --experimental-strip-types scripts/test-recompensas-bau-cheio.ts
+      - name: Diagnóstico de balanceamento até a temporada 500
+        run: node --experimental-strip-types scripts/diagnostico-balanceamento-500.ts
       - name: Auditorias ja publicadas
         run: |
           node --experimental-strip-types scripts/test-fase1-economia.ts

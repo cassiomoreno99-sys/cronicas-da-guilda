@@ -391,6 +391,15 @@ export function regionThreat(regionIndex:number) {
   const distance=WORLD_REGIONS[i].minLevel-1;
   return 1+Math.sqrt(distance)*.39;
 }
+/** Ao atingir o teto de heróis (nível 50), a pressão sazonal deixa de crescer
+ * indefinidamente. Mantém a progressão original até a temporada 250 e depois
+ * aumenta suavemente sem impossibilitar todas as batalhas em campanhas longas. */
+export function seasonalThreat(season:number,perSeason:number){
+  const elapsed=Math.max(0,season-1);
+  const original=Math.min(elapsed,249);
+  const extreme=Math.max(0,elapsed-249);
+  return 1+original*perSeason+2*(1-Math.exp(-extreme/85));
+}
 export function missionSuggestedLevel(m:Pick<Mission,"location"|"rank"|"kind">) {
   const region=WORLD_REGIONS.find(r=>r.name===m.location);
   const base=region?.minLevel||1;
@@ -511,7 +520,7 @@ export function missionLocks(s: Campaign, m: Mission) {
 }
 export function missionReadiness(s: Campaign, m: Mission, ids = s.team) {
   const team = s.heroes.filter(h => ids.includes(h.id));
-  const recommended = missionSuggestedLevel(m) + Math.floor((s.season - 1) / 3);
+  const recommended = Math.min(MAX_HERO_LEVEL,missionSuggestedLevel(m) + Math.floor((s.season - 1) / 3));
   const reference = "Referência: nível " + recommended + " e energia 60%+.";
   if (team.length < 3 || team.length > 4 || team.some(h => !available(h, s))) return { level: "risk", label: "Equipe incompleta ou indisponível", hint: "Escale 3 ou 4 heróis disponíveis, com pelo menos 25% de energia e sem ferimentos." };
   const average = team.reduce((n, h) => n + h.level, 0) / team.length;
@@ -981,7 +990,7 @@ export function newCampaign(seed = 381077): Campaign {
 export function missions(s: Campaign): Mission[] {
   const regionIndex = Math.max(0, Math.min(WORLD_REGIONS.length - 1, (s.activeRegion || 1) - 1));
   const region = WORLD_REGIONS[regionIndex], progression = Math.max(0, region.minLevel - 1);
-  const scaling = regionThreat(regionIndex) * (1 + (s.season - 1) * .06 + Math.floor((seasonDay(s) - 1) / 7) * .024);
+  const scaling = regionThreat(regionIndex) * (seasonalThreat(s.season,.06) + Math.floor((seasonDay(s) - 1) / 7) * .024);
   // Cada região possui seis missões próprias; o guardião regional é a sétima.
   // A sexta entra no dia 30; o guardião regional surge no dia 45 da temporada de 60 dias.
   const kinds: MissionKind[] = ["dungeon", "hunt", "escort", "dungeon", "dungeon", "hunt"];
@@ -1031,7 +1040,7 @@ export function seasonBoss(s: Campaign): Mission | null {
     location:region.name,
     description:guardian?.description||"Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
     rank: 5,
-    force: Math.max(Math.round(135 * regionThreat(regionIndex) * (1 + (s.season - 1) * .045)),Math.round(missions(s)[4].force * 1.13)),
+    force: Math.max(Math.round(135 * regionThreat(regionIndex) * seasonalThreat(s.season,.045)),Math.round(missions(s)[4].force * 1.13)),
     reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
     enemy, count: 3, specialty: "boss",
     flavor:guardian?.flavor||"Chefe regional: batalha de elite, renome e cicatrizes memoráveis.",

@@ -1,4 +1,4 @@
-import { applyAction, newCampaign, normalizeCampaign, type Action, type Campaign } from "@/lib/game";
+import { applyAction, newCampaign, normalizeCampaign, type Action, type Campaign } from "./game.ts";
 
 export const LOCAL_SAVE_KEY = "cronicas-da-guilda:standalone:v1";
 export const LOCAL_RECOVERY_KEY = LOCAL_SAVE_KEY + ":recovery";

@@ -405,8 +405,9 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
   const ranking=heroLeaderboard(state).slice(0,10);
   const inspected=ranking.find(h=>h.id===rankHeroId);
   const inspectedGuild=inspected&&!inspected.owned?state.rivals.find(g=>g.heroes.some(h=>h.id===inspected.id)):undefined;
-  const quotePersuade=inspected&&inspectedGuild?rankingRecruitQuote(state,inspectedGuild,inspected.hero,"persuade"):null;
-  const quoteBuyout=inspected&&inspectedGuild?rankingRecruitQuote(state,inspectedGuild,inspected.hero,"buyout"):null;
+  const inspectedRival=inspectedGuild?.heroes.find(h=>h.id===rankHeroId);
+  const quotePersuade=inspectedRival&&inspectedGuild?rankingRecruitQuote(state,inspectedGuild,inspectedRival,"persuade"):null;
+  const quoteBuyout=inspectedRival&&inspectedGuild?rankingRecruitQuote(state,inspectedGuild,inspectedRival,"buyout"):null;
   useEffect(()=>{
     if(!rankHeroId)return;
     const previous=document.body.style.overflow;
@@ -525,7 +526,7 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
               <span>Especialização: <strong>{hero.talent?PATH_NAMES[hero.talent.path]+" · grau "+hero.talent.rank:"Não definida"}</strong></span>
               <span>Talento racial: <strong>{hero.racial?RACIAL_PATH_NAMES[hero.racial.path]+" · grau "+hero.racial.rank:"Não definido"}</strong></span>
               <span>Condição: <strong>{hero.injuredUntil>state.day?"Ferido até o dia "+hero.injuredUntil:"Disponível conforme energia"}</strong></span>
-              {inspectedGuild&&<span>Lealdade à guilda atual: <strong>{hero.loyalty}/100</strong></span>}
+              {inspectedGuild&&<span>Lealdade à guilda atual: <strong>{inspectedRival?.loyalty}/100</strong></span>}
             </div>
             <div className="rank-modal-contracts">
               <h3>Trazer para sua guilda</h3>

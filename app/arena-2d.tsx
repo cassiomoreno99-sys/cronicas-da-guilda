@@ -110,7 +110,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
      {queuedUnit(f.id)&&f.side==="hero"&&<em>HABILIDADE</em>}
       {focus?.id===f.id&&<em>FOCO</em>}
       {!!f.statuses?.length&&<span className="guild2d-effects">{f.statuses.slice(0,3).map((status,i)=>
-        <abbr key={status.kind+"-"+i} title={status.kind+" · "+status.rounds+" turno(s)"}>{status.kind==="shield"?"🛡️":status.kind==="poison"?"☠️":status.kind==="regen"?"✚":status.kind==="stun"?"✦":"●"}{status.rounds}</abbr>)}</span>
+        <abbr key={status.kind+"-"+i} title={status.kind+" · "+status.rounds+" turno(s)"}>{status.kind==="shield"?"🛡️":status.kind==="poison"?"☠️":status.kind==="regen"?"✚":status.kind==="stun"?"✦":"●"}{status.rounds}</abbr>)}</span>}
   </div>;
  }
  function queueAbility(ability:ReturnType<typeof availableAbilities>[number]){
@@ -162,7 +162,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   </div>
   {openSkill&&active&&<div className="guild2d-skills"><b>Habilidades de {hero?.name}</b>
     {queued&&hero&&<button type="button" className="guild2d-cancel-order" disabled={busy}
-      onClick={()=>{act({type:"battle-cancel-ability",expeditionId:expedition.id,heroId:hero.id});setTip("");}}>Cancelar habilidade preparada</button><p>Toque em um personagem para mudar quem usa a habilidade. Selecione abaixo quem recebe curas ou escudos. Inimigos tocados recebem golpes direcionados.</p>
+      onClick={()=>{act({type:"battle-cancel-ability",expeditionId:expedition.id,heroId:hero.id});setTip("");}}>Cancelar habilidade preparada</button>}<p>Toque em um personagem para mudar quem usa a habilidade. Selecione abaixo quem recebe curas ou escudos. Inimigos tocados recebem golpes direcionados.</p>
    <label className="guild2d-ally-selector">Alvo aliado para cura ou proteção
     <select value={allyTarget?.id||""} onChange={event=>setAllyTargetId(event.target.value)} disabled={busy}>
      {heroes.filter(f=>f.hp>0).map(f=><option key={f.id} value={f.id}>{f.name} · {f.hp}/{f.maxHp} PV</option>)}

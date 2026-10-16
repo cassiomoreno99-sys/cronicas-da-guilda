@@ -1176,7 +1176,7 @@ function negotiateRival(s: Campaign, action: Extract<Action, { type: "negotiate-
   requireRule(guild && h, "Esse aventureiro não está mais nessa guilda.");
   if(ranked)requireRule(heroLeaderboard(s).slice(0,10).some(candidate=>candidate.id===h.id&&!candidate.owned&&candidate.guild===guild.name),"O herói não está mais no Top 10 do ranking.");
   const q=ranked?rankingRecruitQuote(s,guild,h,action.method):negotiationQuote(s,guild,h,mode);
-  const prestigeCost="prestigeCost" in q?q.prestigeCost:0;
+  const prestigeCost="prestigeCost" in q && typeof q.prestigeCost==="number"?q.prestigeCost:0;
   requireRule(q.eligible,q.reason);
   const success=mode==="transfer"||random(s)*100<q.chance, fame=s.fame;
   const cost=success?q.price:q.fee;

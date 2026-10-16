@@ -1176,13 +1176,14 @@ function negotiateRival(s: Campaign, action: Extract<Action, { type: "negotiate-
   requireRule(guild && h, "Esse aventureiro não está mais nessa guilda.");
   if(ranked)requireRule(heroLeaderboard(s).slice(0,10).some(candidate=>candidate.id===h.id&&!candidate.owned&&candidate.guild===guild.name),"O herói não está mais no Top 10 do ranking.");
   const q=ranked?rankingRecruitQuote(s,guild,h,action.method):negotiationQuote(s,guild,h,mode);
+  const prestigeCost="prestigeCost" in q?q.prestigeCost:0;
   requireRule(q.eligible,q.reason);
   const success=mode==="transfer"||random(s)*100<q.chance, fame=s.fame;
   const cost=success?q.price:q.fee;
   entry(s,(success?"Contrato rival · ":"Proposta recusada · ")+h.name,-cost);
   s.rivalAttempts.push(Math.floor((s.day-1)/7)+":"+h.id);
   if(mode==="covert")s.fame=Math.max(0,s.fame-(success?15:8));
-  if(ranked&&action.method==="buyout"&&success)s.fame-=q.prestigeCost;
+  if(ranked&&action.method==="buyout"&&success)s.fame-=prestigeCost;
   if(success){
     const {loyalty:_loyalty,...hero}=h;
     hero.salary=q.salary;s.heroes.push(hero);
@@ -1192,7 +1193,7 @@ function negotiateRival(s: Campaign, action: Extract<Action, { type: "negotiate-
   }else if(mode==="covert")raiseRivalry(s,guild.id,12,"Aliciamento secreto descoberto");
   const message=success
     ?h.name+" deixou "+guild.name+" e entrou para sua guilda. Salário: "+q.salary+" ouro/semana."+
-      (ranked&&action.method==="buyout"?" Multa: "+cost+" ouro e "+q.prestigeCost+" pontos de prestígio.":"")+
+      (ranked&&action.method==="buyout"?" Multa: "+cost+" ouro e "+prestigeCost+" pontos de prestígio.":"")+
       " Rivalidade: "+rivalryHeat(s,guild.id)+"/100."
     :h.name+" recusou a proposta e permaneceu em "+guild.name+". Você pagou "+cost+" ouro pela abordagem.";
   s.lastNegotiation={id:s.transaction,day:s.day,guildId:guild.id,guildName:guild.name,heroId:h.id,heroName:h.name,mode,success,cost,chance:q.chance,fameChange:s.fame-fame,salary:q.salary,message};

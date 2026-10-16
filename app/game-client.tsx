@@ -15,7 +15,7 @@ import {
   heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss,
   teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, leagueLineup, leagueCalendar, CUP_DAYS, cupStageLabel, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
-  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
+  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, MAX_HERO_LEVEL, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
   ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rank,
   type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
@@ -273,7 +273,7 @@ function MissionPage({
             <p><GameSymbol kind="objective"/>{m.description}</p>
             <div className="difficulty"><GameSymbol kind="difficulty"/><b>Dificuldade:</b>{[0,1,2,3,4].map(i => <i key={i} data-on={i < m.rank}>◆</i>)}</div>
             <div className="specialist"><GameSymbol kind="squad"/><span>Especialistas: {specialtyName(m.specialty)}</span></div>
-            <div className="specialist"><GameSymbol kind="experience"/><span><strong>Nível recomendado: {missionSuggestedLevel(m) + Math.floor((state.season - 1) / 3)}</strong> · {m.kind==="boss"?"Chefe de elite":"Perigo desta região"}</span></div>
+            <div className="specialist"><GameSymbol kind="experience"/><span><strong>Nível recomendado: {Math.min(MAX_HERO_LEVEL,missionSuggestedLevel(m) + Math.floor((state.season - 1) / 3))}</strong> · {m.kind==="boss"?"Chefe de elite":"Perigo desta região"}</span></div>
             {!!locks.length && <small className="locked-copy"><GameSymbol kind="locked"/> {locks[0]}</small>}
           </div>
           <div className="mission-rewards">

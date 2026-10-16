@@ -12,7 +12,7 @@ import {
   SPECIALIZATIONS, SPECIALIZATION_BRANCHES, RACE_TREES, HERO_STORIES,
   HQ_DEFINITIONS, WORLD_MAP, NEGOTIATION_MODES, JOURNEY_CHOICES,
   activeExpeditions, freeExpeditionSlots, available, activeJourney, heroOnExpedition,
-  heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss,
+  heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss, tavernRumorReady, tavernRumorHint,
   teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, leagueLineup, leagueCalendar, CUP_DAYS, cupStageLabel, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
   hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, MAX_HERO_LEVEL, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
@@ -274,6 +274,7 @@ function MissionPage({
             <div className="difficulty"><GameSymbol kind="difficulty"/><b>Dificuldade:</b>{[0,1,2,3,4].map(i => <i key={i} data-on={i < m.rank}>◆</i>)}</div>
             <div className="specialist"><GameSymbol kind="squad"/><span>Especialistas: {specialtyName(m.specialty)}</span></div>
             <div className="specialist"><GameSymbol kind="experience"/><span><strong>Nível recomendado: {Math.min(MAX_HERO_LEVEL,missionSuggestedLevel(m) + Math.floor((state.season - 1) / 3))}</strong> · {m.kind==="boss"?"Chefe de elite":"Perigo desta região"}</span></div>
+            {tavernRumorReady(state,m.id)&&<small className="mission-rumor-ready"><GameSymbol kind="scouting"/> Rumor investigado · +10% ataque/magia e +5% defesa nesta expedição</small>}
             {!!locks.length && <small className="locked-copy"><GameSymbol kind="locked"/> {locks[0]}</small>}
           </div>
           <div className="mission-rewards">
@@ -720,6 +721,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
 function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (a: Action) => void; busy: boolean; openMission: (id:string) => void }) {
   const recruits = market(state).slice(0,4);
   const rumors = missions(state).slice(0,3);
+  const checkedToday=state.tavernRumor?.day===state.day;
   return <section className="screen tavern-screen">
     <div className="tavern-hero"><img src={tavernArtwork} alt="Taverneira sorrindo e erguendo um caneco em brinde na Taverna da Guilda" /></div>
     <ParchmentTitle icon={<GameSymbol kind="squad"/>} title="Heróis para Recrutar" side={<span>Renova semanalmente</span>} />
@@ -736,7 +738,27 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
   </div></section>
       </section>
       <aside className="tavern-side" aria-label="Boatos da Taverna">
-        <section className="rumors parchment"><ParchmentTitle icon={<GameSymbol kind="objective"/>} title="Rumores da Taverna" />{rumors.map(m => <button key={m.id} onClick={() => openMission(m.id)}><span><strong>{m.title}</strong><small>{m.description}</small></span><em><GameSymbol kind="gold"/> {m.reward}</em></button>)}</section>
+        <section className="rumors parchment">
+          <ParchmentTitle icon={<GameSymbol kind="objective"/>} title="Informações da Taverna" />
+          <p className="tavern-rumors-intro">Escolha um rumor gratuito por dia. Ao investigá-lo, sua equipe ganha <strong>+10% ataque e magia e +5% defesa</strong> somente na missão indicada. Não é uma compra.</p>
+          {rumors.map(m=>{
+            const prepared=tavernRumorReady(state,m.id);
+            const used=checkedToday&&state.tavernRumor?.missionId===m.id&&!prepared;
+            const locks=missionLocks(state,m);
+            return <article className="tavern-rumor-card" key={m.id} data-ready={prepared}>
+              <button type="button" className="tavern-rumor-link" onClick={()=>openMission(m.id)}>
+                <strong>{m.title}</strong><small>{m.description}</small>
+                <span><GameSymbol kind="gold"/> Recompensa da missão: {fmt(m.reward)} ouro</span>
+              </button>
+              <p><GameSymbol kind="scouting"/> {tavernRumorHint(m)} Inimigos conhecidos: {m.enemy}.</p>
+              <button type="button" className="tavern-rumor-research" disabled={busy||checkedToday||locks.length>0}
+                onClick={()=>act({type:"investigate-rumor",missionId:m.id})}>
+                {prepared?"Rumor preparado · bônus ativo":used?"Informação utilizada":checkedToday?"Outro rumor escolhido hoje":locks.length?"Missão indisponível":"Investigar gratuitamente"}
+              </button>
+              {(prepared||used)&&<small className="tavern-rumor-status">{prepared?"Bônus pronto para esta missão, somente hoje.":"Bônus consumido na missão de hoje."}</small>}
+            </article>;
+          })}
+        </section>
         <section className="parchment drinks"><div className="mug"><Beer aria-hidden="true"/></div><h3>Bebidas da Casa</h3><p>Brinde com a guilda para recuperar o moral e a energia.</p><button className="action-button green" disabled={busy || !!state.event || activeExpeditions(state).length>0 || state.gold < 8 || state.dailyActions?.restDay===state.day} onClick={() => act({type:"rest"})}>{state.dailyActions?.restDay===state.day?"Descanso realizado":"Descansar · 8 ouro"}</button></section>
       </aside>
     </div>

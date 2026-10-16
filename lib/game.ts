@@ -62,8 +62,24 @@ export type Rivalry = { guildId: string; heat: number; sinceSeason: number; last
 export type CupStage = "oitavas" | "quartas" | "semifinal" | "final" | "champion" | "eliminated";
 export type CupState = { season: number; stage: CupStage; wins: number; history: LeagueMatch[] };
 export type SeasonForgePlan = {season:number;itemKey:string;materials:Record<string,number>;crafted?:boolean};
+export type TavernRumor = {day:number;missionId:string;used:boolean};
+export const TAVERN_RUMOR_ATTACK_BONUS = .10;
+export const TAVERN_RUMOR_DEFENSE_BONUS = .05;
+export function tavernRumorHint(m:Mission):string {
+  const hints:Record<MissionKind,string>={
+    dungeon:"Informantes localizaram entradas seguras, vigias e pontos fracos nas ruínas.",
+    hunt:"Batedores descobriram as rotas de caça e os horários das criaturas.",
+    escort:"Viajantes revelaram as trilhas onde a caravana costuma ser atacada.",
+    defense:"Pedreiros indicaram pontos para fortalecer a linha de defesa.",
+    boss:"Sobreviventes revelaram a forma de lutar do guardião regional."
+  };
+  return hints[m.kind];
+}
+export function tavernRumorReady(s:Pick<Campaign,"day"|"tavernRumor">,missionId:string){
+  return s.tavernRumor?.day===s.day && s.tavernRumor.missionId===missionId && !s.tavernRumor.used;
+}
 export type SeasonAward = {season:number;guildWinners:Array<{id:string;name:string}>;heroWinners:Array<{id:string;name:string;race:HeroRace;guild:string}>;guildPlace:number};
-export type Campaign = { schema: 1; seasonForgePlans?:SeasonForgePlan[]; seasonAwards?:SeasonAward[]; teamFamiliarity?: Record<string,number>; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number;missionDay?:number;missionIds?:string[]}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; leagueTeam?:string[]; leagueFormation?:Record<string,FormationLine>; leagueTactic?:Tactic; pendingRewards?:ChestItem[]; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
+export type Campaign = { schema: 1; seasonForgePlans?:SeasonForgePlan[]; seasonAwards?:SeasonAward[]; teamFamiliarity?: Record<string,number>; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number;missionDay?:number;missionIds?:string[]}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; tavernRumor?:TavernRumor; leagueTeam?:string[]; leagueFormation?:Record<string,FormationLine>; leagueTactic?:Tactic; pendingRewards?:ChestItem[]; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
 export type Action =
   | { type: "mission"; missionId: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine>; startedAt?: number; expeditionSlot?: ExpeditionSlot }
   | { type: "save-squad"; specialty: MissionKind; name: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
@@ -71,6 +87,7 @@ export type Action =
   | { type: "upgrade-hq"; building: HQBuilding }
   | { type: "claim-pending-rewards" }
   | { type: "next-day" }
+  | { type: "investigate-rumor"; missionId:string }
   | { type: "league-lineup"; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
   | { type: "academy-trainees"; heroIds: string[] }
   | { type: "academy-mentor"; heroId?: string }
@@ -792,6 +809,9 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     s.calendarVersion=2;
   }
   s.dailyActions ??= {};
+  if(s.tavernRumor && (
+     !Number.isInteger(s.tavernRumor.day) || typeof s.tavernRumor.missionId!=="string" ||
+     s.tavernRumor.day!==s.day)) s.tavernRumor=undefined;
   s.teamFamiliarity ??= {};
   s.seasonForgePlans ??= [];s.seasonAwards ??= [];
   s.pendingRewards=Array.isArray(s.pendingRewards)?s.pendingRewards.filter(i=>!!ITEMS[i.key]&&!i.equippedTo):[];
@@ -1287,6 +1307,7 @@ function advance(s: Campaign, used: string[]) {
   const upkeep = Math.min(8, s.gold); if (upkeep) entry(s, "Manutenção diária", -upkeep);
   s.rivalries.forEach(r => r.heat = Math.max(0, r.heat - 2)); s.rivalries = s.rivalries.filter(r => r.heat > 0);
   s.day++;
+  s.tavernRumor=undefined;
   if ((s.day - 1) % 7 === 0) {
     s.shopPurchases = [];
     s.rivalAttempts = [];
@@ -1343,10 +1364,11 @@ function selectTeam(s: Campaign, ids: string[], tactic: Tactic, formation?: Reco
 function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   const scaling = m.force / [30, 48, 68, 92, 125][m.rank - 1], cohesion = squadBonus(s, team.map(h => h.id)) * (1+(s.hq.warroom||0)*.012);
   const familiarity=familiarityBonus(s.teamFamiliarity,team.map(h=>h.id));
+  const prepared=tavernRumorReady(s,m.id);
   const fighters: Combatant[] = team.map(h => {
     const base = heroStats(h, s), position = s.formation[h.id] || defaultFormationLine(h.class);
     const missionBoost=Math.min(.15,h.nextMissionBoost||0);
-    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion * (1+familiarity.defense), attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage), magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage), speed: base.speed + (position === "back" ? 2 : 0), critical: Math.min(.48,base.critical+familiarity.critical),healing:base.healing*(1+familiarity.healing) };
+    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion * (1+familiarity.defense) * (prepared?1+TAVERN_RUMOR_DEFENSE_BONUS:1), attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage) * (prepared?1+TAVERN_RUMOR_ATTACK_BONUS:1), magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage) * (prepared?1+TAVERN_RUMOR_ATTACK_BONUS:1), speed: base.speed + (position === "back" ? 2 : 0), critical: Math.min(.48,base.critical+familiarity.critical),healing:base.healing*(1+familiarity.healing) };
     delete h.nextMissionBoost;
     const hp = Math.round((80 + n.defense * 3 + h.level * 15 + n.hp)*(1+familiarity.hp));
     return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy, guarding: h.talent?.path === "defense" && ["warrior", "paladin", "monk"].includes(h.class) ? h.talent.rank : 0 };
@@ -1359,7 +1381,8 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   const scout = team.some(h => h.class === "ranger" && h.talent?.path === "defense");
   const objectiveMax = m.kind === "escort" ? 170 + m.rank * 25 : m.kind === "defense" ? 200 + Math.round(fighters.filter(f => f.side === "hero").reduce((n, f) => n + f.defense, 0) * .6) : 0;
   const targetRounds = m.kind === "escort" ? Math.max(3, 7 - (agile >= 2 ? 1 : 0) - (scout ? 1 : 0) - Math.floor((s.hq.stables||0)/5)) : m.kind === "defense" ? 6 : m.kind === "hunt" ? 12 : 24;
-  return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, consumablesUsed: 0, pendingAbilities: [], abilityCooldowns: {}, autoAbilities: true, healingItemsUsed:0, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
+  if(prepared && s.tavernRumor)s.tavernRumor.used=true;
+  return { title: m.title, day: s.day, won: false, reward: 0, xp: 0, rounds: 0, log: prepared ? [{round:0,kind:"status" as const,text:"Informações da Taverna utilizadas: +10% ataque e magia, +5% defesa para toda a equipe."}] : [], levelUps: [], wounded: [], remaining: team.length, fighters: fighters.map(f => ({ id: f.id, name: f.name, side: f.side, class: f.class, hp: f.hp, maxHp: f.maxHp, position: f.position, statuses: [] })), status: "active", loot: [], combat: { mission: m, fighters, tactic: s.tactic, lastTactic: s.tactic, fatigueTotal: 0, potionsUsed: 0, consumablesUsed: 0, pendingAbilities: [], abilityCooldowns: {}, autoAbilities: true, healingItemsUsed:0, formation: { ...s.formation }, objectiveHp: objectiveMax, objectiveMax, targetRounds }, objective: { name: m.kind === "escort" ? "Caravana" : m.kind === "defense" ? "Barricada" : m.kind === "hunt" ? "Limite da caçada" : "Exploração", hp: objectiveMax, maxHp: objectiveMax, targetRounds } } satisfies Battle;
 }
 function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreated") {
   const c = b.combat!, m = c.mission, won = status === "won";
@@ -1649,6 +1672,16 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       s.leagueFormation={...s.formation};
       s.leagueTactic=s.tactic;
       note(s,"Escalação oficial da Liga e da Copa salva: "+selected.map(h=>h.name).join(", ")+" · "+TACTICS[s.leagueTactic].name+".");
+      break;
+    }
+    case "investigate-rumor": {
+      requireRule(!s.tavernRumor || s.tavernRumor.day!==s.day,"O informante já revelou um rumor hoje. Volte no próximo dia.");
+      const mission=missions(s).slice(0,3).find(m=>m.id===action.missionId);
+      requireRule(mission,"Esse rumor já não está disponível na Taverna.");
+      const locks=missionLocks(s,mission);
+      requireRule(!locks.length,"Esse rumor aponta para uma missão indisponível: "+locks.join("; "));
+      s.tavernRumor={day:s.day,missionId:mission.id,used:false};
+      note(s,"Rumor investigado sem custo: "+mission.title+". Sua equipe receberá +10% ataque e magia e +5% defesa se aceitar essa missão hoje.");
       break;
     }
     case "next-day": {

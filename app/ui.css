@@ -2891,3 +2891,18 @@ img.game-symbol.game-coin{
 .guild-pending-rewards small{overflow-wrap:anywhere;font:12px/1.5 system-ui}
 .guild-pending-rewards button{min-height:44px;justify-self:start;max-width:100%}
 @media(max-width:480px){.guild-pending-rewards{padding:10px}.guild-pending-rewards button{width:100%}}
+
+/* Rumores gratuitos: conexão explícita entre informação e combate. */
+.rumors .tavern-rumors-intro{font:12px/1.5 system-ui;padding:9px 11px;margin:0;background:rgba(234,209,146,.25);color:#583d27}
+.tavern-rumor-card{padding:9px 10px;display:grid;gap:7px;border-top:1px solid rgba(114,78,44,.35)}
+.tavern-rumor-card[data-ready="true"]{background:rgba(108,143,106,.17)}
+.tavern-rumor-link{border:0;padding:0!important;background:transparent!important;display:grid;gap:4px;text-align:left;cursor:pointer;color:var(--ink);min-height:44px}
+.tavern-rumor-link strong{font:700 13px/1.35 Georgia!important;text-decoration:underline;text-underline-offset:2px}
+.tavern-rumor-link small{font:11px/1.5 system-ui!important;color:var(--ink)}
+.tavern-rumor-link span{font:700 11px/1.5 system-ui;color:#79511b}
+.tavern-rumor-card>p{display:block;font:11px/1.45 system-ui;margin:0}
+.tavern-rumor-research{font:700 12px/1.3 system-ui;min-height:44px;padding:7px 9px;border:1px solid #927039;border-radius:5px;background:#e9d39b;color:#472c18;cursor:pointer}
+.tavern-rumor-research:disabled{cursor:default;opacity:.7}
+.tavern-rumor-status{font:700 11px/1.4 system-ui;color:#255b3c}
+.mission-rumor-ready{display:flex;align-items:center;gap:5px;font:700 11px/1.5 system-ui;color:#286044;padding:5px}
+@media(max-width:600px){.tavern-rumor-card{padding:10px 8px}.tavern-rumors-intro{font-size:12px!important}.tavern-rumor-research{width:100%}}

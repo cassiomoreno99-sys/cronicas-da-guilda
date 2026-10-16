@@ -217,3 +217,21 @@
 .guild2d-rewards{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;padding:10px;margin:8px;border-radius:7px;border:1px solid #a38756;background:#142e35;color:#fce1a8;font:700 12px system-ui}
 .guild2d-rewards strong{color:#ffeab8;font:700 15px Georgia,serif}
 .guild2d-rewards p{width:100%;margin:0;color:#e4d8c0;font:11px system-ui}
+
+/* Fase 3: comandos táticos sem alterar cenário ou sprites aprovados. */
+.guild2d-command-center{display:grid;gap:8px;margin:8px 0;padding:10px;border:1px solid #9f8050;border-radius:6px;background:linear-gradient(135deg,#11283d,#19344a);color:#f4e3bd}
+.guild2d-turn-info{display:grid;gap:3px;font-size:12px}
+.guild2d-turn-info small{font-size:10px;color:#c2dbe8}
+.guild2d-focus-controls{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:12px}
+.guild2d-focus-controls>span{flex:1;min-width:125px}
+.guild2d-command-center button{border:1px solid #b99458;background:#e9cb91;color:#34231c;border-radius:4px;min-height:36px;padding:6px 9px;font:800 11px system-ui;cursor:pointer}
+.guild2d-command-center button:disabled{opacity:.48;cursor:not-allowed}
+.guild2d-auto-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.guild2d-auto-controls small{flex:1;min-width:150px;color:#bed9e5;font:10px/1.4 system-ui}
+.guild2d-auto-controls button[data-active="true"]{background:#215145;color:#e9ffdd;border-color:#9ad6a7}
+.guild2d-unit[data-focused="true"]{filter:drop-shadow(0 0 8px #f0c367)}
+.guild2d-unit[data-focused="true"] .guild2d-sprite{outline:2px solid #ffd184;outline-offset:2px;border-radius:8px}
+.guild2d-effects{display:flex;justify-content:center;flex-wrap:wrap;gap:2px}
+.guild2d-effects abbr{font:9px system-ui;text-decoration:none;background:#112739;border:1px solid #aa915d;border-radius:3px;color:#ffe8b4;cursor:help}
+.guild2d-skills .guild2d-cancel-order{background:#5a342b;color:#ffedc9;border:1px solid #d4a478;padding:9px 12px;min-height:36px}
+@media(max-width:390px){.guild2d-command-center{padding:7px}.guild2d-focus-controls>span{flex-basis:100%}.guild2d-focus-controls button{flex:1;min-width:0}}

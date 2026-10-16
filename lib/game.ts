@@ -63,12 +63,13 @@ export type CupStage = "oitavas" | "quartas" | "semifinal" | "final" | "champion
 export type CupState = { season: number; stage: CupStage; wins: number; history: LeagueMatch[] };
 export type SeasonForgePlan = {season:number;itemKey:string;materials:Record<string,number>;crafted?:boolean};
 export type SeasonAward = {season:number;guildWinners:Array<{id:string;name:string}>;heroWinners:Array<{id:string;name:string;race:HeroRace;guild:string}>;guildPlace:number};
-export type Campaign = { schema: 1; seasonForgePlans?:SeasonForgePlan[]; seasonAwards?:SeasonAward[]; teamFamiliarity?: Record<string,number>; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number;missionDay?:number;missionIds?:string[]}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; leagueTeam?:string[]; leagueFormation?:Record<string,FormationLine>; leagueTactic?:Tactic; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
+export type Campaign = { schema: 1; seasonForgePlans?:SeasonForgePlan[]; seasonAwards?:SeasonAward[]; teamFamiliarity?: Record<string,number>; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number;missionDay?:number;missionIds?:string[]}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; leagueTeam?:string[]; leagueFormation?:Record<string,FormationLine>; leagueTactic?:Tactic; pendingRewards?:ChestItem[]; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
 export type Action =
   | { type: "mission"; missionId: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine>; startedAt?: number; expeditionSlot?: ExpeditionSlot }
   | { type: "save-squad"; specialty: MissionKind; name: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
   | { type: "rename-squad"; specialty: MissionKind; name: string }
   | { type: "upgrade-hq"; building: HQBuilding }
+  | { type: "claim-pending-rewards" }
   | { type: "next-day" }
   | { type: "league-lineup"; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
   | { type: "academy-trainees"; heroIds: string[] }
@@ -695,6 +696,12 @@ function resolveRivalBattle(s: Campaign, guildId: string, team: string[]) {
 
 function entry(s: Campaign, label: string, amount: number) { s.transaction++; s.ledger.unshift({ id: s.transaction, day: s.day, label, amount }); s.ledger = s.ledger.slice(0, 80); s.gold += amount; }
 function note(s: Campaign, text: string) { s.journal.unshift({ day: s.day, text }); s.journal = s.journal.slice(0, 40); }
+/** Prêmios garantidos jamais ignoram o limite do baú nem são perdidos. */
+function giveSeasonReward(s:Campaign,key:string){
+  const item:ChestItem={id:"item-"+(++s.itemSequence),key};
+  if(storageUsed(s.chest)<chestCapacity(s))s.chest.push(item);
+  else(s.pendingRewards??=[]).push(item);
+}
 function addItem(_s: Campaign, _key: string) { /* Catálogo desativado: nenhum item pode ser criado. */ }
 function levelOneHero(id: string, name: string, heroClass: HeroClass, trait: string, race?: HeroRace, sex?: HeroSex): Hero {
   const b = V130_BASE_STATS[heroClass] || { attack: 4, defense: 4, magic: 2 };
@@ -778,6 +785,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.dailyActions ??= {};
   s.teamFamiliarity ??= {};
   s.seasonForgePlans ??= [];s.seasonAwards ??= [];
+  s.pendingRewards=Array.isArray(s.pendingRewards)?s.pendingRewards.filter(i=>!!ITEMS[i.key]&&!i.equippedTo):[];
   s.hq ??= { infirmary: 0, forge: 0, academy: 0, library: 0, stables: 0, warroom: 0 };
   for (const key of Object.keys(HQ_BUILDINGS) as HQBuilding[]) s.hq[key] = Math.max(0, Math.min(HQ_BUILDINGS[key].max, s.hq[key] || 0));
   s.academy ??= { trainees: [], candidates: [], reserve: [] };
@@ -904,7 +912,7 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.formation = normalizedFormation(s);
   // Limpeza dos itens inclusive em saves antigos, para não reaparecerem ao atualizar.
   s.chest = Array.isArray(s.chest) ? s.chest.filter(i=>!!ITEMS[i.key]) : [];
-  s.itemSequence = Math.max(s.itemSequence||0,0,...s.chest.map(i=>Number(i.id.match(/-(\d+)$/)?.[1]||0)));
+  s.itemSequence = Math.max(s.itemSequence||0,0,...[...s.chest,...(s.pendingRewards||[])].map(i=>Number(i.id.match(/-(\d+)$/)?.[1]||0)));
   // Preserva históricos de itens, sem devolver recompensas ao reabrir o jogo.
   s.journeys.forEach(j => { j.loot ??= []; });
   s.raidHistory.forEach(r => { r.loot ??= []; });
@@ -1288,12 +1296,12 @@ function advance(s: Campaign, used: string[]) {
       const materials=seasonalMaterialBundle(s.season,mats);
       const itemKey=GUILD_EXCLUSIVE_GEAR[(s.season-1)%GUILD_EXCLUSIVE_GEAR.length].id;
       s.seasonForgePlans!.unshift({season:s.season,itemKey,materials});
-      for(const [key,qty] of Object.entries(materials))for(let i=0;i<qty;i++)s.chest.push({id:"item-"+(++s.itemSequence),key});
+      for(const [key,qty] of Object.entries(materials))for(let i=0;i<qty;i++)giveSeasonReward(s,key);
       note(s,"Top 3 da Liga! Kit completo de materiais para fabricar exatamente uma "+EXCLUSIVE_BY_ID[itemKey].nome+" na Forja.");
     }
     for(const winner of bestHeroes.slice(0,3))if(winner.owned){
       const key="RX-"+winner.race.toUpperCase();
-      if(EXCLUSIVE_BY_ID[key]){s.chest.push({id:"item-"+(++s.itemSequence),key});note(s,winner.name+" entrou no Top 3 dos Heróis e recebeu "+EXCLUSIVE_BY_ID[key].nome+".");}
+      if(EXCLUSIVE_BY_ID[key]){giveSeasonReward(s,key);note(s,winner.name+" entrou no Top 3 dos Heróis e recebeu "+EXCLUSIVE_BY_ID[key].nome+(s.pendingRewards?.some(i=>i.key===key)? " (retirada pendente: baú cheio).":"."));}
       entry(s,"Prêmio herói · "+winner.name,Math.round(260-50*bestHeroes.findIndex(h=>h.id===winner.id)));
     }
     entry(s, "Prêmio da temporada " + s.season + " · " + LEAGUE_TIERS[oldTier].name + " · " + place + "º lugar", prize);
@@ -1693,6 +1701,16 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const squad = s.squads.find(q => q.specialty === action.specialty); requireRule(squad, "Equipe pronta não encontrada.");
       const name = action.name.trim().slice(0, 32); requireRule(name.length >= 2, "Dê um nome com pelo menos 2 caracteres.");
       squad.name = name; break;
+    }
+    case "claim-pending-rewards": {
+      const queue=s.pendingRewards??[];
+      requireRule(queue.length>0,"Nenhuma recompensa pendente.");
+      const free=Math.max(0,chestCapacity(s)-storageUsed(s.chest));
+      requireRule(free>0,"Baú cheio. Venda, utilize ou equipe itens antes de receber os prêmios.");
+      const claimed=queue.splice(0,free);
+      s.chest.push(...claimed);
+      note(s,"Resgatou "+claimed.length+" recompensa(s) da temporada. Aguardando: "+queue.length+".");
+      break;
     }
     case "upgrade-hq": {
       const spec = HQ_BUILDINGS[action.building]; requireRule(spec, "Construção da sede inválida.");

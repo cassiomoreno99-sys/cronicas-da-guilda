@@ -20,7 +20,7 @@ assert.equal(current.state.schema,1);
 const initialName=current.state.name;
 let updated=updateLocalCampaign(current.revision,{type:"rename",name:"Guilda da Auditoria"});
 assert.equal(updated.conflict,false);
-assert.notEqual(updated.name,undefined); // validate local save wrapper
+assert.ok(updated.updatedAt); // validate local save wrapper
 assert.equal(updated.state.name,"Guilda da Auditoria");
 assert.equal(recoveryAvailable(),true);
 const snapshot=JSON.parse(data.get(LOCAL_RECOVERY_KEY)!);

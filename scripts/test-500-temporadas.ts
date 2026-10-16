@@ -1,11 +1,11 @@
 import assert from "node:assert/strict";
 import {mkdirSync,writeFileSync} from "node:fs";
-import {newCampaign,applyAction,normalizeCampaign,seasonDay,SEASON_DAYS,standings,leagueLineup,payroll,CUP_DAYS} from "../lib/game.ts";
+import {newCampaign,applyAction,normalizeCampaign,seasonDay,SEASON_DAYS,standings,leagueLineup,payroll,missions,missionLocks} from "../lib/game.ts";
 
 const TOTAL_SEASONS=500;
 const started=Date.now();
 let s=newCampaign(20261016);
-let matches=0,forfeits=0,cupMatches=0,decisions=0,eventsByKind:Record<string,number>={},
+let matches=0,forfeits=0,missionFights=0,missionVictories=0,missionDefeats=0,decisions=0,eventsByKind:Record<string,number>={},
     emptyGoldDays=0,seasonRollovers=0,seasonProbes=0,reloads=0,wins=0,losses=0,draws=0,
     maxSaveBytes=0,minGold=Infinity,maxGold=-Infinity;
 const checkpoints:Array<{season:number;gold:number;fame:number;rank:number;cup:string;saveBytes:number;heroLevels:number[]}>=[];
@@ -39,6 +39,21 @@ for(let season=1;season<=TOTAL_SEASONS;season++){
       s=applyAction(s,{type:"event",eventId:e.id,choiceId:choice.id});
       assert.equal(s.event,null,"Conselho não encerrou evento "+e.id);
       decisions++;eventsByKind[e.kind]=(eventsByKind[e.kind]||0)+1;
+    }
+    // Também exercita combates reais durante toda a campanha secular.
+    // Pelo menos 100 missões espaçadas cobrem temporadas iniciais e tardias.
+    if(day===7&&season%5===0){
+      const mission=missions(s).find(m=>missionLocks(s,m).length===0);
+      assert.ok(mission,"Não existe nenhum contrato acessível na temporada "+season);
+      assert.ok(s.team.length>=3,"Equipe ausente na temporada "+season);
+      s=applyAction(s,{type:"mission",missionId:mission.id,team:s.team.slice(0,4),tactic:(season%2===0?"aggressive":"defensive"),expeditionSlot:1,startedAt:1700000000000});
+      const expId=s.expeditions.at(-1)!.id;
+      s=applyAction(s,{type:"battle-auto",expeditionId:expId});
+      const result=s.expeditions.find(e=>e.id===expId)!.battle;
+      assert.notEqual(result.status,"active","Missão não terminou na temporada "+season);
+      assert.ok(Number.isFinite(result.reward)&&result.reward>=0,"Recompensa inválida");
+      missionFights++;
+      if(result.won)missionVictories++;else missionDefeats++;
     }
     const ready=leagueLineup(s);
     if(day%11===0&&ready.ready){
@@ -98,10 +113,11 @@ for(let season=1;season<=TOTAL_SEASONS;season++){
   if(season%50===0)console.log("MARCO "+season+"/500 temporadas; "+matches+" dias; ouro="+s.gold+"; save="+maxSaveBytes+"B; decisões="+decisions);
 }
 assert.equal(matches,30000);
+assert.equal(missionFights,100,"Faltaram os 100 combates escalonados.");
 assert.equal(seasonRollovers,500);
 assert.equal(reloads,500);
 assert.equal(s.season,501);
 checkState("após 500 temporadas");
-const report={passed:true,seed:20261016,requestedSeasons:TOTAL_SEASONS,completedSeasons:seasonRollovers,daysAndLeagueMatches:matches,forfeits,league:{wins,draws,losses},cupCheckpoints:seasonProbes,councilDecisions:decisions,eventsByKind,zeroGoldDays:emptyGoldDays,minGold,maxGold,maxSaveBytes,reloads,checkpoints,elapsedMs:Date.now()-started};
+const report={passed:true,seed:20261016,requestedSeasons:TOTAL_SEASONS,completedSeasons:seasonRollovers,daysAndLeagueMatches:matches,missionFights,missionVictories,missionDefeats,forfeits,league:{wins,draws,losses},cupCheckpoints:seasonProbes,councilDecisions:decisions,eventsByKind,zeroGoldDays:emptyGoldDays,minGold,maxGold,maxSaveBytes,reloads,checkpoints,elapsedMs:Date.now()-started};
 mkdirSync("qa-report",{recursive:true});writeFileSync("qa-report/500-temporadas.json",JSON.stringify(report,null,2));
 console.log("QA 500 TEMPORADAS APROVADO:",JSON.stringify({...report,checkpoints:checkpoints.length}));

@@ -59,6 +59,8 @@ jobs:
         run: npm run build
       - name: Auditar estabilidade da equipe oficial da Liga
         run: node --experimental-strip-types scripts/test-liga-escalacao-isolada.ts
+      - name: Premiações garantidas com baú cheio
+        run: node --experimental-strip-types scripts/test-recompensas-bau-cheio.ts
       - name: Auditorias ja publicadas
         run: |
           node --experimental-strip-types scripts/test-fase1-economia.ts

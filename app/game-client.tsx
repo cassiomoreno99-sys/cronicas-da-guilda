@@ -471,11 +471,11 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
 
 function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
   const recover = state.heroes.filter(h => h.energy < 100 || h.injuredUntil > state.day);
-  const shown = (recover.length ? recover : state.heroes).slice(0,4);
+  const shown = recover.length ? recover : state.heroes;
   return <section className="screen rest-screen">
     <div className="sanctuary-head parchment">
       <img src="/reference/sanctuary-2026.webp" alt="Santuário da Guilda: acampamento medieval com leitos de recuperação, fogueira, lanternas e o estandarte azul da guilda." width={1360} height={765} />
-      <div><h2><GameSymbol kind="sanctuary"/> Santuário da Guilda</h2><p>Aqui seus heróis feridos podem repousar e se recuperar para novas aventuras.</p>
+      <div><h2><GameSymbol kind="sanctuary"/> Santuário da Guilda</h2><p>Recupere 40 de energia dos heróis presentes por 8 ouro. Ferimentos ainda exigem o prazo indicado de dias.</p>
         <strong><GameSymbol kind="squad"/> Capacidade</strong><div className="beds">▰ ▰ ▰ ▱ ▱</div><span>{recover.length} heróis precisam de recuperação</span>
       </div>
     </div>
@@ -487,10 +487,11 @@ function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => v
         <div><h3>{h.name}</h3><span className={injured ? "danger-text" : "ok-text"}>{injured ? "Ferido" : h.energy < 100 ? "Recuperando" : "Pronto"}</span>
           <ProgressBar value={h.energy} tone={injured ? "red" : "green"} /><small><GameSymbol kind="energy"/> Energia {h.energy}% · Nv. {h.level}</small>
         </div>
-        <button className="action-button blue" disabled={busy || injured || h.energy < 15 || state.hqActionDay[h.id]===state.day} onClick={() => act({ type:"train-hero", heroId:h.id })}>Treinar +{plan.xp} XP</button>
+        <button className="action-button blue" disabled={busy || !!state.event || !available(h,state) || state.gold < plan.cost || state.hqActionDay[h.id]===state.day} onClick={() => act({ type:"train-hero", heroId:h.id })}>Treinar +{plan.xp} XP</button>
       </article>;
     })}</div>
-        <button className="action-button green rest-all" disabled={busy} onClick={() => act({ type:"rest" })}><GameSymbol kind="sanctuary"/> Descansar toda a guilda</button>
+        <button className="action-button green rest-all" disabled={busy || !!state.event || activeExpeditions(state).length>0 || state.gold<8 || state.dailyActions?.restDay===state.day} onClick={() => act({ type:"rest" })}><GameSymbol kind="sanctuary"/> Descansar na sede · 8 ouro</button>
+        {state.dailyActions?.restDay===state.day&&<small role="status">Descanso de hoje realizado. Disponível novamente no próximo dia.</small>}
   </section>;
 }
 
@@ -736,7 +737,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
       </section>
       <aside className="tavern-side" aria-label="Boatos da Taverna">
         <section className="rumors parchment"><ParchmentTitle icon={<GameSymbol kind="objective"/>} title="Rumores da Taverna" />{rumors.map(m => <button key={m.id} onClick={() => openMission(m.id)}><span><strong>{m.title}</strong><small>{m.description}</small></span><em><GameSymbol kind="gold"/> {m.reward}</em></button>)}</section>
-        <section className="parchment drinks"><div className="mug"><Beer aria-hidden="true"/></div><h3>Bebidas da Casa</h3><p>Brinde com a guilda para recuperar o moral e a energia.</p><button className="action-button green" disabled={busy || state.gold < 8} onClick={() => act({type:"rest"})}>Descansar</button></section>
+        <section className="parchment drinks"><div className="mug"><Beer aria-hidden="true"/></div><h3>Bebidas da Casa</h3><p>Brinde com a guilda para recuperar o moral e a energia.</p><button className="action-button green" disabled={busy || !!state.event || activeExpeditions(state).length>0 || state.gold < 8 || state.dailyActions?.restDay===state.day} onClick={() => act({type:"rest"})}>{state.dailyActions?.restDay===state.day?"Descanso realizado":"Descansar · 8 ouro"}</button></section>
       </aside>
     </div>
   </section>;

@@ -57,6 +57,8 @@ jobs:
         run: npm install --no-audit --no-fund --package-lock=false
       - name: Regressao e build de producao
         run: npm run build
+      - name: Auditar estabilidade da equipe oficial da Liga
+        run: node --experimental-strip-types scripts/test-liga-escalacao-isolada.ts
       - name: Auditorias ja publicadas
         run: |
           node --experimental-strip-types scripts/test-fase1-economia.ts

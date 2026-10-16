@@ -419,7 +419,7 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
       <div><strong>Próximo jogo · Dia {seasonDay(state)}/60</strong>
         <span>{fixtures[0]?.opponent.name||"Adversário ainda não definido"}</span>
         <small>A partida acontece ao encerrar o dia na Guilda.</small></div>
-      <div><strong>Escalação {lineup.ids.length}/4</strong><small>{lineup.ready?"Pronta para Liga e Copa · "+TACTICS[state.tactic].name:"ATENÇÃO: menos de 3 heróis prontos. Derrota por W.O. se encerrar o dia."}</small></div>
+      <div><strong>Escalação oficial {lineup.ids.length}/4</strong><small>{lineup.ids.map(id=>state.heroes.find(h=>h.id===id)?.name).join(" · ")||"Nenhum herói pronto"} · </small><small>{lineup.ready?"Pronta para Liga e Copa · "+TACTICS[state.leagueTactic??state.tactic].name:"ATENÇÃO: menos de 3 heróis prontos. Derrota por W.O. se encerrar o dia."}</small></div>
       <button type="button" className="action-button blue" onClick={openTeam}>Preparar equipe</button>
     </div>
     <ParchmentTitle icon={<img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={31} height={31}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />

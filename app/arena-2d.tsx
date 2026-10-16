@@ -155,7 +155,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    {log.length?log.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}>{l.text}</p>):<p>Os combatentes tomam suas posições.</p>}
   </div>
   <div className="guild2d-actions">
-   <button type="button" className="guild2d-attack" disabled={!active||busy} onClick={()=>{setTip("Avançou a próxima ação da ordem de iniciativa.");act({type:"battle-round",expeditionId:expedition.id});}}><Swords size={19}/> Próxima ação <small>{focus?"Alvo focado":"Alvo livre"}</small></button>
+   <button type="button" className="guild2d-attack" disabled={!active||busy} onClick={()=>{setTip("Avançou a próxima ação da ordem de iniciativa.");act({type:"battle-round",expeditionId:expedition.id});}}><Swords size={19}/> Atacar <small>{focus?"Alvo focado":"Ator e alvo automáticos"}</small></button>
    <button type="button" className="guild2d-skill" disabled={!active||busy||!hero} onClick={()=>{setOpenSkill(v=>!v);setTip("");}}><Sparkles size={19}/> Habilidade <small>{queued?"Preparada":"Escolher"}</small></button>
    <button type="button" className="guild2d-defend" disabled={!active||busy} onClick={()=>{setTip("Tática defensiva ativada para a equipe.");act({type:"battle-tactic",tactic:"defensive",expeditionId:expedition.id});}}><Shield size={19}/> Defender <small>{TACTICS[battle.combat?.tactic||expedition.tactic].name}</small></button>
    <button type="button" className="guild2d-retreat" disabled={!active||busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}><ArrowLeft size={19}/> Retirar equipe <small>Encerrar missão</small></button>

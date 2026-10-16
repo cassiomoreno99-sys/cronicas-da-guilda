@@ -15,7 +15,7 @@ import {
   heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss,
   teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, leagueLineup, leagueCalendar, CUP_DAYS, cupStageLabel, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
-  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
+  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, MAX_HERO_LEVEL, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
   ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rank,
   type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
@@ -273,7 +273,7 @@ function MissionPage({
             <p><GameSymbol kind="objective"/>{m.description}</p>
             <div className="difficulty"><GameSymbol kind="difficulty"/><b>Dificuldade:</b>{[0,1,2,3,4].map(i => <i key={i} data-on={i < m.rank}>◆</i>)}</div>
             <div className="specialist"><GameSymbol kind="squad"/><span>Especialistas: {specialtyName(m.specialty)}</span></div>
-            <div className="specialist"><GameSymbol kind="experience"/><span><strong>Nível recomendado: {missionSuggestedLevel(m) + Math.floor((state.season - 1) / 3)}</strong> · {m.kind==="boss"?"Chefe de elite":"Perigo desta região"}</span></div>
+            <div className="specialist"><GameSymbol kind="experience"/><span><strong>Nível recomendado: {Math.min(MAX_HERO_LEVEL,missionSuggestedLevel(m) + Math.floor((state.season - 1) / 3))}</strong> · {m.kind==="boss"?"Chefe de elite":"Perigo desta região"}</span></div>
             {!!locks.length && <small className="locked-copy"><GameSymbol kind="locked"/> {locks[0]}</small>}
           </div>
           <div className="mission-rewards">
@@ -419,7 +419,7 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
       <div><strong>Próximo jogo · Dia {seasonDay(state)}/60</strong>
         <span>{fixtures[0]?.opponent.name||"Adversário ainda não definido"}</span>
         <small>A partida acontece ao encerrar o dia na Guilda.</small></div>
-      <div><strong>Escalação {lineup.ids.length}/4</strong><small>{lineup.ready?"Pronta para Liga e Copa · "+TACTICS[state.tactic].name:"ATENÇÃO: menos de 3 heróis prontos. Derrota por W.O. se encerrar o dia."}</small></div>
+      <div><strong>Escalação oficial {lineup.ids.length}/4</strong><small>{lineup.ids.map(id=>state.heroes.find(h=>h.id===id)?.name).join(" · ")||"Nenhum herói pronto"} · </small><small>{lineup.ready?"Pronta para Liga e Copa · "+TACTICS[state.leagueTactic??state.tactic].name:"ATENÇÃO: menos de 3 heróis prontos. Derrota por W.O. se encerrar o dia."}</small></div>
       <button type="button" className="action-button blue" onClick={openTeam}>Preparar equipe</button>
     </div>
     <ParchmentTitle icon={<img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={31} height={31}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
@@ -958,6 +958,17 @@ function GuildPage({
       return <article className="guild-building-card" key={key}>
         <GuildRoomArt room={key} compact label={spec.name+": local medieval da Sede da Guilda."}/><div><h3>{spec.name} <small>Nv. {lvl}/10</small></h3><p>{spec.description}</p><small className="guild-building-effect">{effects[key]}</small>{lvl<max&&<small className="guild-building-next">Próximo nível: {nextEffects[key]}</small>}</div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
+    {!!state.pendingRewards?.length&&<section className="guild-pending-rewards parchment" aria-label="Recompensas da temporada aguardando espaço no baú">
+      <h3><GameSymbol kind="reward"/> Recompensas pendentes · {state.pendingRewards.length}</h3>
+      <p>Seu baú está sem espaço para todos os prêmios. Eles ficam guardados e não serão perdidos.</p>
+      <small>{state.pendingRewards.slice(0,5).map(item=>ITEMS[item.key]?.name||item.key).join(" · ")}
+        {state.pendingRewards.length>5?" · e outras "+(state.pendingRewards.length-5):""}</small>
+      <button type="button" className="action-button green"
+        disabled={busy||storageUsed(state.chest)>=chestCapacity(state)}
+        onClick={()=>act({type:"claim-pending-rewards"})}>
+        Receber prêmios · {Math.min(state.pendingRewards.length,Math.max(0,chestCapacity(state)-storageUsed(state.chest)))} espaço(s)
+      </button>
+    </section>}
     <section className="parchment catalog-forge"><h3><GameSymbol kind="forge" size={18}/> Forja · Nv. {state.hq.forge}</h3>
     <p className="forge-capacity">Capacidade do Baú: <strong>{storageUsed(state.chest)}/{chestCapacity(state)}</strong> · Forja Nv. {state.hq.forge}/10</p>
     {state.seasonForgePlans?.filter(plan=>!plan.crafted).map(plan=><div className="seasonal-forge-order parchment" key={plan.season}>

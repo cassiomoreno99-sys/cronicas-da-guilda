@@ -1,0 +1,72 @@
+name: Estresse - 500 temporadas e mais de 5000 cenarios
+on:
+  push:
+    branches: [qa-500-temporadas-6000-cenarios-20261016]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  campanha500:
+    name: 500 temporadas / 30000 dias
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Rodar 500 temporadas reais no motor
+        run: node --experimental-strip-types scripts/test-500-temporadas.ts
+      - name: Relatório de progressão
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: estresse-500-temporadas
+          path: qa-report/500-temporadas.json
+          if-no-files-found: ignore
+  matriz6000:
+    name: Matriz de mais de 5000 cenarios
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Testar milhares de acoes positivas e negativas
+        run: node --experimental-strip-types scripts/test-6000-cenarios.ts
+      - name: Relatório de combinações
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: estresse-6000-cenarios
+          path: qa-report/acoes-combinatorias.json
+          if-no-files-found: ignore
+  regressao:
+    name: Build e testes oficiais
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Instalar dependencias
+        run: npm install --no-audit --no-fund --package-lock=false
+      - name: Regressao e build de producao
+        run: npm run build
+      - name: Auditar estabilidade da equipe oficial da Liga
+        run: node --experimental-strip-types scripts/test-liga-escalacao-isolada.ts
+      - name: Premiações garantidas com baú cheio
+        run: node --experimental-strip-types scripts/test-recompensas-bau-cheio.ts
+      - name: Diagnóstico de balanceamento até a temporada 500
+        run: node --experimental-strip-types scripts/diagnostico-balanceamento-500.ts
+      - name: Auditorias ja publicadas
+        run: |
+          node --experimental-strip-types scripts/test-fase1-economia.ts
+          node --experimental-strip-types scripts/test-fase2-competicoes.ts
+          node --experimental-strip-types scripts/test-fase3-combate.ts
+          node --experimental-strip-types scripts/test-fases4-a-9.ts
+          node --experimental-strip-types scripts/test-auditoria-critica.ts

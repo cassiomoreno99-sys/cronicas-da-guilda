@@ -893,6 +893,11 @@ function GuildPage({
   state, act, busy, onExport, onImport, onRecover, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack
 }: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onRecover: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void }) {
   const buildings = Object.entries(HQ_DEFINITIONS) as Array<[HQBuilding,(typeof HQ_DEFINITIONS)[HQBuilding]]>;
+  const wage=payroll(state), daysUntilWage=7-((state.day-1)%7);
+  const safeTreasury=state.gold-8-wage;
+  const currentRegion=WORLD_MAP[state.activeRegion-1];
+  const currentContracts=missions(state);
+  const regionalGuardian=seasonBoss(state);
   const availableRaidHeroes = state.heroes.filter(h => available(h,state)).slice(0,9);
   const raidTeams = availableRaidHeroes.length >= 9 ? [availableRaidHeroes.slice(0,3).map(h=>h.id),availableRaidHeroes.slice(3,6).map(h=>h.id),availableRaidHeroes.slice(6,9).map(h=>h.id)] : [];
   return <section className="screen guild-screen">
@@ -911,7 +916,20 @@ function GuildPage({
         onClick={()=>{const warning=leagueLineup(state).ready?"":" ATENÇÃO: sua escalação da Liga possui menos de 3 heróis disponíveis. Você perderá por W.O. na Liga e, se houver Copa hoje, também será eliminado.";if(window.confirm("Encerrar o dia "+seasonDay(state)+"/"+SEASON_DAYS+"? Salários, liga, viagens e recuperação diária serão processados."+warning))act({type:"next-day"});}}>
         Próximo dia <ChevronRight size={18}/></button>
     </div>
-    {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}</small></button>)}</div></div></div>}
+    <section className="guild-strategy parchment" aria-label="Planejamento financeiro da Guilda">
+      <h3><GameSymbol kind="gold"/> Planejamento antes de encerrar o dia</h3>
+      <div className="guild-strategy-grid">
+        <span>Ouro disponível <strong>{fmt(state.gold)}</strong></span>
+        <span>Manutenção diária <strong>−{fmt(Math.min(8,state.gold))}</strong></span>
+        <span>Salários semanais <strong>{fmt(wage)} · em {daysUntilWage} dia(s)</strong></span>
+        <span>Reserva para despesas <strong>{fmt(safeTreasury)} ouro</strong></span>
+        <span>Contratos realizados <strong>{dailyContractsUsed(state)}/{DAILY_CONTRACT_LIMIT}</strong></span>
+        <span>Partida da Liga <strong>{leagueLineup(state).ready?"Escalação pronta":"Risco de W.O."}</strong></span>
+      </div>
+      {safeTreasury<0&&<p className="guild-budget-warning">Atenção: o tesouro não cobre simultaneamente os próximos salários e um dia de manutenção.</p>}
+      <small>Projeção de reserva, não cobrança antecipada. A folha é semanal; resultados de batalhas também alteram o tesouro.</small>
+    </section>
+    {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}{c.cost?` · Custo: ${fmt(c.cost)} ouro`:" · Sem custo adicional"}</small></button>)}</div></div></div>}
     <div className="hero-art-library parchment" aria-label="Biblioteca de artes dos heróis">
       <strong>Biblioteca Visual dos Heróis</strong><small>{heroArtProgress().portraits}/84 retratos e {heroArtProgress().battle}/84 sprites completos.
       Novas imagens serão reconhecidas automaticamente pela raça, classe e sexo depois de adicionadas ao projeto e publicadas. Nenhum retrato de outra identidade será utilizado.</small>
@@ -919,6 +937,15 @@ function GuildPage({
     <ParchmentTitle icon={<GameSymbol kind="guild"/>} title="Sede da Guilda" />
     <div className="building-list parchment">{buildings.map(([key,spec],index) => {
       const lvl = state.hq[key] || 0, max = spec.max, cost = hqUpgradeCost(state,key);
+      const nextLvl=Math.min(max,lvl+1);
+      const nextEffects:Record<HQBuilding,string>={
+        infirmary:"Recuperação diária +"+(nextLvl*3)+" energia · ferimento reduzido até "+Math.floor(nextLvl/2)+" dias",
+        forge:"Baú "+Math.min(300,30+nextLvl*30)+"/300 espaços · desconto até "+Math.min(20,nextLvl*2)+"%",
+        academy:"Até "+(nextLvl?Math.min(4,1+nextLvl):0)+" aprendizes · treinamento +"+(nextLvl*7)+" XP",
+        library:"Magia +"+Math.ceil(nextLvl*.8)+" · cura +"+(nextLvl*2)+"%",
+        stables:"Recuperação diária +"+(nextLvl*2)+" energia · menor fadiga",
+        warroom:"Poder de expedição +"+(nextLvl*1.2).toFixed(1)+"%"
+      };
       const effects:Record<HQBuilding,string>={
        infirmary:"Recuperação diária +"+(lvl*3)+" energia · ferimento reduzido até "+Math.floor(lvl/2)+" dias",
        forge:"Baú "+chestCapacity(state)+"/300 espaços · criação com até "+Math.min(20,lvl*2)+"% de desconto · itens reforçados",
@@ -928,7 +955,7 @@ function GuildPage({
        warroom:"Poder de expedição +"+(lvl*1.2).toFixed(1)+"% · bônus nas batalhas entre guildas"
       };
       return <article className="guild-building-card" key={key}>
-        <GuildRoomArt room={key} compact label={spec.name+": local medieval da Sede da Guilda."}/><div><h3>{spec.name} <small>Nv. {lvl}/10</small></h3><p>{spec.description}</p><small className="guild-building-effect">{effects[key]}</small></div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
+        <GuildRoomArt room={key} compact label={spec.name+": local medieval da Sede da Guilda."}/><div><h3>{spec.name} <small>Nv. {lvl}/10</small></h3><p>{spec.description}</p><small className="guild-building-effect">{effects[key]}</small>{lvl<max&&<small className="guild-building-next">Próximo nível: {nextEffects[key]}</small>}</div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
     <section className="parchment catalog-forge"><h3><GameSymbol kind="forge" size={18}/> Forja · Nv. {state.hq.forge}</h3>
     <p className="forge-capacity">Capacidade do Baú: <strong>{storageUsed(state.chest)}/{chestCapacity(state)}</strong> · Forja Nv. {state.hq.forge}/10</p>
@@ -953,7 +980,17 @@ function GuildPage({
     })}{!state.hq.forge&&<p>Melhore a Forja para liberar receitas.</p>}</div></section>
     <SupremeLibraryPanel state={state} act={act} busy={busy}/>
     <div className="guild-grid">
-      <section className="guild-mini parchment"><h3>Mapa do Mundo</h3><div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}><strong>{i+1}. {r.name}</strong><small>{r.theme}</small></button>)}</div></section>
+      <section className="guild-mini parchment"><h3>Mapa do Mundo · 12 regiões</h3>
+        <div className="world-summary" aria-label="Progresso regional">
+          <strong>{state.activeRegion}. {currentRegion.name}</strong>
+          <small>{currentRegion.theme} · Nível base recomendado: {currentRegion.minLevel}</small>
+          <span>{state.region}/12 territórios liberados · {currentContracts.length} contratos disponíveis</span>
+          <small>Guardião: {state.bossSeasons.includes(state.season)?"Já derrotado nesta temporada":regionalGuardian?regionalGuardian.title+" · disponível":seasonDay(state)<45?"Disponível a partir do dia 45":"Aguarda desafio"}</small>
+        </div>
+        <div className="world-list">{WORLD_MAP.map((r,i) => <button key={r.name} data-active={state.activeRegion === i+1} disabled={i+1 > state.region || busy} onClick={() => act({type:"travel-region",region:i+1})}>
+          <strong>{i+1}. {r.name}{i+1>state.region?" · Bloqueada":state.activeRegion===i+1?" · Atual":""}</strong>
+          <small>Nível sugerido {r.minLevel} · {r.theme}</small>
+        </button>)}</div></section>
       <AcademyPanel state={state} act={act} busy={busy} />
       <section className="guild-mini parchment"><h3>Sala de Guerra · Guerra de Guildas</h3>
         <p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0 || state.raidHistory.some(r=>r.day===state.day) || state.rivalBattleHistory.some(r=>r.day===state.day)} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>

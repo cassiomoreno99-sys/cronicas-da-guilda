@@ -76,7 +76,7 @@ assert.ok(persuaded>0&&refused>0,"Persuasão deveria produzir aceites e recusas"
  full.heroes.push(...Array.from({length:12-full.heroes.length},(_,i)=>({...full.heroes[0],id:"extra-rank-"+i})));
  assert.equal(rankingRecruitQuote(full,guild,hero,"buyout").eligible,false);
  const capped=structuredClone(s);
- capped.rivalAttempts=["1:hero1","1:hero2","1:hero3"];
+ capped.rivalAttempts=["0:hero1","0:hero2","0:hero3"];
  assert.equal(rankingRecruitQuote(capped,guild,hero,"buyout").eligible,false);
  assert.throws(()=>applyAction(s,{type:"rank-recruit",guildId:guild.id,heroId:hero.id,method:"invalid" as "buyout"}),GameRuleError);
 }

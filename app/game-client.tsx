@@ -15,7 +15,7 @@ import {
   heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss,
   teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, leagueLineup, leagueCalendar, CUP_DAYS, cupStageLabel, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
-  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, dailyContractsUsed, DAILY_CONTRACT_LIMIT,
+  hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
   ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rank,
   type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
@@ -23,7 +23,7 @@ import {
   type Mission, type NegotiationMode, type RacialPath, type TalentPath, type Tactic
 } from "@/lib/game";
 import {
-  exportLocalCampaign, importLocalCampaign, readLocalCampaign, updateLocalCampaign,
+  exportLocalCampaign, importLocalCampaign, readLocalCampaign, updateLocalCampaign, restoreRecoveryCampaign, recoveryAvailable,
   type LocalSave
 } from "@/lib/local-save";
 import { portraitSource } from "@/lib/portraits";
@@ -616,6 +616,7 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
 
 function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
   const [filter,setFilter] = useState("all");
+  const [itemPage,setItemPage] = useState(0);
   const [showCatalog,setShowCatalog] = useState(false);
   const [catalogPage,setCatalogPage] = useState(0);
   const [catalogSelection,setCatalogSelection] = useState("CG-001");
@@ -624,7 +625,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const [useHero,setUseHero] = useState(state.heroes[0]?.id || "");
   const filtered = state.chest.filter(i => !i.equippedTo).filter(i => {
     const slot = ITEMS[i.key]?.slot;
-    if (filter === "all") return slot !== "material";
+    if (filter === "all") return true;
     if (filter === "weapons") return slot === "weapon" || slot === "offhand";
     if (filter === "armor") return ["helmet","armor","gloves","boots"].includes(slot);
     if (filter === "accessory") return slot === "accessory";
@@ -632,7 +633,9 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
     if (filter === "other") return slot === "quest" || slot === "treasure";
     return slot === "material";
   });
-  const selected = filtered.find(i => i.id === selectedId) || filtered[0];
+  const totalPages=Math.max(1,Math.ceil(filtered.length/32));
+  const page=Math.min(itemPage,totalPages-1);
+  const selected = filtered.find(i => i.id === selectedId) || filtered[page*32] || filtered[0];
   const def = selected ? ITEMS[selected.key] : undefined;
   const owner = selected?.equippedTo ? state.heroes.find(h => h.id === selected.equippedTo) : undefined;
   const compatible = def ? state.heroes.filter(h => itemSlots.has(def.slot) && !heroOnExpedition(state,h.id) && (!def.race || heroRace(h) === def.race) && (!def.classes || def.classes.includes(h.class)) && (!def.levelReq || h.level >= def.levelReq)) : [];
@@ -669,11 +672,16 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
     </section>;
   }
   return <section className="screen chest-screen">
-    <div className="inventory-top"><button data-active><GameSymbol kind="inventory"/> Inventário</button><button onClick={()=>setShowCatalog(true)}><GameSymbol kind="book"/> Ver 314 itens</button><button onClick={() => setFilter("material")} data-active={filter === "material"}><GameSymbol kind="forge"/> Materiais</button><span><GameSymbol kind="inventory"/> {storageUsed(state.chest)}/{chestCapacity(state)}</span></div>
+    <div className="inventory-top"><button data-active><GameSymbol kind="inventory"/> Inventário</button><button onClick={()=>setShowCatalog(true)}><GameSymbol kind="book"/> Ver 314 itens</button><button onClick={() => {setFilter("material");setItemPage(0);setSelectedId("");}} data-active={filter === "material"}><GameSymbol kind="forge"/> Materiais</button><span><GameSymbol kind="inventory"/> {storageUsed(state.chest)}/{chestCapacity(state)}</span></div>
     <p className="inventory-capacity-note">Forja Nv. {state.hq.forge} · {storageUsed(state.chest)} guardados · {state.chest.filter(i=>!!i.equippedTo).length} equipados nos heróis · {Math.max(0,chestCapacity(state)-storageUsed(state.chest))} espaços livres</p>
-    <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => setFilter(id)}>{label}</button>)}</div>
+    <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => {setFilter(id);setItemPage(0);setSelectedId("");}}>{label}</button>)}</div>
+    <nav className="inventory-pagination" aria-label="Páginas dos itens no baú">
+      <button type="button" disabled={page===0} onClick={()=>{setItemPage(page-1);setSelectedId("");}}>‹ Anterior</button>
+      <strong>{filtered.length} itens · Página {page+1} de {totalPages}</strong>
+      <button type="button" disabled={page>=totalPages-1} onClick={()=>{setItemPage(page+1);setSelectedId("");}}>Próxima ›</button>
+    </nav>
     <div className="inventory-layout">
-      <div className="item-grid">{filtered.slice(0,40).map(item => <button key={item.id} data-active={selected?.id === item.id} className={"item-tile rarity-" + ITEMS[item.key].rarity} onClick={() => setSelectedId(item.id)}>
+      <div className="item-grid">{filtered.slice(page*32,(page+1)*32).map(item => <button key={item.id} data-active={selected?.id === item.id} className={"item-tile rarity-" + ITEMS[item.key].rarity} onClick={() => setSelectedId(item.id)}>
         <ItemArt itemKey={item.key} /><span>{ITEMS[item.key].name}</span>{item.equippedTo && <b>✓</b>}
       </button>)}</div>
       {selected && def ? <article className="item-detail parchment">
@@ -882,8 +890,8 @@ function SymbolGuide(){
 }
 
 function GuildPage({
-  state, act, busy, onExport, onImport, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack
-}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void }) {
+  state, act, busy, onExport, onImport, onRecover, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack
+}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onRecover: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void }) {
   const buildings = Object.entries(HQ_DEFINITIONS) as Array<[HQBuilding,(typeof HQ_DEFINITIONS)[HQBuilding]]>;
   const availableRaidHeroes = state.heroes.filter(h => available(h,state)).slice(0,9);
   const raidTeams = availableRaidHeroes.length >= 9 ? [availableRaidHeroes.slice(0,3).map(h=>h.id),availableRaidHeroes.slice(3,6).map(h=>h.id),availableRaidHeroes.slice(6,9).map(h=>h.id)] : [];
@@ -964,7 +972,7 @@ function GuildPage({
       </div>
       <small className="music-credit">Trilhas de Juhani Junkala / SubspaceAudio, HydroGene, RandomMind (CC0) e Kevin MacLeod (CC BY 4.0). <a href="/music/CREDITOS.txt" target="_blank" rel="noreferrer">Ver licenças e créditos completos</a>. Mais de 30 minutos de faixas diferentes, disponíveis offline após o primeiro carregamento.</small>
     </div>
-    <div className="settings-panel parchment"><button onClick={onExport}><Download /> Baixar backup</button><button onClick={onImport}><Upload /> Importar backup</button><button className="danger" onClick={onReset}><X /> Reiniciar campanha</button></div>
+    <div className="settings-panel parchment"><button onClick={onExport}><Download /> Baixar backup</button><button onClick={onImport}><Upload /> Importar backup</button><button onClick={onRecover} disabled={!recoveryAvailable()}><Archive /> Recuperar salvamento anterior</button><button className="danger" onClick={onReset}><X /> Reiniciar campanha</button></div>
   </section>;
 }
 
@@ -1056,7 +1064,16 @@ export default function Game() {
     return () => window.clearTimeout(timer);
   },[save?.revision,busy,screen,running.map(e=>e.nextRoundAt).join(","),perform]);
 
-  if (!state) return <main className="boot-screen"><GameSymbol kind="guild"/><h1>Crônicas da Guilda</h1><p>{error || "Abrindo sua campanha…"}</p></main>;
+  const recover=()=>{
+    if(!window.confirm("Recuperar o salvamento anterior e substituir o atual?"))return;
+    try{const next=restoreRecoveryCampaign();hydrate({state:next.state,revision:next.revision});setError("");}
+    catch(e){setError(e instanceof Error?e.message:"Não foi possível recuperar a campanha.");}
+  };
+  if (!state) return <main className="boot-screen"><GameSymbol kind="guild"/><h1>Crônicas da Guilda</h1><p>{error || "Abrindo sua campanha…"}</p>
+    {error&&<div className="boot-recovery"><button onClick={recover} disabled={!recoveryAvailable()}>Recuperar campanha anterior</button>
+      <label>Importar arquivo de backup<input type="file" accept=".json,application/json" onChange={e=>{const file=e.target.files?.[0];if(file)void restore(file);e.currentTarget.value="";}}/></label>
+      <small>O salvamento original não foi apagado. Não iniciaremos uma campanha nova automaticamente.</small></div>}
+  </main>;
 
   const allMissions = [...missions(state), seasonBoss(state)].filter(Boolean) as Mission[];
   const selectedMission = allMissions.find(m=>m.id===selectedMissionId) || allMissions[0];
@@ -1075,6 +1092,7 @@ export default function Game() {
     a.href=url; a.download="cronicas-da-guilda-backup.json"; a.click(); URL.revokeObjectURL(url);
   };
   const restore = async (file: File) => {
+    if(!window.confirm("Importar este backup e substituir a campanha atual? A versão anterior será preservada para recuperação."))return;
     try { const next = importLocalCampaign(await file.text()); hydrate({state:next.state,revision:next.revision}); }
     catch(e){ setError(e instanceof Error ? e.message : "Backup inválido."); }
   };
@@ -1098,7 +1116,7 @@ export default function Game() {
       {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} act={perform} busy={busy} />}
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
-      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onReset={() => { if (window.confirm("Reiniciar toda a campanha?")) perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} />} 
+      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onRecover={recover} onReset={() => { if (window.prompt("Para reiniciar toda a campanha, digite REINICIAR. Seu progresso será perdido.")==="REINICIAR") perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} />} 
       </main>
     </div>
     <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />

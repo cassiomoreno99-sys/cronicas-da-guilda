@@ -16,7 +16,7 @@ import {
   teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, leagueLineup, leagueCalendar, CUP_DAYS, cupStageLabel, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
   hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, MAX_HERO_LEVEL, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
-  ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rank,
+  ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rankingRecruitQuote, rank,
   type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
   type Hero, type HQBuilding, type JourneyChoice, type JourneyDuration,
@@ -400,6 +400,32 @@ function TeamPage({
 }
 
 function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; team: string[]; act: (a: Action) => void; busy: boolean; openTeam:()=>void }) {
+  const [rankHeroId,setRankHeroId] = useState<string | null>(null);
+  const rankDialogRef=useRef<HTMLElement>(null);
+  const ranking=heroLeaderboard(state).slice(0,10);
+  const inspected=ranking.find(h=>h.id===rankHeroId);
+  const inspectedGuild=inspected&&!inspected.owned?state.rivals.find(g=>g.heroes.some(h=>h.id===inspected.id)):undefined;
+  const inspectedRival=inspectedGuild?.heroes.find(h=>h.id===rankHeroId);
+  const quotePersuade=inspectedRival&&inspectedGuild?rankingRecruitQuote(state,inspectedGuild,inspectedRival,"persuade"):null;
+  const quoteBuyout=inspectedRival&&inspectedGuild?rankingRecruitQuote(state,inspectedGuild,inspectedRival,"buyout"):null;
+  useEffect(()=>{
+    if(!rankHeroId)return;
+    const previous=document.body.style.overflow;
+    document.body.style.overflow="hidden";
+    rankDialogRef.current?.focus();
+    const handleKey=(e:KeyboardEvent)=>{if(e.key==="Escape")setRankHeroId(null);};
+    document.addEventListener("keydown",handleKey);
+    return()=>{document.body.style.overflow=previous;document.removeEventListener("keydown",handleKey);};
+  },[rankHeroId]);
+  const contract=(method:"persuade"|"buyout")=>{
+    if(!inspected||!inspectedGuild)return;
+    const q=method==="buyout"?quoteBuyout:quotePersuade;
+    if(!q?.eligible||busy)return;
+    const prompt=method==="buyout"
+      ?"Contratar "+inspected.name+" diretamente? Multa: "+fmt(q.price)+" ouro. Serão DESCONTADOS "+q.prestigeCost+" pontos de prestígio. A contratação é garantida."
+      :"Tentar persuadir "+inspected.name+"? Chance: "+q.chance+"%. Se aceitar: "+fmt(q.price)+" ouro. Se recusar: taxa de abordagem de "+fmt(q.fee)+" ouro. Prestígio não é gasto.";
+    if(window.confirm(prompt))act({type:"rank-recruit",guildId:inspectedGuild.id,heroId:inspected.id,method});
+  };
   const table = standings(state);
   const place = table.findIndex(g => g.id === "player") + 1;
   const rival = table.find(g => g.id !== "player");
@@ -452,9 +478,11 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
     </div>
     <ParchmentTitle icon={<GameSymbol kind="squad"/>} title="Ranking dos 10 Melhores Heróis" side={<span>Equipamentos e evolução contam no poder</span>}/>
     <section className="heroes-top10 parchment" aria-label="Ranking dos 10 melhores heróis">
-      {heroLeaderboard(state).slice(0,10).map((h,i)=><article key={h.id} className="hero-ranking-card" data-player={h.owned}>
-        <b>{i+1}º</b><HeroPortrait hero={h.hero}/><div><strong>{h.name}</strong><small>{h.guild} · {RACES[h.race].name} · Nv. {h.hero.level}</small></div>
-        <span>{fmt(h.score)} poder{i<3&&<small>Top 3: ouro + relíquia racial</small>}</span>
+      {ranking.map((h,i)=><article key={h.id} className="hero-ranking-card" data-player={h.owned}>
+        <b>{i+1}º</b><HeroPortrait hero={h.hero}/><div className="rank-hero-identity"><strong>{h.name}</strong><small>{h.guild} · {RACES[h.race].name} · Nv. {h.hero.level}</small></div>
+        <div className="rank-card-actions"><span>{fmt(h.score)} poder{i<3&&<small>Top 3: ouro + relíquia racial</small>}</span>
+          <button type="button" className="rank-profile-trigger" onClick={()=>setRankHeroId(h.id)} aria-label={"Ver características de "+h.name}>Ver ficha</button>
+        </div>
       </article>)}
     </section>
     {state.seasonAwards?.[0]&&<div className="season-awards-history parchment"><strong>Premiação da temporada {state.seasonAwards[0].season}</strong><small>Guildas: {state.seasonAwards[0].guildWinners.map(g=>g.name).join(" · ")}</small><small>Heróis: {state.seasonAwards[0].heroWinners.map(h=>h.name+" ("+RACES[h.race].name+")").join(" · ")}</small></div>}
@@ -467,6 +495,63 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
       <button className="action-button red huge" disabled={busy || !rivalData || team.length < 3 || activeExpeditions(state).length > 0 || state.raidHistory.some(r=>r.day===state.day) || state.rivalBattleHistory.some(r=>r.day===state.day)}
         onClick={() => rivalData && act({ type:"rival-battle", guildId:rivalData.id, team })}>Desafiar</button>
     </div>
+    {state.lastNegotiation&&state.lastNegotiation.day===state.day&&<div className="rank-transfer-result parchment" role="status">
+      <strong>{state.lastNegotiation.success?"Contratação realizada":"Proposta recusada"}</strong>
+      <p>{state.lastNegotiation.message}</p>
+    </div>}
+    {rankHeroId&&<div className="rank-hero-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setRankHeroId(null);}}>
+      <section ref={rankDialogRef} className="rank-hero-modal" role="dialog" aria-modal="true" aria-label={inspected?"Características de "+inspected.name:"Herói não disponível"} tabIndex={-1}>
+        <button type="button" className="rank-hero-close" aria-label="Fechar ficha" onClick={()=>setRankHeroId(null)}><X size={21}/></button>
+        {inspected?(()=>{
+          const hero=inspected.hero,stats=heroStats(hero,inspected.owned?state:undefined);
+          return <>
+            <div className="rank-modal-heading">
+              <HeroPortrait hero={hero} large/>
+              <div><small>{ranking.findIndex(h=>h.id===inspected.id)+1}º no ranking · {fmt(inspected.score)} poder</small>
+                <h2>{inspected.name}</h2>
+                <p>{CLASSES[hero.class].name} · {RACES[inspected.race].name} · {HERO_SEX_LABEL[heroSex(hero)]}</p>
+                <small>{inspected.guild} · Nível {hero.level}</small>
+              </div>
+            </div>
+            <p className="rank-hero-trait">{hero.trait||"Aventureiro experiente da Liga"}</p>
+            <div className="rank-modal-stats">
+              {[
+                ["Ataque",Math.round(stats.attack)],["Defesa",Math.round(stats.defense)],
+                ["Magia",Math.round(stats.magic)],["Energia",hero.energy+"%"],
+                ["Velocidade",Math.round(stats.speed)],["Crítico",Math.round(stats.critical*100)+"%"],
+                ["Experiência",fmt(hero.xp)],["Salário semanal",fmt(hero.salary)+" ouro"]
+              ].map(([label,value])=><div key={label}><span>{label}</span><strong>{value}</strong></div>)}
+            </div>
+            <div className="rank-modal-extra">
+              <span>Especialização: <strong>{hero.talent?PATH_NAMES[hero.talent.path]+" · grau "+hero.talent.rank:"Não definida"}</strong></span>
+              <span>Talento racial: <strong>{hero.racial?RACIAL_PATH_NAMES[hero.racial.path]+" · grau "+hero.racial.rank:"Não definido"}</strong></span>
+              <span>Condição: <strong>{hero.injuredUntil>state.day?"Ferido até o dia "+hero.injuredUntil:"Disponível conforme energia"}</strong></span>
+              {inspectedGuild&&<span>Lealdade à guilda atual: <strong>{inspectedRival?.loyalty}/100</strong></span>}
+            </div>
+            <div className="rank-modal-contracts">
+              <h3>Trazer para sua guilda</h3>
+              {inspected.owned?<p>Este herói já pertence à sua guilda. Não há multa nem negociação.</p>:
+                inspectedGuild&&quotePersuade&&quoteBuyout?<>
+                  <button type="button" className="rank-contract-button persuasion" disabled={busy||!quotePersuade.eligible} onClick={()=>contract("persuade")}>
+                    <strong>Persuadir o herói · {quotePersuade.chance}% de chance</strong>
+                    <span>Se aceitar: {fmt(quotePersuade.price)} ouro · Se recusar: {fmt(quotePersuade.fee)} ouro</span>
+                    <small>Sem gasto de prestígio · Salário: {quotePersuade.salary} ouro/semana</small>
+                  </button>
+                  {quotePersuade.reason&&<small className="rank-contract-reason">{quotePersuade.reason}</small>}
+                  <button type="button" className="rank-contract-button buyout" disabled={busy||!quoteBuyout.eligible} onClick={()=>contract("buyout")}>
+                    <strong>Contratar direto · Multa {fmt(quoteBuyout.price)} ouro</strong>
+                    <span>Gasta {fmt(quoteBuyout.prestigeCost)} pontos de prestígio · Chance: 100%</span>
+                    <small>Requer {fmt(quoteBuyout.requiredFame)} de prestígio disponível · Salário: {quoteBuyout.salary} ouro/semana</small>
+                  </button>
+                  {quoteBuyout.reason&&<small className="rank-contract-reason">{quoteBuyout.reason}</small>}
+                  <p className="rank-contract-budget">Seu tesouro: {fmt(state.gold)} ouro · Seu prestígio: {fmt(state.fame)} pontos. Limite compartilhado: 3 propostas por semana.</p>
+                </>:<p>Este herói não está mais disponível na guilda indicada. Atualize o ranking.</p>}
+              {state.lastNegotiation?.heroId===inspected.id&&state.lastNegotiation.day===state.day&&<p className="rank-contract-feedback" role="status">{state.lastNegotiation.message}</p>}
+            </div>
+          </>;
+        })():<div className="rank-modal-unavailable"><h2>Ranking atualizado</h2><p>Esse herói saiu do Top 10. Feche a ficha e escolha outro participante.</p></div>}
+      </section>
+    </div>}
   </section>;
 }
 

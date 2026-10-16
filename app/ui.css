@@ -2906,3 +2906,69 @@ img.game-symbol.game-coin{
 .tavern-rumor-status{font:700 11px/1.4 system-ui;color:#255b3c}
 .mission-rumor-ready{display:flex;align-items:center;gap:5px;font:700 11px/1.5 system-ui;color:#286044;padding:5px}
 @media(max-width:600px){.tavern-rumor-card{padding:10px 8px}.tavern-rumors-intro{font-size:12px!important}.tavern-rumor-research{width:100%}}
+
+
+/* Ranking de heróis: ficha detalhada em sobreposição, sem alterar os retratos aprovados. */
+.hero-ranking-card>.rank-hero-identity{min-width:0;flex:1 1 auto}
+.hero-ranking-card>.rank-card-actions{display:grid;gap:6px;flex:0 0 auto;min-width:102px;max-width:140px;text-align:right;justify-items:stretch}
+.rank-card-actions>span{font:800 12px/1.3 system-ui;color:#ffe5ac}
+.rank-card-actions small{display:block;font:10px/1.3 system-ui;color:#c6d5de}
+.rank-profile-trigger{min-height:42px;border:1px solid #e1b970;border-radius:6px;background:#e7ca86;color:#242018;font:800 12px/1.25 system-ui;cursor:pointer;white-space:normal}
+.rank-profile-trigger:focus-visible,.rank-hero-close:focus-visible,.rank-contract-button:focus-visible{outline:3px solid #55c5ee;outline-offset:3px}
+.rank-hero-backdrop{position:fixed;inset:0;z-index:20000;background:rgba(3,10,17,.85);display:grid;place-items:center;padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom));overflow:hidden}
+.rank-hero-modal{position:relative;box-sizing:border-box;width:min(100%,580px);max-height:min(92dvh,850px);overflow-y:auto;overscroll-behavior:contain;background:linear-gradient(180deg,#142e46,#0b2135);border:2px solid #d2ae6b;border-radius:12px;box-shadow:0 22px 80px #000b;color:#fff0c9;padding:22px 18px 18px;scrollbar-width:thin}
+.rank-hero-modal:focus{outline:none}
+.rank-hero-close{position:absolute;top:9px;right:9px;width:44px;height:44px;display:grid;place-items:center;border:1px solid #d1ad72;background:#243b4e;color:#fff0c9;border-radius:7px;cursor:pointer;z-index:1}
+.rank-modal-heading{display:grid;grid-template-columns:110px minmax(0,1fr);align-items:center;gap:16px;padding:7px 43px 14px 0}
+.rank-modal-heading .hero-portrait{width:110px;height:128px;max-width:100%;border:2px solid #b99455;border-radius:10px;overflow:hidden}
+.rank-modal-heading>div{min-width:0}
+.rank-modal-heading h2{font:700 clamp(20px,5vw,27px)/1.15 Georgia;margin:6px 0;color:#ffe2a5;overflow-wrap:anywhere}
+.rank-modal-heading p{font:12px/1.5 system-ui;margin:0;color:#dfd4c1}
+.rank-modal-heading small{font:600 11px/1.5 system-ui;color:#b9d4e2}
+.rank-hero-trait{padding:8px 10px;border-left:3px solid #d8ae64;background:rgba(230,196,135,.09);font:italic 13px/1.5 Georgia;margin:0 0 12px}
+.rank-modal-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.rank-modal-stats>div{min-width:0;display:flex;align-items:center;justify-content:space-between;gap:5px;border:1px solid #456070;background:#17354a;border-radius:6px;padding:9px}
+.rank-modal-stats span{font:11px/1.4 system-ui;color:#d4e2e5}
+.rank-modal-stats strong{font:800 13px/1.3 system-ui;text-align:right;color:#ffdc8e}
+.rank-modal-extra{display:grid;gap:7px;margin:14px 0;border-top:1px solid #607080;border-bottom:1px solid #607080;padding:12px 4px}
+.rank-modal-extra>span{font:12px/1.45 system-ui;color:#cfdbdf}
+.rank-modal-extra strong{color:#fff0bd}
+.rank-modal-contracts{display:grid;gap:8px}
+.rank-modal-contracts h3{font:700 19px/1.3 Georgia;color:#ffe2a5;margin:4px 0}
+.rank-modal-contracts>p{font:12px/1.55 system-ui;margin:2px 0}
+.rank-contract-button{min-width:0;display:grid;gap:5px;padding:12px;border:1px solid #dfb777;border-radius:8px;min-height:75px;text-align:left;cursor:pointer;color:#1c2430}
+.rank-contract-button strong{font:800 13px/1.45 system-ui;overflow-wrap:anywhere}
+.rank-contract-button span{font:700 12px/1.4 system-ui}
+.rank-contract-button small{font:11px/1.45 system-ui}
+.rank-contract-button.persuasion{background:#cde3cf;border-color:#9cbb9e}
+.rank-contract-button.buyout{background:#eed49c;border-color:#c59a4f}
+.rank-contract-button:disabled{opacity:.52;cursor:not-allowed}
+.rank-contract-reason{font:600 11px/1.45 system-ui;color:#ffcbab}
+.rank-contract-budget{font:11px/1.5 system-ui;color:#d6e1e7}
+.rank-contract-feedback{border:1px solid #d7b56e;background:#284b48;border-radius:6px;padding:10px}
+.rank-modal-unavailable{text-align:center;padding:32px 10px}
+.rank-transfer-result{margin:10px 0;padding:13px;border:1px solid #c9a16a}
+.rank-transfer-result strong{font:700 15px Georgia;color:#7b5525}
+.rank-transfer-result p{font:12px/1.45 system-ui;margin:6px 0 0}
+@media(max-width:640px){
+ .hero-ranking-card>.rank-card-actions{min-width:78px;max-width:88px}
+ .rank-card-actions>span{font-size:11px}
+ .rank-card-actions small{font-size:9px}
+ .rank-profile-trigger{min-height:44px;font-size:11px;padding:5px}
+ .rank-hero-backdrop{padding:6px}
+ .rank-hero-modal{width:100%;max-height:calc(100dvh - 12px);padding:18px 12px 14px}
+ .rank-modal-heading{grid-template-columns:82px minmax(0,1fr);gap:10px;padding:8px 34px 10px 0}
+ .rank-modal-heading .hero-portrait{width:82px;height:102px}
+ .rank-modal-stats{gap:6px}
+ .rank-modal-stats>div{padding:7px}
+ .rank-modal-stats span{font-size:10px}
+ .rank-modal-stats strong{font-size:11px}
+}
+@media(max-width:355px){
+ .hero-ranking-card{gap:5px}
+ .hero-ranking-card>.rank-card-actions{min-width:70px;max-width:75px}
+ .hero-ranking-card .rank-hero-identity strong{font-size:11px}
+ .hero-ranking-card .rank-hero-identity small{font-size:9px}
+ .rank-modal-heading{grid-template-columns:68px minmax(0,1fr)}
+ .rank-modal-heading .hero-portrait{width:68px;height:86px}
+}

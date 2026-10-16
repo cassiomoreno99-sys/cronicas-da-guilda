@@ -1839,7 +1839,8 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     }
     case "battle-auto": {
       const target = expeditionBattle(s, action.expeditionId); requireRule(target, "Essa expedição não está mais em combate.");
-      target.battle.combat!.autoAbilities = true; while (target.battle.status === "active" && target.battle.combat) stepBattle(s, target.battle);
+      // Pular as animações não modifica a escolha manual/automática do jogador.
+      while (target.battle.status === "active" && target.battle.combat) stepBattle(s, target.battle);
       s.lastBattle = target.battle; break;
     }
     case "battle-retreat": {
@@ -1967,9 +1968,13 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     }
     case "rest": {
       requireRule(s.dailyActions!.restDay!==s.day,"A guilda já descansou hoje. Use Próximo dia para descansar novamente.");
-      s.heroes.forEach(h=>h.energy=Math.min(100,h.energy+40));
+      requireRule(s.gold>=8,"O descanso custa 8 ouro. Faça uma missão ou espere receber recursos.");
+      // O pagamento precisa valer em todas as telas (Santuário e Taverna).
+      // Quem estiver em viagem não pode recuperar energia na sede à distância.
+      entry(s,"Descanso da guilda",-8);
+      s.heroes.filter(h=>!activeJourney(s,h.id)).forEach(h=>h.energy=Math.min(100,h.energy+40));
       s.dailyActions!.restDay=s.day;
-      note(s,"Descanso realizado sem avançar o dia.");
+      note(s,"Descanso realizado por 8 ouro, sem avançar o dia. Viajantes recuperam energia quando retornarem.");
       break;
     }
     case "train": {

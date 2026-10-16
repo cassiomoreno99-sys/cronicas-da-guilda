@@ -45,7 +45,7 @@ export type BattleConsumableKey = "healing_potion" | "antidote" | "stun_bomb";
 export type PendingConsumable = { key: BattleConsumableKey; targetId: string };
 export type MissionKind = "escort" | "defense" | "dungeon" | "hunt" | "boss";
 export type Mission = { id: string; title: string; location: string; description: string; rank: number; force: number; reward: number; enemy: string; count: number; specialty: string; flavor: string; kind: MissionKind; requiredFame: number; requiredItem?: string; boss?: number };
-type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; healingItemsUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; supremeUsed?: Record<string,boolean>; revivedIds?: string[]; damageThis?: Record<string,number>; damagePrevious?: Record<string,number>; autoAbilities?: boolean; liveOrder?: string[]; liveCursor?: number; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
+type Combat = { mission: Mission; fighters: Combatant[]; tactic: Tactic; lastTactic: Tactic; fatigueTotal: number; potionsUsed: number; pendingPotion?: { targetId: string }; pendingConsumable?: PendingConsumable; consumablesUsed?: number; healingItemsUsed?: number; pendingAbilities: PendingAbility[]; abilityCooldowns: Record<string, number>; supremeUsed?: Record<string,boolean>; revivedIds?: string[]; damageThis?: Record<string,number>; damagePrevious?: Record<string,number>; autoAbilities?: boolean; focusTargetId?: string; liveOrder?: string[]; liveCursor?: number; formation: Record<string, FormationLine>; objectiveHp: number; objectiveMax: number; targetRounds: number };
 export type Battle = { title: string; day: number; won: boolean; reward: number; xp: number; rounds: number; log: BattleLog[]; levelUps: string[]; wounded: string[]; remaining: number; fighters?: BattleFighter[]; status?: "active" | "won" | "lost" | "retreated"; combat?: Combat; loot?: string[]; fameChange?: number; regionUnlocked?: number; objective?: { name: string; hp: number; maxHp: number; targetRounds: number } };
 export type ExpeditionSlot = 1 | 2 | 3;
 export type SavedSquad = { id: string; name: string; specialty: MissionKind; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; level: number; xp: number; wins: number };
@@ -87,6 +87,9 @@ export type Action =
   | { type: "expedition-tick"; now: number }
   | { type: "battle-round"; expeditionId?: string } | { type: "battle-auto"; expeditionId?: string } | { type: "battle-retreat"; expeditionId?: string }
   | { type: "battle-tactic"; tactic: Tactic; expeditionId?: string } | { type: "battle-potion"; heroId: string; expeditionId?: string }
+  | { type: "battle-focus"; targetId?: string; expeditionId?: string }
+  | { type: "battle-auto-abilities"; enabled: boolean; expeditionId?: string }
+  | { type: "battle-cancel-ability"; heroId: string; expeditionId?: string }
   | { type: "battle-consumable"; key: BattleConsumableKey; targetId: string; expeditionId?: string }
   | { type: "battle-ability"; heroId: string; abilityId: string; targetId?: string; expeditionId?: string }
   | { type: "event"; eventId: string; choiceId: string }
@@ -861,7 +864,9 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     } else if (!([1, 2, 3] as ExpeditionSlot[]).includes(expedition.slot as ExpeditionSlot)) expedition.slot = 1;
     if (expedition.battle?.combat) {
       const c = expedition.battle.combat;
-      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.supremeUsed ??= {}; c.revivedIds ??= []; c.damageThis ??= {}; c.damagePrevious ??= {}; c.formation ??= { ...expedition.formation }; c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0; c.healingItemsUsed ??= 0;
+      c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.supremeUsed ??= {}; c.revivedIds ??= []; c.damageThis ??= {}; c.damagePrevious ??= {}; c.formation ??= { ...expedition.formation }; c.autoAbilities ??= true;
+      if(c.focusTargetId&&!c.fighters.some(f=>f.side==="enemy"&&f.id===c.focusTargetId&&f.hp>0))delete c.focusTargetId;
+      c.consumablesUsed ??= c.potionsUsed || 0; c.healingItemsUsed ??= 0;
       delete c.pendingPotion; delete c.pendingConsumable;
       for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
       if (expedition.battle.fighters) for (const f of expedition.battle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";
@@ -1450,7 +1455,7 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
 
   const executeAbility = (a: Combatant, h: Hero, order: PendingAbility, ability: AbilitySpec) => {
     const allyTarget = heroes().find(f => f.id === order.targetId) || heroes().sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
-    const enemyTarget = enemies().find(f => f.id === order.targetId) || enemies().sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
+    const enemyTarget = enemies().find(f => f.id === order.targetId) || enemies().find(f=>f.id===c.focusTargetId) || enemies().sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp)[0];
     const power = Math.max(a.attack, a.magic) + h.level * 2, ultimate = (h.talent?.rank === 3 && ability.evolved || ability.id.startsWith("race-") && h.racial?.rank === 3 ? 1.25 : 1) * (ability.id.startsWith("story-") ? 1.18 : 1);
     log.push({ round, text: a.name + " usa " + ability.name + ".", kind: "ability", actorId: a.id, targetId: ability.target === "enemy" ? enemyTarget?.id : ability.target === "ally" ? allyTarget?.id : a.id });
     if (ability.effect === "challenge") { addStatus(a, "shield", 2, Math.round(35 + a.defense * .7), a.id); addStatus(a, "taunt", 2, undefined, a.id); }
@@ -1512,7 +1517,10 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
       const canHeal = a.class === "healer" || a.class === "druid" || h.talent?.path === "healing" || a.class === "paladin" && h.talent?.path === "defense";
       const injured = heroes().filter(f => f.hp < f.maxHp * healingLimit).sort((x, y) => x.hp / x.maxHp - y.hp / y.maxHp);
       if (injured.length && canHeal) { heal(injured[0], (12 + a.magic * .55) * (.55 + a.energy * .0045) * a.healing, a.name + " cura " + injured[0].name + " em ", a.id); continue; }
-      const alive = enemies(), target = alive[Math.floor(random(s) * alive.length)], magical = a.magic > a.attack;
+      const alive = enemies();
+       const focused=alive.find(f=>f.id===c.focusTargetId);
+       if(c.focusTargetId&&!focused)delete c.focusTargetId;
+       const target = focused || alive[Math.floor(random(s) * alive.length)], magical = a.magic > a.attack;
       const bonus = m.kind === "hunt" && a.class === "ranger" ? 1.18 : m.specialty === a.class || m.specialty === "undead" && ["mage", "paladin"].includes(a.class || "") ? 1.12 : 1;
        const blessed=a.statuses.some(x=>x.kind==="critBlessing");
        const critical = blessed || random(s) < Math.min(.45,a.critical + (m.kind === "hunt" && a.class === "ranger" ? .1 : 0));
@@ -1840,6 +1848,36 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const target = expeditionBattle(s, action.expeditionId); requireRule(target, "Essa expedição não está mais em combate.");
       requireRule(Object.hasOwn(TACTICS, action.tactic), "Escolha uma tática válida."); target.battle.combat!.tactic = action.tactic;
       if (target.expedition) target.expedition.tactic = action.tactic; s.lastBattle = target.battle; break;
+    }
+    case "battle-focus": {
+      const found=expeditionBattle(s,action.expeditionId);requireRule(found?.battle.combat,"Confronto não está ativo.");
+      const c=found.battle.combat;
+      if(action.targetId){
+        const enemy=c.fighters.find(f=>f.side==="enemy"&&f.id===action.targetId&&f.hp>0);
+        requireRule(enemy,"Escolha um inimigo vivo para concentrar os ataques.");
+        c.focusTargetId=enemy.id;
+        found.battle.log.push({round:found.battle.rounds,text:"Foco: atacar "+enemy.name+".",kind:"order",targetId:enemy.id});
+      }else{
+        delete c.focusTargetId;
+        found.battle.log.push({round:found.battle.rounds,text:"Foco cancelado: ataques automáticos liberados.",kind:"order"});
+      }
+      s.lastBattle=found.battle;break;
+    }
+    case "battle-auto-abilities": {
+      const found=expeditionBattle(s,action.expeditionId);requireRule(found?.battle.combat,"Confronto não está ativo.");
+      requireRule(typeof action.enabled==="boolean","Modo inválido para as habilidades.");
+      found.battle.combat.autoAbilities=action.enabled;
+      found.battle.log.push({round:found.battle.rounds,text:action.enabled?"Habilidades automáticas ativadas.":"Habilidades automáticas desligadas.",kind:"order"});
+      s.lastBattle=found.battle;break;
+    }
+    case "battle-cancel-ability": {
+      const found=expeditionBattle(s,action.expeditionId);requireRule(found?.battle.combat,"Confronto não está ativo.");
+      const c=found.battle.combat;
+      requireRule(c.fighters.some(f=>f.side==="hero"&&f.id===action.heroId),"Herói inválido.");
+      requireRule(c.pendingAbilities.some(o=>o.heroId===action.heroId),"Esse herói não tem ordem pendente.");
+      c.pendingAbilities=c.pendingAbilities.filter(o=>o.heroId!==action.heroId);
+      found.battle.log.push({round:found.battle.rounds,text:"Ordem de habilidade cancelada.",kind:"order",actorId:action.heroId});
+      s.lastBattle=found.battle;break;
     }
     case "battle-potion":
     case "battle-consumable": requireRule(false, "Poções e consumíveis foram removidos do jogo."); break;

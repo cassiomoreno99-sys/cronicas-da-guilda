@@ -1,5 +1,5 @@
 import {mkdirSync,writeFileSync} from "node:fs";
-import {newCampaign,applyAction,missions,missionReadiness} from "../lib/game.ts";
+import {newCampaign,applyAction,missions,seasonalThreat} from "../lib/game.ts";
 const report=[];
 for(const season of [1,20,50,100,250,500]){
  let wins=0,losses=0;
@@ -17,7 +17,8 @@ for(const season of [1,20,50,100,250,500]){
  }
  const preview=newCampaign(720001);preview.day=(season-1)*60+7;preview.season=season;
  const m=missions(preview)[0];
- report.push({season,force:m.force,wins,losses,suggestedByUI:Math.min(50,1+Math.floor((season-1)/3))});
+ if(season===500&&wins<10)throw new Error("Desequilíbrio extremo: equipe no nível máximo vence menos de 10/20 na missão básica da temporada 500.");
+ report.push({season,force:m.force,wins,losses,suggestedByUI:Math.min(50,1+Math.floor((season-1)/3)),multiplier:seasonalThreat(season,.06)});
  console.log("BALANCEAMENTO TEMPORADA "+season+": vitórias="+wins+"/20; força="+m.force);
 }
 mkdirSync("qa-report",{recursive:true});writeFileSync("qa-report/diagnostico-balanceamento-500.json",JSON.stringify(report,null,2));

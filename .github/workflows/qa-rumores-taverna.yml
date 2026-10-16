@@ -1,0 +1,50 @@
+name: Taverna - Rumores com efeito real
+on:
+  push:
+    branches: [taverna-rumores-estrategicos-20261016]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regras:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Testar investigação, 100 combates preparados e save
+        run: node --experimental-strip-types scripts/test-rumores-taverna.ts
+      - name: Build e regressões
+        run: |
+          npm install --no-audit --no-fund --package-lock=false
+          npm run build
+  visual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Instalar aplicativo e navegador
+        run: |
+          npm install --no-audit --no-fund --package-lock=false
+          npm install --no-save --no-audit --no-fund --package-lock=false playwright@1.56.1
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROMIUM_EXECUTABLE_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
+      - name: Montar versão de teste
+        run: npm run build
+      - name: Testar Taverna em 320 390 e 1024 pixels
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort &
+          PID=$!
+          trap "kill $PID 2>/dev/null || true" EXIT
+          for i in $(seq 1 40); do if curl -fsS http://127.0.0.1:4173 -o /dev/null; then break; fi; sleep 1; done
+          node scripts/test-rumores-taverna-browser.mjs

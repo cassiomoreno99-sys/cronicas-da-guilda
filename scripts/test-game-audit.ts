@@ -16,7 +16,7 @@ for(const removed of ["app/arena-3d.tsx","app/arena-3d.css","app/arena-wolf.ts",
 }
 assert.ok(arenaUI.includes('ability.target==="ally"?allyTarget?.id'),"Habilidades de cura ainda são forçadas ao próprio conjurador.");
 assert.ok(arenaUI.includes("guild2d-ally-selector"),"Seleção de alvo aliado não aparece na tela.");
-assert.ok(arenaUI.includes("Ator e alvo automáticos"),"Botão básico engana sobre seleção de alvo.");
+assert.ok(arenaUI.includes("Concentrar ataques")&&arenaUI.includes('type:"battle-focus"'),"A arena não possui seleção tática de alvo.");
 
 // TODAS as criaturas regionais e chefes devem selecionar uma arte do acervo.
 // Uma arte ilustrativa aproximada é aceita quando não existe retrato específico.

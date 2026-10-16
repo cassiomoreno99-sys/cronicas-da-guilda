@@ -66,6 +66,7 @@ for(let seed=0;seed<100;seed++){
  assert.equal(s.expeditions[0].battle.log.some(x=>/Informações da Taverna utilizadas/.test(x.text)),false);
  s=applyAction(s,{type:"battle-auto",expeditionId:s.expeditions[0].id});
  s.heroes.forEach(h=>{h.energy=100;h.injuredUntil=0;});s.event=null;
+ s.team=s.heroes.slice(0,4).map(h=>h.id); // equipe da segunda missão após a primeira já ter terminado
  s=embark(s,m);
  assert.equal(s.tavernRumor?.used,true,"Investigação não foi usada na missão correta");
 }

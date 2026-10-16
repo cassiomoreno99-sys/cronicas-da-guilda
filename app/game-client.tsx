@@ -958,6 +958,17 @@ function GuildPage({
       return <article className="guild-building-card" key={key}>
         <GuildRoomArt room={key} compact label={spec.name+": local medieval da Sede da Guilda."}/><div><h3>{spec.name} <small>Nv. {lvl}/10</small></h3><p>{spec.description}</p><small className="guild-building-effect">{effects[key]}</small>{lvl<max&&<small className="guild-building-next">Próximo nível: {nextEffects[key]}</small>}</div><div><span><GameSymbol kind="gold"/> {cost}</span><button className="action-button green" disabled={busy || lvl >= max || state.gold < cost} onClick={() => act({type:"upgrade-hq",building:key})}>{lvl >= max ? "Máximo" : "Melhorar"}</button></div></article>;
     })}</div>
+    {!!state.pendingRewards?.length&&<section className="guild-pending-rewards parchment" aria-label="Recompensas da temporada aguardando espaço no baú">
+      <h3><GameSymbol kind="reward"/> Recompensas pendentes · {state.pendingRewards.length}</h3>
+      <p>Seu baú está sem espaço para todos os prêmios. Eles ficam guardados e não serão perdidos.</p>
+      <small>{state.pendingRewards.slice(0,5).map(item=>ITEMS[item.key]?.name||item.key).join(" · ")}
+        {state.pendingRewards.length>5?" · e outras "+(state.pendingRewards.length-5):""}</small>
+      <button type="button" className="action-button green"
+        disabled={busy||storageUsed(state.chest)>=chestCapacity(state)}
+        onClick={()=>act({type:"claim-pending-rewards"})}>
+        Receber prêmios · {Math.min(state.pendingRewards.length,Math.max(0,chestCapacity(state)-storageUsed(state.chest)))} espaço(s)
+      </button>
+    </section>}
     <section className="parchment catalog-forge"><h3><GameSymbol kind="forge" size={18}/> Forja · Nv. {state.hq.forge}</h3>
     <p className="forge-capacity">Capacidade do Baú: <strong>{storageUsed(state.chest)}/{chestCapacity(state)}</strong> · Forja Nv. {state.hq.forge}/10</p>
     {state.seasonForgePlans?.filter(plan=>!plan.crafted).map(plan=><div className="seasonal-forge-order parchment" key={plan.season}>

@@ -2,7 +2,8 @@ import { CATALOG_BY_ID, CATALOG_ITEMS, RECIPE_BY_ID, testShop, equippedPosition,
 import { heroRace, type Campaign,type Action,type HeroClass,type Mission } from "./game.ts";
 import { chestCapacity, storageUsed } from "./storage.ts";
 type AddEntry=(s:Campaign,title:string,delta:number)=>void;
-function ensure(v:unknown,message:string):asserts v {if(!v)throw Error(message);}
+export class CatalogRuleError extends Error {}
+function ensure(v:unknown,message:string):asserts v {if(!v)throw new CatalogRuleError(message);}
 function own(s:Campaign,key:string){return s.chest.filter(i=>i.key===key&&!i.equippedTo).length;}
 const NAMES:Record<string,HeroClass>={"Guerreiro":"warrior","Cavaleiro":"paladin","Arqueiro":"ranger","Assassino":"rogue","Mago":"mage","Sacerdote":"healer","Pierrô":"bard"};
 export function addCatalogItem(s:Campaign,key:string){ensure(CATALOG_BY_ID[key],"Item não cadastrado.");ensure(storageUsed(s.chest)<chestCapacity(s),"Baú cheio. Melhore o Forja da Guilda.");s.chest.push({id:"item-"+(++s.itemSequence),key});}

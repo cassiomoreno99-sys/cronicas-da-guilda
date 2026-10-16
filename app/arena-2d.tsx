@@ -67,6 +67,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const heroData=state.heroes.find(h=>h.id===hero?.id);
  const abilities=heroData?availableAbilities(heroData):[];
  const queued=battle.combat?.pendingAbilities?.some(p=>p.heroId===hero?.id);
+ const focus=active?enemies.find(f=>f.id===battle.combat?.focusTargetId&&f.hp>0):undefined;
+ const autoSkills=battle.combat?.autoAbilities!==false;
+ const upcoming=battle.combat?.liveOrder?.slice(battle.combat.liveCursor||0).map(id=>all.find(f=>f.id===id)).filter((f):f is BattleFighter=>!!f&&f.hp>0)||[];
  const log=battle.log.slice(-3).reverse();
  const evt=recentHit(battle.log);
  const evtIndex=evt?battle.log.lastIndexOf(evt):-1;
@@ -84,7 +87,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const image=combatArt(f,f.side==="hero"?state.heroes.find(h=>h.id===f.id):undefined);
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
-    style={style} data-dead={f.hp<=0} data-selected={selected} data-full-art={image.full}
+    style={style} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" key={acting?evtKey:f.id} data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"}>
@@ -105,6 +108,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
      <div className="guild2d-meter"><span style={{width:hpWidth(f.hp,f.maxHp)}}/></div>
      <small>{Math.max(0,f.hp)} / {f.maxHp} PV</small>
      {queuedUnit(f.id)&&f.side==="hero"&&<em>HABILIDADE</em>}
+      {focus?.id===f.id&&<em>FOCO</em>}
+      {!!f.statuses?.length&&<span className="guild2d-effects">{f.statuses.slice(0,3).map((status,i)=>
+        <abbr key={status.kind+"-"+i} title={status.kind+" · "+status.rounds+" turno(s)"}>{status.kind==="shield"?"🛡️":status.kind==="poison"?"☠️":status.kind==="regen"?"✚":status.kind==="stun"?"✦":"●"}{status.rounds}</abbr>)}</span>
   </div>;
  }
  function queueAbility(ability:ReturnType<typeof availableAbilities>[number]){
@@ -126,7 +132,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <div className="guild2d-hud-layer">{heroes.map(hud)}{enemies.map(hud)}</div>
    <div className="guild2d-ground"/>
    {!active&&<div className="guild2d-result"><strong>{battle.won?"🏆 VITÓRIA":battle.status==="retreated"?"EQUIPE RETIRADA":"☠️ DERROTA"}</strong></div>}
-   <div className="guild2d-help">Toque em um herói e em um inimigo para selecionar</div>
+   <div className="guild2d-help">Toque num inimigo para selecionar. Concentre ataques para fixar o alvo.</div>
   </div>
   <div className="guild2d-chosen"><span>🛡️ {hero?.name||"Sem heróis vivos"}</span><span>⚔️</span><span>🐺 {enemy?.name||"Sem inimigos vivos"}</span></div>
   {!active&&<section className="guild2d-rewards" aria-label="Resultado e recompensas">
@@ -134,17 +140,29 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     <span>Ouro: {battle.reward||0} · Experiência: {battle.xp||0}</span>
     {!!battle.loot?.length&&<p>Itens encontrados: {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</p>}
   </section>}
-  <p className="guild2d-target-tip">O inimigo selecionado é usado nas habilidades direcionadas. O ataque comum obedece à ordem de iniciativa e à escolha automática do motor, não ao alvo tocado.</p>
+  <div className="guild2d-command-center" aria-label="Comandos táticos do combate">
+    <div className="guild2d-turn-info"><strong>{active?"Próxima ação: "+(upcoming[0]?.name||"nova rodada"):"Batalha encerrada"}</strong>
+      <small>{active?"Iniciativa: "+(upcoming.length?upcoming.slice(0,4).map(f=>f.name.split(" ")[0]).join(" → "):"recalculando"):"Resultado salvo."}</small></div>
+    <div className="guild2d-focus-controls"><span>Alvo prioritário: <strong>{focus?.name||"Livre"}</strong></span>
+      <button type="button" disabled={!active||busy||!enemy||focus?.id===enemy.id} onClick={()=>enemy&&act({type:"battle-focus",expeditionId:expedition.id,targetId:enemy.id})}>Concentrar ataques</button>
+      <button type="button" disabled={!active||busy||!focus} onClick={()=>act({type:"battle-focus",expeditionId:expedition.id})}>Liberar foco</button></div>
+    <div className="guild2d-auto-controls"><button type="button" disabled={!active||busy} data-active={autoSkills}
+      onClick={()=>act({type:"battle-auto-abilities",expeditionId:expedition.id,enabled:!autoSkills})}>Habilidades automáticas: {autoSkills?"Ligadas":"Desligadas"}</button>
+      <small>{autoSkills?"Heróis usam habilidades disponíveis sem ordem manual.":"Heróis só usam habilidades quando você preparar uma ordem."}</small></div>
+   </div>
+   <p className="guild2d-target-tip">O foco direciona golpes comuns e habilidades automáticas contra um inimigo vivo; curas e habilidades manuais respeitam seus alvos.</p>
   <div className="guild2d-log" aria-live="polite"><b>CRÔNICA · {active?"COMBATE REAL":"RESULTADO"}</b>
    {log.length?log.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}>{l.text}</p>):<p>Os combatentes tomam suas posições.</p>}
   </div>
   <div className="guild2d-actions">
-   <button type="button" className="guild2d-attack" disabled={!active||busy} onClick={()=>{setTip("Avançou a próxima ação da ordem de iniciativa.");act({type:"battle-round",expeditionId:expedition.id});}}><Swords size={19}/> Atacar <small>Ator e alvo automáticos</small></button>
-   <button type="button" className="guild2d-skill" disabled={!active||busy||!hero||!!queued} onClick={()=>{setOpenSkill(v=>!v);setTip("");}}><Sparkles size={19}/> Habilidade <small>{queued?"Preparada":"Escolher"}</small></button>
-   <button type="button" className="guild2d-defend" disabled={!active||busy} onClick={()=>{setTip("Tática defensiva ativada para a equipe.");act({type:"battle-tactic",tactic:"defensive",expeditionId:expedition.id});}}><Shield size={19}/> Defender <small>Tática defensiva</small></button>
+   <button type="button" className="guild2d-attack" disabled={!active||busy} onClick={()=>{setTip("Avançou a próxima ação da ordem de iniciativa.");act({type:"battle-round",expeditionId:expedition.id});}}><Swords size={19}/> Próxima ação <small>{focus?"Alvo focado":"Alvo livre"}</small></button>
+   <button type="button" className="guild2d-skill" disabled={!active||busy||!hero} onClick={()=>{setOpenSkill(v=>!v);setTip("");}}><Sparkles size={19}/> Habilidade <small>{queued?"Preparada":"Escolher"}</small></button>
+   <button type="button" className="guild2d-defend" disabled={!active||busy} onClick={()=>{setTip("Tática defensiva ativada para a equipe.");act({type:"battle-tactic",tactic:"defensive",expeditionId:expedition.id});}}><Shield size={19}/> Defender <small>{TACTICS[battle.combat?.tactic||expedition.tactic].name}</small></button>
    <button type="button" className="guild2d-retreat" disabled={!active||busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}><ArrowLeft size={19}/> Retirar equipe <small>Encerrar missão</small></button>
   </div>
-  {openSkill&&active&&<div className="guild2d-skills"><b>Habilidades de {hero?.name}</b><p>Toque em um personagem para mudar quem usa a habilidade. Selecione abaixo quem recebe curas ou escudos. Inimigos tocados recebem golpes direcionados.</p>
+  {openSkill&&active&&<div className="guild2d-skills"><b>Habilidades de {hero?.name}</b>
+    {queued&&hero&&<button type="button" className="guild2d-cancel-order" disabled={busy}
+      onClick={()=>{act({type:"battle-cancel-ability",expeditionId:expedition.id,heroId:hero.id});setTip("");}}>Cancelar habilidade preparada</button><p>Toque em um personagem para mudar quem usa a habilidade. Selecione abaixo quem recebe curas ou escudos. Inimigos tocados recebem golpes direcionados.</p>
    <label className="guild2d-ally-selector">Alvo aliado para cura ou proteção
     <select value={allyTarget?.id||""} onChange={event=>setAllyTargetId(event.target.value)} disabled={busy}>
      {heroes.filter(f=>f.hp>0).map(f=><option key={f.id} value={f.id}>{f.name} · {f.hp}/{f.maxHp} PV</option>)}
@@ -162,7 +180,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   </div>}
   <div className="guild2d-options">
    <button type="button" disabled={!active||busy} onClick={()=>{setTip("Tática agressiva ativada.");act({type:"battle-tactic",tactic:"aggressive",expeditionId:expedition.id});}}><Zap size={15}/> Agressivo</button>
-   <button type="button" disabled={!active||busy} onClick={()=>{setTip("Tática equilibrada ativada.");act({type:"battle-tactic",tactic:"balanced",expeditionId:expedition.id});}}>Tática: {TACTICS[expedition.tactic].name}</button>
+   <button type="button" disabled={!active||busy} onClick={()=>{setTip("Tática equilibrada ativada.");act({type:"battle-tactic",tactic:"balanced",expeditionId:expedition.id});}}>Equilibrada {battle.combat?.tactic==="balanced"?"✓":""}</button>
    <button type="button" disabled={!active||busy} onClick={()=>act({type:"battle-auto",expeditionId:expedition.id})}><ChevronsRight size={15}/> Pular resultado</button>
   </div>
   <div className="guild2d-nav"><button type="button" onClick={returnToTeam}>← Seleção de heróis</button>{!active&&<button type="button" onClick={close}>Voltar à guilda</button>}</div>

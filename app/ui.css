@@ -2848,3 +2848,38 @@ img.game-symbol.game-coin{
 .league-close-ranking>div[data-player="true"]{background:#edcf87;font-weight:800}
 @media(max-width:680px){.league-fase2-grid{grid-template-columns:minmax(0,1fr)}.league-fase2-brief{grid-template-columns:minmax(0,1fr)}.league-fase2-brief button{width:100%}.league-team-save{flex-direction:column;align-items:stretch}.league-team-save .action-button{width:100%}}
 @media(max-width:390px){.league-fixture,.cup-stage{font-size:10px;gap:5px}.cup-stage{grid-template-columns:78px minmax(0,1fr) auto}.league-fase2-grid>section{padding:8px}}
+
+/* Auditoria Fases 4–9: feedback de decisões, progressão e navegação móvel. */
+.inventory-pagination{display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 9px;margin:7px 0 10px;background:rgba(77,52,31,.13);border:1px solid #aa936d;border-radius:6px}
+.inventory-pagination button{min-height:44px;min-width:90px;padding:7px 12px;border:1px solid #9b7542;border-radius:6px;background:#ead3a0;color:#48321c;font-weight:800;cursor:pointer}
+.inventory-pagination button:disabled{opacity:.5;cursor:not-allowed}
+.inventory-pagination strong{font:700 13px/1.4 system-ui;color:#56391d;text-align:center}
+.guild-building-next{display:block!important;font-weight:700!important;color:#285b45!important;margin-top:5px!important;line-height:1.4!important}
+.world-summary{display:grid;gap:5px;margin:7px 0 12px;padding:10px;border:1px solid #ae9160;border-radius:6px;background:rgba(246,224,165,.28)}
+.world-summary strong{font:700 15px Georgia;color:#633720}
+.world-summary small,.world-summary span{font:12px/1.5 system-ui;overflow-wrap:anywhere}
+.guild-strategy{margin:12px 0;padding:12px;border:1px solid #ac8a52}
+.guild-strategy h3{font:700 18px Georgia;color:#673921;margin:0 0 12px}
+.guild-strategy-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:8px}
+.guild-strategy-grid span{display:grid;gap:4px;min-width:0;padding:10px 9px;border:1px solid #b99a67;border-radius:5px;font:12px/1.4 system-ui}
+.guild-strategy-grid strong{font-size:13px;overflow-wrap:anywhere;color:#553a1d}
+.guild-strategy>small{font:11px/1.5 system-ui}
+.guild-budget-warning{padding:8px 10px;border-left:3px solid #a04c29;font-weight:750;color:#75381d}
+.boot-recovery{display:grid;gap:12px;max-width:430px;margin:16px auto;padding:16px;background:#f2dfb8;border:1px solid #ba9561;border-radius:8px;color:#48311f}
+.boot-recovery button,.boot-recovery input{min-height:44px;max-width:100%}
+.boot-recovery label{display:grid;gap:6px;font-weight:750;font-size:13px}
+.boot-recovery small{line-height:1.5}
+@media(max-width:750px){
+ .guild-strategy-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .guild-building-card,.inventory-layout,.guild-mini,.world-list,.settings-panel,.guild-settings-controls{max-width:100%;min-width:0}
+ .world-list button{min-height:44px}
+ .inventory-pagination{gap:6px}
+ .inventory-pagination button{flex:1;min-width:84px}
+ .inventory-pagination strong{flex:1 1 100%;order:-1}
+}
+@media(max-width:380px){
+ .guild-strategy-grid{grid-template-columns:minmax(0,1fr)}
+ .guild-strategy{padding:9px}
+ .inventory-pagination button{font-size:12px}
+ .world-summary{padding:8px}
+}

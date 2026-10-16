@@ -952,7 +952,9 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   if (s.event?.kind === "map" || s.event?.kind === "caravan") s.event = villageEvent(s.event.id);
   if (s.lastBattle?.combat) {
     const c = s.lastBattle.combat;
-    c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.supremeUsed ??= {}; c.revivedIds ??= []; c.damageThis ??= {}; c.damagePrevious ??= {}; c.formation ??= normalizedFormation(s); c.autoAbilities = true; c.consumablesUsed ??= c.potionsUsed || 0;
+    c.pendingAbilities ??= []; c.abilityCooldowns ??= {}; c.supremeUsed ??= {}; c.revivedIds ??= []; c.damageThis ??= {}; c.damagePrevious ??= {}; c.formation ??= normalizedFormation(s); c.autoAbilities ??= true;
+     if(c.focusTargetId&&!c.fighters.some(f=>f.side==="enemy"&&f.id===c.focusTargetId&&f.hp>0))delete c.focusTargetId;
+     c.consumablesUsed ??= c.potionsUsed || 0;
     delete c.pendingPotion; delete c.pendingConsumable;
     for (const f of c.fighters) { f.statuses ??= []; if (f.side === "hero") f.position ??= c.formation[f.id] || "back"; }
     if (s.lastBattle.fighters) for (const f of s.lastBattle.fighters) if (f.side === "hero") f.position ??= c.formation[f.id] || "back";

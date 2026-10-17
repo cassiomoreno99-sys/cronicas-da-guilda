@@ -18,6 +18,8 @@ jobs:
           node-version: "22"
       - name: Testar sete conjuntos, atributos e batalhas 2D
         run: node --experimental-strip-types scripts/test-conjuntos-estrategicos.ts
+      - name: Comparar cinco efeitos especiais em 75 turnos reais
+        run: node --experimental-strip-types scripts/test-conjuntos-efeitos-combate.ts
       - name: Executar build e regressão completa
         run: |
           npm install --no-audit --no-fund --package-lock=false

@@ -138,11 +138,37 @@ export function awardCatalogLoot(s:Campaign,m:Mission):string[]{
  if(gated.length&&storageUsed(s.chest)<chestCapacity(s)){const d=pick(gated);add(s,d.id);won.push(d.id);}
  return won;
 }
+
+/** Fonte única para exibição e execução dos conjuntos. */
+export function equipmentSetProgress(heroClass:HeroClass,equippedKeys:string[]){
+ const equipped=new Set(equippedKeys);
+ return Object.entries(SETS).filter(([,def])=>NAMES[def.classe]===heroClass)
+  .map(([name,def])=>{
+   const pieces=def.items.map(number=>{
+     const key="CG-"+String(number).padStart(3,"0");
+     return {key,name:CATALOG_BY_ID[key]?.nome||key,owned:equipped.has(key)};
+   });
+   return {name,heroClass,count:pieces.filter(p=>p.owned).length,pieces,
+     bonus2:def.bonus2,bonus3:def.bonus3};
+  });
+}
+/** Efeitos especiais 3/3 aplicados no motor 2D. */
+export function equipmentSetCombatEffects(heroClass:HeroClass,equippedKeys:string[]){
+ const complete=new Set(equipmentSetProgress(heroClass,equippedKeys)
+   .filter(set=>set.count===3).map(set=>set.name));
+ return {
+  physicalReduction:complete.has("Bastião do Leão")?.05:0,
+  incomingHealing:complete.has("Juramento Solar")?.06:0,
+  rangedDamage:complete.has("Rastro do Falcão")?.06:0,
+  bleedPoisonDamage:complete.has("Véu das Sete Lâminas")?.06:0,
+  skillDamage:complete.has("Fortuna do Espetáculo")?.03:0
+ };
+}
 export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[]){
  const n={attack:0,defense:0,magic:0,hp:0,speed:0,critical:0,healing:0,luck:0};
  for(const [name,def] of Object.entries(SETS)){
   if(NAMES[def.classe]!==heroClass)continue;
-  const count=equippedKeys.filter(key=>def.items.includes(Number(key.slice(3)))).length;
+  const count=def.items.filter(number=>equippedKeys.includes("CG-"+String(number).padStart(3,"0"))).length;
   if(count>=2){
    if(name==="Bastião do Leão"){n.defense+=5;n.hp+=20;}
    if(name==="Juramento Solar"){n.defense+=6;n.magic+=12;}

@@ -1,7 +1,7 @@
 import { TEST_ITEMS, TEST_RECIPES, CATALOG_ITEMS, CATALOG_BY_ID } from "./catalog-test.ts";
 import { REGIONAL_CHAPTERS } from "./regional-missions.ts";
 import { performSupreme, type SupremeUnit } from "./supreme-abilities.ts";
-import { handleCatalogAction, awardCatalogLoot, setBonuses, CatalogRuleError } from "./catalog-runtime.ts";
+import { handleCatalogAction, awardCatalogLoot, setBonuses, equipmentSetCombatEffects, CatalogRuleError } from "./catalog-runtime.ts";
 import { chestCapacity, storageUsed } from "./storage.ts";
 import { familiarityBonus, registerTeamExpedition } from "./team-familiarity.ts";
 import { EXCLUSIVE_BY_ID, GUILD_EXCLUSIVE_GEAR, seasonalMaterialBundle } from "./exclusive-gear.ts";
@@ -36,7 +36,7 @@ export type StatusKind = "bleed" | "poison" | "stun" | "shield" | "regen" | "tau
 export type CombatStatus = { kind: StatusKind; rounds: number; amount?: number; sourceId?: string };
 export type BattleLog = { round: number; text: string; kind: "hit" | "heal" | "critical" | "fall" | "order" | "ability" | "status"; actorId?: string; targetId?: string; targetHp?: number; amount?: number; objectiveHp?: number };
 export type BattleFighter = { id: string; name: string; side: "hero" | "enemy"; class?: HeroClass; hp: number; maxHp: number; position?: FormationLine; statuses?: CombatStatus[] };
-type Combatant = BattleFighter & { attack: number; defense: number; magic: number; speed: number; critical: number; energy: number; healing: number; guarding: number; statuses: CombatStatus[] };
+type Combatant = BattleFighter & { attack: number; defense: number; magic: number; speed: number; critical: number; energy: number; healing: number; guarding: number; statuses: CombatStatus[]; setEffects?:ReturnType<typeof equipmentSetCombatEffects> };
 export type AbilityTarget = "self" | "ally" | "enemy" | "all-allies" | "all-enemies";
 export type AbilityEffect = "challenge" | "fireball" | "restore" | "venom" | "pinning" | "aegis" | "chi" | "drain" | "renew" | "anthem" | "execution" | "storm" | "lifebloom" | "sanctuary" | "fortress" | "control" | "supreme";
 export type AbilitySpec = { id: string; name: string; description: string; target: AbilityTarget; cooldown: number; effect: AbilityEffect; evolved?: boolean };
@@ -1394,7 +1394,9 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
     const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion * (1+familiarity.defense) * (prepared?1+TAVERN_RUMOR_DEFENSE_BONUS:1), attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage) * (prepared?1+TAVERN_RUMOR_ATTACK_BONUS:1), magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage) * (prepared?1+TAVERN_RUMOR_ATTACK_BONUS:1), speed: base.speed + (position === "back" ? 2 : 0), critical: Math.min(.48,base.critical+familiarity.critical),healing:base.healing*(1+familiarity.healing) };
     delete h.nextMissionBoost;
     const hp = Math.round((80 + n.defense * 3 + h.level * 15 + n.hp)*(1+familiarity.hp));
-    return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy, guarding: h.talent?.path === "defense" && ["warrior", "paladin", "monk"].includes(h.class) ? h.talent.rank : 0 };
+    return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy,
+      setEffects:equipmentSetCombatEffects(h.class,s.chest.filter(item=>item.equippedTo===h.id).map(item=>item.key)),
+      guarding: h.talent?.path === "defense" && ["warrior", "paladin", "monk"].includes(h.class) ? h.talent.rank : 0 };
   });
   for (let i = 0; i < m.count; i++) {
     const boss = m.kind === "boss" && i === 0, hp = Math.round((65 + m.rank * 48) * scaling * (boss ? 2.25 : 1.24));
@@ -1463,6 +1465,17 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
   const hit = (target: Combatant, amount: number, text: string, actorId?: string, critical = false, bypassShield = false, kind: BattleLog["kind"] = "hit") => {
     if (target.statuses.some(x => x.kind === "vulnerable")) amount *= 1.15;
     const attacker=actorId?c.fighters.find(f=>f.id===actorId):undefined;
+    // Os efeitos 3/3 do conjunto foram congelados ao iniciar a expedição.
+    // A redução física só protege contra golpes físicos, jamais veneno,
+    // sangramento ou magia. Escudos e defesas existentes continuam funcionando.
+    if(kind==="hit"&&target.side==="hero"&&(!attacker||attacker.side==="enemy"))
+      amount*=1-(target.setEffects?.physicalReduction||0);
+    if(attacker?.side==="hero"&&target.side==="enemy"){
+      if(attacker.class==="ranger"&&(kind==="hit"||kind==="ability"))amount*=1+(attacker.setEffects?.rangedDamage||0);
+      if(attacker.class==="rogue"&&(kind==="hit"||kind==="ability")&&target.statuses.some(st=>st.kind==="poison"||st.kind==="bleed"))
+        amount*=1+(attacker.setEffects?.bleedPoisonDamage||0);
+      if(kind==="ability")amount*=1+(attacker.setEffects?.skillDamage||0);
+    }
     const evasion=target.statuses.find(x=>x.kind==="evasion");
     if(evasion&&attacker&&attacker.side!==target.side&&random(s)<Math.min(.25,evasion.amount||0)){
       log.push({round,text:target.name+" evitou o ataque sob cobertura de fumaça.",kind:"status",targetId:target.id,targetHp:target.hp});
@@ -1500,7 +1513,8 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     return dealt;
   };
   const heal = (target: Combatant, amount: number, text: string, actorId?: string, kind: BattleLog["kind"] = "heal") => {
-    amount = Math.max(0, Math.min(target.maxHp - target.hp, Math.round(amount))); if (!amount) return 0; target.hp += amount;
+    amount = Math.max(0, Math.min(target.maxHp - target.hp,
+      Math.round(amount*(1+(target.setEffects?.incomingHealing||0))))); if (!amount) return 0; target.hp += amount;
     log.push({ round, text: text + amount + " PV.", kind, actorId, targetId: target.id, targetHp: target.hp, amount }); return amount;
   };
   if (newRound && c.lastTactic !== c.tactic) { log.push({ round, text: "Nova ordem: tática " + TACTICS[c.tactic].name.toLowerCase() + ".", kind: "order" }); c.lastTactic = c.tactic; }
@@ -1633,7 +1647,7 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     }
     const boss = enemies().find(f => f.id === "enemy-0");
     if (m.kind === "boss" && boss && round % 3 === 0) {
-      if (m.boss === 0) for (const target of heroes()) hit(target, Math.max(5, boss.attack * .45 * t.incoming - target.defense * .1), "O Vigia libera uma onda sombria em " + target.name + ": ", boss.id);
+      if (m.boss === 0) for (const target of heroes()) hit(target, Math.max(5, boss.attack * .45 * t.incoming - target.defense * .1), "O Vigia libera uma onda sombria em " + target.name + ": ", boss.id,false,false,"ability");
       if (m.boss === 1) heal(boss, boss.maxHp * .1, "A Matriarca drena a névoa e recupera ", boss.id);
     }
   }

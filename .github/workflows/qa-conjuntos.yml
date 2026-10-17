@@ -1,0 +1,52 @@
+name: Conjuntos - Combate, Atributos e Mobile
+on:
+  push:
+    branches: [sistema-conjuntos-equipamentos-20261016]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Testar sete conjuntos, atributos e batalhas 2D
+        run: node --experimental-strip-types scripts/test-conjuntos-estrategicos.ts
+      - name: Comparar cinco efeitos especiais em 75 turnos reais
+        run: node --experimental-strip-types scripts/test-conjuntos-efeitos-combate.ts
+      - name: Executar build e regressão completa
+        run: |
+          npm install --no-audit --no-fund --package-lock=false
+          npm run build
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Preparar compilação e navegador
+        run: |
+          npm install --no-audit --no-fund --package-lock=false
+          npm install --no-save --no-audit --no-fund --package-lock=false playwright@1.56.1
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROMIUM_EXECUTABLE_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
+      - name: Compilar interface
+        run: npm run build
+      - name: Testar cores e conjuntos em 320, 390 e 1024 pixels
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort &
+          PID=$!
+          trap "kill $PID 2>/dev/null || true" EXIT
+          for i in $(seq 1 40); do if curl -fsS http://127.0.0.1:4173 -o /dev/null; then break; fi; sleep 1; done
+          node scripts/test-conjuntos-estrategicos-browser.mjs

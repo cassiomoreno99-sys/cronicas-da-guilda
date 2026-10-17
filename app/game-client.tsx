@@ -36,8 +36,8 @@ import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
-import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, equippedPosition } from "@/lib/catalog-test";
-import { missionLootPreview } from "@/lib/catalog-runtime";
+import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, SETS, equippedPosition } from "@/lib/catalog-test";
+import { missionLootPreview, equipmentSetProgress } from "@/lib/catalog-runtime";
 
 type Save = Pick<LocalSave, "state" | "revision">;
 type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
@@ -640,6 +640,74 @@ const EQUIPMENT_ICONS = {
   cloak:Flag, ring1:Gem, ring2:Gem, amulet:Sparkles,
 } satisfies Record<EquipmentSlotId, typeof Swords>;
 
+
+/** Cada atributo mantém a mesma cor em qualquer conjunto e em qualquer classe.
+ * A prévia permanece neutra; apenas efeitos realmente ativos ficam coloridos. */
+const SET_ATTRIBUTE_PATTERN=/(redução de dano físico|dano contra alvos sob veneno\/sangramento|dano à distância|dano de habilidade|cura recebida|cura total|p\.p\.\s*crítico|sangramento|crítico|defesa|ataque|magia|velocidade|sorte|veneno|cura|DEF|ATQ|MAG|VEL|PV|SORTE|dano)/gi;
+function setAttributeType(word:string):string {
+ const value=word.toLowerCase();
+ if(/crítico|sangramento/.test(value))return "critical";
+ if(/defesa|redução|\bdef\b/.test(value))return "defense";
+ if(/magia|\bmag\b|veneno/.test(value))return "magic";
+ if(/\bpv\b/.test(value))return "life";
+ if(/velocidade|\bvel\b/.test(value))return "speed";
+ if(/cura/.test(value))return "healing";
+ if(/sorte/.test(value))return "luck";
+ return "attack";
+}
+function SetAttributeText({value,active=false}:{value:string;active?:boolean}){
+ const matched=[...value.matchAll(SET_ATTRIBUTE_PATTERN)];
+ const nodes:ReactNode[]=[];let cursor=0;
+ matched.forEach((match,i)=>{
+  const pos=match.index??0;
+  if(pos>cursor)nodes.push(value.slice(cursor,pos));
+  nodes.push(<span key={i} className="set-attribute" data-stat={setAttributeType(match[0])} data-active={active}>{match[0]}</span>);
+  cursor=pos+match[0].length;
+ });
+ if(cursor<value.length)nodes.push(value.slice(cursor));
+ return <>{nodes}</>;
+}
+
+function SetItemInfo({itemKey}:{itemKey:string}){
+ const name=CATALOG_BY_ID[itemKey]?.conjunto,def=name?SETS[name]:undefined;
+ return name&&def?<div className="set-item-info">
+   <strong><GameSymbol kind="reward"/> Conjunto: {name}</strong>
+   <small>2 peças: <SetAttributeText value={def.bonus2}/></small><small>3 peças: <SetAttributeText value={def.bonus3}/></small>
+ </div>:null;
+}
+function EquipmentSetPanel({state,hero,selectSlot}:{state:Campaign;hero:Hero;selectSlot:(id:EquipmentSlotId)=>void}){
+ const keys=state.chest.filter(i=>i.equippedTo===hero.id).map(i=>i.key);
+ const sets=equipmentSetProgress(hero.class,keys);
+ return <section className="equipment-sets parchment" aria-label="Combinações de conjuntos do personagem">
+  <h3><GameSymbol kind="reward"/> Conjuntos e combinações</h3>
+  <p>Junte peças do mesmo conjunto <strong>neste herói</strong>. Com 2 peças, ativa o bônus inicial. Com 3 peças, ganha o bônus adicional e o efeito especial em batalha.</p>
+  {!sets.length&&<p>Esta classe ainda não tem conjunto de três peças no catálogo. Seus equipamentos continuam com os bônus individuais.</p>}
+  {sets.map(set=><article key={set.name} className="equipment-set-card" data-tier={set.count>=3?"complete":set.count>=2?"active":"inactive"}>
+    <div className="equipment-set-heading"><strong>{set.name}</strong><b>{set.count}/3 peças</b></div>
+    <div className="equipment-set-meter" role="progressbar" aria-label={set.name} aria-valuemin={0} aria-valuemax={3} aria-valuenow={set.count}>
+     {[0,1,2].map(i=><span key={i} data-active={i<set.count}/>)}
+    </div>
+    <div className="equipment-set-effects">
+      <p data-active={set.count>=2}><b>{set.count>=2?"✓":"○"} 2 peças:</b> <SetAttributeText value={set.bonus2} active={set.count>=2}/></p>
+      <p data-active={set.count>=3}><b>{set.count>=3?"✓":"○"} 3 peças:</b> <SetAttributeText value={set.bonus3} active={set.count>=3}/></p>
+    </div>
+    <div className="equipment-set-pieces">{set.pieces.map(piece=>{
+      const item=CATALOG_BY_ID[piece.key],inChest=state.chest.some(i=>i.key===piece.key&&!i.equippedTo);
+      const inOther=state.chest.some(i=>i.key===piece.key&&!!i.equippedTo&&i.equippedTo!==hero.id);
+      const slot=equippedPosition(piece.key),target=(slot==="ring"?"ring1":slot) as EquipmentSlotId;
+      return <div key={piece.key} className="equipment-set-piece" data-equipped={piece.owned}>
+       <span className="equipment-set-piece-art"><ItemArt itemKey={piece.key}/></span>
+       <div><strong>{piece.name}</strong>
+        <small>{piece.owned?"✓ Equipada":inChest?"Disponível no baú":inOther?"Vestida por outro herói":"Não adquirida"} · Nv. {item?.nivel}</small>
+        {!piece.owned&&!inChest&&!inOther&&<small>Obtenção: {item?.obtencao}</small>}
+       </div>
+       {!piece.owned&&slot&&<button type="button" className="equipment-set-go" onClick={()=>selectSlot(target)}>Ver espaço</button>}
+      </div>;
+    })}</div>
+   </article>)}
+ </section>;
+}
+
 function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
   state: Campaign; selectedId: string; selectHero: (id: string) => void; back: () => void;
   act:(a:Action)=>void;busy:boolean;
@@ -677,6 +745,7 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
     </section>
 
     <p className="equipment-intro">Equipamentos vestidos ficam nos espaços abaixo e não ocupam posições do baú. Desequipe para devolver o item ao armazenamento.</p>
+    <EquipmentSetPanel state={state} hero={hero} selectSlot={setSelectedSlot}/>
     <div className="equipment-slot-grid" role="group" aria-label="12 espaços de equipamento">
       {EQUIPMENT_SLOTS.map((slot, i) => {
         const Icon = EQUIPMENT_ICONS[slot.id];
@@ -692,9 +761,9 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
     <section className="equipment-slot-detail parchment" aria-live="polite">
       <span className="equipment-detail-label">{activeSlot.group}</span>
       <h3>{activeSlot.label}</h3><p>{activeSlot.description}</p>
-      {current?<div><strong>{ITEMS[current.key]?.name}</strong><p>{ITEMS[current.key]?.description}</p><button className="action-button blue" disabled={busy} onClick={()=>act({type:"unequip",itemId:current.id})}>Desequipar</button></div>:
+      {current?<div><strong>{ITEMS[current.key]?.name}</strong><p>{ITEMS[current.key]?.description}</p><SetItemInfo itemKey={current.key}/><button className="action-button blue" disabled={busy} onClick={()=>act({type:"unequip",itemId:current.id})}>Desequipar</button></div>:
       <div><p>Sem item equipado neste espaço.</p><div className="catalog-equippable">
-        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}><ItemArt itemKey={i.key}/>{ITEMS[i.key]?.name}</button>)}
+        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}><ItemArt itemKey={i.key}/>{ITEMS[i.key]?.name}{ITEMS[i.key]?.set&&<small className="equipment-candidate-set"> · {ITEMS[i.key]?.set}</small>}</button>)}
       </div>{!candidates.length&&<small>Sem itens compatíveis no baú.</small>}</div>}
     </section>
     <button type="button" className="equipment-bottom-back" onClick={back}><ChevronLeft aria-hidden="true"/> Voltar à ficha do herói</button>
@@ -751,7 +820,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
           <p><b>Classes:</b> {detail.classes.join(", ")}</p>
           <p><b>Requisito:</b> Nível {detail.nivel}</p>
           <p><b>Função:</b> {detail.efeito}</p>
-          <p><b>Como obter:</b> {detail.obtencao}</p>
+          <p><b>Como obter:</b> {detail.obtencao}</p><SetItemInfo itemKey={detail.id}/>
           <p className="catalog-price"><GameSymbol kind="gold"/><b> Valor:</b> {detail.preco_compra!==null?fmt(detail.preco_compra)+" ouro de compra":"Não vendido por mercador"} · {fmt(detail.preco_venda)} de venda</p>
           <small>Disponibilidade e receitas dependem da evolução da campanha. Livros supremos exigem história pessoal e uma ativação por batalha.</small>
         </article>}
@@ -774,7 +843,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
       {selected && def ? <article className="item-detail parchment">
         <span className="rarity-label">{def.rarity.toUpperCase()}</span><h2>{def.name}</h2>
         <div className="selected-item-art"><ItemArt itemKey={selected.key} /></div>
-        <p>{def.description}</p>
+        <p>{def.description}</p><SetItemInfo itemKey={selected.key}/>
         <div className="item-stats">{([["Ataque",def.attack],["Defesa",def.defense],["Magia",def.magic],["Vida",def.hp],["Velocidade",def.speed]] as Array<[string,number|undefined]>).filter(([,v]) => v).map(([k,v]) => <span key={k}><b><GameSymbol kind={ATTRIBUTE_SYMBOLS[k]}/>{k}</b><em>+{v}</em></span>)}</div>
         {def.levelReq && <small>Nível necessário: {def.levelReq}</small>}
         {owner && <small>Equipado por {owner.name}</small>}

@@ -73,6 +73,8 @@ jobs:
         run: |
           node --experimental-strip-types scripts/test-conjuntos-estrategicos.ts
           node --experimental-strip-types scripts/test-conjuntos-efeitos-combate.ts
+      - name: Evitar W.O. permanente após transferência pelo Conselho
+        run: node --experimental-strip-types scripts/test-transferencia-escalacao.ts
       - name: Liga e contratação
         run: |
           node --experimental-strip-types scripts/test-liga-escalacao-isolada.ts

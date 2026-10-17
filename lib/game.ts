@@ -1670,6 +1670,17 @@ function releaseHero(s: Campaign, h: Hero, amount: number, rivalId?: string) {
   entry(s, "Transferência · " + h.name, amount); s.heroes = s.heroes.filter(x => x.id !== h.id); s.journeys = s.journeys.filter(j => j.heroId !== h.id); s.chest.forEach(i => { if (i.equippedTo === h.id) { delete i.equippedTo; delete i.equippedSlot; } });
   s.team = s.team.filter(id => id !== h.id); for (const x of s.heroes) if (s.team.length < 4 && !s.team.includes(x.id)) s.team.push(x.id);
   s.formation = normalizedFormation(s);
+  // O elenco da Liga/Copa é independente das expedições, mas não deve manter
+  // um personagem que já foi transferido. Mantém a ordem e a tática oficiais,
+  // preenche a vaga com um reserva legítimo e recalcula frente/retaguarda.
+  if (s.leagueTeam?.includes(h.id)) {
+    const previous = [...new Set(s.leagueTeam)];
+    s.leagueTeam = previous.filter(id => id!==h.id && s.heroes.some(candidate=>candidate.id===id)).slice(0,4);
+    for (const id of s.team) if (s.leagueTeam.length < 4 && !s.leagueTeam.includes(id)) s.leagueTeam.push(id);
+    for (const candidate of s.heroes) if (s.leagueTeam.length < 4 && !s.leagueTeam.includes(candidate.id)) s.leagueTeam.push(candidate.id);
+    s.leagueFormation = normalizedFormation({heroes:s.heroes,team:s.leagueTeam,formation:s.leagueFormation??s.formation});
+    note(s,"Escalação oficial atualizada: "+h.name+" saiu da guilda e um reserva assumiu sua vaga.");
+  }
   const target = s.rivals.find(r => r.id === rivalId) || s.rivals[Math.floor(random(s) * s.rivals.length)];
   if (target.heroes.length >= 6) target.heroes = [...target.heroes].sort((a, b) => rating(b) - rating(a)).slice(0, 5);
   target.heroes.push({ ...h, loyalty: 75 });

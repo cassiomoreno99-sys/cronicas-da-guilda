@@ -641,11 +641,38 @@ const EQUIPMENT_ICONS = {
 } satisfies Record<EquipmentSlotId, typeof Swords>;
 
 
+/** Cada atributo mantém a mesma cor em qualquer conjunto e em qualquer classe.
+ * A prévia permanece neutra; apenas efeitos realmente ativos ficam coloridos. */
+const SET_ATTRIBUTE_PATTERN=/(redução de dano físico|dano contra alvos sob veneno\/sangramento|dano à distância|dano de habilidade|cura recebida|cura total|p\.p\.\s*crítico|sangramento|crítico|defesa|ataque|magia|velocidade|sorte|veneno|cura|DEF|ATQ|MAG|VEL|PV|SORTE|dano)/gi;
+function setAttributeType(word:string):string {
+ const value=word.toLowerCase();
+ if(/crítico|sangramento/.test(value))return "critical";
+ if(/defesa|redução|\bdef\b/.test(value))return "defense";
+ if(/magia|\bmag\b|veneno/.test(value))return "magic";
+ if(/\bpv\b/.test(value))return "life";
+ if(/velocidade|\bvel\b/.test(value))return "speed";
+ if(/cura/.test(value))return "healing";
+ if(/sorte/.test(value))return "luck";
+ return "attack";
+}
+function SetAttributeText({value,active=false}:{value:string;active?:boolean}){
+ const matched=[...value.matchAll(SET_ATTRIBUTE_PATTERN)];
+ const nodes:ReactNode[]=[];let cursor=0;
+ matched.forEach((match,i)=>{
+  const pos=match.index??0;
+  if(pos>cursor)nodes.push(value.slice(cursor,pos));
+  nodes.push(<span key={i} className="set-attribute" data-stat={setAttributeType(match[0])} data-active={active}>{match[0]}</span>);
+  cursor=pos+match[0].length;
+ });
+ if(cursor<value.length)nodes.push(value.slice(cursor));
+ return <>{nodes}</>;
+}
+
 function SetItemInfo({itemKey}:{itemKey:string}){
  const name=CATALOG_BY_ID[itemKey]?.conjunto,def=name?SETS[name]:undefined;
  return name&&def?<div className="set-item-info">
    <strong><GameSymbol kind="reward"/> Conjunto: {name}</strong>
-   <small>2 peças: {def.bonus2}</small><small>3 peças: {def.bonus3}</small>
+   <small>2 peças: <SetAttributeText value={def.bonus2}/></small><small>3 peças: <SetAttributeText value={def.bonus3}/></small>
  </div>:null;
 }
 function EquipmentSetPanel({state,hero,selectSlot}:{state:Campaign;hero:Hero;selectSlot:(id:EquipmentSlotId)=>void}){
@@ -661,8 +688,8 @@ function EquipmentSetPanel({state,hero,selectSlot}:{state:Campaign;hero:Hero;sel
      {[0,1,2].map(i=><span key={i} data-active={i<set.count}/>)}
     </div>
     <div className="equipment-set-effects">
-      <p data-active={set.count>=2}><b>{set.count>=2?"✓":"○"} 2 peças:</b> {set.bonus2}</p>
-      <p data-active={set.count>=3}><b>{set.count>=3?"✓":"○"} 3 peças:</b> {set.bonus3}</p>
+      <p data-active={set.count>=2}><b>{set.count>=2?"✓":"○"} 2 peças:</b> <SetAttributeText value={set.bonus2} active={set.count>=2}/></p>
+      <p data-active={set.count>=3}><b>{set.count>=3?"✓":"○"} 3 peças:</b> <SetAttributeText value={set.bonus3} active={set.count>=3}/></p>
     </div>
     <div className="equipment-set-pieces">{set.pieces.map(piece=>{
       const item=CATALOG_BY_ID[piece.key],inChest=state.chest.some(i=>i.key===piece.key&&!i.equippedTo);

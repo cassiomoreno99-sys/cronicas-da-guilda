@@ -199,7 +199,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={style} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
-    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"} data-fighter-id={f.id}
+    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>

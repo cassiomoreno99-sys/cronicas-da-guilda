@@ -30,6 +30,8 @@ assert.match(guild,/\.building-list article\.guild-building-card img\.guild-room
 assert.match(guild,/@media \(max-width:760px\)[\s\S]*?\.building-list article\.guild-building-card/);
 assert.match(scene,/guild2d-sword-strike/,"Golpe de espada separado do retrato e com movimento até o inimigo.");
 assert.match(scene,/guild2d-cast-ring/,"Magia precisa surgir no conjurador.");
+assert.match(scene,/if\(!actor\?\.class\)return "claw"/,"Inimigo selvagem não pode usar espada humana.");
+assert.match(scene,/guild2d-claw-mark/,"Garras atingem os alvos.");
 assert.match(visuals,/guild2d-sword-travel/,"Espada percorre o trajeto real do confronto.");
 assert.match(visuals,/guild2d-cast-charge/,"Animação de conjuração.");
 assert.match(visuals,/guild2d-enemy\[data-enemy-bestiary="true"\]/,"Inimigos precisam de escala independente de heróis.");

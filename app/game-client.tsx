@@ -1096,11 +1096,13 @@ function SymbolGuide(){
 }
 
 function GuildPage({
-  state, act, busy, onExport, onImport, onRecover, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack
-}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onRecover: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void }) {
+  state, act, busy, go, onExport, onImport, onRecover, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack
+}: { state: Campaign; act: (a: Action) => void; busy: boolean; go:(screen:Screen)=>void; onExport: () => void; onImport: () => void; onRecover: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void }) {
   const buildings = Object.entries(HQ_DEFINITIONS) as Array<[HQBuilding,(typeof HQ_DEFINITIONS)[HQBuilding]]>;
   const wage=payroll(state), daysUntilWage=7-((state.day-1)%7);
   const safeTreasury=state.gold-8-wage;
+  const forecast=treasuryForecast(state),relief=emergencyContractQuote(state);
+  const challenges=seasonalChallenges(state);
   const currentRegion=WORLD_MAP[state.activeRegion-1];
   const currentContracts=missions(state);
   const regionalGuardian=seasonBoss(state);
@@ -1122,6 +1124,18 @@ function GuildPage({
         onClick={()=>{const warning=leagueLineup(state).ready?"":" ATENÇÃO: sua escalação da Liga possui menos de 3 heróis disponíveis. Você perderá por W.O. na Liga e, se houver Copa hoje, também será eliminado.";if(window.confirm("Encerrar o dia "+seasonDay(state)+"/"+SEASON_DAYS+"? Salários, liga, viagens e recuperação diária serão processados."+warning))act({type:"next-day"});}}>
         Próximo dia <ChevronRight size={18}/></button>
     </div>
+    <section className="guild-quick-actions parchment" aria-label="Acesso rápido e alertas da campanha">
+      <strong>Plano do dia · atalhos rápidos</strong>
+      <div className="guild-quick-grid">
+        <button type="button" onClick={()=>go("mission")}>Missões <ChevronRight size={15}/></button>
+        <button type="button" onClick={()=>go("league")}>Liga e reservas <ChevronRight size={15}/></button>
+        <button type="button" onClick={()=>go("equipment")}>Equipar heróis <ChevronRight size={15}/></button>
+        <button type="button" onClick={()=>go("chest")}>Inventário <ChevronRight size={15}/></button>
+      </div>
+      {!leagueLineup(state).ready&&<small className="guild-quick-alert">Atenção: menos de três heróis aptos na Liga. Prepare reservas antes de avançar.</small>}
+      {forecast.projected<0&&<small className="guild-quick-alert">Tesouro projetado negativo em {forecast.days} dias: {fmt(forecast.projected)} ouro.</small>}
+      {!!state.pendingRewards?.length&&<small className="guild-quick-alert">{state.pendingRewards.length} prêmios aguardam espaço no baú.</small>}
+    </section>
     <section className="guild-strategy parchment" aria-label="Planejamento financeiro da Guilda">
       <h3><GameSymbol kind="gold"/> Planejamento antes de encerrar o dia</h3>
       <div className="guild-strategy-grid">
@@ -1133,7 +1147,22 @@ function GuildPage({
         <span>Partida da Liga <strong>{leagueLineup(state).ready?"Escalação pronta":"Risco de W.O."}</strong></span>
       </div>
       {safeTreasury<0&&<p className="guild-budget-warning">Atenção: o tesouro não cobre simultaneamente os próximos salários e um dia de manutenção.</p>}
-      <small>Projeção de reserva, não cobrança antecipada. A folha é semanal; resultados de batalhas também alteram o tesouro.</small>
+      <small>Projeção para {forecast.days} dia(s): manutenção −{fmt(forecast.maintenance)} e salários −{fmt(forecast.wages)} = saldo estimado {fmt(forecast.projected)} ouro. Não inclui receitas futuras.</small>
+      <div className="guild-relief"><strong>Trabalho comunitário emergencial</strong>
+        <small>Apenas quando o tesouro não cobre a próxima folha e a manutenção. Uma vez por semana, sem XP.</small>
+        <button type="button" className="action-button green" disabled={busy||!relief.available}
+          onClick={()=>act({type:"emergency-contract"})}>
+           {relief.used?"Já realizado nesta semana":relief.available?"Trabalhar · +"+fmt(relief.reward)+" ouro":"Tesouro ainda cobre as despesas"}
+        </button>
+      </div>
+    </section>
+    <section className="guild-season-goals parchment" aria-label="Desafios e títulos da temporada">
+      <h3><Crown size={19}/> Desafios da temporada</h3>
+      <p>Conclua objetivos reais para conquistar prestígio, sem inflacionar o ouro.</p>
+      <div className="guild-goal-list">{challenges.map(goal=><div key={goal.title}>
+        <span>{goal.title}</span><strong>{Math.min(goal.current,goal.goal)}/{goal.goal} · +{goal.prestige} prestígio</strong>
+      </div>)}</div>
+      {!!state.seasonHonors?.length&&<small>Última honraria: temporada {state.seasonHonors[0].season} — {state.seasonHonors[0].title} (+{state.seasonHonors[0].prestige} prestígio).</small>}
     </section>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}{c.cost?` · Custo: ${fmt(c.cost)} ouro`:" · Sem custo adicional"}</small></button>)}</div></div></div>}
     <div className="hero-art-library parchment" aria-label="Biblioteca de artes dos heróis">
@@ -1370,7 +1399,7 @@ export default function Game() {
       {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} act={perform} busy={busy} />}
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
-      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onRecover={recover} onReset={() => { if (window.prompt("Para reiniciar toda a campanha, digite REINICIAR. Seu progresso será perdido.")==="REINICIAR") perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} />} 
+      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} go={go} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onRecover={recover} onReset={() => { if (window.prompt("Para reiniciar toda a campanha, digite REINICIAR. Seu progresso será perdido.")==="REINICIAR") perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} />} 
       </main>
     </div>
     <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />

@@ -765,7 +765,7 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
 
   const comparison=(item:ChestItem)=>{
     const before=heroStats(hero,state);
-    const hypothesis={...state,chest:state.chest.map(entry=>entry.id===item.id?{...entry,equippedTo:hero.id,equippedSlot:selectedSlot}:entry)};
+    const hypothesis={...state,chest:state.chest.map(entry=>entry.id===current?.id?{...entry,equippedTo:undefined,equippedSlot:undefined}:entry.id===item.id?{...entry,equippedTo:hero.id,equippedSlot:selectedSlot}:entry)};
     const after=heroStats(hero,hypothesis);
     const deltas=[["ATQ",Math.round(after.attack-before.attack)],["DEF",Math.round(after.defense-before.defense)],
       ["MAG",Math.round(after.magic-before.magic)],["PV",Math.round(after.hp-before.hp)],
@@ -814,10 +814,13 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
     <section className="equipment-slot-detail parchment" aria-live="polite">
       <span className="equipment-detail-label">{activeSlot.group}</span>
       <h3>{activeSlot.label}</h3><p>{activeSlot.description}</p>
-      {current?<div><strong>{ITEMS[current.key]?.name}</strong><p>{ITEMS[current.key]?.description}</p><SetItemInfo itemKey={current.key}/><button className="action-button blue" disabled={busy} onClick={()=>act({type:"unequip",itemId:current.id})}>Desequipar</button></div>:
-      <div><p>Sem item equipado neste espaço.</p><div className="catalog-equippable">
-        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}><ItemArt itemKey={i.key}/><span>{ITEMS[i.key]?.name}{ITEMS[i.key]?.set&&<small className="equipment-candidate-set">Conjunto: {ITEMS[i.key]?.set}</small>}<small className="equipment-comparison">{comparison(i)}</small></span></button>)}
-      </div>{!candidates.length&&<small>Sem itens compatíveis no baú.</small>}</div>}
+      {current?<div className="equipment-current"><strong>Em uso: {ITEMS[current.key]?.name}</strong><p>{ITEMS[current.key]?.description}</p><SetItemInfo itemKey={current.key}/><button className="action-button blue" disabled={busy} onClick={()=>act({type:"unequip",itemId:current.id})}>Desequipar</button></div>:<p>Sem item equipado neste espaço.</p>}
+      <div className="equipment-candidate-area">
+        <strong>{current?"Substituir diretamente":"Itens compatíveis no baú"}</strong>
+        <small>A comparação considera o equipamento substituído e os bônus de conjunto.</small>
+        <div className="catalog-equippable">{candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act(current?{type:"swap-equip",itemId:i.id,heroId:hero.id,oldItemId:current.id,slot:selectedSlot}:{type:"equip",itemId:i.id,heroId:hero.id,...(["ring1","ring2"].includes(selectedSlot)?{slot:selectedSlot as "ring1"|"ring2"}:{})})}><ItemArt itemKey={i.key}/><span>{ITEMS[i.key]?.name}{ITEMS[i.key]?.set&&<small className="equipment-candidate-set">Conjunto: {ITEMS[i.key]?.set}</small>}<small className="equipment-comparison">{current?"Trocar · ":"Equipar · "}{comparison(i)}</small></span></button>)}</div>
+        {!candidates.length&&<small>Sem itens compatíveis no baú.</small>}
+      </div>
     </section>
     <button type="button" className="equipment-bottom-back" onClick={back}><ChevronLeft aria-hidden="true"/> Voltar à ficha do herói</button>
   </section>;

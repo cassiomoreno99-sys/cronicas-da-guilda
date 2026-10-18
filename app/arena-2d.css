@@ -246,3 +246,10 @@
 .guild2d-performance-grid strong{font:700 12px/1.4 system-ui;overflow-wrap:anywhere;color:#ffe2a8}
 .guild2d-performance-grid span,.guild2d-performance-grid small{font:11px/1.35 system-ui;color:#dce7ed}
 @media(max-width:360px){.guild2d-performance-grid{grid-template-columns:1fr}.guild2d-performance{padding:8px}}
+
+/* Android em modo leve: economizar composição de oito personagens.
+   A arte 2D permanece e os efeitos normais continuam fora do modo leve. */
+.guild-lite-mode .guild2d-unit,
+.guild-lite-mode .guild2d-hud,
+.guild-lite-mode .guild2d-sprite img{filter:none!important;box-shadow:none!important}
+.guild-lite-mode .guild2d-sprite{will-change:auto}

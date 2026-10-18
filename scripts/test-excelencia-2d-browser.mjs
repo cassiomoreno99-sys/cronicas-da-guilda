@@ -73,6 +73,9 @@ try{
     await page.locator(".expedition-card.active").getByRole("button",{name:"Detalhes"}).first().click();
    }
    await page.locator(".guild2d-stage").waitFor({state:"visible",timeout:15000});
+   // O log persistido não pode recriar uma animação ao restaurar a partida.
+   if(await page.locator(".guild2d-cinema").count())
+     throw new Error("Um golpe antigo foi reproduzido novamente ao abrir o salvamento.");
    await page.waitForFunction(()=>[...document.querySelectorAll(".guild2d-unit img")].every(img=>img.complete&&img.naturalWidth>0),null,{timeout:20000});
    const info=await page.evaluate(()=>{
     const stage=document.querySelector(".guild2d-stage");

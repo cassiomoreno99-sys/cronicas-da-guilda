@@ -753,7 +753,7 @@
   left:8%;width:84%;height:11px;bottom:-4px;
   background:radial-gradient(ellipse,#060a0de0,transparent 75%);
 }
-.guild2d-enemy[data-enemy-bestiary="true"] .guild2d-sprite{
+.guild2d-unit.guild2d-enemy[data-enemy-bestiary="true"][data-full-art="false"] .guild2d-sprite{
   width:100%!important;height:100%!important;flex:0 0 100%;
   border:0!important;border-radius:50%!important;
   overflow:hidden!important;

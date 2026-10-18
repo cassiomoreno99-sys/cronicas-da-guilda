@@ -32,13 +32,14 @@ export function performSupreme(c:SupremeContext){
  case "CG-312":for(const e of enemies())harm(e,a.magic*2.05*(c.missionUndead?1.25:1)-e.defense*.2,.22);for(const u of allies())status(u,"ward",2,.50);break;
  case "CG-313":for(const u of allies())status(u,"critBlessing",1);break;
  case "CG-314":for(const u of allies()){heal(u,Math.min(u.maxHp*.30,(c.previousDamage[u.id]||0)*.6)+u.maxHp*.15);status(u,"might",1,.25)}break;
- // Grimórios raciais Imperiais: um único uso supremo por herói em cada batalha.
- case "IMP-B-HUMAN":for(const u of allies()){status(u,"inspired",2);status(u,"ward",2,.18);status(u,"shield",2,u.maxHp*.16)}break;
- case "IMP-B-ELF":for(const e of enemies())harm(e,a.magic*1.65-e.defense*.15,.19);for(const u of allies())status(u,"regen",2,Math.round(a.magic*.17+12));break;
- case "IMP-B-DWARF":for(const u of allies()){status(u,"shield",2,u.maxHp*.32);status(u,"ward",2,.35);heal(u,u.maxHp*.08)}break;
- case "IMP-B-ORC":{const e=target();if(e)harm(e,a.attack*3-e.defense*.55,.28);status(a,"might",2,.28);break}
- case "IMP-B-BEASTKIN":for(const e of enemies())harm(e,a.attack*1.70-e.defense*.28,.19);status(a,"dodge",2,1);break;
- case "IMP-B-UMBRAL":for(const e of enemies()){harm(e,a.magic*1.75-e.defense*.20,.19);status(e,"slow",2,.16);status(e,"vulnerable",2,.10)}break;
+ // Grimórios Supremos Imperiais exclusivos de classe: um poder supremo por herói/batalha.
+ case "IMP-B-WARRIOR":{const e=target();if(e)harm(e,a.attack*3.1-e.defense*.55,.28);status(a,"might",2,.28);break}
+ case "IMP-B-PALADIN":for(const u of allies()){status(u,"shield",2,u.maxHp*.30);status(u,"ward",2,.32);heal(u,u.maxHp*.06)}break;
+ case "IMP-B-RANGER":for(const e of enemies())harm(e,a.attack*1.9-e.defense*.28,.20);status(a,"critBlessing",2);break;
+ case "IMP-B-ROGUE":{const e=target();if(e){harm(e,a.attack*2.85-e.defense*.65,.28);status(e,"vulnerable",2,.15)}status(a,"dodge",2,1);break}
+ case "IMP-B-MAGE":for(const e of enemies()){harm(e,a.magic*1.8-e.defense*.18,.20);status(e,"slow",2,.16);status(e,"vulnerable",2,.10)}break;
+ case "IMP-B-HEALER":for(const u of allies()){heal(u,u.maxHp*.26);status(u,"regen",2,Math.round(a.magic*.16+10));status(u,"shield",2,u.maxHp*.15)}break;
+ case "IMP-B-BARD":for(const u of allies()){status(u,"inspired",2);status(u,"critBlessing",2);status(u,"shield",2,u.maxHp*.14)}break;
  default:throw Error("Livro supremo não reconhecido");
  }
  c.mark("Livro supremo ativado: "+book+".");

@@ -449,8 +449,13 @@ export function battleActive(s: Campaign, expeditionId?: string) {
 }
 function expeditionBattle(s: Campaign, expeditionId?: string) {
   const active = activeExpeditions(s);
-  const expedition = (expeditionId ? active.find(e => e.id === expeditionId) : undefined) || active[0];
-  return expedition ? { expedition, battle: expedition.battle } : s.lastBattle?.status === "active" && s.lastBattle.combat ? { expedition: undefined, battle: s.lastBattle } : null;
+  // Comando com ID de expedição obsoleto não deve atingir outra batalha.
+  if (expeditionId) {
+    const requested=active.find(e=>e.id===expeditionId);
+    return requested?{expedition:requested,battle:requested.battle}:null;
+  }
+  const expedition=active[0];
+  return expedition?{expedition,battle:expedition.battle}:s.lastBattle?.status==="active"&&s.lastBattle.combat?{expedition:undefined,battle:s.lastBattle}:null;
 }
 export function talentPoints(h: Hero) { return Math.max(0,[8,16,28].filter(l=>h.level>=l).length-(h.talent?.rank||0)); }
 export function racialPoints(h: Hero) { return Math.max(0,[6,15,27].filter(l=>h.level>=l).length-(h.racial?.rank||0)); }
@@ -778,7 +783,15 @@ function resolveRivalBattle(s: Campaign, guildId: string, team: string[]) {
   // Desafio rival não avança o calendário.
 }
 
-function entry(s: Campaign, label: string, amount: number) { s.transaction++; s.ledger.unshift({ id: s.transaction, day: s.day, label, amount }); s.ledger = s.ledger.slice(0, 80); s.gold += amount; }
+function entry(s: Campaign, label: string, amount: number) {
+  requireRule(Number.isSafeInteger(amount)&&Number.isSafeInteger(s.gold)&&s.gold>=0&&
+    Number.isSafeInteger(s.gold+amount)&&s.gold+amount>=0,
+    "Movimentação de ouro inválida ou sem saldo suficiente.");
+  s.transaction++;
+  s.ledger.unshift({id:s.transaction,day:s.day,label,amount});
+  s.ledger=s.ledger.slice(0,80);
+  s.gold+=amount;
+}
 function note(s: Campaign, text: string) { s.journal.unshift({ day: s.day, text }); s.journal = s.journal.slice(0, 40); }
 /** Prêmios garantidos jamais ignoram o limite do baú nem são perdidos. */
 function giveSeasonReward(s:Campaign,key:string){
@@ -1510,7 +1523,7 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   awardSquadExperience(s, battleTeam, m.kind, won);
   if (won) {
     entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s,m,battleTeam);
-    for(const key of b.loot.filter(key=>key.startsWith("IMP-S-")))note(s,"Peça Suprema Imperial encontrada · "+(CATALOG_BY_ID[key]?.nome||key)+" encontrado!");
+    for(const key of b.loot.filter(key=>key.startsWith("IMP-S-")))note(s,"Peça Suprema Imperial encontrada · "+(CATALOG_BY_ID[key]?.nome||key)+(s.pendingRewards?.some(i=>i.key===key)?" (aguardando espaço no baú).":"."));
     s.seasonMissionVictories=(s.seasonMissionVictories||0)+1;
     const influenceBefore=regionInfluence(s,m.location);
     s.regionalInfluence![m.location]=Math.min(100,influenceBefore+(m.kind==="boss"?18:2+m.rank));

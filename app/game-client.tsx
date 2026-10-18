@@ -926,6 +926,38 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   </section>;
 }
 
+
+function ImperialShopPanel({state,act,busy}:{state:Campaign;act:(a:Action)=>void;busy:boolean}){
+ const [race,setRace]=useState<string>(state.heroes[0]?heroRace(state.heroes[0]):"human");
+ const [category,setCategory]=useState<"weapons"|"sets"|"books">("weapons");
+ const unlocked=state.activeRegion>=IMPERIAL_MIN_REGION;
+ const visible=category==="weapons"?IMPERIAL_WEAPONS:category==="sets"?IMPERIAL_SETS.filter(d=>d.race===race):IMPERIAL_BOOKS.filter(d=>d.race===race);
+ return <section className="imperial-market parchment" aria-label="Arsenal Supremo Imperial">
+   <h3><Crown aria-hidden="true"/> Arsenal Supremo Imperial</h3>
+   <p>7 armas supremas por classe, 6 regalias raciais de 12 peças e 6 livros imperiais. Cada livro custa <strong>500.000 ouro</strong>. Para equipar ou aprender, nível 40.</p>
+   {!unlocked&&<p className="imperial-locked"><LockKeyhole aria-hidden="true"/> Desbloqueio: visite a região 10, Império de Solkar. Os itens abaixo são uma prévia.</p>}
+   <div className="imperial-controls">
+     <div className="imperial-tabs" role="group" aria-label="Categoria imperial">
+       <button type="button" data-active={category==="weapons"} onClick={()=>setCategory("weapons")}>Armas · 7</button>
+       <button type="button" data-active={category==="sets"} onClick={()=>setCategory("sets")}>Regalias · 72</button>
+       <button type="button" data-active={category==="books"} onClick={()=>setCategory("books")}>Livros · 6</button>
+     </div>
+     {category!=="weapons"&&<label>Raça <select value={race} onChange={e=>setRace(e.target.value)}>
+       {IMPERIAL_RACES.map(r=><option value={r.race} key={r.race}>{RACES[r.race].name}</option>)}
+     </select></label>}
+   </div>
+   {category==="sets"&&<p className="imperial-set-tip">Bônus ativos em 3/12, 6/12, 9/12 e 12/12. A arma imperial de classe pode substituir a arma racial do conjunto.</p>}
+   <div className="catalog-shop">{visible.map(d=>{
+     const sold=state.shopPurchases.includes(Math.floor((state.day-1)/7)+":"+state.activeRegion+":"+d.id);
+     return <div key={d.id}><ItemArt itemKey={d.id}/><span><strong>{d.nome}</strong>
+       <small>{d.raridade} · Nv. {d.nivel}{d.race?" · "+RACES[d.race].name:""} · {d.slot}</small>
+       <small>{d.efeito}</small>
+     </span><button type="button" className="small-button gold" disabled={busy||!unlocked||sold||storageUsed(state.chest)>=chestCapacity(state)||state.gold<(d.preco_compra||0)}
+       onClick={()=>act({type:"buy",key:d.id})}>{sold?"Esgotado":fmt(d.preco_compra||0)+" ouro"}</button></div>;
+   })}</div>
+ </section>;
+}
+
 function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (a: Action) => void; busy: boolean; openMission: (id:string) => void }) {
   const recruits = market(state).slice(0,4);
   const rumors = missions(state).slice(0,3);
@@ -944,6 +976,7 @@ function TavernPage({ state, act, busy, openMission }: { state: Campaign; act: (
   })}
   {!testShop(state).length&&<small>Sem mercadorias nesta região.</small>}
   </div></section>
+        <ImperialShopPanel state={state} act={act} busy={busy}/>
       </section>
       <aside className="tavern-side" aria-label="Boatos da Taverna">
         <section className="rumors parchment">

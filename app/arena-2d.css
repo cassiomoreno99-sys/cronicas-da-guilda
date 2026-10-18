@@ -411,7 +411,7 @@
   margin:-19px 0 0 -19px;
   opacity:0;
   transform-origin:50% 50%;
-  animation:guild2d-projectile-travel .87s cubic-bezier(.17,.5,.12,1) both;
+  animation:guild2d-projectile-travel var(--cinema-ms,820ms) cubic-bezier(.17,.5,.12,1) both;
 }
 .guild2d-projectile:before,.guild2d-projectile:after{
   content:"";
@@ -469,7 +469,7 @@
   margin:-42px 0 0 -42px;
   display:block;
   opacity:0;
-  animation:guild2d-impact-bloom .86s ease-out both;
+  animation:guild2d-impact-bloom var(--cinema-ms,820ms) ease-out both;
 }
 .guild2d-impact-core{
   position:absolute;
@@ -509,7 +509,7 @@
 .guild2d-cinema-flash{
   position:absolute;inset:0;
   background:radial-gradient(ellipse 32% 30% at 50% 55%,#fff8e82b,transparent);
-  animation:guild2d-hit-flash .68s ease-out both;
+  animation:guild2d-hit-flash var(--cinema-ms,820ms) ease-out both;
 }
 @keyframes guild2d-projectile-travel {
   0%{opacity:0;transform:translate(0,0) scale(.45)}
@@ -567,7 +567,7 @@
  border-width:0 0 7px 0;
  box-shadow:0 5px 1px -3px var(--fx-accent);
  transform:rotate(-42deg);
- animation:guild2d-slash-reveal .85s ease-out both;
+ animation:guild2d-slash-reveal var(--cinema-ms,820ms) ease-out both;
 }
 .guild2d-cinema-steel .guild2d-impact-slash{
  border-width:0 0 10px 0;
@@ -589,7 +589,7 @@
  inset:12%;
  border-radius:50%;
  border:3px solid var(--fx-accent);
- animation:guild2d-shock-ring .85s cubic-bezier(.12,.6,.25,1) both;
+ animation:guild2d-shock-ring var(--cinema-ms,820ms) cubic-bezier(.12,.6,.25,1) both;
 }
 .guild2d-cinema-arcane .guild2d-shockwave{
  border:3px double #9be8ff;
@@ -610,7 +610,7 @@
  left:10%;right:10%;bottom:-22%;
  height:16px;border-radius:50%;
  background:radial-gradient(ellipse,#f8dec48c,#bd9a7650 50%,transparent 77%);
- animation:guild2d-impact-ground .85s ease-out both;
+ animation:guild2d-impact-ground var(--cinema-ms,820ms) ease-out both;
 }
 .guild2d-cinema-holy .guild2d-impact-dust,
 .guild2d-cinema-song .guild2d-impact-dust{display:none}
@@ -654,4 +654,51 @@
 .guild-lite-mode .guild2d-shockwave{box-shadow:none}
 @media(prefers-reduced-motion:reduce){
  .guild2d-impact-slash,.guild2d-shockwave,.guild2d-impact-dust{display:none!important;animation:none!important}
+}
+
+/* Coreografia 2D sincronizada: preparação do golpe e rastro do deslocamento. */
+.guild2d-unit[data-line="front"]{z-index:8}
+.guild2d-unit[data-line="back"]{z-index:5}
+.guild2d-unit[data-cinematic-actor="true"]{z-index:20}
+.guild2d-windup{
+ position:absolute;left:var(--start-x);top:var(--start-y);
+ width:clamp(48px,10cqw,92px);aspect-ratio:1;translate:-50% -35%;
+ border:2px solid var(--fx-accent);border-radius:50%;
+ background:radial-gradient(circle,transparent 35%,var(--fx-accent) 67%,transparent 70%);
+ opacity:0;pointer-events:none;
+ animation:guild2d-prepare var(--cinema-ms,820ms) ease-out both;
+}
+.guild2d-windup:after{content:"";position:absolute;inset:-8px;border:2px dashed var(--fx-core);border-radius:50%;opacity:.6}
+.guild2d-cinema[data-ranged="true"] .guild2d-windup{border-style:dashed;box-shadow:0 0 14px var(--fx-accent)}
+.guild2d-motion-trail{
+ position:absolute;left:var(--start-x);top:var(--start-y);
+ height:13px;width:calc(var(--flight-distance) * .8);max-width:80%;
+ border-top:3px solid var(--fx-core);border-radius:100% 45% 0 0;
+ background:linear-gradient(180deg,var(--fx-accent),transparent);
+ box-shadow:0 -3px 12px var(--fx-accent);
+ rotate:var(--shot-angle);transform-origin:left center;opacity:0;
+ animation:guild2d-melee-advance var(--cinema-ms,820ms) ease-out both
+}
+.guild2d-cinema-shadow .guild2d-motion-trail{height:7px;border-top-style:dashed}
+.guild2d-cinema-steel .guild2d-motion-trail{height:18px;border-top-width:5px}
+.guild2d-cinema[data-ranged="true"] .guild2d-impact-dust,
+.guild2d-impact-mark[data-heal="true"] .guild2d-impact-slash,
+.guild2d-impact-mark[data-heal="true"] .guild2d-impact-dust{display:none}
+@keyframes guild2d-prepare{
+ 0%,5%{opacity:0;transform:scale(.5) rotate(-22deg)}
+ 17%{opacity:.45;transform:scale(.9) rotate(-5deg)}
+ 30%{opacity:.80;transform:scale(1.1) rotate(15deg)}
+ 46%{opacity:0;transform:scale(1.5) rotate(32deg)}
+ 100%{opacity:0;transform:scale(1.6) rotate(32deg)}
+}
+@keyframes guild2d-melee-advance{
+ 0%,26%{opacity:0;transform:scaleX(0)}
+ 35%{opacity:.65;transform:scaleX(.20)}
+ 52%{opacity:.9;transform:scaleX(1)}
+ 67%{opacity:.10;transform:scaleX(1.02)}
+ 100%{opacity:0;transform:scaleX(1.02)}
+}
+.guild-lite-mode .guild2d-windup,.guild-lite-mode .guild2d-motion-trail{display:none}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-windup,.guild2d-motion-trail{display:none!important;animation:none!important}
 }

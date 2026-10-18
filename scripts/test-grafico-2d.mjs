@@ -4,6 +4,8 @@ const scene=readFileSync(new URL("../app/arena-2d.tsx",import.meta.url),"utf8");
 const visuals=readFileSync(new URL("../app/arena-2d.css",import.meta.url),"utf8");
 const guild=readFileSync(new URL("../app/ui.css",import.meta.url),"utf8");
 assert.match(scene,/actorNode\.animate\(/,"Atacante precisa se deslocar.");
+assert.match(scene,/setPlayingEvent\(evtKey\)/,"Animações antigas do salvamento não podem reiniciar.");
+assert.match(scene,/--shot-angle/,"Flechas precisam ter ângulo de trajetória por alvo.");
 assert.match(scene,/targetNode\.animate\(/,"Inimigo precisa reagir ao impacto.");
 assert.match(scene,/strikeDistance/,"O lutador precisa avançar até a área de contato.");
 assert.match(scene,/evt\.kind==="heal"\?\[/,"Cura não pode provocar recuo físico como se fosse dano.");

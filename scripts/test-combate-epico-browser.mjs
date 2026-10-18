@@ -67,7 +67,11 @@ try{
     const result=await page.evaluate(()=>{
      const nodes=[...document.querySelectorAll(".guild2d-unit")];
      return {hasFx:!!document.querySelector(".guild2d-cinema"),hasProjectile:!!document.querySelector(".guild2d-projectile"),
-       spriteMove:nodes.some(u=>u.querySelector(".guild2d-sprite")?.getAnimations().some(a=>a.playState==="running")),
+       // "Respirar" parado não conta. Exigir trajetória do Web Animations API.
+       spriteMove:nodes.some(u=>[...u.querySelector(".guild2d-sprite")?.getAnimations()||[]].some(a=>a.playState==="running"&&
+          a.effect?.getKeyframes?.().some(frame=>/translate\((-?\d+)(?:\.\d+)?px,/.test(String(frame.transform||""))))),
+       targeted:nodes.some(u=>u.querySelector(".guild2d-sprite")?.getAnimations().some(a=>
+          a.effect?.getKeyframes?.().some(frame=>String(frame.transform||"").includes("rotate(")))),
        kept:nodes.every(u=>globalThis.__epicSprites.get(u.dataset.fighterId)===u.querySelector(".guild2d-sprite img")),
        school:document.querySelector(".guild2d-cinema")?.getAttribute("data-school")||"",
        fxDisplay:document.querySelector(".guild2d-impact-mark")?getComputedStyle(document.querySelector(".guild2d-impact-mark")).display:"none"};
@@ -79,6 +83,9 @@ try{
     if(animated&&motion)break;
    }
    if(!animated||!motion)throw Error("Combate sem movimento real ou impacto: "+JSON.stringify({animated,motion,visual}));
+   const angle=await page.locator(".guild2d-cinema").evaluate(el=>el.style.getPropertyValue("--shot-angle"));
+   if(!angle.includes("deg")||Number.isNaN(parseFloat(angle)))
+     throw Error("Projétil sem direção baseada na posição real dos combatentes.");
    if(errors.length)throw Error("Erro de navegador: "+errors.join(" | "));
    await page.locator(".guild2d-stage").screenshot({path:"visual-report/combate-epico-"+width+".png"});
    console.log("AUDITORIA_2D_OK",JSON.stringify({width,height,buildings:sizes.length,cardArtRatio:Math.round(sizes[0].img/sizes[0].card*100)+"%",characters:baseNodes.length,animated,motion,visual}));

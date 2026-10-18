@@ -432,8 +432,9 @@
   border-right:3px solid var(--fx-core);
   transform:rotate(45deg);
 }
-.guild2d-cinema[data-direction="enemy"] .guild2d-projectile{
-  rotate:180deg;
+.guild2d-cinema .guild2d-projectile{
+  /* Flechas seguem o ângulo real do alvo no cenário, inclusive contra-ataques. */
+  rotate:var(--shot-angle,0deg);
 }
 .guild2d-cinema-arcane .guild2d-projectile,
 .guild2d-cinema-holy .guild2d-projectile,

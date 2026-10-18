@@ -66,7 +66,7 @@ export function visualSchool(actor:Pick<BattleFighter,"class">|undefined,kind:Ba
 const isRangedVisual=(school:VisualSchool)=>["arrow","arcane","holy","song","nature"].includes(school);
 const hpWidth=(hp:number,max:number)=>(max?Math.max(0,Math.min(100,100*hp/max)):0)+"%";
 type PosStyle=CSSProperties&{"--x":string;"--y":string;"--dash-x":string;"--dash-y":string};
-type VisualPath=CSSProperties&{"--start-x":string;"--start-y":string;"--flight-x":string;"--flight-y":string};
+type VisualPath=CSSProperties&{"--start-x":string;"--start-y":string;"--flight-x":string;"--flight-y":string;"--shot-angle":string};
 
 
 export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
@@ -94,6 +94,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const [allyTargetId,setAllyTargetId]=useState("");
  const [openSkill,setOpenSkill]=useState(false);
  const [tip,setTip]=useState("");
+ const [playingEvent,setPlayingEvent]=useState<string|null>(null);
  const active=battle.status==="active"&&!!battle.combat;
  const hero=heroes.find(f=>f.id===heroId&&f.hp>0)||heroes.find(f=>f.hp>0);
  const enemy=enemies.find(f=>f.id===enemyId&&f.hp>0)||enemies.find(f=>f.hp>0);
@@ -121,7 +122,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const visualPath:VisualPath|undefined=visualStart&&targetPos?{
   "--start-x":visualStart.x+"%","--start-y":visualStart.y+"%",
   "--flight-x":(targetPos.x-visualStart.x)+"cqw",
-  "--flight-y":(targetPos.y-visualStart.y)+"cqh"
+  "--flight-y":(targetPos.y-visualStart.y)+"cqh",
+  "--shot-angle":Math.atan2((targetPos.y-visualStart.y)*(stageRef.current?.clientHeight||590),
+                (targetPos.x-visualStart.x)*(stageRef.current?.clientWidth||800))*180/Math.PI+"deg"
  }:undefined;
  // Animações nativas no mesmo nó do sprite: não recarregam as imagens.
  // Ataque, pausa de impacto e reação estão sincronizados com o log real.
@@ -129,6 +132,8 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const previous=lastAnimated.current;
   lastAnimated.current=evtKey;
   if(previous===evtKey||!actor||!target||!evt||!stageRef.current)return;
+  // Só novas ações criam coreografia; carregar um save não repete o golpe antigo.
+  setPlayingEvent(evtKey);
   const stage=stageRef.current;
   const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(reduced)return;
@@ -169,29 +174,32 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     {offset:1,transform:"translateX(0) rotate(0deg)"}
    ],{delay:duration*.45,duration:Math.max(260,duration*.49),easing:"ease-out",fill:"none"}));
   }
-  if(!light&&evt.kind==="critical"&&evt.amount!==0){
+  if(!light&&evt.amount!==0){
     const scene=stage.querySelector<HTMLElement>(".guild2d-scene");
-    if(scene)motions.push(scene.animate([
-      {offset:0,transform:"translate(0,0)"},
-      {offset:.22,transform:"translate(-4px,1px)"},
-      {offset:.5,transform:"translate(4px,-3px)"},
-      {offset:.75,transform:"translate(-2px,2px)"},
-      {offset:1,transform:"translate(0,0)"}
-    ],{delay:duration*.54,duration:160,easing:"steps(3,end)"}));
+    if(scene){
+      const critical=evt.kind==="critical";
+      const direction=actor.side==="hero"?1:-1;
+      motions.push(scene.animate([
+        {offset:0,transform:"translate(0,0) scale(1)"},
+        {offset:.28,transform:`translate(${direction*(critical?5:2)}px,-1px) scale(${critical?1.013:1.005})`},
+        {offset:.55,transform:`translate(${critical?-3:-direction}px,${critical?2:0}px) scale(1.006)`},
+        {offset:1,transform:"translate(0,0) scale(1)"}
+      ],{delay:duration*.5,duration:critical?220:150,easing:"ease-out"}));
+    }
   }
   return ()=>motions.forEach(animation=>animation.cancel());
  },[evtKey]);
 
  const queuedUnit=(id:string)=>battle.combat?.pendingAbilities?.some(p=>p.heroId===id);
  function unit(f:BattleFighter,i:number){
-  const p=pos(f.side,i),acting=actor?.id===f.id&&!!targetPos&&f.hp>0;
-  const struck=target?.id===f.id&&!!evt;
+  const p=pos(f.side,i),acting=playingEvent===evtKey&&actor?.id===f.id&&!!targetPos&&f.hp>0;
+  const struck=playingEvent===evtKey&&target?.id===f.id&&!!evt;
   const style:PosStyle={"--x":p.x+"%","--y":p.y+"%","--dash-x":acting&&targetPos?((targetPos.x-p.x)*.7)+"cqw":"0cqw","--dash-y":acting&&targetPos?((targetPos.y-p.y)*.7)+"cqh":"0cqh"};
   const image=combatArt(f,f.side==="hero"?state.heroes.find(h=>h.id===f.id):undefined);
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={style} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
-    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"} data-fighter-id={f.id}
+    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>
@@ -235,7 +243,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
-   {evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} aria-hidden="true" style={visualPath}>
+   {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} aria-hidden="true" style={visualPath}>
       {projectile&&<span className="guild2d-projectile"><i/></span>}
       <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>
         <i className="guild2d-impact-core"/>

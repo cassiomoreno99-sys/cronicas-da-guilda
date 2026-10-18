@@ -114,7 +114,7 @@ export type Action =
   | { type: "battle-consumable"; key: BattleConsumableKey; targetId: string; expeditionId?: string }
   | { type: "battle-ability"; heroId: string; abilityId: string; targetId?: string; expeditionId?: string }
   | { type: "event"; eventId: string; choiceId: string }
-  | { type: "equip"; itemId: string; heroId: string } | { type: "unequip"; itemId: string }
+  | { type: "equip"; itemId: string; heroId: string; slot?: "ring1"|"ring2" } | { type: "swap-equip"; itemId: string; heroId: string; oldItemId: string; slot: string } | { type: "unequip"; itemId: string }
   | { type: "sell"; itemId: string } | { type: "buy"; key: string }
   | { type: "specialize"; heroId: string; path: TalentPath; branch?: EvolutionBranch }
   | { type: "racial-specialize"; heroId: string; path: RacialPath }
@@ -541,8 +541,12 @@ export function emergencyContractQuote(s:Campaign){
 }
 export function treasuryForecast(s:Campaign){
  const days=7-((s.day-1)%7);
+ // Relatório contábil somente de lançamentos efetivados, não de vitórias previstas.
+ const recent=(s.ledger||[]).filter(x=>x.day>=s.day-6&&x.day<=s.day);
+ const recentIncome=recent.reduce((n,x)=>n+Math.max(0,x.amount),0);
+ const recentExpense=recent.reduce((n,x)=>n+Math.max(0,-x.amount),0);
  return {days,wages:payroll(s),maintenance:8*days,
-  projected:s.gold-payroll(s)-8*days};
+  projected:s.gold-payroll(s)-8*days,recentIncome,recentExpense,recentNet:recentIncome-recentExpense};
 }
 /** Objetivos verificáveis por temporada, sem inflação adicional de ouro. */
 /** A curva de ouro cresce até o teto de progressão e depois desacelera.
@@ -1130,6 +1134,16 @@ export function missions(s: Campaign): Mission[] {
       requiredFame: i === 3 ? 80 + regionIndex * 20 : i === 4 ? 180 + regionIndex * 30 : i === 5 ? 220 + regionIndex * 30 : 0,
     };
   });
+}
+/** Ameaça regional usada pelo conselho tático da arena; combina com o motor. */
+export function bossTacticHint(regionIndex:number):string{
+ if(regionIndex===0)return "O Vigia libera ondas sombrias a cada três rodadas. Prepare cura coletiva.";
+ if(regionIndex===1)return "A Matriarca se regenera a cada três rodadas. Concentre dano.";
+ const mode=(regionIndex-2)%4;
+ return mode===0?"O guardião atinge toda a equipe a cada três rodadas; guarde cura."
+  :mode===1?"O guardião recupera vida a cada três rodadas; concentre dano."
+  :mode===2?"O guardião busca a retaguarda a cada três rodadas; proteja conjuradores."
+  :"O guardião ergue barreiras a cada três rodadas; reserve ataques fortes.";
 }
 export function seasonBoss(s: Campaign): Mission | null {
   if (seasonDay(s) < 45 || s.bossSeasons?.includes(s.season)) return null;
@@ -1748,6 +1762,17 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     if (m.kind === "boss" && boss && round % 3 === 0) {
       if (m.boss === 0) for (const target of heroes()) hit(target, Math.max(5, boss.attack * .45 * t.incoming - target.defense * .1), "O Vigia libera uma onda sombria em " + target.name + ": ", boss.id,false,false,"ability");
       if (m.boss === 1) heal(boss, boss.maxHp * .1, "A Matriarca drena a névoa e recupera ", boss.id);
+      if((m.boss??0)>=2){
+        // Ritmo previsível para permitir resposta tática, sem alterar recompensas.
+        const mode=(m.boss!-2)%4;
+        if(mode===0)for(const target of heroes())hit(target,Math.max(3,boss.attack*.22*t.incoming-target.defense*.10),"O guardião libera uma onda contra "+target.name+": ",boss.id,false,false,"ability");
+        if(mode===1)heal(boss,boss.maxHp*.065,"O guardião recupera forças: ",boss.id);
+        if(mode===2){
+          const back=heroes().filter(f=>f.position==="back"),target=(back.length?back:heroes()).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+          if(target)hit(target,Math.max(4,boss.attack*.48*t.incoming-target.defense*.25),"O guardião invade a retaguarda e golpeia "+target.name+": ",boss.id,false,false,"ability");
+        }
+        if(mode===3)addStatus(boss,"shield",2,Math.max(5,Math.round(boss.defense*.55)),boss.id);
+      }
     }
   }
   for (const f of c.fighters) {
@@ -2129,6 +2154,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     }
     case "event": resolveEvent(s, action); break;
     case "equip":
+    case "swap-equip":
     case "unequip":
     case "sell":
     case "buy":

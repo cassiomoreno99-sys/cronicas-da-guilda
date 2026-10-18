@@ -20,7 +20,8 @@ assert.ok(portraits.includes('doran:"sora",kael:"kael",elen:"doran",sora:"elen"'
 assert.ok(portraits.includes("heroArtPlaceholder"),"Retratos ainda precisam de placeholders por identidade.");
 assert.ok(portraits.includes('const portrait=officialHeroArt("portrait",race,hero.class,sex);'),"Combate deve usar os 84 retratos reais antes de um sprite provisório.");
 const arenaCode=fs.readFileSync("app/arena-2d.tsx","utf8");
-assert.ok(arenaCode.includes('orc:"orc"'),"Inimigo orco está usando um esqueleto.");
+assert.ok(arenaCode.includes("src:enemyArtSource(f.name)"),"A arena precisa usar a arte da espécie correta.");
+assert.ok(fs.existsSync("public/enemies/orc.webp"),"Arte do orco ausente no bestiário.");
 assert.ok(arenaCode.includes('!src.includes("/heroes/portraits/")'),"Retrato de herói precisa de moldura na arena.");
 assert.ok(portraits.includes('officialHeroArt("portrait"'),"Falta registrar arte por raça/classe/sexo.");
 const heroPage = fs.readFileSync("app/game-client.tsx", "utf8");

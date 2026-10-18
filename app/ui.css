@@ -3172,3 +3172,38 @@ img.game-symbol.game-coin{
     font-size:clamp(14px,3.7vw,17px);
   }
 }
+
+/* Transparência financeira, estratégia regional e backup seguro no Android. */
+.guild-economy-ledger{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px 10px;
+ margin-top:10px;padding:11px;background:#132b37;border:1px solid #aa8950;
+ border-radius:8px;color:#e7d9b7;font:700 11px/1.5 system-ui;
+}
+.guild-economy-ledger strong,.guild-economy-ledger small{grid-column:1/-1}
+.guild-economy-ledger strong{font-size:13px;color:#ffe0a0}
+.guild-economy-ledger b{color:#abe6b3}
+.guild-economy-ledger b[data-negative="true"]{color:#ffb4a8}
+.mission-boss-warning{
+ display:block;padding:7px 9px;border-left:3px solid #bd8f52;
+ background:#40301f;color:#ffe5b8;font:700 11px/1.5 system-ui;
+}
+.guild-backup-reminder{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ padding:9px 12px;background:#302816;color:#fce8bc;
+ border-block:1px solid #ad925a;font:700 12px/1.4 system-ui;
+}
+.guild-backup-reminder button{
+ flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+ gap:5px;padding:8px 10px;background:#e8c88d;color:#291c12;
+ border:1px solid #bd9861;border-radius:6px;font-weight:800;
+}
+.equipment-candidate-area{display:grid;gap:6px;margin-top:12px;padding:10px;border:1px solid #ac9063;border-radius:7px}
+.equipment-candidate-area>strong{color:#ffe3aa}
+.equipment-candidate-area>small{color:#c7d6d9;font-size:11px}
+@media(max-width:500px){
+ .guild-economy-ledger{grid-template-columns:1fr 1fr}
+ .guild-economy-ledger b{grid-column:1/-1}
+ .guild-backup-reminder{flex-direction:column;align-items:stretch;text-align:center}
+ .guild-backup-reminder button{min-height:42px}
+ .equipment-candidate-area{padding:7px}
+}

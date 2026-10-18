@@ -52,11 +52,29 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   ensure(hero.level>=def.nivel,"Nível "+def.nivel+" necessário.");
   const owned=s.chest.filter(x=>x.equippedTo===hero.id);
   const used=owned.map(x=>x.equippedSlot||equippedPosition(x.key));
-  const target=slot==="ring"?(used.includes("ring1")?(used.includes("ring2")?"":"ring2"):"ring1"):slot;
+  const target=slot==="ring"?(action.slot||(!used.includes("ring1")?"ring1":!used.includes("ring2")?"ring2":"")):slot;
   ensure(target,"Anéis ocupados.");ensure(!used.includes(target),"Espaço ocupado.");
   if(target==="offhand")ensure(!owned.some(x=>isTwoHanded(x.key)),"Arma de duas mãos bloqueia escudo.");
   if(isTwoHanded(item.key))ensure(!used.includes("offhand"),"Remova a mão secundária.");
   item.equippedTo=hero.id;item.equippedSlot=target;break;
+ }
+ case "swap-equip":{
+  // Troca atômica: valida toda a operação antes de modificar os dois itens.
+  const item=s.chest.find(i=>i.id===action.itemId&&!i.equippedTo);
+  const old=s.chest.find(i=>i.id===action.oldItemId&&i.equippedTo===action.heroId);
+  const hero=s.heroes.find(h=>h.id===action.heroId);
+  ensure(item&&old&&hero&&item.id!==old.id,"Equipamentos da troca indisponíveis.");
+  ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(hero.id))&&!s.journeys.some(j=>j.heroId===hero.id&&j.remaining>0),"Herói ocupado.");
+  const oldSlot=old.equippedSlot||equippedPosition(old.key),newSlot=equippedPosition(item.key);
+  ensure(oldSlot===action.slot,"O equipamento do espaço foi alterado. Atualize a tela.");
+  ensure(newSlot===oldSlot||(newSlot==="ring"&&["ring1","ring2"].includes(oldSlot||"")),"Peça incompatível com o espaço.");
+  const def=CATALOG_BY_ID[item.key];
+  ensure(def&&def.classes.some(c=>NAMES[c]===hero.class)&&(!def.race||hero.race===def.race)&&hero.level>=def.nivel,"Classe, raça ou nível incompatível.");
+  const others=s.chest.filter(i=>i.equippedTo===hero.id&&i.id!==old.id);
+  if(oldSlot==="offhand")ensure(!others.some(i=>isTwoHanded(i.key)),"Arma de duas mãos impede escudo.");
+  if(isTwoHanded(item.key))ensure(!others.some(i=>(i.equippedSlot||equippedPosition(i.key))==="offhand"),"Remova a mão secundária antes de usar arma de duas mãos.");
+  delete old.equippedTo;delete old.equippedSlot;
+  item.equippedTo=hero.id;item.equippedSlot=oldSlot;break;
  }
  case "unequip":{
   const item=s.chest.find(x=>x.id===action.itemId);ensure(item&&item.equippedTo,"Item não equipado.");

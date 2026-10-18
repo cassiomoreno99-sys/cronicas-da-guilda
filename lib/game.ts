@@ -21,7 +21,7 @@ export type StoryStage = 0 | 1 | 2 | 3;
 export type JourneyDuration = 3 | 5 | 7;
 export type JourneyChoice = "camp" | "explore" | "shortcut";
 export type HeroJourney = { id: string; heroId: string; startedDay: number; duration: JourneyDuration; remaining: number; choice: JourneyChoice; xpEarned: number; loot: string[] };
-export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; sex?: HeroSex; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean; scars?: string[]; supremeBook?: string; supremeRespecced?: boolean; nextMissionBoost?: number };
+export type Hero = { id: string; name: string; class: HeroClass; race?: HeroRace; sex?: HeroSex; level: number; attack: number; defense: number; magic: number; energy: number; xp: number; salary: number; value: number; trait: string; injuredUntil: number; talent?: HeroTalent; racial?: HeroRacialTalent; storyStage?: StoryStage; storyAbilityUnlocked?: boolean; scars?: string[]; supremeBook?: string; imperialBook?: string; supremeRespecced?: boolean; nextMissionBoost?: number };
 export type Ledger = { id: number; day: number; label: string; amount: number };
 export type ItemSlot = "weapon" | "offhand" | "helmet" | "armor" | "gloves" | "boots" | "accessory" | "consumable" | "material" | "quest" | "treasure";
 export type ItemDef = { name: string; slot: ItemSlot; race?: HeroRace; rarity: "common" | "uncommon" | "rare" | "epic" | "legendary"; value: number; description: string; attack?: number; defense?: number; magic?: number; hp?: number; speed?: number; critical?: number; luck?: number; set?: string; classes?: HeroClass[]; levelReq?: number; material?: string };
@@ -347,9 +347,11 @@ export function availableAbilities(hero: Hero): AbilitySpec[] {
     abilities.push({ ...racial.ability, description: racial.ability.description + (hero.racial.rank >= 3 ? " Forma ancestral dominada." : "") });
   }
   if (hero.storyAbilityUnlocked) abilities.push(HERO_STORIES[hero.class].ability);
-  if(hero.supremeBook && CATALOG_BY_ID[hero.supremeBook]){
-    const d=CATALOG_BY_ID[hero.supremeBook];
-    abilities.push({id:"supreme-"+d.id,name:d.nome,description:d.efeito,target:"self",cooldown:9999,effect:"supreme"});
+  for(const book of [hero.supremeBook,hero.imperialBook]){
+    if(book && CATALOG_BY_ID[book]){
+      const d=CATALOG_BY_ID[book];
+      abilities.push({id:"supreme-"+d.id,name:d.nome,description:d.efeito,target:"self",cooldown:9999,effect:"supreme"});
+    }
   }
   return abilities;
 }
@@ -495,7 +497,7 @@ export function heroStats(h: Hero, s?: Campaign) {
   }
   if (s?.hq?.library){n.magic += Math.ceil(s.hq.library*.8);n.healing *= 1+s.hq.library*.02;}
   if(s){
-    const extra=setBonuses(s,h.class,equipped.map(i=>i.key));
+    const extra=setBonuses(s,h.class,equipped.map(i=>i.key),heroRace(h));
     for(const key of ["attack","defense","magic","hp","speed","critical","healing","luck"] as const)n[key]+=extra[key];
   }
   n.critical=Math.max(0,Math.min(.45,n.critical));
@@ -1634,11 +1636,11 @@ function stepBattle(s: Campaign, b: Battle = s.lastBattle!) {
     else if (ability.effect === "sanctuary") for (const target of heroes()) { heal(target, (16 + a.magic * .32) * ultimate, ability.name + " cura " + target.name + ": ", a.id, "ability"); addStatus(target, "shield", 2, Math.round((28 + a.magic * .24 + a.defense * .18) * ultimate), a.id); }
     else if (ability.effect === "fortress") { addStatus(a, "shield", 3, Math.round((62 + a.defense * 1.05) * ultimate), a.id); addStatus(a, "taunt", 2, undefined, a.id); }
     else if (ability.effect === "control" && enemyTarget) { hit(enemyTarget, power * .72 * ultimate, ability.name + " controla " + enemyTarget.name + ": ", a.id, false, false, "ability"); if (enemyTarget.hp > 0) addStatus(enemyTarget, "stun", 1, undefined, a.id); addStatus(a, "shield", 2, Math.round(22 + a.defense * .35), a.id); }
-    if(ability.effect==="supreme"&&h.supremeBook){
+    if(ability.effect==="supreme"&&(h.supremeBook||h.imperialBook)){
       if(c.supremeUsed![a.id])return;
       c.supremeUsed![a.id]=true;
       performSupreme({
-        actor:a,heroBook:h.supremeBook,units:()=>c.fighters,allies:heroes,enemies,
+        actor:a,heroBook:ability.id.slice("supreme-".length),units:()=>c.fighters,allies:heroes,enemies,
         missionBoss:m.kind==="boss",missionUndead:m.specialty==="undead"||/sombr|morto|cripta/i.test(m.enemy),
         targetId:order.targetId,hit:(u:SupremeUnit,n:number)=>hit(u as Combatant,n,ability.name+" atinge "+u.name+": ",a.id,false,false,"ability"),
         heal:(u:SupremeUnit,n:number)=>heal(u as Combatant,n,ability.name+" restaura "+u.name+": ",a.id,"ability"),

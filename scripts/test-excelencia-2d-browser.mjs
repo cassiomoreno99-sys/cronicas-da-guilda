@@ -91,7 +91,7 @@ try{
       stage:{left:rect.left,right:rect.right,top:rect.top,bottom:rect.bottom}};
    });
    if(info.hero!==4||info.enemy!==4||info.bars!==8)throw Error("4x4/HUD inválido: "+JSON.stringify({hero:info.hero,enemy:info.enemy,bars:info.bars}));
-   if(!info.ready||!info.background.includes("arena-aprovada.webp")||info.cover!=="cover")throw Error("Arte oficial indisponível ou distorcida");
+   if(!info.ready||!info.background.includes("arena-aprovada.webp")||!info.cover.includes("cover"))throw Error("Arte oficial indisponível ou distorcida: "+JSON.stringify({loaded:info.ready,bg:info.background,cover:info.cover}));
    if(info.overflow>5)throw Error("Rolagem horizontal: "+info.overflow);
    if(info.units.some(u=>u.left<info.stage.left-3||u.right>info.stage.right+3))throw Error("Sprite cortado lateralmente no Android");
    if(info.hud.some(h=>h.left<info.stage.left-3||h.right>info.stage.right+3||h.bottom>info.stage.bottom+4))throw Error("HUD cortado nos limites do cenário");

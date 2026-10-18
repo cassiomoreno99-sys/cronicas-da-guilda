@@ -74,13 +74,14 @@ try{
           a.effect?.getKeyframes?.().some(frame=>String(frame.transform||"").includes("rotate(")))),
        sword:!!document.querySelector(".guild2d-sword-strike"),
        casting:!!document.querySelector(".guild2d-cast-ring"),
+       claw:!!document.querySelector(".guild2d-claw-mark"),
        kept:nodes.every(u=>globalThis.__epicSprites.get(u.dataset.fighterId)===u.querySelector(".guild2d-sprite img")),
        school:document.querySelector(".guild2d-cinema")?.getAttribute("data-school")||"",
        fxDisplay:document.querySelector(".guild2d-impact-mark")?getComputedStyle(document.querySelector(".guild2d-impact-mark")).display:"none"};
     });
     if(!result.kept)throw Error("Os sprites foram recarregados durante o combate, causando piscadas.");
     animated ||=result.hasFx&&result.fxDisplay!=="none";
-    visibleAttack ||= result.sword||result.casting;
+    visibleAttack ||= result.sword||result.casting||result.claw;
     motion ||=result.spriteMove;
     visual ||=result.school;
     if(animated&&motion&&visibleAttack)break;

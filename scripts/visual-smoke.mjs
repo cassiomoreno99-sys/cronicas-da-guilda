@@ -115,17 +115,30 @@ if(!(await page.locator(".catalog-gallery .inventory-top").innerText()).includes
   throw new Error("Catálogo completo de 430 itens não aparece.");
 if(!(await page.locator(".catalog-pagination strong").innerText()).includes("98 itens"))
   throw new Error("Os 98 Supremos Imperiais não aparecem ao abrir o catálogo.");
-if(await page.locator(".catalog-gallery-grid .imperial-item-art").count()!==30)
+if(await page.locator(".catalog-gallery-grid .imperial-catalog-image").count()!==30)
   throw new Error("A primeira página imperial não exibe os 30 itens esperados.");
 await sanity("06a-catalogo-imperial");
 await page.getByRole("button",{name:"Armas Imperiais",exact:true}).click();
-if(await page.locator(".catalog-gallery-grid .imperial-item-art").count()!==7)
+if(await page.locator(".catalog-gallery-grid .imperial-catalog-image").count()!==7)
   throw new Error("As sete armas Supremas Imperiais não aparecem no catálogo.");
+// Confirma que todos os sete atlas foram publicados e têm bytes de imagem (não ícones vazios).
+const imperialUrls=await page.locator(".catalog-gallery-grid .imperial-catalog-image").evaluateAll(elements=>elements.map(el=>{
+ const bg=getComputedStyle(el).backgroundImage;
+ return bg.startsWith("url(")?bg.slice(4,-1).replaceAll('"',"").replaceAll("'",""):"";
+}));
+if(new Set(imperialUrls).size!==7||imperialUrls.some(url=>!url.includes("/items/imperial/")))
+  throw new Error("Os atlas das sete classes não foram atribuídos às armas Supremas Imperiais.");
+const imperialLoaded=await page.evaluate(async urls=>Promise.all(urls.map(async url=>{
+ const resp=await fetch(url);const bytes=await resp.arrayBuffer();
+ return {url,ok:resp.ok,type:resp.headers.get("content-type"),size:bytes.byteLength};
+})),imperialUrls);
+if(imperialLoaded.some(x=>!x.ok||!x.type?.includes("image/webp")||x.size<50000))
+  throw new Error("Há imagens Supremas Imperiais ausentes ou inválidas: "+JSON.stringify(imperialLoaded));
 await page.getByRole("button",{name:"Conjuntos Imperiais",exact:true}).click();
 if(!(await page.locator(".catalog-pagination strong").innerText()).includes("84 itens"))
   throw new Error("As 84 peças dos conjuntos Supremos Imperiais estão faltando.");
 await page.getByRole("button",{name:"Livros Imperiais",exact:true}).click();
-if(await page.locator(".catalog-gallery-grid .imperial-item-art").count()!==7)
+if(await page.locator(".catalog-gallery-grid .imperial-catalog-image").count()!==7)
   throw new Error("Os sete livros Supremos Imperiais estão faltando.");
 await page.locator(".catalog-search-controls select").selectOption("Pierrô");
 if(await page.locator(".catalog-gallery-grid .imperial-item-art").count()!==1)

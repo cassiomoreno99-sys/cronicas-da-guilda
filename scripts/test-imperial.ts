@@ -1,10 +1,27 @@
 import assert from "node:assert/strict";
+import {readFileSync} from "node:fs";
 import {newCampaign,applyAction,normalizeCampaign,heroStats,heroLuck,seasonBoss} from "../lib/game.ts";
 import {CATALOG_BY_ID,requiredSlot,TEST_ITEMS} from "../lib/catalog-test.ts";
-import {imperialSetProgress,imperialSetBonuses,IMPERIAL_BOOKS,IMPERIAL_WEAPONS,IMPERIAL_SETS,IMPERIAL_ITEMS,IMPERIAL_CLASSES,IMPERIAL_BOOK_PRICE,IMPERIAL_WEAPON_IDS} from "../lib/imperial-content.ts";
+import {imperialSetProgress,imperialSetBonuses,IMPERIAL_BOOKS,IMPERIAL_WEAPONS,IMPERIAL_SETS,IMPERIAL_ITEMS,IMPERIAL_CLASSES,IMPERIAL_BOOK_PRICE,IMPERIAL_WEAPON_IDS,imperialArtwork} from "../lib/imperial-content.ts";
 import {imperialDropChance,awardCatalogLoot} from "../lib/catalog-runtime.ts";
 import {teamKey} from "../lib/team-familiarity.ts";
 import {performSupreme,type SupremeUnit} from "../lib/supreme-abilities.ts";
+// Sete atlas com quatorze ilustrações reais de equipamento para 98 IDs únicos.
+for(const c of IMPERIAL_CLASSES){
+ const p=new URL("../public/items/imperial/"+c.heroClass+".webp",import.meta.url);
+ const buf=readFileSync(p);
+ assert.ok(buf.length>50000,"Atlas imperial ausente ou vazio: "+c.heroClass);
+ assert.equal(buf.toString("ascii",0,4),"RIFF","Cabeçalho WebP incorreto");
+ assert.equal(buf.toString("ascii",8,12),"WEBP","Formato WebP incorreto");
+}
+assert.ok(IMPERIAL_ITEMS.every(item=>imperialArtwork(item.id)!==null),"Há item imperial sem ilustração");
+assert.equal(new Set(IMPERIAL_ITEMS.map(item=>{const x=imperialArtwork(item.id)!;return x.src+"#"+x.index})).size,98,"Ícones imperiais duplicados no atlas");
+assert.ok(IMPERIAL_WEAPON_IDS.every(id=>imperialArtwork(id)?.index===0),"Posição de arma suprema incorreta");
+assert.ok(IMPERIAL_BOOKS.every(book=>imperialArtwork(book.id)?.index===13),"Posição de livro imperial incorreta");
+assert.ok(IMPERIAL_SETS.every(set=>{const index=Number(set.id.slice(-2));return imperialArtwork(set.id)?.index===index;}),"Peças imperiais em posições incorretas");
+assert.equal(imperialArtwork("IMP-S-WARRIOR-00"),null);
+assert.equal(imperialArtwork("IMP-S-WARRIOR-13"),null);
+assert.equal(imperialArtwork("IMP-B-ELF"),null);
 assert.equal(IMPERIAL_WEAPONS.length,7);
 assert.equal(IMPERIAL_SETS.length,84);
 assert.equal(IMPERIAL_BOOKS.length,7);

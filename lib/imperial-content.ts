@@ -81,7 +81,7 @@ export const IMPERIAL_ITEMS:CatalogEntry[]=[...IMPERIAL_WEAPONS,...IMPERIAL_SETS
  * Índices: 0=arma suprema, 1..12=peças do conjunto, 13=livro.
  * O atlas é uma grade 4x4; 2 células finais são vazias. */
 export function imperialArtwork(key:string):{src:string;index:number}|null{
- const match=/^IMP-(W|S|B)-(WARRIOR|PALADIN|RANGER|ROGUE|MAGE|HEALER|BARD)(?:-(\\d{2}))?$/.exec(key);
+ const match=/^IMP-(W|S|B)-(WARRIOR|PALADIN|RANGER|ROGUE|MAGE|HEALER|BARD)(?:-(\d{2}))?$/.exec(key);
  if(!match)return null;
  const kind=match[1],digit=match[3];
  if((kind==="S"&&!digit)||(kind!=="S"&&digit))return null;

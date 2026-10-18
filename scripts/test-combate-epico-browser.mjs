@@ -39,6 +39,9 @@ try{
    await page.locator(".building-list article.guild-building-card").first().screenshot({
     path:"visual-report/arte-guilda-"+width+".png"
    });
+   // Campanha nova exige resolver a decisão do Conselho antes de enviar heróis.
+   const council=page.locator(".council-actions button:not([disabled])").first();
+   if(await council.count())await council.click();
    await page.getByRole("button",{name:"Missões",exact:true}).last().click();
    await page.locator(".mission-card .action-button:not([disabled])").first().click();
    const send=page.locator(".send-row .action-button").first();

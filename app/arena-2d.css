@@ -702,3 +702,40 @@
 @media(prefers-reduced-motion:reduce){
  .guild2d-windup,.guild2d-motion-trail{display:none!important;animation:none!important}
 }
+
+/* 22 espécies com aparência própria no combate, sem retratos deformados. */
+.guild2d-unit[data-enemy-bestiary="true"][data-full-art="false"] .guild2d-sprite{
+ width:94%;height:99%;margin:auto;border:2px solid #9a6660!important;border-radius:12px 12px 18px 18px!important;
+ overflow:hidden;background:#152332!important;box-shadow:0 6px 14px #0009!important;
+}
+.guild2d-unit[data-enemy-bestiary="true"] .guild2d-sprite img{
+ width:100%;height:100%;object-fit:contain!important;object-position:center center!important;
+}
+.guild2d-weapon-sweep{
+ pointer-events:none;position:absolute;z-index:3;left:36%;top:13%;
+ width:clamp(23px,6cqw,68px);height:clamp(65px,23cqh,170px);
+ border-right:clamp(3px,.7cqw,6px) solid #ffe3ac;
+ border-radius:0 85% 0 85%;filter:drop-shadow(0 0 6px #edb474);
+ transform-origin:20% 86%;opacity:0;animation:guild2d-weapon-arc var(--cinema-ms,820ms) ease-in-out both;
+}
+.guild2d-weapon-shadow{border-color:#d7a3ff}
+.guild2d-weapon-steel{border-width:clamp(5px,1cqw,9px);border-color:#daeaff}
+.guild2d-weapon-blade{border-color:#ffd38c}
+.guild2d-weapon-arrow,.guild2d-weapon-arcane,.guild2d-weapon-holy,.guild2d-weapon-song,.guild2d-weapon-nature{display:none}
+.guild2d-step-dust{pointer-events:none;position:absolute;left:var(--start-x);top:calc(var(--start-y) + 11cqh);width:33px;height:12px;border-radius:50%;background:radial-gradient(ellipse,#d9c6a096,transparent 74%);opacity:0;animation:guild2d-step-cloud var(--cinema-ms,820ms) ease-out both}
+@keyframes guild2d-weapon-arc{
+ 0%,18%{opacity:0;transform:rotate(-48deg) scale(.8)}
+ 28%{opacity:.6;transform:rotate(-65deg)}
+ 50%{opacity:.9;transform:rotate(58deg) scale(1.16)}
+ 72%{opacity:.18;transform:rotate(105deg)}
+ 100%{opacity:0;transform:rotate(110deg)}
+}
+@keyframes guild2d-step-cloud{
+ 0%,37%{opacity:0;transform:scale(.3)}
+ 49%{opacity:.6;transform:scale(1.25)}
+ 76%{opacity:.13;transform:scale(2)}
+ 100%{opacity:0;transform:scale(2.3)}
+}
+.guild2d-unit[data-dead="true"] .guild2d-sprite{transform:translateY(13px) rotate(-8deg) scale(.93);animation:none;transition:transform .35s ease-out}
+.guild-lite-mode .guild2d-weapon-sweep,.guild-lite-mode .guild2d-step-dust{display:none}
+@media(prefers-reduced-motion:reduce){.guild2d-weapon-sweep,.guild2d-step-dust{display:none!important}}

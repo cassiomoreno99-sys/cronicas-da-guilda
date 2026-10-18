@@ -1,0 +1,42 @@
+name: Sete melhorias - estrategia e Android
+on:
+  push:
+    branches: [sete-melhorias-completas-20261017]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  game:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Regras das sete melhorias e 160 campanhas de teste
+        run: node --experimental-strip-types scripts/test-sete-melhorias.ts
+      - name: Preparar dependências
+        run: npm install --no-audit --no-fund --package-lock=false
+      - name: Compilar para produção
+        run: npm run build
+      - name: Regressões de Liga, combate, Taverna e equipamentos
+        run: |
+          node --experimental-strip-types scripts/test-liga-escalacao-isolada.ts
+          node --experimental-strip-types scripts/test-auditoria-critica.ts
+          node --experimental-strip-types scripts/test-conjuntos-estrategicos.ts
+          node --experimental-strip-types scripts/test-rumores-taverna.ts
+      - name: Bateria de milhares de cenários
+        run: node --experimental-strip-types scripts/test-6000-cenarios.ts
+  longevity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Simular 500 temporadas e salvar progresso
+        run: node --experimental-strip-types scripts/test-500-temporadas.ts

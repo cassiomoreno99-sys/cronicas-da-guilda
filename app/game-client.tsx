@@ -37,8 +37,8 @@ import merchantPortrait from "@/lib/portrait-art/merchant";
 import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, SETS, equippedPosition } from "@/lib/catalog-test";
-import { missionLootPreview, equipmentSetProgress } from "@/lib/catalog-runtime";
-import { IMPERIAL_WEAPONS, IMPERIAL_SETS, IMPERIAL_BOOKS, IMPERIAL_RACES, IMPERIAL_WEAPON_IDS, IMPERIAL_MIN_REGION, imperialSetProgress } from "@/lib/imperial-content";
+import { missionLootPreview, equipmentSetProgress, imperialDropChance } from "@/lib/catalog-runtime";
+import { IMPERIAL_WEAPONS, IMPERIAL_SETS, IMPERIAL_BOOKS, IMPERIAL_CLASSES, IMPERIAL_WEAPON_IDS, IMPERIAL_MIN_REGION, imperialSetProgress } from "@/lib/imperial-content";
 
 type Save = Pick<LocalSave, "state" | "revision">;
 type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
@@ -290,6 +290,7 @@ function MissionPage({
             <span><GameSymbol kind="experience"/> Até +{missionRewardXp(m)} XP</span>
             {!!missionLootPreview(state,m).length&&<small className="mission-special-loot"><GameSymbol kind="objective"/> Item de objetivo: {missionLootPreview(state,m).join(", ")}</small>}
             <small className="mission-material-loot"><GameSymbol kind="treasure"/> Materiais regionais e chance de equipamento</small>
+             {m.kind==="boss"&&state.activeRegion>=6&&<small className="mission-special-loot"><Crown aria-hidden="true"/> Drop Supremo Imperial: {(imperialDropChance(state,m,state.team)*100).toFixed(1)}% com a equipe atual (20% base + sorte + entrosamento).</small>}
             
             <button
               className={"action-button " + (index % 3 === 0 ? "red" : index % 3 === 1 ? "green" : "blue")}
@@ -389,7 +390,8 @@ function TeamPage({
         <h3>Bônus de Equipe</h3>
         <p>{readiness.label}</p><small>{readiness.hint}</small>
         {(()=>{const f=familiarityBonus(state.teamFamiliarity,team);return <div className="team-familiarity" aria-label="Entrosamento da equipe"><strong>Entrosamento: nível {f.level}/5</strong><small>{f.expeditions} expedições juntos · {f.next?f.next+" até o próximo bônus":"Entrosamento máximo"}</small>
-        <span>Crítico +{(f.critical*100).toFixed(1)}% · Defesa +{(f.defense*100).toFixed(1)}% · Vida +{(f.hp*100).toFixed(1)}% · Dano +{(f.damage*100).toFixed(1)}% · Cura +{(f.healing*100).toFixed(1)}%</span></div>})()}
+        <span>Crítico +{(f.critical*100).toFixed(1)}% · Defesa +{(f.defense*100).toFixed(1)}% · Vida +{(f.hp*100).toFixed(1)}% · Dano +{(f.damage*100).toFixed(1)}% · Cura +{(f.healing*100).toFixed(1)}%</span>
+         {selectedMission.kind==="boss"&&state.activeRegion>=6&&<small>Chance de peça Suprema Imperial: <strong>{(imperialDropChance(state,selectedMission,team)*100).toFixed(1)}%</strong> (20% base + sorte média + entrosamento da formação).</small>}</div>})()}
         <div className="tactic-row">{(Object.keys(TACTICS) as Tactic[]).map(t => <button key={t} data-active={tactic === t} onClick={() => setTactic(t)}>{TACTICS[t].name}</button>)}</div>
         <div className="team-power"><GameSymbol kind="battle"/><span>Poder da Equipe</span><strong>{fmt(power)}</strong></div>
       </div>
@@ -693,14 +695,14 @@ function SetItemInfo({itemKey}:{itemKey:string}){
 function EquipmentSetPanel({state,hero,selectSlot}:{state:Campaign;hero:Hero;selectSlot:(id:EquipmentSlotId)=>void}){
  const keys=state.chest.filter(i=>i.equippedTo===hero.id).map(i=>i.key);
  const sets=equipmentSetProgress(hero.class,keys);
- const imperial=imperialSetProgress(heroRace(hero),keys);
+ const imperial=imperialSetProgress(hero.class,keys);
  return <section className="equipment-sets parchment" aria-label="Combinações de conjuntos do personagem">
   <h3><GameSymbol kind="reward"/> Conjuntos e combinações</h3>
   <p>Junte peças do mesmo conjunto <strong>neste herói</strong>. Com 2 peças, ativa o bônus inicial. Com 3 peças, ganha o bônus adicional e o efeito especial em batalha.</p>
   {!sets.length&&<p>Esta classe ainda não tem conjunto de três peças no catálogo. Seus equipamentos continuam com os bônus individuais.</p>}
   <article className="equipment-set-card imperial-set-card" data-tier={imperial.count===12?"complete":imperial.count>=3?"active":"inactive"}>
      <div className="equipment-set-heading"><strong><Crown aria-hidden="true"/> {imperial.name}</strong><b>{imperial.count}/12 peças</b></div>
-     <p>Supremo Imperial racial. Bônus reais em 3, 6, 9 e 12 peças. A arma suprema da classe substitui a arma racial.</p>
+     <p>Supremo Imperial de classe. Bônus ativos em 3, 6, 9 e 12 peças. A arma Suprema Imperial da classe substitui a arma do conjunto.</p>
      <div className="imperial-milestones">{[3,6,9,12].map(min=><span key={min} data-active={imperial.count>=min}>{imperial.count>=min?"✓":"○"} {min}/12</span>)}</div>
      <div className="equipment-set-pieces">{imperial.pieces.map(piece=>{
        const d=CATALOG_BY_ID[piece.key];
@@ -709,7 +711,7 @@ function EquipmentSetPanel({state,hero,selectSlot}:{state:Campaign;hero:Hero;sel
        const slot=equippedPosition(piece.key);
        return <div key={piece.key} className="equipment-set-piece" data-equipped={piece.owned}>
          <span className="equipment-set-piece-art"><ItemArt itemKey={piece.key}/></span>
-         <div><strong>{piece.name}</strong><small>{piece.substituted?"✓ Substituída por arma de classe":piece.owned?"✓ Equipada":chest?"No baú":other?"Com outro herói":"Não adquirida"} · Nv. {d?.nivel}</small></div>
+         <div><strong>{piece.name}</strong><small>{piece.substituted?"✓ Substituída por arma Suprema Imperial da classe":piece.owned?"✓ Equipada":chest?"No baú":other?"Com outro herói":"Não adquirida"} · Nv. {d?.nivel}</small></div>
          {!piece.owned&&slot&&<button type="button" className="equipment-set-go" onClick={()=>selectSlot((slot==="ring"?"ring1":slot) as EquipmentSlotId)}>Ver espaço</button>}
        </div>;
      })}</div>
@@ -902,10 +904,10 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
          {h.name} · {h.storyStage===3?"Aprender":"História pessoal incompleta"}</button>)}
         </div>}
         {def.slot==="quest"&&CATALOG_BY_ID[selected.key]?.categoria==="Livro Imperial"&&
-        <div className="item-book-learn"><strong>Aprender poder imperial racial · uma ativação suprema por combate:</strong>
-         {state.heroes.filter(h=>heroRace(h)===CATALOG_BY_ID[selected.key].race&&h.level>=CATALOG_BY_ID[selected.key].nivel).map(h=>
+        <div className="item-book-learn"><strong>Aprender poder imperial de classe · uma ativação suprema por combate:</strong>
+         {state.heroes.filter(h=>({warrior:"Guerreiro",paladin:"Cavaleiro",ranger:"Arqueiro",rogue:"Assassino",mage:"Mago",healer:"Sacerdote",bard:"Pierrô"} as Record<string,string>)[h.class]===CATALOG_BY_ID[selected.key].classes[0]&&h.level>=CATALOG_BY_ID[selected.key].nivel).map(h=>
           <button key={h.id} className="action-button gold" disabled={busy||!!h.imperialBook||heroOnExpedition(state,h.id)} onClick={()=>act({type:"learn-book",itemId:selected.id,heroId:h.id})}>{h.name} · {h.imperialBook?"Já aprendeu":"Aprender"}</button>)}
-         {!state.heroes.some(h=>heroRace(h)===CATALOG_BY_ID[selected.key].race&&h.level>=CATALOG_BY_ID[selected.key].nivel)&&<small>Requer herói da raça no nível {CATALOG_BY_ID[selected.key].nivel}.</small>}
+         {!state.heroes.some(h=>({warrior:"Guerreiro",paladin:"Cavaleiro",ranger:"Arqueiro",rogue:"Assassino",mage:"Mago",healer:"Sacerdote",bard:"Pierrô"} as Record<string,string>)[h.class]===CATALOG_BY_ID[selected.key].classes[0]&&h.level>=CATALOG_BY_ID[selected.key].nivel)&&<small>Requer herói da classe no nível {CATALOG_BY_ID[selected.key].nivel}.</small>}
         </div>}
         {!owner && compatible.length > 0 && <select value={target} onChange={e => setRecipient(e.target.value)}>{compatible.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select>}
         <div className="item-actions">
@@ -928,29 +930,29 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
 
 
 function ImperialShopPanel({state,act,busy}:{state:Campaign;act:(a:Action)=>void;busy:boolean}){
- const [race,setRace]=useState<string>(state.heroes[0]?heroRace(state.heroes[0]):"human");
+ const [heroClass,setHeroClass]=useState<string>(state.heroes[0]?.class||"warrior");
  const [category,setCategory]=useState<"weapons"|"sets"|"books">("weapons");
  const unlocked=state.activeRegion>=IMPERIAL_MIN_REGION;
- const visible=category==="weapons"?IMPERIAL_WEAPONS:category==="sets"?IMPERIAL_SETS.filter(d=>d.race===race):IMPERIAL_BOOKS.filter(d=>d.race===race);
+ const visible=category==="weapons"?IMPERIAL_WEAPONS:category==="sets"?IMPERIAL_SETS.filter(d=>d.classes.includes(IMPERIAL_CLASSES.find(c=>c.heroClass===heroClass)?.label||"")):IMPERIAL_BOOKS.filter(d=>d.classes.includes(IMPERIAL_CLASSES.find(c=>c.heroClass===heroClass)?.label||""));
  return <section className="imperial-market parchment" aria-label="Arsenal Supremo Imperial">
    <h3><Crown aria-hidden="true"/> Arsenal Supremo Imperial</h3>
-   <p>7 armas supremas por classe, 6 regalias raciais de 12 peças e 6 livros imperiais. Cada livro custa <strong>500.000 ouro</strong>. Para equipar ou aprender, nível 40.</p>
+   <p>7 armas Supremas Imperiais, 7 conjuntos de classe com 12 peças (84 peças) e 7 livros imperiais. Cada livro custa <strong>500.000 ouro</strong>. Para equipar ou aprender, nível 40.</p>
    {!unlocked&&<p className="imperial-locked"><LockKeyhole aria-hidden="true"/> Desbloqueio: visite a região 10, Império de Solkar. Os itens abaixo são uma prévia.</p>}
    <div className="imperial-controls">
      <div className="imperial-tabs" role="group" aria-label="Categoria imperial">
        <button type="button" data-active={category==="weapons"} onClick={()=>setCategory("weapons")}>Armas · 7</button>
-       <button type="button" data-active={category==="sets"} onClick={()=>setCategory("sets")}>Regalias · 72</button>
-       <button type="button" data-active={category==="books"} onClick={()=>setCategory("books")}>Livros · 6</button>
+       <button type="button" data-active={category==="sets"} onClick={()=>setCategory("sets")}>Conjuntos · 84</button>
+       <button type="button" data-active={category==="books"} onClick={()=>setCategory("books")}>Livros · 7</button>
      </div>
-     {category!=="weapons"&&<label>Raça <select value={race} onChange={e=>setRace(e.target.value)}>
-       {IMPERIAL_RACES.map(r=><option value={r.race} key={r.race}>{RACES[r.race].name}</option>)}
+     {category!=="weapons"&&<label>Classe <select value={heroClass} onChange={e=>setHeroClass(e.target.value)}>
+        {IMPERIAL_CLASSES.map(c=><option value={c.heroClass} key={c.heroClass}>{c.label}</option>)}
      </select></label>}
    </div>
-   {category==="sets"&&<p className="imperial-set-tip">Bônus ativos em 3/12, 6/12, 9/12 e 12/12. A arma imperial de classe pode substituir a arma racial do conjunto.</p>}
+   {category==="sets"&&<p className="imperial-set-tip">Bônus ativos em 3/12, 6/12, 9/12 e 12/12. A arma Suprema Imperial da mesma classe substitui a arma do conjunto. Desde a região 6, os guardiões podem derrubar uma peça com 20% de chance base mais bônus da equipe.</p>}
    <div className="catalog-shop">{visible.map(d=>{
      const sold=state.shopPurchases.includes(Math.floor((state.day-1)/7)+":"+state.activeRegion+":"+d.id);
      return <div key={d.id}><ItemArt itemKey={d.id}/><span><strong>{d.nome}</strong>
-       <small>{d.raridade} · Nv. {d.nivel}{d.race?" · "+RACES[d.race].name:""} · {d.slot}</small>
+       <small>{d.raridade} · Nv. {d.nivel}{d.classes[0]?" · "+d.classes[0]:""} · {d.slot}</small>
        <small>{d.efeito}</small>
      </span><button type="button" className="small-button gold" disabled={busy||!unlocked||sold||storageUsed(state.chest)>=chestCapacity(state)||state.gold<(d.preco_compra||0)}
        onClick={()=>act({type:"buy",key:d.id})}>{sold?"Esgotado":fmt(d.preco_compra||0)+" ouro"}</button></div>;
@@ -1119,7 +1121,7 @@ function SupremeLibraryPanel({state,act,busy}:{state:Campaign;act:(a:Action)=>vo
    {state.heroes.map(x=><option key={x.id} value={x.id}>{x.name} · {CLASSES[x.class].name} · Nv. {x.level}</option>)}
   </select></label>
   {h?.supremeBook&&<p>Livro aprendido: {CATALOG_BY_ID[h.supremeBook]?.nome}</p>}
-  {h?.imperialBook&&<p>Livro Imperial racial: {CATALOG_BY_ID[h.imperialBook]?.nome}. Compartilha o limite de uma ativação suprema por combate.</p>}
+  {h?.imperialBook&&<p>Livro Imperial de classe: {CATALOG_BY_ID[h.imperialBook]?.nome}. Compartilha o limite de uma ativação suprema por combate.</p>}
   {h?.supremeBook&&h.talent&&!h.supremeRespecced&&<button className="action-button blue" disabled={busy} onClick={()=>act({type:"reset-specialization",heroId:h.id})}>Corrigir especialização (uma vez)</button>}
   <div className="catalog-shop">{books.map(d=>{
     const price=Math.round((d.preco_compra||0)*.7);

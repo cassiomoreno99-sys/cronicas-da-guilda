@@ -3,6 +3,7 @@ import { REGIONAL_CHAPTERS } from "./regional-missions.ts";
 import { performSupreme, type SupremeUnit } from "./supreme-abilities.ts";
 import { handleCatalogAction, awardCatalogLoot, setBonuses, equipmentSetCombatEffects, CatalogRuleError } from "./catalog-runtime.ts";
 import { chestCapacity, storageUsed } from "./storage.ts";
+import { migrateLegacyImperialKey } from "./imperial-content.ts";
 import { familiarityBonus, registerTeamExpedition } from "./team-familiarity.ts";
 import { EXCLUSIVE_BY_ID, GUILD_EXCLUSIVE_GEAR, seasonalMaterialBundle } from "./exclusive-gear.ts";
 import { CLASSIC_CLASS_IDS, V130_BASE_STATS, WORLD_REGIONS, HQ_BUILDINGS, HERO_SCARS, LEVEL_ABILITIES, V130_ITEMS, ITEM_SETS, CRAFT_RECIPES, uniqueAdventurerName } from "./v130-content.ts";
@@ -497,7 +498,7 @@ export function heroStats(h: Hero, s?: Campaign) {
   }
   if (s?.hq?.library){n.magic += Math.ceil(s.hq.library*.8);n.healing *= 1+s.hq.library*.02;}
   if(s){
-    const extra=setBonuses(s,h.class,equipped.map(i=>i.key),heroRace(h));
+    const extra=setBonuses(s,h.class,equipped.map(i=>i.key));
     for(const key of ["attack","defense","magic","hp","speed","critical","healing","luck"] as const)n[key]+=extra[key];
   }
   n.critical=Math.max(0,Math.min(.45,n.critical));
@@ -1000,6 +1001,13 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
   s.team = (s.team || []).filter(id => !deployed.has(id) && s.heroes.some(h => h.id === id)).slice(0, 4);
   for (const h of s.heroes) if (s.team.length < 4 && !deployed.has(h.id) && !s.team.includes(h.id) && h.energy >= 25 && h.injuredUntil <= s.day && !activeJourney(s, h.id)) s.team.push(h.id);
   s.formation = normalizedFormation(s);
+  // Migração: itens e livros raciais de versões anteriores tornam-se da classe
+  // do herói sem desaparecer do baú e sem perder o ouro investido.
+  for(const h of s.heroes)if(h.imperialBook)h.imperialBook=migrateLegacyImperialKey(h.imperialBook,h.class);
+  for(const item of s.chest||[]){
+    const owner=s.heroes.find(h=>h.id===item.equippedTo)||s.heroes[0];
+    if(owner)item.key=migrateLegacyImperialKey(item.key,owner.class);
+  }
   // Limpeza dos itens inclusive em saves antigos, para não reaparecerem ao atualizar.
   s.chest = Array.isArray(s.chest) ? s.chest.filter(i=>!!ITEMS[i.key]) : [];
   s.itemSequence = Math.max(s.itemSequence||0,0,...[...s.chest,...(s.pendingRewards||[])].map(i=>Number(i.id.match(/-(\d+)$/)?.[1]||0)));
@@ -1500,9 +1508,9 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   const before = s.fame;
   const battleTeam = c.fighters.filter(f => f.side === "hero").map(f => f.id);
   awardSquadExperience(s, battleTeam, m.kind, won);
-  registerTeamExpedition(s.teamFamiliarity!,battleTeam);
   if (won) {
-    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s,m);
+    entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s,m,battleTeam);
+    for(const key of b.loot.filter(key=>key.startsWith("IMP-S-")))note(s,"Drop Supremo Imperial · "+(CATALOG_BY_ID[key]?.nome||key)+" encontrado!");
     s.seasonMissionVictories=(s.seasonMissionVictories||0)+1;
     const influenceBefore=regionInfluence(s,m.location);
     s.regionalInfluence![m.location]=Math.min(100,influenceBefore+(m.kind==="boss"?18:2+m.rank));
@@ -1515,6 +1523,7 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
       if (s.activeRegion >= s.region && s.region < WORLD_REGIONS.length) { s.region++; b.regionUnlocked = s.region; }
     }
   } else { s.losses++; s.fame = Math.max(0, s.fame - (status === "retreated" ? 2 + m.rank : 4 + m.rank * 2)); }
+  registerTeamExpedition(s.teamFamiliarity!,battleTeam);
   b.fameChange = s.fame - before;
   note(s, (won ? "Vitória" : status === "retreated" ? "Retirada ordenada" : "Missão fracassou") + " em " + m.title + ". " + (won ? "+" + m.reward + " ouro e +" + b.fameChange + " renome. A equipe ganhou experiência." : b.fameChange + " renome. A equipe ganhou experiência."));
   // Preserva somente o estado visual final antes de descartar o motor ativo.

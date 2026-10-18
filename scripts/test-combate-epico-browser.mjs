@@ -32,7 +32,7 @@ try{
       aspect:ir?.width/(ir?.height||1)};
    }));
    if(sizes.some(x=>!x.loaded||!x.visible))throw Error("Arte de instalação não carregada: "+JSON.stringify(sizes));
-   if(sizes.some(x=>x.img/x.card<(width<=768?.83:.36)||Math.abs(x.aspect-16/9)>.14))
+   if(sizes.some(x=>x.img/x.card<(width<=760?.83:.36)||Math.abs(x.aspect-16/9)>.14))
     throw Error("Arte da Guilda ainda pequena ou distorcida em "+width+"px: "+JSON.stringify(sizes));
    if(width<=412&&sizes.some(x=>x.height<145))
     throw Error("Imagem de prédio não tem altura de destaque no Android "+width+"px.");

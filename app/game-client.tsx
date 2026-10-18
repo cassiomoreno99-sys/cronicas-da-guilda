@@ -1446,7 +1446,7 @@ export default function Game() {
   };
   if (!state) return <main className="boot-screen"><GameSymbol kind="guild"/><h1>Crônicas da Guilda</h1><p>{error || "Abrindo sua campanha…"}</p>
     {error&&<div className="boot-recovery"><button onClick={recover} disabled={!recoveryAvailable()}>Recuperar campanha anterior</button>
-      <label>Importar arquivo de backup<input type="file" accept=".json,application/json" onChange={e=>{const file=e.target.files?.[0];if(file)void restore(file);e.currentTarget.value="";}}/></label>
+      <label>Importar arquivo de cópia de segurança<input type="file" accept=".json,application/json" onChange={e=>{const file=e.target.files?.[0];if(file)void restore(file);e.currentTarget.value="";}}/></label>
       <small>O salvamento original não foi apagado. Não iniciaremos uma campanha nova automaticamente.</small></div>}
   </main>;
 
@@ -1464,10 +1464,10 @@ export default function Game() {
   const downloadBackup = () => {
     const blob = new Blob([exportLocalCampaign()],{type:"application/json"});
     const url = URL.createObjectURL(blob), a = document.createElement("a");
-    a.href=url; a.download="cronicas-da-guilda-backup.json"; a.click(); URL.revokeObjectURL(url);
+    a.href=url; a.download="cronicas-da-guilda-copia-de-seguranca.json"; a.click(); URL.revokeObjectURL(url);
   };
   const restore = async (file: File) => {
-    if(!window.confirm("Importar este backup e substituir a campanha atual? A versão anterior será preservada para recuperação."))return;
+    if(!window.confirm("Importar esta cópia de segurança e substituir a campanha atual? A versão anterior será preservada para recuperação."))return;
     try { const next = importLocalCampaign(await file.text()); hydrate({state:next.state,revision:next.revision}); }
     catch(e){ setError(e instanceof Error ? e.message : "Cópia de segurança inválida."); }
   };

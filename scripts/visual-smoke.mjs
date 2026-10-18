@@ -110,9 +110,32 @@ if(await page.locator(".stat-grid svg.game-emblem").count()!==6)
 await sanity("05b-herois-volta-equipamentos");
 
 await bottom("Baú","06-bau");
-await page.getByRole("button",{name:/Ver 314 itens/}).click();
+await page.getByRole("button",{name:/Ver 430 itens/}).click();
+if(!(await page.locator(".catalog-gallery .inventory-top").innerText()).includes("430 itens"))
+  throw new Error("Catálogo completo de 430 itens não aparece.");
+if(!(await page.locator(".catalog-pagination strong").innerText()).includes("98 itens"))
+  throw new Error("Os 98 Supremos Imperiais não aparecem ao abrir o catálogo.");
+if(await page.locator(".catalog-gallery-grid .imperial-item-art").count()!==30)
+  throw new Error("A primeira página imperial não exibe os 30 itens esperados.");
+await sanity("06a-catalogo-imperial");
+await page.getByRole("button",{name:"Armas Imperiais",exact:true}).click();
+if(await page.locator(".catalog-gallery-grid .imperial-item-art").count()!==7)
+  throw new Error("As sete armas Supremas Imperiais não aparecem no catálogo.");
+await page.getByRole("button",{name:"Conjuntos Imperiais",exact:true}).click();
+if(!(await page.locator(".catalog-pagination strong").innerText()).includes("84 itens"))
+  throw new Error("As 84 peças dos conjuntos Supremos Imperiais estão faltando.");
+await page.getByRole("button",{name:"Livros Imperiais",exact:true}).click();
+if(await page.locator(".catalog-gallery-grid .imperial-item-art").count()!==7)
+  throw new Error("Os sete livros Supremos Imperiais estão faltando.");
+await page.locator(".catalog-search-controls select").selectOption("Pierrô");
+if(await page.locator(".catalog-gallery-grid .imperial-item-art").count()!==1)
+  throw new Error("Filtro de livro Supremo Imperial por classe falhou.");
+await page.locator(".catalog-search-controls select").selectOption("");
+await page.getByRole("button",{name:"Originais",exact:true}).click();
+if(!(await page.locator(".catalog-pagination strong").innerText()).includes("314 itens"))
+  throw new Error("Os 314 itens originais não foram preservados.");
 if(await page.locator(".catalog-gallery-grid .item-art.catalog-image").count()!==30)
-  throw new Error("O catálogo não exibiu 30 miniaturas na primeira página.");
+  throw new Error("O catálogo original não exibiu 30 miniaturas na primeira página.");
 for(const p of [1,4,7,11]){
  const pageNum=await page.locator(".catalog-pagination strong").innerText();
  if(!pageNum.includes("Página "+p+" de 11")) throw new Error("Paginação do catálogo incorreta: "+pageNum);

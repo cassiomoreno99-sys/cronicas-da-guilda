@@ -1817,10 +1817,18 @@ img{display:block;max-width:100%}
   .catalog-shop .item-art{width:28px;height:28px}
 }
 
-/* Galeria consultável de todos os 314 itens, independente do inventário do jogador */
+/* Galeria completa de 430 itens (originais, exclusivos e Supremos Imperiais). */
 .catalog-gallery .inventory-top{gap:8px;align-items:center}
 .catalog-gallery .inventory-top strong{color:#f5d398;font-size:12px}
 .catalog-note{font-size:11px;color:#e8d7b1;margin:7px 3px 10px}
+.catalog-category-filters{display:flex;gap:6px;flex-wrap:wrap;margin:9px 0}
+.catalog-category-filters button{background:#263340;border:1px solid #9a783f;border-radius:6px;color:#e9dab7;min-height:34px;padding:7px 10px;font-size:11px;font-weight:700}
+.catalog-category-filters button[data-active="true"]{background:#845724;border-color:#f4ce7a;color:#fff2c8}
+.catalog-search-controls{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:8px;margin:8px 0}
+.catalog-search-controls label{display:grid;gap:4px;font-size:11px;color:#f5daab}
+.catalog-search-controls input,.catalog-search-controls select{width:100%;min-width:0;min-height:38px;box-sizing:border-box;background:#f6e9cc;border:1px solid #b28c58;color:#432b1d;border-radius:5px;padding:7px;font-size:13px}
+.catalog-empty{grid-column:1/-1;color:#e8d7b1;font-size:12px;padding:16px}
+@media(max-width:550px){.catalog-search-controls{grid-template-columns:1fr}.catalog-category-filters button{font-size:10px;padding:6px 8px}}
 .catalog-pagination{display:flex;align-items:center;justify-content:space-between;gap:6px;margin:4px 0 10px;color:#f6d492;font-size:11px}
 .catalog-pagination button{padding:9px 11px;background:#253747;color:#f8e8c5;border:1px solid #b18a47;border-radius:6px}
 .catalog-pagination button:disabled{opacity:.4}

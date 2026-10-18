@@ -1,5 +1,5 @@
 import { newCampaign, applyAction, normalizeCampaign, ITEMS, heroStats, missions, type Campaign } from "../lib/game.ts";
-import { CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, testShop, requiredSlot, isTwoHanded } from "../lib/catalog-test.ts";
+import { CATALOG_ITEMS, CATALOG_GALLERY_ITEMS, CATALOG_BY_ID, filterCatalogGallery, TEST_RECIPES, testShop, requiredSlot, isTwoHanded } from "../lib/catalog-test.ts";
 const ok=(v:unknown,m:string)=>{if(!v)throw Error(m);};
 const blocked=(f:()=>unknown,m:string)=>{let failed=false;try{f();}catch{failed=true;}ok(failed,m);};
 const fresh=(seed:number)=>{const s=newCampaign(seed);s.event=null;return s;};
@@ -9,6 +9,23 @@ const fresh=(seed:number)=>{const s=newCampaign(seed);s.event=null;return s;};
  ok(ids.every((x,i)=>x==="CG-"+String(i+1).padStart(3,"0")),"Ordem de IDs inválida");
  ok(Object.keys(ITEMS).filter(id=>/^CG-\d{3}$/.test(id)).length===314,"Faltam registros equipáveis do catálogo original.");
  ok(Object.keys(ITEMS).length===430,"As 18 relíquias antigas e os 98 itens imperiais precisam estar cadastrados.");
+ ok(CATALOG_GALLERY_ITEMS.length===430,"Galeria deve listar os 314 originais, 18 exclusivos e 98 itens imperiais.");
+ ok(new Set(CATALOG_GALLERY_ITEMS.map(d=>d.id)).size===430,"Galeria não pode repetir IDs.");
+ ok(CATALOG_GALLERY_ITEMS.every(d=>CATALOG_BY_ID[d.id]&&ITEMS[d.id]),"Todos os itens da galeria precisam ter detalhes e arte.");
+ ok(filterCatalogGallery("all").length===430,"Filtro Todos precisa listar o catálogo completo.");
+ ok(filterCatalogGallery("original").length===314,"Os 314 itens originais precisam continuar disponíveis.");
+ ok(filterCatalogGallery("exclusive").length===18,"Os 18 exclusivos precisam estar visíveis.");
+ ok(filterCatalogGallery("imperial").length===98,"Os 98 Supremos Imperiais precisam estar visíveis.");
+ ok(filterCatalogGallery("imperial-weapons").length===7,"Faltam as sete armas Supremas Imperiais.");
+ ok(filterCatalogGallery("imperial-sets").length===84,"Faltam as 84 peças dos sete conjuntos.");
+ ok(filterCatalogGallery("imperial-books").length===7,"Faltam os sete livros imperiais.");
+ for(const cls of ["Guerreiro","Cavaleiro","Arqueiro","Assassino","Mago","Sacerdote","Pierrô"]){
+   ok(filterCatalogGallery("imperial",cls).length===14,"Cada classe precisa mostrar 1 arma, 12 peças e 1 livro: "+cls);
+   ok(filterCatalogGallery("imperial-sets",cls).length===12,"Conjunto imperial incompleto: "+cls);
+ }
+ ok(filterCatalogGallery("imperial-books","Pierrô","codice").length===1,"Busca de livro por classe/acentuação falhou.");
+ ok(filterCatalogGallery("imperial","Mago","SEMRESULTADOXXXXX").length===0,"A busca deve aceitar nenhum resultado.");
+ ok(filterCatalogGallery("all").slice(420).length===10,"Paginação de 30 itens deve alcançar o catálogo até o fim.");
  ok(CATALOG_ITEMS.filter(x=>x.categoria==="Livro de magia suprema").length===14,"Faltam livros.");
  ok(TEST_RECIPES.every(r=>Object.keys(r.materials).length&&Object.entries(r.materials).every(([k,v])=>CATALOG_BY_ID[k]?.categoria==="Materiais"&&v>0)),"Receita usa insumos fantasmas");
  ok(TEST_RECIPES.every(r=>r.cost>=(CATALOG_BY_ID[r.result]?.preco_venda||0)),"Receita gera lucro automático.");

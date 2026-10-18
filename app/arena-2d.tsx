@@ -64,9 +64,11 @@ export function visualSchool(actor:Pick<BattleFighter,"class">|undefined,kind:Ba
  }
 }
 const isRangedVisual=(school:VisualSchool)=>["arrow","arcane","holy","song","nature"].includes(school);
+/** Coreografia uniforme sem alterar o motor da batalha. */
+const cinemaDuration=(school:VisualSchool)=>school==="shadow"?650:school==="arcane"?960:school==="steel"?920:school==="arrow"?780:820;
 const hpWidth=(hp:number,max:number)=>(max?Math.max(0,Math.min(100,100*hp/max)):0)+"%";
 type PosStyle=CSSProperties&{"--x":string;"--y":string;"--dash-x":string;"--dash-y":string};
-type VisualPath=CSSProperties&{"--start-x":string;"--start-y":string;"--flight-x":string;"--flight-y":string;"--shot-angle":string};
+type VisualPath=CSSProperties&{"--start-x":string;"--start-y":string;"--flight-x":string;"--flight-y":string;"--shot-angle":string;"--flight-distance":string;"--cinema-ms":string};
 
 
 export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
@@ -124,7 +126,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   "--flight-x":(targetPos.x-visualStart.x)+"cqw",
   "--flight-y":(targetPos.y-visualStart.y)+"cqh",
   "--shot-angle":Math.atan2((targetPos.y-visualStart.y)*(stageRef.current?.clientHeight||590),
-                (targetPos.x-visualStart.x)*(stageRef.current?.clientWidth||800))*180/Math.PI+"deg"
+                (targetPos.x-visualStart.x)*(stageRef.current?.clientWidth||800))*180/Math.PI+"deg",
+   "--flight-distance":Math.hypot((targetPos.x-visualStart.x)*(stageRef.current?.clientWidth||800)/100,(targetPos.y-visualStart.y)*(stageRef.current?.clientHeight||590)/100)+"px",
+   "--cinema-ms":(stageRef.current?.closest(".guild-lite-mode")?"520":cinemaDuration(school))+"ms"
  }:undefined;
  // Animações nativas no mesmo nó do sprite: não recarregam as imagens.
  // Ataque, pausa de impacto e reação estão sincronizados com o log real.
@@ -136,9 +140,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   setPlayingEvent(evtKey);
   const stage=stageRef.current;
   const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if(reduced)return;
+  if(reduced){setPlayingEvent(null);return;}
   const light=!!stage.closest(".guild-lite-mode")||document.documentElement.classList.contains("guild-lite-mode");
-  const duration=light?520:school==="shadow"?650:school==="arcane"?960:820;
+  const duration=light?520:cinemaDuration(school);
   const allUnits=[...stage.querySelectorAll<HTMLElement>(".guild2d-unit")];
   const actorNode=allUnits.find(node=>node.dataset.fighterId===actor.id)?.querySelector<HTMLElement>(".guild2d-sprite");
   const targetNode=allUnits.find(node=>node.dataset.fighterId===target.id)?.querySelector<HTMLElement>(".guild2d-sprite");
@@ -151,18 +155,18 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   // Terminar o golpe ao alcance real do oponente (antes a investida parava muito longe).
   const dx=ranged?(actor.side==="hero"?-14:14):Math.sign(absoluteFlight)*Math.min(strikeDistance,Math.abs(absoluteFlight)*.84,Math.max(190,stage.clientWidth*.58));
   const dy=ranged?-10:Math.max(-95,Math.min(95,(to.y-from.y)*stage.clientHeight/100*.77));
-  const swing=school==="shadow"?-17:school==="steel"?-11:school==="blade"?-10:-6;
+  const swing=school==="shadow"?-23:school==="steel"?-13:school==="blade"?-15:school==="arrow"?-8:-6;
   const actorMotion=actorNode.animate([
    {offset:0,transform:"translate(0,0) rotate(0deg) scale(1)"},
-   {offset:.18,transform:`translate(${-dx*.13}px,-6px) rotate(${swing}deg) scale(1.02)`},
-   {offset:.48,transform:`translate(${dx}px,${dy}px) rotate(${-swing}deg) scale(1.08)`},
-   {offset:.48+(.085*820/duration),transform:`translate(${dx}px,${dy}px) rotate(${-swing}deg) scale(1.08)`},
+   {offset:.16,transform:`translate(${-dx*.13}px,-6px) rotate(${swing}deg) scale(1.02)`},
+   {offset:.51,transform:`translate(${dx}px,${dy}px) rotate(${-swing}deg) scale(1.08)`},
+   {offset:.51+(.065*820/duration),transform:`translate(${dx}px,${dy}px) rotate(${-swing}deg) scale(1.08)`},
    {offset:.83,transform:`translate(${dx*.2}px,${dy*.2}px) rotate(0deg) scale(1.01)`},
    {offset:1,transform:"translate(0,0) rotate(0deg) scale(1)"}
   ],{duration,easing:"ease-in-out",fill:"none"});
   const motions=[actorMotion];
   if(actor.id!==target.id){
-   const recoil=(target.side==="enemy"?1:-1)*(evt.kind==="critical"?22:school==="steel"?17:13);
+   const recoil=Math.sign(to.x-from.x)*(evt.kind==="critical"?27:school==="steel"?20:14);
    motions.push(targetNode.animate(evt.kind==="heal"?[
     {offset:0,transform:"scale(1)",filter:"brightness(1)"},
     {offset:.38,transform:"scale(1.065)",filter:"brightness(1.45)"},
@@ -172,7 +176,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     {offset:.23,transform:`translateX(${recoil}px) rotate(${recoil*.48}deg) scale(.97)`},
     {offset:.43,transform:`translateX(${-recoil*.27}px) rotate(-2deg)`},
     {offset:1,transform:"translateX(0) rotate(0deg)"}
-   ],{delay:duration*.45,duration:Math.max(260,duration*.49),easing:"ease-out",fill:"none"}));
+   ],{delay:duration*.51,duration:Math.max(260,duration*.43),easing:"ease-out",fill:"none"}));
   }
   if(!light&&evt.amount!==0){
     const scene=stage.querySelector<HTMLElement>(".guild2d-scene");
@@ -184,10 +188,11 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
         {offset:.28,transform:`translate(${direction*(critical?5:2)}px,-1px) scale(${critical?1.013:1.005})`},
         {offset:.55,transform:`translate(${critical?-3:-direction}px,${critical?2:0}px) scale(1.006)`},
         {offset:1,transform:"translate(0,0) scale(1)"}
-      ],{delay:duration*.5,duration:critical?220:150,easing:"ease-out"}));
+      ],{delay:duration*.53,duration:critical?220:150,easing:"ease-out"}));
     }
   }
-  return ()=>motions.forEach(animation=>animation.cancel());
+  const cleanup=window.setTimeout(()=>setPlayingEvent(current=>current===evtKey?null:current),duration+180);
+   return ()=>{window.clearTimeout(cleanup);motions.forEach(animation=>animation.cancel());};
  },[evtKey]);
 
  const queuedUnit=(id:string)=>battle.combat?.pendingAbilities?.some(p=>p.heroId===id);
@@ -243,7 +248,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
-   {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} aria-hidden="true" style={visualPath}>
+   {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} aria-hidden="true" style={visualPath}>
+       <span className="guild2d-windup"/>
+       {!projectile&&evt.kind!=="heal"&&<span className="guild2d-motion-trail"/>}
       {projectile&&<span className="guild2d-projectile"><i/></span>}
       <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>
         <i className="guild2d-impact-core"/>

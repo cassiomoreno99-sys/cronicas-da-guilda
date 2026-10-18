@@ -4,7 +4,7 @@ import { statusEmPortugues, textoEmPortugues } from "../lib/texto-portugues";
 import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,combatReport,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
-import {enemyArtKey,enemyArtSource} from "@/lib/enemy-art";
+import {enemyArtSource} from "@/lib/enemy-art";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -21,17 +21,9 @@ const pos=(side:"hero"|"enemy",i:number)=>{
  * conserva-se a identidade da espécie pelo bestiário existente. */
 function combatArt(f:BattleFighter,hero?:Hero):{src:string;full:boolean}{
  if(f.side==="enemy"){
-  const kind=enemyArtKey(f.name);
-  const sprites:Record<ReturnType<typeof enemyArtKey>,string>={
-   ambusher:"cultista",ancient_guardian:"esqueleto",bandit:"cultista",
-   border_lord:"necromante",cultist:"cultista",draconic_raider:"cultista",
-   drake_warrior:"esqueleto",fallback:"cultista",goblin:"cultista",
-   matriarch:"necromante",obsidian_guardian:"esqueleto",orc:"orc",
-   panther:"espectro",raider:"cultista",skeleton:"esqueleto",
-   specter:"espectro",spectral_knight:"esqueleto",spider:"espectro",
-   troll:"esqueleto",watcher:"espectro",wild_drake:"espectro",wolf:"espectro"
-  };
-  return {src:"/battle/sprite-"+sprites[kind]+".webp",full:true};
+  // O bestiário fornece 22 artes de criaturas distintas.
+  // Ilustrações recebem moldura própria, não são esticadas como sprites de corpo inteiro.
+  return {src:enemyArtSource(f.name),full:false};
  }
  const race=hero?heroRace(hero):"human";
  if(!hero)return {src:portraitSource(f.name,f.id,f.class||"warrior",race),full:false};
@@ -204,11 +196,12 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={style} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
-    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting}
+    data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>
-     <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
+      {acting&&<i className={"guild2d-weapon-sweep guild2d-weapon-"+school} aria-hidden="true"/>}
+     <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):"/battle/sprite-cultista.webp";node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
 
     </span>
     {acting&&<span key={"trail-"+evtKey} className={"guild2d-action-trail "+((evt?.kind==="ability"||evt?.kind==="heal")?"guild2d-action-magic":"")} aria-hidden="true"/>}
@@ -250,6 +243,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    {heroes.map(unit)}{enemies.map(unit)}
    {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} aria-hidden="true" style={visualPath}>
        <span className="guild2d-windup"/>
+       {!projectile&&<span className="guild2d-step-dust"/>}
        {!projectile&&evt.kind!=="heal"&&<span className="guild2d-motion-trail"/>}
       {projectile&&<span className="guild2d-projectile"><i/></span>}
       <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>

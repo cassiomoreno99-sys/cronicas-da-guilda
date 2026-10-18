@@ -9,9 +9,13 @@ import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
 /** Posições aprovadas: quatro heróis à esquerda, quatro inimigos à direita. */
+/** Profundidade para quatro personagens de cada lado, sem cortes nas laterais.
+ * Coordenadas espelhadas preservam a identidade do cenário aprovado. */
+const HERO_POSITIONS=[[19,36],[35,53],[14,68],[34,80]] as const;
+const ENEMY_POSITIONS=[[81,36],[65,53],[86,68],[66,80]] as const;
 const pos=(side:"hero"|"enemy",i:number)=>{
- const positions=side==="hero"?[[27,37],[44,52],[14,68],[34,70]]:[[89,38],[72,53],[89,70],[76,71]];
- const [x,y]=positions[Math.min(i,3)];return {x,y};
+ const [x,y]=(side==="hero"?HERO_POSITIONS:ENEMY_POSITIONS)[Math.max(0,Math.min(i,3))];
+ return {x,y};
 };
 /** Ilustrações de corpo inteiro; para criaturas sem sprite completo,
  * conserva-se a identidade da espécie pelo bestiário existente. */
@@ -96,13 +100,15 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={style} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
+    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
-    <span className="guild2d-sprite" key={acting?evtKey:f.id} data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"}>
+    <span className="guild2d-sprite" data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"}>
      <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
 
     </span>
-
+    {acting&&<span key={"trail-"+evtKey} className={"guild2d-action-trail "+((evt?.kind==="ability"||evt?.kind==="heal")?"guild2d-action-magic":"")} aria-hidden="true"/>}
+    {struck&&evt?.kind==="critical"&&<span key={"critical-"+evtKey} className="guild2d-critical" aria-hidden="true">CRÍTICO!</span>}
     {struck&&evt?.amount!=null&&evt.amount>0&&<span key={evtKey} className={"guild2d-number "+(evt.kind==="heal"?"guild2d-healed":"")}>{evt.kind==="heal"?"+":"−"}{evt.amount}</span>}
     {struck&&evt?.amount!=null&&evt.amount>0&&<span key={"spark-"+evtKey} className="guild2d-spark" aria-hidden="true"/>}
   </button>;
@@ -111,9 +117,10 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const p=pos(f.side,i);
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <div key={f.id} className={"guild2d-hud "+(f.side==="hero"?"guild2d-hud-hero":"guild2d-hud-enemy")}
-    style={{"--x":p.x+"%","--y":p.y+"%"} as CSSProperties} data-dead={f.hp<=0} data-selected={selected}>
+    style={{"--x":p.x+"%","--y":p.y+"%"} as CSSProperties} data-dead={f.hp<=0} data-selected={selected}
+    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"}>
      <strong>{f.name.split(" ").slice(0,2).join(" ")}</strong>
-     <div className="guild2d-meter"><span style={{width:hpWidth(f.hp,f.maxHp)}}/></div>
+     <div className="guild2d-meter" role="progressbar" aria-label={"Pontos de vida de "+f.name} aria-valuemin={0} aria-valuemax={f.maxHp} aria-valuenow={Math.max(0,f.hp)}><span style={{width:hpWidth(f.hp,f.maxHp)}}/></div>
      <small>{Math.max(0,f.hp)} / {f.maxHp} PV</small>
      {queuedUnit(f.id)&&f.side==="hero"&&<em>HABILIDADE</em>}
       {focus?.id===f.id&&<em>FOCO</em>}
@@ -134,7 +141,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   <header className="guild2d-header"><strong>⚔️ Crônicas da Guilda <small>COMBATE 2D · ARENA REALISTA</small></strong><button type="button" onClick={close} aria-label="Fechar arena"><X size={19}/></button></header>
   <div className="guild2d-mission"><h2>{battle.title}</h2><span>Rodada {battle.rounds}{battle.objective?.targetRounds?"/"+battle.objective.targetRounds:""}</span><small>{battle.combat?.mission.location||battle.objective?.name||"Terras da Guilda"}</small></div>
   <div className="guild2d-stage" role="group" aria-label={heroes.length+" heróis contra "+enemies.length+" inimigos"}>
-   <div className="guild2d-scene"/>
+   <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
    <div className="guild2d-hud-layer">{heroes.map(hud)}{enemies.map(hud)}</div>

@@ -19,7 +19,26 @@ const EXCLUSIVE_ITEMS:CatalogEntry[]=EXCLUSIVE_GEAR.map(x=>({
  preco_compra:null,preco_venda:0,obtencao:x.race?"Ranking dos melhores heróis":"Forja após prêmio das três melhores guildas",
  race:x.race
 }));
-export const CATALOG_BY_ID:Record<string,CatalogEntry> = Object.fromEntries([...CATALOG_ITEMS,...EXCLUSIVE_ITEMS,...IMPERIAL_ITEMS].map(i=>[i.id,i]));
+/** Catálogo visível no jogo: 314 originais + 18 exclusivos + 98 imperiais.
+ * Independente de região ou posse do item; acesso não concede o equipamento. */
+export const CATALOG_GALLERY_ITEMS:CatalogEntry[]=[...CATALOG_ITEMS,...EXCLUSIVE_ITEMS,...IMPERIAL_ITEMS];
+export type CatalogGalleryGroup="all"|"original"|"exclusive"|"imperial"|"imperial-weapons"|"imperial-sets"|"imperial-books";
+export function filterCatalogGallery(group:CatalogGalleryGroup="all",className="",search=""):CatalogEntry[]{
+ const normalized=(value:string)=>value.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLocaleLowerCase("pt-BR");
+ const query=normalized(search.trim());
+ return CATALOG_GALLERY_ITEMS.filter(item=>{
+  const imperial=item.id.startsWith("IMP-");
+  if(group==="original"&&!item.id.startsWith("CG-"))return false;
+  if(group==="exclusive"&&(imperial||item.id.startsWith("CG-")))return false;
+  if(group==="imperial"&&!imperial)return false;
+  if(group==="imperial-weapons"&&item.categoria!=="Arma Suprema Imperial")return false;
+  if(group==="imperial-sets"&&item.categoria!=="Conjunto Supremo Imperial")return false;
+  if(group==="imperial-books"&&item.categoria!=="Livro Imperial")return false;
+  if(className&&!item.classes.includes(className))return false;
+  return !query||normalized([item.nome,item.id,item.categoria,item.subcategoria,item.conjunto||"",item.efeito].join(" ")).includes(query);
+ });
+}
+export const CATALOG_BY_ID:Record<string,CatalogEntry> = Object.fromEntries(CATALOG_GALLERY_ITEMS.map(i=>[i.id,i]));
 export const CATALOG_RULES=raw.regras;
 const CLASS_NAMES:Record<string,HeroClass> = {
  "Guerreiro":"warrior","Cavaleiro":"paladin","Arqueiro":"ranger","Assassino":"rogue",

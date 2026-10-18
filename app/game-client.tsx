@@ -36,7 +36,7 @@ import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
 import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
-import { testShop, CATALOG_ITEMS, CATALOG_BY_ID, TEST_RECIPES, SETS, equippedPosition } from "@/lib/catalog-test";
+import { testShop, CATALOG_ITEMS, CATALOG_GALLERY_ITEMS, CATALOG_BY_ID, filterCatalogGallery, type CatalogGalleryGroup, TEST_RECIPES, SETS, equippedPosition } from "@/lib/catalog-test";
 import { missionLootPreview, equipmentSetProgress, imperialDropChance } from "@/lib/catalog-runtime";
 import { IMPERIAL_WEAPONS, IMPERIAL_SETS, IMPERIAL_BOOKS, IMPERIAL_CLASSES, IMPERIAL_WEAPON_IDS, IMPERIAL_MIN_REGION, imperialSetProgress } from "@/lib/imperial-content";
 
@@ -823,6 +823,9 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const [showCatalog,setShowCatalog] = useState(false);
   const [catalogPage,setCatalogPage] = useState(0);
   const [catalogSelection,setCatalogSelection] = useState("CG-001");
+  const [catalogGroup,setCatalogGroup] = useState<CatalogGalleryGroup>("all");
+  const [catalogClass,setCatalogClass] = useState("");
+  const [catalogQuery,setCatalogQuery] = useState("");
   const [selectedId,setSelectedId] = useState(state.chest.find(i=>!i.equippedTo)?.id || "");
   const [recipient,setRecipient] = useState(state.heroes[0]?.id || "");
   const [useHero,setUseHero] = useState(state.heroes[0]?.id || "");
@@ -846,21 +849,41 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const compatible = def ? state.heroes.filter(h => itemSlots.has(def.slot) && !heroOnExpedition(state,h.id) && (!def.race || heroRace(h) === def.race) && (!def.classes || def.classes.includes(h.class)) && (!def.levelReq || h.level >= def.levelReq)) : [];
   const target = compatible.some(h => h.id === recipient) ? recipient : compatible[0]?.id || "";
   if(showCatalog) {
-    const visible=CATALOG_ITEMS.slice(catalogPage*30,(catalogPage+1)*30);
-    const detail=CATALOG_BY_ID[catalogSelection]&&visible.some(d=>d.id===catalogSelection)?CATALOG_BY_ID[catalogSelection]:visible[0];
-    const changePage=(next:number)=>{setCatalogPage(next);setCatalogSelection(CATALOG_ITEMS[next*30].id);};
+    const matches=filterCatalogGallery(catalogGroup,catalogClass,catalogQuery);
+    const catalogTotalPages=Math.max(1,Math.ceil(matches.length/30));
+    const currentCatalogPage=Math.min(catalogPage,catalogTotalPages-1);
+    const visible=matches.slice(currentCatalogPage*30,(currentCatalogPage+1)*30);
+    const detail=visible.find(d=>d.id===catalogSelection)||visible[0];
+    const changePage=(next:number)=>{const page=Math.max(0,Math.min(next,catalogTotalPages-1));setCatalogPage(page);setCatalogSelection(matches[page*30]?.id||"");};
+    const categories:ReadonlyArray<{key:CatalogGalleryGroup;label:string}>=[
+      {key:"all",label:"Todos"},{key:"imperial",label:"Supremos Imperiais"},
+      {key:"imperial-weapons",label:"Armas Imperiais"},{key:"imperial-sets",label:"Conjuntos Imperiais"},
+      {key:"imperial-books",label:"Livros Imperiais"},{key:"original",label:"Originais"},
+      {key:"exclusive",label:"Exclusivos"}
+    ];
     return <section className="screen chest-screen catalog-gallery">
-      <div className="inventory-top"><button onClick={()=>setShowCatalog(false)}><GameSymbol kind="inventory"/> Meu inventário</button><strong><GameSymbol kind="book"/> Catálogo · 314 imagens</strong></div>
-      <p className="catalog-note">Acervo visual dos 314 itens. Ver uma imagem não significa que o item esteja disponível na campanha.</p>
+      <div className="inventory-top"><button onClick={()=>setShowCatalog(false)}><GameSymbol kind="inventory"/> Meu inventário</button><strong><GameSymbol kind="book"/> Catálogo · {CATALOG_GALLERY_ITEMS.length} itens</strong></div>
+      <p className="catalog-note">Catálogo completo: 314 itens originais, 18 exclusivos e 98 Supremos Imperiais. Os novos itens imperiais usam ícones simbólicos. Consultar um item não significa possuí-lo ou ter a região liberada.</p>
+      <div className="catalog-category-filters" role="group" aria-label="Filtrar catálogo por categoria">
+        {categories.map(category=><button key={category.key} type="button" data-active={catalogGroup===category.key} onClick={()=>{setCatalogGroup(category.key);setCatalogPage(0);setCatalogSelection("");}}>{category.label}</button>)}
+      </div>
+      <div className="catalog-search-controls">
+        <label>Pesquisar item<input type="search" value={catalogQuery} placeholder="Nome, código ou atributo" onChange={e=>{setCatalogQuery(e.target.value);setCatalogPage(0);setCatalogSelection("");}}/></label>
+        <label>Classe<select value={catalogClass} onChange={e=>{setCatalogClass(e.target.value);setCatalogPage(0);setCatalogSelection("");}}>
+          <option value="">Todas as classes</option>
+          {IMPERIAL_CLASSES.map(c=><option key={c.heroClass} value={c.label}>{c.label}</option>)}
+        </select></label>
+      </div>
       <div className="catalog-pagination">
-        <button disabled={catalogPage===0} onClick={()=>changePage(catalogPage-1)}>‹ Anterior</button>
-        <strong>Página {catalogPage+1} de {Math.ceil(CATALOG_ITEMS.length/30)}</strong>
-        <button disabled={(catalogPage+1)*30>=CATALOG_ITEMS.length} onClick={()=>changePage(catalogPage+1)}>Próxima ›</button>
+        <button disabled={currentCatalogPage===0} onClick={()=>changePage(currentCatalogPage-1)}>‹ Anterior</button>
+        <strong>{matches.length} itens · Página {currentCatalogPage+1} de {catalogTotalPages}</strong>
+        <button disabled={currentCatalogPage===catalogTotalPages-1} onClick={()=>changePage(currentCatalogPage+1)}>Próxima ›</button>
       </div>
       <div className="inventory-layout">
         <div className="item-grid catalog-gallery-grid">
           {visible.map(d=><button key={d.id} data-active={detail?.id===d.id} className={"item-tile rarity-"+ITEMS[d.id].rarity} aria-label={d.id+" — "+d.nome}
            onClick={()=>setCatalogSelection(d.id)}><ItemArt itemKey={d.id}/><span>{d.id}</span></button>)}
+          {!visible.length&&<p className="catalog-empty">Nenhum item encontrado com esses filtros.</p>}
         </div>
         {detail&&<article className="item-detail parchment">
           <span className="rarity-label">{detail.id} · {detail.raridade}</span><h2>{detail.nome}</h2>
@@ -868,16 +891,17 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
           <p><b>Categoria:</b> {detail.categoria} · {detail.subcategoria}</p>
           <p><b>Classes:</b> {detail.classes.join(", ")}</p>
           <p><b>Requisito:</b> Nível {detail.nivel}</p>
+          <p><b>Atributos:</b> {Object.entries(detail.atributos).filter(([,v])=>v!==0).map(([key,value])=>key+" +"+value).join(" · ")||"Habilidade especial"}</p>
           <p><b>Função:</b> {detail.efeito}</p>
           <p><b>Como obter:</b> {detail.obtencao}</p><SetItemInfo itemKey={detail.id}/>
           <p className="catalog-price"><GameSymbol kind="gold"/><b> Valor:</b> {detail.preco_compra!==null?fmt(detail.preco_compra)+" ouro de compra":"Não vendido por mercador"} · {fmt(detail.preco_venda)} de venda</p>
-          <small>Disponibilidade e receitas dependem da evolução da campanha. Livros supremos exigem história pessoal e uma ativação por batalha.</small>
+          <small>Esta tela é para consulta. A disponibilidade dos itens e dos livros depende da evolução da campanha; livros Supremos Imperiais custam 500.000 de ouro e exigem a classe correspondente.</small>
         </article>}
       </div>
     </section>;
   }
   return <section className="screen chest-screen">
-    <div className="inventory-top"><button data-active><GameSymbol kind="inventory"/> Inventário</button><button onClick={()=>setShowCatalog(true)}><GameSymbol kind="book"/> Ver 314 itens</button><button onClick={() => {setFilter("material");setItemPage(0);setSelectedId("");}} data-active={filter === "material"}><GameSymbol kind="forge"/> Materiais</button><span><GameSymbol kind="inventory"/> {storageUsed(state.chest)}/{chestCapacity(state)}</span></div>
+    <div className="inventory-top"><button data-active><GameSymbol kind="inventory"/> Inventário</button><button onClick={()=>{setCatalogGroup("imperial");setCatalogClass("");setCatalogQuery("");setCatalogPage(0);setCatalogSelection("");setShowCatalog(true);}}><GameSymbol kind="book"/> Ver {CATALOG_GALLERY_ITEMS.length} itens · Imperiais</button><button onClick={() => {setFilter("material");setItemPage(0);setSelectedId("");}} data-active={filter === "material"}><GameSymbol kind="forge"/> Materiais</button><span><GameSymbol kind="inventory"/> {storageUsed(state.chest)}/{chestCapacity(state)}</span></div>
     <p className="inventory-capacity-note">Forja Nv. {state.hq.forge} · {storageUsed(state.chest)} guardados · {state.chest.filter(i=>!!i.equippedTo).length} equipados nos heróis · {Math.max(0,chestCapacity(state)-storageUsed(state.chest))} espaços livres</p>
     <label className="inventory-search">Pesquisar no baú <input type="search" placeholder="Nome ou código do item" value={itemQuery} onChange={e=>{setItemQuery(e.target.value);setItemPage(0);setSelectedId("");}}/></label>
     <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => {setFilter(id);setItemPage(0);setSelectedId("");}}>{label}</button>)}</div>

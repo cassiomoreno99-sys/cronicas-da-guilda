@@ -116,7 +116,7 @@ console.log("v1.3.0: iniciando bateria ampla...");
 // 6-7) Catálogo experimental de 314 itens e migração segura de saves.
 {
   ok(Object.keys(ITEMS).filter(id=>/^CG-\d{3}$/.test(id)).length===314, "O catálogo original deve continuar com exatamente 314 itens.");
-  ok(Object.keys(ITEMS).length===332,"Deve incluir 12 relíquias de guilda e 6 raciais fora do catálogo original.");
+  ok(Object.keys(ITEMS).length===417,"Deve incluir as 18 relíquias exclusivas originais e os 85 itens imperiais.");
   ok(CRAFTING_RECIPES.length > 100, "As receitas revisadas não foram carregadas.");
   const s = prep(newCampaign(1006));
   ok(s.chest.length === 0, "Nova campanha deve começar com inventário vazio.");

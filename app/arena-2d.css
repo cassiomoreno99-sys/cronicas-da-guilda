@@ -235,3 +235,14 @@
 .guild2d-effects abbr{font:9px system-ui;text-decoration:none;background:#112739;border:1px solid #aa915d;border-radius:3px;color:#ffe8b4;cursor:help}
 .guild2d-skills .guild2d-cancel-order{background:#5a342b;color:#ffedc9;border:1px solid #d4a478;padding:9px 12px;min-height:36px}
 @media(max-width:390px){.guild2d-command-center{padding:7px}.guild2d-focus-controls>span{flex-basis:100%}.guild2d-focus-controls button{flex:1;min-width:0}}
+
+
+/* Resultado tático: dados do log do combate 2D sem trocar o cenário aprovado. */
+.guild2d-performance{display:grid;gap:7px;padding:12px;background:rgba(12,28,41,.95);border:1px solid #a98b59;color:#fff0c7;border-radius:7px;margin:8px 0}
+.guild2d-performance h3{font:700 17px Georgia;margin:0;color:#f0d7a0}
+.guild2d-performance p{margin:0;font:11px/1.5 system-ui;color:#d5e0e6}
+.guild2d-performance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.guild2d-performance-grid>div{min-width:0;display:grid;gap:4px;padding:9px;border:1px solid #425768;border-radius:6px;background:#1b3448}
+.guild2d-performance-grid strong{font:700 12px/1.4 system-ui;overflow-wrap:anywhere;color:#ffe2a8}
+.guild2d-performance-grid span,.guild2d-performance-grid small{font:11px/1.35 system-ui;color:#dce7ed}
+@media(max-width:360px){.guild2d-performance-grid{grid-template-columns:1fr}.guild2d-performance{padding:8px}}

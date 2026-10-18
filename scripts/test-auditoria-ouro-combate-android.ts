@@ -75,8 +75,9 @@ console.log("BATALHA 2D: duas expedições simultâneas, IDs expirados bloqueado
  for(let i=0;i<250;i++){
   const before=s.pendingRewards?.length||0;
   const loot=awardCatalogLoot(s,boss,team);
-  const retained=loot.filter(key=>key.startsWith("IMP-")||s.claimedQuestItems.includes(key)).length;
-  assert.equal(s.pendingRewards?.length||0,before+retained,"Recompensa obrigatória perdida");
+  // Com baú cheio, materiais comuns são descartados; as peças raras,
+  // épicas, lendárias, imperiais e de missão entram na fila integralmente.
+  assert.equal(s.pendingRewards?.length||0,before+loot.length,"Recompensa valiosa perdida");
   assert.equal(storageUsed(s.chest),cap,"Recompensa ultrapassou capacidade do baú");
   supreme+=loot.filter(key=>key.startsWith("IMP-S-")).length;
  }

@@ -16,20 +16,20 @@ const named:Record<string,EnemyArtKey>={
  // Vale de Valen
  "bandido":"bandit","saqueador":"raider","lobo sombrio":"wolf","esqueleto":"skeleton",
  // Brumavale
- "emboscador":"ambusher","pantera das brumas":"panther","aranha ancestral":"spider","troll":"troll",
+ "emboscador":"ambusher","pantera das brumas":"panther","aranha ancestral":"spider","troll":"troll","trol":"troll",
  // Ashen
  "cultista":"cultist","espectro":"specter","guardiao antigo":"ancient_guardian","cavaleiro espectral":"spectral_knight",
  // Fronteira dos Dragões
  "draco selvagem":"wild_drake","salteador draconico":"draconic_raider",
  "guerreiro draco":"drake_warrior","guardiao de obsidiana":"obsidian_guardian",
  // Sahir (artes similares)
- "escorpiao gigante":"spider","saqueador do deserto":"raider","mumia real":"skeleton","djinn corrompido":"specter",
+ "escorpiao gigante":"spider","saqueador do deserto":"raider","mumia real":"skeleton","djinn corrompido":"specter","genio corrompido":"specter",
  // Namar
  "pirata":"bandit","serpente marinha":"wild_drake","afogado":"skeleton","corsario espectral":"spectral_knight",
  // Elarin
- "ent corrompido":"ancient_guardian","cacador feerico":"ambusher","fera lunar":"wolf","espirito selvagem":"specter",
+ "ent corrompido":"ancient_guardian","guardiao arboreo corrompido":"ancient_guardian","cacador feerico":"ambusher","fera lunar":"wolf","espirito selvagem":"specter",
  // Kharum
- "golem de pedra":"ancient_guardian","yeti":"troll","rebelde das minas":"raider","dragao de gelo":"wild_drake",
+ "golem de pedra":"ancient_guardian","yeti":"troll","ieti":"troll","rebelde das minas":"raider","dragao de gelo":"wild_drake",
  // Morn
  "bruxa do pantano":"cultist","hidra jovem":"wild_drake","carnical":"skeleton","limo ancestral":"specter",
  // Solkar

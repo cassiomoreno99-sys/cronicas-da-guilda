@@ -26,9 +26,9 @@ export const REGIONAL_CHAPTERS:Record<number,RegionalChapter>={
       quest("A Ponte dos Peregrinos","Escolte sobreviventes pela ponte coberta de bruma enquanto panteras bloqueiam o caminho.", "escort","Pantera das brumas","paladin","Cavaleiros resistem aos ataques; mantenha a caravana protegida.",3),
       quest("A Última Clareira","Defenda a barricada dos guardas florestais contra emboscadores que atacam de todos os lados.", "defense","Emboscador","warrior","Guerreiros seguram a linha de frente enquanto a barricada resiste.",4),
       quest("O Coração Enredado","Desça à gruta das raízes e vença as aranhas que guardam a fonte da névoa.", "dungeon","Aranha ancestral","mage","Magos são úteis em corredores tomados por criaturas da floresta.",4),
-      quest("A Garganta do Troll","Cace o troll que dominou o desfiladeiro antes que a trilha seja perdida.", "hunt","Troll","ranger","A caçada é limitada no tempo; explore o controle e a precisão dos arqueiros.",4)
+      quest("A Garganta do Trol","Cace o trol que dominou o desfiladeiro antes que a trilha seja perdida.", "hunt","Trol","ranger","A caçada é limitada no tempo; explore o controle e a precisão dos arqueiros.",4)
     ],
-    guardian:{title:"O Vigia da Névoa",description:"Enfrente o troll ancestral que mantém Brumavale mergulhada em silêncio e medo.",flavor:"Chefe de Brumavale: resistência alta e pressão constante na linha de frente."}
+    guardian:{title:"O Vigia da Névoa",description:"Enfrente o trol ancestral que mantém Brumavale mergulhada em silêncio e medo.",flavor:"Chefe de Brumavale: resistência alta e pressão constante na linha de frente."}
   },
   2:{
     contracts:[
@@ -58,10 +58,10 @@ export const REGIONAL_CHAPTERS:Record<number,RegionalChapter>={
       quest("A Caravana do Último Poço","Escolte um comboio de água cercado por saqueadores do deserto.", "escort","Saqueador do deserto","paladin","Proteger a caravana evita que o último suprimento se perca.",3),
       quest("A Tumba Sob a Areia","Entre no mausoléu soterrado e derrote as múmias reais que o protegem.", "dungeon","Múmia real","healer","Sacerdotes são úteis contra as ameaças da antiga tumba.",4),
       quest("O Cerco do Oásis","Segure as defesas do oásis enquanto saqueadores investem contra os portões.", "defense","Saqueador do deserto","warrior","Guerreiros devem preservar a barricada contra a pressão dos invasores.",4),
-      quest("A Voz da Ampulheta","Explore o santuário enterrado onde um djinn corrompido escraviza antigas almas.", "dungeon","Djinn corrompido","mage","Um grupo com poder mágico enfrenta melhor as forças da areia.",4),
-      quest("O Julgamento das Dunas","Cace um djinn errante antes que a tempestade apague seu rastro.", "hunt","Djinn corrompido","ranger","O limite de rodadas exige uma equipe de ação rápida.",4)
+      quest("A Voz da Ampulheta","Explore o santuário enterrado onde um gênio corrompido escraviza antigas almas.", "dungeon","Gênio corrompido","mage","Um grupo com poder mágico enfrenta melhor as forças da areia.",4),
+      quest("O Julgamento das Dunas","Cace um gênio errante antes que a tempestade apague seu rastro.", "hunt","Gênio corrompido","ranger","O limite de rodadas exige uma equipe de ação rápida.",4)
     ],
-    guardian:{title:"O Trono de Areia Eterna",description:"Enfrente o soberano corrompido das dunas e encerre a maldição do deserto de Sahir.",flavor:"Chefe de Sahir: um djinn poderoso guarda a passagem do deserto."}
+    guardian:{title:"O Trono de Areia Eterna",description:"Enfrente o soberano corrompido das dunas e encerre a maldição do deserto de Sahir.",flavor:"Chefe de Sahir: um gênio poderoso guarda a passagem do deserto."}
   },
   5:{
     contracts:[
@@ -76,7 +76,7 @@ export const REGIONAL_CHAPTERS:Record<number,RegionalChapter>={
   },
   6:{
     contracts:[
-      quest("Raízes que Sangram","Explore os troncos ocos e elimine entes corrompidos próximos ao santuário.", "dungeon","Ent corrompido","mage","Magia auxilia a equipe contra a defesa das árvores antigas.",3),
+      quest("Raízes que Sangram","Explore os troncos ocos e elimine guardiões arbóreos corrompidos próximos ao santuário.", "dungeon","Guardião arbóreo corrompido","mage","Magia auxilia a equipe contra a defesa das árvores antigas.",3),
       quest("A Trilha do Caçador Perdido","Rastreie o caçador feérico que embosca os vigias da floresta.", "hunt","Caçador feérico","ranger","Os arqueiros conhecem as trilhas e aproveitam a perseguição curta.",3),
       quest("O Cortejo das Sementes","Escolte os guardiões das sementes durante a migração de feras lunares.", "escort","Fera lunar","healer","Manter o grupo vivo é essencial para concluir a escolta.",4),
       quest("O Círculo Lunar","Defenda a barricada do círculo élfico dos ataques das feras da lua.", "defense","Fera lunar","paladin","A defesa prolongada exige proteção e cura.",4),
@@ -88,7 +88,7 @@ export const REGIONAL_CHAPTERS:Record<number,RegionalChapter>={
   7:{
     contracts:[
       quest("Ecos nas Minas Profundas","Explore galerias abandonadas tomadas por rebeldes das minas.", "dungeon","Rebelde das minas","rogue","Assassinos aproveitam as galerias e os túneis estreitos.",3),
-      quest("Garras na Neve Eterna","Cace os yetis que bloquearam o acesso aos refúgios da montanha.", "hunt","Yeti","ranger","A perseguição na neve pede uma equipe rápida.",3),
+      quest("Garras na Neve Eterna","Cace os iétis que bloquearam o acesso aos refúgios da montanha.", "hunt","Iéti","ranger","A perseguição na neve pede uma equipe rápida.",3),
       quest("Caravana de Ferronúcleo","Escolte os carregamentos da forja anã atacados por rebeldes.", "escort","Rebelde das minas","warrior","A guarda pesada deve proteger o carregamento até o destino.",4),
       quest("O Bastião da Geada","Resista junto à barricada contra golems que avançam sobre a fortaleza.", "defense","Golem de pedra","paladin","Cavaleiros e curandeiros ajudam a segurar o forte.",4),
       quest("A Câmara das Sete Runas","Desça à câmara ancestral e derrote os golems que guardam suas portas.", "dungeon","Golem de pedra","mage","Magos contribuem contra as criaturas de pedra.",4),

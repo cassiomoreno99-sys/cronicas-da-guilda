@@ -133,7 +133,7 @@ export const RACES: Record<HeroRace, { name: string; short: string; description:
   human: { name: "Humano", short: "HU", description: "Versátil e adaptável. Usa equipamentos da tradição dos reinos." },
   elf: { name: "Elfo", short: "EL", description: "Ágil e afinado com magia. Usa armas lunares e armaduras leves." },
   dwarf: { name: "Anão", short: "AN", description: "Resistente e forjado para a linha de frente. Usa metal e runas." },
-  orc: { name: "Orc", short: "OR", description: "Brutal e resistente. Prefere armas pesadas e proteção tribal." },
+  orc: { name: "Orco", short: "OR", description: "Brutal e resistente. Prefere armas pesadas e proteção tribal." },
   beastkin: { name: "Bestial / Dracônico", short: "BE", description: "Linhagens bestiais e dracônicas, de força instintiva e traços próprios. Nos 84 retratos desta fase, o visual bestial usa a linhagem dracônica." },
   umbral: { name: "Sombrio", short: "SO", description: "Ligado às sombras e à magia obscura. Usa lâminas e mantos umbrais." },
 };
@@ -183,7 +183,7 @@ const talent = (name: string, description: string, stages: [string, string, stri
 export const PATH_NAMES: Record<TalentPath, string> = { offense: "Poder", healing: "Cura", defense: "Defesa" };
 export const SPECIALIZATIONS: Record<HeroClass, Record<TalentPath, TalentSpec>> = {
   warrior: {
-    offense: talent("Berserker", "Por grau: +6 ataque e +4% crítico.", ["Ímpeto", "Ruptura", "Fúria ancestral"], { attack: 6, critical: .04 }),
+    offense: talent("Guerreiro Frenético", "Por grau: +6 ataque e +4% crítico.", ["Ímpeto", "Ruptura", "Fúria ancestral"], { attack: 6, critical: .04 }),
     healing: talent("Médico de guerra", "Por grau: +4 magia e +20% cura. Cura aliados abaixo de 45% de vida.", ["Primeiros socorros", "Resgate", "Vida no campo"], { magic: 4, healing: .2 }),
     defense: talent("Guardião", "Por grau: +7 defesa e +20 vida. Protege estruturas.", ["Postura firme", "Muralha", "Bastião"], { defense: 7, hp: 20 }),
   },
@@ -256,8 +256,8 @@ export const RACE_TREES: Record<HeroRace, Record<RacialPath, RaceTalentSpec>> = 
   },
   orc: {
     heritage: { name: "Sangue de Guerra", stage2: "Sangue da Horda", stage3: "Coração Indomável", description: "A dor alimenta a recuperação e a pressão ofensiva.", bonus: { attack: 2, hp: 14 }, ability: { id: "race-orc-heritage", name: "Sangue de Guerra", description: "Drena a força do inimigo para recuperar a própria vida.", target: "enemy", cooldown: 4, effect: "drain", evolved: true } },
-    spirit: { name: "Fúria da Horda", stage2: "Clamor da Horda", stage3: "Horda Imparável", description: "A presença orc pressiona toda a linha adversária.", bonus: { attack: 3, speed: 1 }, ability: { id: "race-orc-spirit", name: "Fúria da Horda", description: "Varre todos os inimigos e os deixa vulneráveis.", target: "all-enemies", cooldown: 4, effect: "storm", evolved: true } },
-    war: { name: "Sacrifício Orc", stage2: "Dor pela Vitória", stage3: "Sacrifício do Chefe", description: "Converte resistência em um golpe devastador.", bonus: { attack: 4, critical: .02 }, ability: { id: "race-orc-war", name: "Sacrifício Orc", description: "Golpe brutal de alvo único que deixa sangramento.", target: "enemy", cooldown: 4, effect: "execution", evolved: true } },
+    spirit: { name: "Fúria da Horda", stage2: "Clamor da Horda", stage3: "Horda Imparável", description: "A presença dos orcos pressiona toda a linha adversária.", bonus: { attack: 3, speed: 1 }, ability: { id: "race-orc-spirit", name: "Fúria da Horda", description: "Varre todos os inimigos e os deixa vulneráveis.", target: "all-enemies", cooldown: 4, effect: "storm", evolved: true } },
+    war: { name: "Sacrifício do Orco", stage2: "Dor pela Vitória", stage3: "Sacrifício do Chefe", description: "Converte resistência em um golpe devastador.", bonus: { attack: 4, critical: .02 }, ability: { id: "race-orc-war", name: "Sacrifício do Orco", description: "Golpe brutal de alvo único que deixa sangramento.", target: "enemy", cooldown: 4, effect: "execution", evolved: true } },
   },
   beastkin: {
     heritage: { name: "Instinto Predador", stage2: "Olhos da Caça", stage3: "Predador Alfa", description: "Instinto, velocidade e precisão em combate.", bonus: { speed: 3, critical: .02 }, ability: { id: "race-beastkin-heritage", name: "Instinto Predador", description: "Golpe rápido que aplica veneno ao alvo.", target: "enemy", cooldown: 4, effect: "venom", evolved: true } },
@@ -428,7 +428,7 @@ export function missionSuggestedLevel(m:Pick<Mission,"location"|"rank"|"kind">) 
   const base=region?.minLevel||1;
   return Math.min(MAX_HERO_LEVEL,base+[0,1,2,4,6][Math.min(4,Math.max(0,m.rank-1))]+(m.kind==="boss"?3:0));
 }
-/** XP base exibido nas missões e entregue pelo motor após o resultado.
+/** EXP base exibido nas missões e entregue pelo motor após o resultado.
  * Ajuste por nível individual ocorre separadamente (repetição rende menos). */
 export function missionRewardXp(m:Pick<Mission,"location"|"rank"|"kind">,won=true) {
   const regionIndex=Math.max(0,WORLD_REGIONS.findIndex(r=>r.name===m.location));
@@ -731,11 +731,11 @@ function addScar(s: Campaign, h: Hero, source: "defeat" | "boss" = "defeat") {
   if (source === "boss" || random(s) < .32) { h.scars.push(pick.id); note(s, h.name + " ganhou a marca \"" + pick.name + "\"."); }
 }
 function resolveGuildRaid(s: Campaign, teams: string[][], rivalId?: string) {
-  requireRule(!battleActive(s), "Conclua as expedições antes de iniciar uma raid.");
+  requireRule(!battleActive(s), "Conclua as expedições antes de iniciar uma incursão.");
   requireRule(!guildConfrontationToday(s),"A Guilda já participou de um confronto contra rivais hoje. Volte no próximo dia.");
-  requireRule(teams.length === 3 && teams.every(team => team.length >= 3 && team.length <= 4), "A raid exige três equipes de 3 ou 4 heróis.");
-  const all = teams.flat(); requireRule(new Set(all).size === all.length, "Um herói não pode participar de duas frentes da mesma raid.");
-  requireRule(all.every(id => s.heroes.some(h => h.id === id && available(h, s))), "Todos os heróis da raid precisam estar disponíveis.");
+  requireRule(teams.length === 3 && teams.every(team => team.length >= 3 && team.length <= 4), "A incursão exige três equipes de 3 ou 4 heróis.");
+  const all = teams.flat(); requireRule(new Set(all).size === all.length, "Um herói não pode participar de duas frentes da mesma incursão.");
+  requireRule(all.every(id => s.heroes.some(h => h.id === id && available(h, s))), "Todos os heróis da incursão precisam estar disponíveis.");
   const rival = rivalId ? s.rivals.find(r => r.id === rivalId) : undefined;
   if (rivalId) requireRule(rival, "Guilda rival não encontrada.");
   const names = ["Portão Principal", "Passagem Subterrânea", "Torre dos Magos"];
@@ -751,11 +751,11 @@ function resolveGuildRaid(s: Campaign, teams: string[][], rivalId?: string) {
     awardSquadExperience(s, teams[i], i === 0 ? "defense" : i === 1 ? "dungeon" : "boss", won);
   }
   const wins = fronts.filter(f => f.won).length, won = wins >= 2, reward = won ? 260 + s.activeRegion * 45 + (rival ? 120 : 0) : 60;
-  entry(s, (rival ? "Guerra de guildas · " + rival!.name : "Raid · " + WORLD_REGIONS[s.activeRegion - 1].name), reward);
+  entry(s, (rival ? "Guerra de guildas · " + rival!.name : "Incursão · " + WORLD_REGIONS[s.activeRegion - 1].name), reward);
   if (won) s.fame += rival ? 22 : 16;
   else s.fame = Math.max(0, s.fame - 8);
-  if (rival) raiseRivalry(s, rival.id, won ? 20 : 10, "Raid entre guildas");
-  const result: GuildRaidResult = { id: "raid-" + s.day + "-" + s.raidHistory.length, day: s.day, rivalId: rival?.id, title: rival ? "Cerco contra " + rival.name : "Raid em " + WORLD_REGIONS[s.activeRegion - 1].name, teams: teams.map(x => [...x]), fronts, won, reward, loot: [] };
+  if (rival) raiseRivalry(s, rival.id, won ? 20 : 10, "Incursão entre guildas");
+  const result: GuildRaidResult = { id: "raid-" + s.day + "-" + s.raidHistory.length, day: s.day, rivalId: rival?.id, title: rival ? "Cerco contra " + rival.name : "Incursão em " + WORLD_REGIONS[s.activeRegion - 1].name, teams: teams.map(x => [...x]), fronts, won, reward, loot: [] };
   s.raidHistory.unshift(result); s.raidHistory = s.raidHistory.slice(0, 30);
   note(s, result.title + ": " + wins + "/3 frentes vencidas. " + (won ? "Vitória da guilda." : "A ofensiva falhou."));
   // Raid não avança o calendário: Próximo dia é a única passagem de tempo.
@@ -1236,13 +1236,13 @@ export function rankingRecruitQuote(s: Campaign, guild: RivalGuild, hero: RivalH
 }
 function negotiateRival(s: Campaign, action: Extract<Action, { type: "negotiate-rival" | "rank-recruit" }>) {
   const ranked=action.type==="rank-recruit";
-  if(ranked)requireRule(action.method==="persuade"||action.method==="buyout","Abordagem do ranking inválida.");
+  if(ranked)requireRule(action.method==="persuade"||action.method==="buyout","Abordagem da classificação inválida.");
   const mode:NegotiationMode=ranked?(action.method==="buyout"?"transfer":"offer"):action.mode;
   requireRule(Object.hasOwn(NEGOTIATION_MODES, mode), "Escolha uma abordagem válida.");
   const guild=(ranked?s.rivals:rivalRecruitCandidates(s)).find(g => g.id === action.guildId);
   const h=guild?.heroes.find(h => h.id === action.heroId);
   requireRule(guild && h, "Esse aventureiro não está mais nessa guilda.");
-  if(ranked)requireRule(heroLeaderboard(s).slice(0,10).some(candidate=>candidate.id===h.id&&!candidate.owned&&candidate.guild===guild.name),"O herói não está mais no Top 10 do ranking.");
+  if(ranked)requireRule(heroLeaderboard(s).slice(0,10).some(candidate=>candidate.id===h.id&&!candidate.owned&&candidate.guild===guild.name),"O herói não está mais entre os 10 melhores da classificação.");
   const q=ranked?rankingRecruitQuote(s,guild,h,action.method):negotiationQuote(s,guild,h,mode);
   const prestigeCost="prestigeCost" in q && typeof q.prestigeCost==="number"?q.prestigeCost:0;
   requireRule(q.eligible,q.reason);
@@ -1305,7 +1305,7 @@ function resolveLeagueDay(s: Campaign) {
   const match: LeagueMatch = { season: s.season, day, opponentId: opponent.id, opponentName: opponent.name, playerScore: outcome.playerScore, opponentScore: outcome.opponentScore, result: outcome.result, playerPower, opponentPower, rivalry, forfeit:!lineup.ready, tactic:s.leagueTactic??s.tactic };
   s.leagueHistory.unshift(match); s.leagueHistory = s.leagueHistory.slice(0, 120);
   if (rivalry) { const delta = outcome.result === "win" ? 3 : outcome.result === "loss" ? -2 : 0; s.fame = Math.max(0, s.fame + delta); }
-  note(s, (rivalry ? "Clássico da liga" : "Liga") + " · " + s.name + " " + outcome.playerScore + " × " + outcome.opponentScore + " " + opponent.name + ". " + (!lineup.ready ? "Derrota por W.O.: menos de 3 heróis disponíveis." : outcome.result === "win" ? "+3 pontos." : outcome.result === "draw" ? "+1 ponto." : "Sem pontos."));
+  note(s, (rivalry ? "Clássico da liga" : "Liga") + " · " + s.name + " " + outcome.playerScore + " × " + outcome.opponentScore + " " + opponent.name + ". " + (!lineup.ready ? "Derrota por ausência: menos de 3 heróis disponíveis." : outcome.result === "win" ? "+3 pontos." : outcome.result === "draw" ? "+1 ponto." : "Sem pontos."));
   for (const r of s.rivals) if (r.id !== opponent.id) { const p = random(s), win = rivalWinChance(r, s); if (p < win) { r.points += 3; r.victories++; } else if (p < win + .18) r.points++; }
 }
 export const CUP_DAYS = [15,30,45,60];
@@ -1366,8 +1366,8 @@ export const JOURNEY_OPTIONS: Record<JourneyDuration, { label: string; dailyXp: 
 };
 export const JOURNEY_CHOICES: Record<JourneyChoice, { name: string; description: string }> = {
   camp: { name: "Acampamento", description: "Segue com segurança e recupera energia durante a viagem." },
-  explore: { name: "Exploração", description: "Ganha mais XP, mas consome energia." },
-  shortcut: { name: "Atalho", description: "Avança mais rápido, com um pouco menos de XP diário." },
+  explore: { name: "Exploração", description: "Ganha mais EXP, mas consome energia." },
+  shortcut: { name: "Atalho", description: "Avança mais rápido, com um pouco menos de EXP diário." },
 };
 function processJourneys(s: Campaign) {
   if (!s.journeys?.length) return;
@@ -1385,7 +1385,7 @@ function processJourneys(s: Campaign) {
     if (journey.remaining <= 0) {
       journey.remaining = 0; completed.push(journey); s.fame += 3 + journey.duration;
       
-      note(s, h.name + " voltou de uma viagem de " + journey.duration + " dias com +" + journey.xpEarned + " XP e +" + (3 + journey.duration) + " renome.");
+      note(s, h.name + " voltou de uma viagem de " + journey.duration + " dias com +" + journey.xpEarned + " EXP e +" + (3 + journey.duration) + " renome.");
     }
   }
   if (completed.length) s.journeys = s.journeys.filter(j => !completed.includes(j));
@@ -1426,11 +1426,11 @@ function advance(s: Campaign, used: string[]) {
       const itemKey=GUILD_EXCLUSIVE_GEAR[(s.season-1)%GUILD_EXCLUSIVE_GEAR.length].id;
       s.seasonForgePlans!.unshift({season:s.season,itemKey,materials});
       for(const [key,qty] of Object.entries(materials))for(let i=0;i<qty;i++)giveSeasonReward(s,key);
-      note(s,"Top 3 da Liga! Kit completo de materiais para fabricar exatamente uma "+EXCLUSIVE_BY_ID[itemKey].nome+" na Forja.");
+      note(s,"Entre os 3 primeiros da Liga! Conjunto completo de materiais para fabricar exatamente uma "+EXCLUSIVE_BY_ID[itemKey].nome+" na Forja.");
     }
     for(const winner of bestHeroes.slice(0,3))if(winner.owned){
       const key="RX-"+winner.race.toUpperCase();
-      if(EXCLUSIVE_BY_ID[key]){giveSeasonReward(s,key);note(s,winner.name+" entrou no Top 3 dos Heróis e recebeu "+EXCLUSIVE_BY_ID[key].nome+(s.pendingRewards?.some(i=>i.key===key)? " (retirada pendente: baú cheio).":"."));}
+      if(EXCLUSIVE_BY_ID[key]){giveSeasonReward(s,key);note(s,winner.name+" entrou entre os 3 melhores heróis e recebeu "+EXCLUSIVE_BY_ID[key].nome+(s.pendingRewards?.some(i=>i.key===key)? " (retirada pendente: baú cheio).":"."));}
       entry(s,"Prêmio herói · "+winner.name,Math.round(260-50*bestHeroes.findIndex(h=>h.id===winner.id)));
     }
     entry(s, "Prêmio da temporada " + s.season + " · " + LEAGUE_TIERS[oldTier].name + " · " + place + "º lugar", prize);
@@ -1496,7 +1496,7 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
     const h = s.heroes.find(h => h.id === f.id)!;
     h.energy = Math.max(0, h.energy - Math.max(5,Math.round((status === "retreated" ? 12 : c.fatigueTotal / Math.max(1,b.rounds))/(1+(s.hq.stables||0)*.035))) - (f.hp === 0 ? 12 : 0));
     // Repetir desafios muito abaixo do próprio nível deixa de ser o melhor treino.
-    // O XP final por herói é menor nas missões antigas; o histórico da recompensa permanece.
+    // O EXP final por herói é menor nas missões antigas; o histórico da recompensa permanece.
     const overlevel=Math.max(0,h.level-missionSuggestedLevel(m)-3);
     const earned=Math.max(status==="retreated"&&!b.rounds?0:1,Math.round(b.xp*Math.max(.18,1-overlevel*.16)));
     if (gainXp(h,earned)) b.levelUps.push(h.name);
@@ -1510,7 +1510,7 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   awardSquadExperience(s, battleTeam, m.kind, won);
   if (won) {
     entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s,m,battleTeam);
-    for(const key of b.loot.filter(key=>key.startsWith("IMP-S-")))note(s,"Drop Supremo Imperial · "+(CATALOG_BY_ID[key]?.nome||key)+" encontrado!");
+    for(const key of b.loot.filter(key=>key.startsWith("IMP-S-")))note(s,"Peça Suprema Imperial encontrada · "+(CATALOG_BY_ID[key]?.nome||key)+" encontrado!");
     s.seasonMissionVictories=(s.seasonMissionVictories||0)+1;
     const influenceBefore=regionInfluence(s,m.location);
     s.regionalInfluence![m.location]=Math.min(100,influenceBefore+(m.kind==="boss"?18:2+m.rank));
@@ -2200,7 +2200,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       const team = selectTeam(s, action.team, action.tactic), cost = 50 * team.length; requireRule(s.gold >= cost, "O treino da equipe custa " + cost + " de ouro.");
       requireRule(s.dailyActions!.teamTrainDay!==s.day,"A equipe já treinou hoje.");
       requireRule(team.every(h=>s.hqActionDay[h.id]!==s.day),"Um dos heróis já treinou ou avançou sua história hoje.");
-      entry(s, "Treino da equipe", -cost); team.forEach(h => { h.energy -= 12; gainXp(h, 65); s.hqActionDay[h.id]=s.day; }); note(s, "A equipe treinou: +65 XP por herói e −12 energia."); s.dailyActions!.teamTrainDay=s.day; break;
+      entry(s, "Treino da equipe", -cost); team.forEach(h => { h.energy -= 12; gainXp(h, 65); s.hqActionDay[h.id]=s.day; }); note(s, "A equipe treinou: +65 EXP por herói e −12 energia."); s.dailyActions!.teamTrainDay=s.day; break;
     }
     case "train-hero": {
       const h = s.heroes.find(h => h.id === action.heroId); requireRule(h, "Herói não encontrado na guilda.");
@@ -2208,7 +2208,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
       requireRule(s.hqActionDay[h.id] !== s.day, "Esse herói já treinou ou avançou sua história hoje.");
       const plan = trainingPlan(s, h); requireRule(s.gold >= plan.cost, "O treino individual custa " + plan.cost + " ouro.");
       entry(s, "Treino individual · " + h.name, -plan.cost); h.energy -= plan.energy; gainXp(h, plan.xp);
-      note(s, h.name + " concluiu treino individual: +" + plan.xp + " XP, −" + plan.energy + " energia. Nível " + h.level + ".");
+      note(s, h.name + " concluiu treino individual: +" + plan.xp + " EXP, −" + plan.energy + " energia. Nível " + h.level + ".");
       s.hqActionDay[h.id] = s.day; break;
     }
     case "hire": {

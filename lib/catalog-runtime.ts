@@ -1,7 +1,8 @@
 import { CATALOG_BY_ID, CATALOG_ITEMS, RECIPE_BY_ID, testShop, equippedPosition, isTwoHanded, SETS } from "./catalog-test.ts";
-import { heroRace, type Campaign,type Action,type HeroClass,type HeroRace,type Mission } from "./game.ts";
-import { imperialMarket, imperialSetBonuses } from "./imperial-content.ts";
+import { heroLuck, type Campaign,type Action,type HeroClass,type Mission } from "./game.ts";
+import { imperialMarket, imperialSetBonuses, IMPERIAL_SETS, IMPERIAL_DROP_BASE, IMPERIAL_DROP_MIN_REGION } from "./imperial-content.ts";
 import { chestCapacity, storageUsed } from "./storage.ts";
+import { familiarityBonus } from "./team-familiarity.ts";
 type AddEntry=(s:Campaign,title:string,delta:number)=>void;
 export class CatalogRuleError extends Error {}
 function ensure(v:unknown,message:string):asserts v {if(!v)throw new CatalogRuleError(message);}
@@ -47,7 +48,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   ensure(!s.journeys.some(j=>j.heroId===hero.id&&j.remaining>0),"Herói em viagem.");
   const def=CATALOG_BY_ID[item.key],slot=equippedPosition(item.key);
   ensure(def&&slot,"Objeto não equipável.");ensure(def.classes.some(c=>NAMES[c]===hero.class),"Classe incompatível.");
-  ensure(!def.race || heroRace(hero)===def.race,"Esta relíquia é exclusiva de outra raça.");
+  ensure(!def.race || hero.race===def.race,"Esta relíquia é exclusiva de outra raça.");
   ensure(hero.level>=def.nivel,"Nível "+def.nivel+" necessário.");
   const owned=s.chest.filter(x=>x.equippedTo===hero.id);
   const used=owned.map(x=>x.equippedSlot||equippedPosition(x.key));
@@ -102,7 +103,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
   ensure(d.classes.some(c=>NAMES[c]===hero.class)&&hero.level>=d.nivel,"Classe ou nível incompatível.");
   ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(hero.id)),"Herói está em expedição.");
   if(imperial){
-   ensure(d.race===heroRace(hero),"Livro imperial reservado a outra raça.");
+   ensure(d.classes.some(c=>NAMES[c]===hero.class),"Livro imperial reservado a outra classe.");
    ensure(!hero.imperialBook,"Este herói já aprendeu um livro imperial.");
    hero.imperialBook=d.id;
   }else{
@@ -125,10 +126,26 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
  * recursos são recolhidos regionalmente, e itens combatíveis dependem de rolagens de raridade.
  * Loot só é concedido pelo chamador após uma vitória.
  */
-export function awardCatalogLoot(s:Campaign,m:Mission):string[]{
+/** Chefes a partir da região 6: 20% base + 1,5 p.p./nível de entrosamento
+ * + 20% da sorte média do time. Uma única rolagem por vitória. */
+export function imperialDropChance(s:Campaign,m:Mission,team:readonly string[]):number{
+ if(m.kind!=="boss"||REGIONS.indexOf(m.location as typeof REGIONS[number])+1<IMPERIAL_DROP_MIN_REGION)return 0;
+ const heroes=team.map(id=>s.heroes.find(h=>h.id===id)).filter((h):h is Campaign["heroes"][number]=>!!h);
+ const level=familiarityBonus(s.teamFamiliarity,team).level;
+ const luck=heroes.length?heroes.reduce((sum,h)=>sum+heroLuck(h,s),0)/heroes.length:0;
+ return Math.min(.40,Math.round((IMPERIAL_DROP_BASE+level*.015+luck*.20)*1000)/1000);
+}
+export function awardCatalogLoot(s:Campaign,m:Mission,team:readonly string[]=[]):string[]{
  if(storageUsed(s.chest)>=chestCapacity(s))return [];
  const won:string[]=[];
  const pick=(candidates:typeof CATALOG_ITEMS)=>candidates[Math.floor(roll(s)*candidates.length)];
+ // Peça rara primeiro para o inventário cheio não consumir a chance com material comum.
+ const chance=imperialDropChance(s,m,team);
+ if(chance>0&&roll(s)<chance){
+  const classes=team.map(id=>s.heroes.find(h=>h.id===id)?.class).filter((c):c is HeroClass=>!!c);
+  const eligible=IMPERIAL_SETS.filter(d=>classes.some(c=>d.classes.some(n=>NAMES[n]===c)));
+  if(eligible.length){const d=eligible[Math.floor(roll(s)*eligible.length)];add(s,d.id);won.push(d.id);}
+ }
  const material=CATALOG_ITEMS.filter(d=>d.categoria==="Materiais"&&d.regiao===m.location);
  if(material.length&&storageUsed(s.chest)<chestCapacity(s)){const d=pick(material);add(s,d.id);won.push(d.id);}
  const index=m.kind==="boss"?6:Number(m.id.split("-").at(-1));
@@ -173,7 +190,7 @@ export function equipmentSetCombatEffects(heroClass:HeroClass,equippedKeys:strin
   skillDamage:complete.has("Fortuna do Espetáculo")?.03:0
  };
 }
-export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[],race?:HeroRace){
+export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[]){
  const n={attack:0,defense:0,magic:0,hp:0,speed:0,critical:0,healing:0,luck:0};
  for(const [name,def] of Object.entries(SETS)){
   if(NAMES[def.classe]!==heroClass)continue;
@@ -196,9 +213,7 @@ export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[],
    if(name==="Fortuna do Espetáculo"){n.magic+=9;n.critical+=.02;}
   }
  }
- if(race){
-  const bonus=imperialSetBonuses(race,equippedKeys);
-  for(const key of Object.keys(n) as Array<keyof typeof n>)n[key]+=bonus[key];
- }
+ const bonus=imperialSetBonuses(heroClass,equippedKeys);
+ for(const key of Object.keys(n) as Array<keyof typeof n>)n[key]+=bonus[key];
  return n;
 }

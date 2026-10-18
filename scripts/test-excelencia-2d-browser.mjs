@@ -69,8 +69,8 @@ try{
    await page.reload({waitUntil:"networkidle"});
    // Abrir a expedição que continuou ativa, sem modificações no motor.
    if(!(await page.locator(".guild2d-stage").count())){
-    const expButton=page.getByRole("button",{name:/Ver combate|Retomar combate|Abrir combate|Combate em andamento/i}).first();
-    if(await expButton.count())await expButton.click();
+    await page.getByRole("button",{name:"Equipe",exact:true}).first().click();
+    await page.locator(".expedition-card.active").getByRole("button",{name:"Detalhes"}).first().click();
    }
    await page.locator(".guild2d-stage").waitFor({state:"visible",timeout:15000});
    const info=await page.evaluate(()=>{

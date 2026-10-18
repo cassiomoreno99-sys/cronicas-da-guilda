@@ -16,7 +16,7 @@ import {
   teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, leagueLineup, leagueCalendar, CUP_DAYS, cupStageLabel, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
   hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, MAX_HERO_LEVEL, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
-  ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rankingRecruitQuote, rank,
+  ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rankingRecruitQuote, rank, emergencyContractQuote, treasuryForecast, seasonalChallenges, regionInfluence,
   type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
   type Hero, type HQBuilding, type JourneyChoice, type JourneyDuration,
@@ -261,6 +261,11 @@ function MissionPage({
   const boss = seasonBoss(state);
   const cards = [...board, ...(boss ? [boss] : [])];
   return <section className="screen mission-screen">
+    <div className="regional-progress parchment" aria-label="Influência regional">
+      <strong><GameSymbol kind="scouting"/> Apoio regional: {WORLD_MAP[state.activeRegion-1]?.name}</strong>
+      <span>{regionInfluence(state,WORLD_MAP[state.activeRegion-1]?.name||"")}/100 · até +6% ataque/magia e +5% recompensa quando completo</span>
+      <small>Vitórias aumentam o apoio. Marcos de 25, 50, 75 e 100 rendem prestígio. No fim da temporada, a influência diminui 5 pontos.</small>
+    </div>
     <div className="mission-daily-budget" role="status"><GameSymbol kind="scouting"/> Expedições do dia: <strong>{dailyContractsUsed(state)}/{DAILY_CONTRACT_LIMIT}</strong> · Um contrato pode ser tentado apenas uma vez por dia. Próximo dia libera novos contratos.</div>
     <div className="mission-list">
       {cards.map((m, index) => {
@@ -274,6 +279,7 @@ function MissionPage({
             <div className="difficulty"><GameSymbol kind="difficulty"/><b>Dificuldade:</b>{[0,1,2,3,4].map(i => <i key={i} data-on={i < m.rank}>◆</i>)}</div>
             <div className="specialist"><GameSymbol kind="squad"/><span>Especialistas: {specialtyName(m.specialty)}</span></div>
             <div className="specialist"><GameSymbol kind="experience"/><span><strong>Nível recomendado: {Math.min(MAX_HERO_LEVEL,missionSuggestedLevel(m) + Math.floor((state.season - 1) / 3))}</strong> · {m.kind==="boss"?"Chefe de elite":"Perigo desta região"}</span></div>
+            {regionInfluence(state,m.location)>0&&<small className="mission-rumor-ready"><GameSymbol kind="scouting"/> Influência local: {regionInfluence(state,m.location)}/100 · combate e prêmio melhores</small>}
             {tavernRumorReady(state,m.id)&&<small className="mission-rumor-ready"><GameSymbol kind="scouting"/> Rumor investigado · +10% ataque/magia e +5% defesa nesta expedição</small>}
             {!!locks.length && <small className="locked-copy"><GameSymbol kind="locked"/> {locks[0]}</small>}
           </div>
@@ -448,6 +454,13 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
         <small>A partida acontece ao encerrar o dia na Guilda.</small></div>
       <div><strong>Escalação oficial {lineup.ids.length}/4</strong><small>{lineup.ids.map(id=>state.heroes.find(h=>h.id===id)?.name).join(" · ")||"Nenhum herói pronto"} · </small><small>{lineup.ready?"Pronta para Liga e Copa · "+TACTICS[state.leagueTactic??state.tactic].name:"ATENÇÃO: menos de 3 heróis prontos. Derrota por W.O. se encerrar o dia."}</small></div>
       <button type="button" className="action-button blue" onClick={openTeam}>Preparar equipe</button>
+      <div className="league-reserve-controls">
+        <label><input type="checkbox" checked={!!state.leagueAutoSub} disabled={busy}
+          onChange={e=>act({type:"league-auto-reserve",enabled:e.target.checked})}/>
+          <strong>Reservas automáticos (opcional)</strong></label>
+        <small>{state.leagueAutoSub?"Se titulares estiverem indisponíveis, reservas aptos entram automaticamente.":"Apenas titulares escalados podem jogar."}
+          {!!lineup.reserves.length&&" Substitutos: "+lineup.reserves.map(id=>state.heroes.find(h=>h.id===id)?.name).join(", ")+"."}</small>
+      </div>
     </div>
     <ParchmentTitle icon={<img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={31} height={31}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
     <div className="league-table parchment">
@@ -714,13 +727,23 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
 }) {
   const hero = state.heroes.find(h => h.id === selectedId) || state.heroes[0];
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlotId>("weapon");
+  const [onlySets,setOnlySets]=useState(false);
   const activeSlot = EQUIPMENT_SLOTS.find(s => s.id === selectedSlot) || EQUIPMENT_SLOTS[0];
   const equippedCount = state.chest.filter(i => i.equippedTo === hero.id && ITEMS[i.key]).length;
   const used=state.chest.filter(i=>i.equippedTo===hero.id);
   const current=used.find(i=>(i.equippedSlot||equippedPosition(i.key))===selectedSlot);
-  const candidates=state.chest.filter(i=>!i.equippedTo&&((equippedPosition(i.key)===selectedSlot)||(equippedPosition(i.key)==="ring"&&["ring1","ring2"].includes(selectedSlot))) &&
+  const candidates=state.chest.filter(i=>!i.equippedTo&&(!onlySets||!!ITEMS[i.key]?.set)&&((equippedPosition(i.key)===selectedSlot)||(equippedPosition(i.key)==="ring"&&["ring1","ring2"].includes(selectedSlot))) &&
     (ITEMS[i.key]?.classes||[]).includes(hero.class)&&hero.level>=(ITEMS[i.key]?.levelReq||0));
 
+  const comparison=(item:ChestItem)=>{
+    const before=heroStats(hero,state);
+    const hypothesis={...state,chest:state.chest.map(entry=>entry.id===item.id?{...entry,equippedTo:hero.id,equippedSlot:selectedSlot}:entry)};
+    const after=heroStats(hero,hypothesis);
+    const deltas=[["ATQ",Math.round(after.attack-before.attack)],["DEF",Math.round(after.defense-before.defense)],
+      ["MAG",Math.round(after.magic-before.magic)],["PV",Math.round(after.hp-before.hp)],
+      ["VEL",Math.round(after.speed-before.speed)]].filter(([,n])=>Number(n)!==0);
+    return deltas.map(([k,n])=>String(k)+" "+(Number(n)>0?"+":"")+n).join(" · ")||"Sem mudança significativa";
+  };
   return <section className="screen equipment-screen" aria-label="Equipamentos de 12 espaços">
     <header className="equipment-page-header">
       <button type="button" className="equipment-back" onClick={back}>
@@ -758,12 +781,14 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
         </button>;
       })}
     </div>
+    <label className="equip-only-set"><input type="checkbox" checked={onlySets} onChange={e=>setOnlySets(e.target.checked)}/>
+      Mostrar apenas peças de conjuntos</label>
     <section className="equipment-slot-detail parchment" aria-live="polite">
       <span className="equipment-detail-label">{activeSlot.group}</span>
       <h3>{activeSlot.label}</h3><p>{activeSlot.description}</p>
       {current?<div><strong>{ITEMS[current.key]?.name}</strong><p>{ITEMS[current.key]?.description}</p><SetItemInfo itemKey={current.key}/><button className="action-button blue" disabled={busy} onClick={()=>act({type:"unequip",itemId:current.id})}>Desequipar</button></div>:
       <div><p>Sem item equipado neste espaço.</p><div className="catalog-equippable">
-        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}><ItemArt itemKey={i.key}/>{ITEMS[i.key]?.name}{ITEMS[i.key]?.set&&<small className="equipment-candidate-set"> · {ITEMS[i.key]?.set}</small>}</button>)}
+        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}><ItemArt itemKey={i.key}/><span>{ITEMS[i.key]?.name}{ITEMS[i.key]?.set&&<small className="equipment-candidate-set">Conjunto: {ITEMS[i.key]?.set}</small>}<small className="equipment-comparison">{comparison(i)}</small></span></button>)}
       </div>{!candidates.length&&<small>Sem itens compatíveis no baú.</small>}</div>}
     </section>
     <button type="button" className="equipment-bottom-back" onClick={back}><ChevronLeft aria-hidden="true"/> Voltar à ficha do herói</button>
@@ -772,6 +797,7 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
 
 function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
   const [filter,setFilter] = useState("all");
+  const [itemQuery,setItemQuery]=useState("");
   const [itemPage,setItemPage] = useState(0);
   const [showCatalog,setShowCatalog] = useState(false);
   const [catalogPage,setCatalogPage] = useState(0);
@@ -779,7 +805,9 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const [selectedId,setSelectedId] = useState(state.chest.find(i=>!i.equippedTo)?.id || "");
   const [recipient,setRecipient] = useState(state.heroes[0]?.id || "");
   const [useHero,setUseHero] = useState(state.heroes[0]?.id || "");
-  const filtered = state.chest.filter(i => !i.equippedTo).filter(i => {
+  const filtered = state.chest.filter(i => !i.equippedTo)
+    .filter(i=>!itemQuery.trim()||(ITEMS[i.key]?.name||"").toLocaleLowerCase("pt-BR").includes(itemQuery.trim().toLocaleLowerCase("pt-BR"))||i.key.toLowerCase().includes(itemQuery.trim().toLowerCase()))
+    .filter(i => {
     const slot = ITEMS[i.key]?.slot;
     if (filter === "all") return true;
     if (filter === "weapons") return slot === "weapon" || slot === "offhand";
@@ -830,6 +858,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   return <section className="screen chest-screen">
     <div className="inventory-top"><button data-active><GameSymbol kind="inventory"/> Inventário</button><button onClick={()=>setShowCatalog(true)}><GameSymbol kind="book"/> Ver 314 itens</button><button onClick={() => {setFilter("material");setItemPage(0);setSelectedId("");}} data-active={filter === "material"}><GameSymbol kind="forge"/> Materiais</button><span><GameSymbol kind="inventory"/> {storageUsed(state.chest)}/{chestCapacity(state)}</span></div>
     <p className="inventory-capacity-note">Forja Nv. {state.hq.forge} · {storageUsed(state.chest)} guardados · {state.chest.filter(i=>!!i.equippedTo).length} equipados nos heróis · {Math.max(0,chestCapacity(state)-storageUsed(state.chest))} espaços livres</p>
+    <label className="inventory-search">Pesquisar no baú <input type="search" placeholder="Nome ou código do item" value={itemQuery} onChange={e=>{setItemQuery(e.target.value);setItemPage(0);setSelectedId("");}}/></label>
     <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => {setFilter(id);setItemPage(0);setSelectedId("");}}>{label}</button>)}</div>
     <nav className="inventory-pagination" aria-label="Páginas dos itens no baú">
       <button type="button" disabled={page===0} onClick={()=>{setItemPage(page-1);setSelectedId("");}}>‹ Anterior</button>
@@ -1067,11 +1096,13 @@ function SymbolGuide(){
 }
 
 function GuildPage({
-  state, act, busy, onExport, onImport, onRecover, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack
-}: { state: Campaign; act: (a: Action) => void; busy: boolean; onExport: () => void; onImport: () => void; onRecover: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void }) {
+  state, act, busy, go, onExport, onImport, onRecover, onReset, musicEnabled, toggleMusic, liteMode, setLiteMode, musicIndex, nextTrack
+}: { state: Campaign; act: (a: Action) => void; busy: boolean; go:(screen:Screen)=>void; onExport: () => void; onImport: () => void; onRecover: () => void; onReset: () => void; musicEnabled: boolean; toggleMusic: () => void; liteMode: boolean; setLiteMode: (value:boolean) => void; musicIndex: number; nextTrack: () => void }) {
   const buildings = Object.entries(HQ_DEFINITIONS) as Array<[HQBuilding,(typeof HQ_DEFINITIONS)[HQBuilding]]>;
   const wage=payroll(state), daysUntilWage=7-((state.day-1)%7);
   const safeTreasury=state.gold-8-wage;
+  const forecast=treasuryForecast(state),relief=emergencyContractQuote(state);
+  const challenges=seasonalChallenges(state);
   const currentRegion=WORLD_MAP[state.activeRegion-1];
   const currentContracts=missions(state);
   const regionalGuardian=seasonBoss(state);
@@ -1093,6 +1124,18 @@ function GuildPage({
         onClick={()=>{const warning=leagueLineup(state).ready?"":" ATENÇÃO: sua escalação da Liga possui menos de 3 heróis disponíveis. Você perderá por W.O. na Liga e, se houver Copa hoje, também será eliminado.";if(window.confirm("Encerrar o dia "+seasonDay(state)+"/"+SEASON_DAYS+"? Salários, liga, viagens e recuperação diária serão processados."+warning))act({type:"next-day"});}}>
         Próximo dia <ChevronRight size={18}/></button>
     </div>
+    <section className="guild-quick-actions parchment" aria-label="Acesso rápido e alertas da campanha">
+      <strong>Plano do dia · atalhos rápidos</strong>
+      <div className="guild-quick-grid">
+        <button type="button" onClick={()=>go("mission")}>Missões <ChevronRight size={15}/></button>
+        <button type="button" onClick={()=>go("league")}>Liga e reservas <ChevronRight size={15}/></button>
+        <button type="button" onClick={()=>go("equipment")}>Equipar heróis <ChevronRight size={15}/></button>
+        <button type="button" onClick={()=>go("chest")}>Inventário <ChevronRight size={15}/></button>
+      </div>
+      {!leagueLineup(state).ready&&<small className="guild-quick-alert">Atenção: menos de três heróis aptos na Liga. Prepare reservas antes de avançar.</small>}
+      {forecast.projected<0&&<small className="guild-quick-alert">Tesouro projetado negativo em {forecast.days} dias: {fmt(forecast.projected)} ouro.</small>}
+      {!!state.pendingRewards?.length&&<small className="guild-quick-alert">{state.pendingRewards.length} prêmios aguardam espaço no baú.</small>}
+    </section>
     <section className="guild-strategy parchment" aria-label="Planejamento financeiro da Guilda">
       <h3><GameSymbol kind="gold"/> Planejamento antes de encerrar o dia</h3>
       <div className="guild-strategy-grid">
@@ -1104,7 +1147,22 @@ function GuildPage({
         <span>Partida da Liga <strong>{leagueLineup(state).ready?"Escalação pronta":"Risco de W.O."}</strong></span>
       </div>
       {safeTreasury<0&&<p className="guild-budget-warning">Atenção: o tesouro não cobre simultaneamente os próximos salários e um dia de manutenção.</p>}
-      <small>Projeção de reserva, não cobrança antecipada. A folha é semanal; resultados de batalhas também alteram o tesouro.</small>
+      <small>Projeção para {forecast.days} dia(s): manutenção −{fmt(forecast.maintenance)} e salários −{fmt(forecast.wages)} = saldo estimado {fmt(forecast.projected)} ouro. Não inclui receitas futuras.</small>
+      <div className="guild-relief"><strong>Trabalho comunitário emergencial</strong>
+        <small>Apenas quando o tesouro não cobre a próxima folha e a manutenção. Uma vez por semana, sem XP.</small>
+        <button type="button" className="action-button green" disabled={busy||!relief.available}
+          onClick={()=>act({type:"emergency-contract"})}>
+           {relief.used?"Já realizado nesta semana":relief.available?"Trabalhar · +"+fmt(relief.reward)+" ouro":"Tesouro ainda cobre as despesas"}
+        </button>
+      </div>
+    </section>
+    <section className="guild-season-goals parchment" aria-label="Desafios e títulos da temporada">
+      <h3><Crown size={19}/> Desafios da temporada</h3>
+      <p>Conclua objetivos reais para conquistar prestígio, sem inflacionar o ouro.</p>
+      <div className="guild-goal-list">{challenges.map(goal=><div key={goal.title}>
+        <span>{goal.title}</span><strong>{Math.min(goal.current,goal.goal)}/{goal.goal} · +{goal.prestige} prestígio</strong>
+      </div>)}</div>
+      {!!state.seasonHonors?.length&&<small>Última honraria: temporada {state.seasonHonors[0].season} — {state.seasonHonors[0].title} (+{state.seasonHonors[0].prestige} prestígio).</small>}
     </section>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}{c.cost?` · Custo: ${fmt(c.cost)} ouro`:" · Sem custo adicional"}</small></button>)}</div></div></div>}
     <div className="hero-art-library parchment" aria-label="Biblioteca de artes dos heróis">
@@ -1341,7 +1399,7 @@ export default function Game() {
       {screen === "equipment" && <EquipmentPage state={state} selectedId={selectedHeroId} selectHero={setSelectedHeroId} back={() => go("heroes")} act={perform} busy={busy} />}
       {screen === "chest" && <ChestPage state={state} act={perform} busy={busy} />}
       {screen === "tavern" && <TavernPage state={state} act={perform} busy={busy} openMission={id => { setSelectedMissionId(id); go("mission"); }} />}
-      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onRecover={recover} onReset={() => { if (window.prompt("Para reiniciar toda a campanha, digite REINICIAR. Seu progresso será perdido.")==="REINICIAR") perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} />} 
+      {screen === "guild" && <GuildPage state={state} act={perform} busy={busy} go={go} onExport={downloadBackup} onImport={() => fileRef.current?.click()} onRecover={recover} onReset={() => { if (window.prompt("Para reiniciar toda a campanha, digite REINICIAR. Seu progresso será perdido.")==="REINICIAR") perform({type:"reset"}); }} musicEnabled={musicEnabled} toggleMusic={toggleMusic} liteMode={liteMode} setLiteMode={setLiteMode} musicIndex={musicIndex} nextTrack={nextTrack} />} 
       </main>
     </div>
     <input ref={fileRef} className="hidden-file" type="file" accept=".json,application/json" onChange={e => { const f=e.target.files?.[0]; if(f) void restore(f); e.currentTarget.value=""; }} />

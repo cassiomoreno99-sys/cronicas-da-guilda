@@ -1,6 +1,6 @@
 import {useState,type CSSProperties} from "react";
 import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide-react";
-import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
+import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,combatReport,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
 import {enemyArtKey,enemyArtSource} from "@/lib/enemy-art";
@@ -139,6 +139,20 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     <strong>{battle.won?"Vitória e recompensas":battle.status==="retreated"?"Equipe retirada":"Resultado do confronto"}</strong>
     <span>Ouro: {battle.reward||0} · Experiência: {battle.xp||0}</span>
     {!!battle.loot?.length&&<p>Itens encontrados: {battle.loot.map(id=>CATALOG_BY_ID[id]?.nome||id).join(" · ")}</p>}
+  </section>}
+  {!active&&<section className="guild2d-performance" aria-label="Desempenho dos heróis na batalha">
+    <h3>Relatório tático da equipe</h3>
+    <p>Valores calculados do registro real de ações nesta expedição.</p>
+    <div className="guild2d-performance-grid">
+      {combatReport(battle,state.heroes).slice(0,8).map(person=><div key={person.id}>
+        <strong>{person.name}</strong>
+        <span>⚔️ Dano: {person.damage}</span>
+        <span>💚 Cura: {person.healing}</span>
+        <span>🛡️ Sofreu: {person.received}</span>
+        <small>Críticos: {person.criticalHits}</small>
+      </div>)}
+      {!combatReport(battle,state.heroes).length&&<small>Sem ações de combate registradas para os heróis.</small>}
+    </div>
   </section>}
   <div className="guild2d-command-center" aria-label="Comandos táticos do combate">
     <div className="guild2d-turn-info"><strong>{active?"Próxima ação: "+(upcoming[0]?.name||"nova rodada"):"Batalha encerrada"}</strong>

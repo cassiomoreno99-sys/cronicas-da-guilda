@@ -79,13 +79,15 @@ export function tavernRumorReady(s:Pick<Campaign,"day"|"tavernRumor">,missionId:
   return s.tavernRumor?.day===s.day && s.tavernRumor.missionId===missionId && !s.tavernRumor.used;
 }
 export type SeasonAward = {season:number;guildWinners:Array<{id:string;name:string}>;heroWinners:Array<{id:string;name:string;race:HeroRace;guild:string}>;guildPlace:number};
-export type Campaign = { schema: 1; seasonForgePlans?:SeasonForgePlan[]; seasonAwards?:SeasonAward[]; teamFamiliarity?: Record<string,number>; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number;missionDay?:number;missionIds?:string[]}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; tavernRumor?:TavernRumor; leagueTeam?:string[]; leagueFormation?:Record<string,FormationLine>; leagueTactic?:Tactic; pendingRewards?:ChestItem[]; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
+export type Campaign = { schema: 1; seasonForgePlans?:SeasonForgePlan[]; seasonAwards?:SeasonAward[]; teamFamiliarity?: Record<string,number>; calendarVersion?:number; dailyActions?: {restDay?:number;teamTrainDay?:number;missionDay?:number;missionIds?:string[]; reliefWeek?:number}; name: string; day: number; season: number; gold: number; fame: number; points: number; wins: number; losses: number; arsenal: number; heroes: Hero[]; team: string[]; formation: Record<string, FormationLine>; tactic: Tactic; hired: string[]; rivals: RivalGuild[]; ledger: Ledger[]; journal: { day: number; text: string }[]; lastBattle: Battle | null; rng: number; transaction: number; chest: ChestItem[]; itemSequence: number; event: GuildEvent | null; nextEventDay: number; eventSequence: number; region: number; activeRegion: number; bossSeasons: number[]; claimedQuestItems: string[]; shopPurchases: string[]; rivalAttempts: string[]; lastNegotiation: NegotiationResult | null; leagueTier: LeagueTier; leagueWins: number; leagueDraws: number; leagueLosses: number; leagueHistory: LeagueMatch[]; rivalries: Rivalry[]; cup: CupState; journeys: HeroJourney[]; journeySequence: number; expeditions: Expedition[]; expeditionSequence: number; hqActionDay: Record<string, number>; squads: SavedSquad[]; balanceVersion: number; hq: Record<HQBuilding, number>; academy: AcademyState; tavernRumor?:TavernRumor; leagueTeam?:string[]; leagueFormation?:Record<string,FormationLine>; leagueTactic?:Tactic; pendingRewards?:ChestItem[]; leagueAutoSub?:boolean; regionalInfluence?:Record<string,number>; seasonMissionVictories?:number; seasonHonors?:Array<{season:number;title:string;prestige:number}>; raidHistory: GuildRaidResult[]; rivalBattleHistory: RivalBattleResult[] };
 export type Action =
   | { type: "mission"; missionId: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine>; startedAt?: number; expeditionSlot?: ExpeditionSlot }
   | { type: "save-squad"; specialty: MissionKind; name: string; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
   | { type: "rename-squad"; specialty: MissionKind; name: string }
   | { type: "upgrade-hq"; building: HQBuilding }
   | { type: "claim-pending-rewards" }
+  | { type: "emergency-contract" }
+  | { type: "league-auto-reserve"; enabled:boolean }
   | { type: "next-day" }
   | { type: "investigate-rumor"; missionId:string }
   | { type: "league-lineup"; team: string[]; tactic: Tactic; formation?: Record<string, FormationLine> }
@@ -508,10 +510,62 @@ export function rating(h: Hero, arsenal = 0, s?: Campaign) {
 export function teamPower(s: Campaign, ids = s.team) { return s.heroes.filter(h => ids.includes(h.id)).reduce((n, h) => n + rating(h, s.arsenal, s), 0); }
 /** Escalação oficial da Liga: apenas heróis prontos e realmente selecionados. */
 export function leagueLineup(s: Campaign) {
-  const ids = [...new Set(s.leagueTeam??s.team)].filter(id => s.heroes.some(h => h.id === id && available(h,s))).slice(0,4);
-  return { ids, ready: ids.length >= 3, missing: Math.max(0,3-ids.length), power: teamPower(s,ids) };
+  const preferred=[...new Set(s.leagueTeam??s.team)];
+  const ids=preferred.filter(id=>s.heroes.some(h=>h.id===id&&available(h,s))).slice(0,4);
+  const reserves:string[]=[];
+  if(s.leagueAutoSub){
+    const candidates=s.heroes.filter(h=>!preferred.includes(h.id)&&available(h,s))
+      .sort((a,b)=>rating(b,s.arsenal,s)-rating(a,s.arsenal,s)||a.id.localeCompare(b.id));
+    for(const candidate of candidates)if(ids.length<4){
+      ids.push(candidate.id);reserves.push(candidate.id);
+    }
+  }
+  return { ids, reserves, ready: ids.length>=3, missing: Math.max(0,3-ids.length), power: teamPower(s,ids) };
 }
 export function payroll(s: Campaign) { return s.heroes.reduce((n, h) => n + h.salary, 0); }
+/** Um serviço modesto por semana, somente quando o tesouro está comprometido.
+ * Não substitui missões, não gera recursos ilimitados e não usa RNG. */
+export function emergencyContractQuote(s:Campaign){
+ const week=Math.floor((s.day-1)/7),need=payroll(s)+16;
+ return {reward:Math.min(140,Math.max(45,Math.round(payroll(s)*.55+30))),
+  available:s.gold<need && s.dailyActions?.reliefWeek!==week && !s.event && !battleActive(s),
+  week,need,used:s.dailyActions?.reliefWeek===week};
+}
+export function treasuryForecast(s:Campaign){
+ const days=7-((s.day-1)%7);
+ return {days,wages:payroll(s),maintenance:8*days,
+  projected:s.gold-payroll(s)-8*days};
+}
+/** Objetivos verificáveis por temporada, sem inflação adicional de ouro. */
+/** A curva de ouro cresce até o teto de progressão e depois desacelera.
+ * Mantém a economia original das primeiras 250 temporadas. */
+export function seasonalGoldScale(season:number){
+ const elapsed=Math.max(0,season-1);
+ return 1+Math.min(elapsed,249)*.04+Math.min(1.5,Math.log1p(Math.max(0,elapsed-249))*.35);
+}
+export function seasonalChallenges(s:Campaign){
+ return [
+  {title:"Disciplina da Liga",current:s.leagueWins,goal:15,prestige:20},
+  {title:"Exploradores veteranos",current:s.seasonMissionVictories||0,goal:4,prestige:15},
+  {title:"Guardião derrotado",current:s.bossSeasons.includes(s.season)?1:0,goal:1,prestige:25},
+ ];
+}
+export function regionInfluence(s:Campaign,region:string){
+ return Math.max(0,Math.min(100,s.regionalInfluence?.[region]||0));
+}
+export function combatReport(b:Battle,heroes:Pick<Hero,"id"|"name">[]){
+ const ids=new Set(heroes.map(h=>h.id));
+ const map=new Map(heroes.map(h=>[h.id,{id:h.id,name:h.name,damage:0,healing:0,received:0,criticalHits:0}]));
+ for(const event of b.log){
+   if(!Number.isFinite(event.amount)||!event.amount||event.amount<0)continue;
+   const actor=event.actorId?map.get(event.actorId):undefined,target=event.targetId?map.get(event.targetId):undefined;
+   const heal=/recupera|cura|restaura| PV\./i.test(event.text)&&!event.text.includes("de dano");
+   if(heal){if(actor)actor.healing+=event.amount;}
+   else if(actor&&event.targetId&&!ids.has(event.targetId)){actor.damage+=event.amount;if(event.kind==="critical")actor.criticalHits++;}
+   else if(target&&event.actorId&&!ids.has(event.actorId))target.received+=event.amount;
+ }
+ return [...map.values()].filter(x=>x.damage||x.healing||x.received).sort((a,b)=>b.damage-a.damage);
+}
 export function rank(s: Campaign) { return s.fame >= 600 ? "Ouro" : s.fame >= 220 ? "Prata" : "Bronze"; }
 export function standings(s: Campaign) { return [{ id: "player", name: s.name, points: s.points, victories: s.leagueWins || 0 }, ...s.rivals].sort((a, b) => b.points - a.points || b.victories - a.victories || a.name.localeCompare(b.name, "pt-BR")); }
 export function rivalRecruitCandidates(s:Campaign){return standings(s).filter(g=>g.id!=="player").slice(0,10).map(g=>s.rivals.find(r=>r.id===g.id)!).filter(Boolean);}
@@ -810,6 +864,10 @@ export function normalizeCampaign(previous: StoredCampaign): Campaign {
     s.calendarVersion=2;
   }
   s.dailyActions ??= {};
+  s.leagueAutoSub= s.leagueAutoSub===true;
+  s.seasonMissionVictories=Math.max(0,Math.min(60,Math.floor(s.seasonMissionVictories||0)));
+  s.seasonHonors=Array.isArray(s.seasonHonors)?s.seasonHonors.filter(x=>x&&Number.isFinite(x.season)&&typeof x.title==="string"&&Number.isFinite(x.prestige)).slice(0,30):[];
+  s.regionalInfluence=Object.fromEntries(Object.entries(s.regionalInfluence||{}).filter(([key,v])=>WORLD_REGIONS.some(r=>r.name===key)&&Number.isFinite(v)).map(([key,v])=>[key,Math.max(0,Math.min(100,Math.floor(v)))]));
   if(s.tavernRumor && (
      !Number.isInteger(s.tavernRumor.day) || typeof s.tavernRumor.missionId!=="string" ||
      s.tavernRumor.day!==s.day)) s.tavernRumor=undefined;
@@ -1039,7 +1097,7 @@ export function missions(s: Campaign): Mission[] {
       ][i],
       rank: difficulty,
       force: Math.round(forceBase * scaling),
-      reward: Math.round(rewardBase * (1 + regionIndex * .10 + (s.season - 1) * .04)),
+      reward: Math.round(rewardBase * (seasonalGoldScale(s.season) + regionIndex * .10) * (1+regionInfluence(s,region.name)*.0005)),
       enemy, count: authored?.count||(i===0?3:i>=3?4:3),
       specialty: authored?.specialty||(kind==="hunt"?"ranger":kind==="dungeon"?"rogue":"warrior"),
       flavor: authored?.flavor||(kind==="hunt"?"Arqueiros e Assassinos se destacam na perseguição."
@@ -1062,7 +1120,7 @@ export function seasonBoss(s: Campaign): Mission | null {
     description:guardian?.description||"Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
     rank: 5,
     force: Math.max(Math.round(135 * regionThreat(regionIndex) * seasonalThreat(s.season,.045)),Math.round(missions(s)[4].force * 1.13)),
-    reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
+    reward: Math.round((165 + regionIndex * 28) * seasonalGoldScale(s.season) * (1+regionInfluence(s,region.name)*.0005)),
     enemy, count: 3, specialty: "boss",
     flavor:guardian?.flavor||"Chefe regional: batalha de elite, renome e cicatrizes memoráveis.",
     kind: "boss", requiredFame: 0, boss: regionIndex,
@@ -1340,6 +1398,14 @@ function advance(s: Campaign, used: string[]) {
   }
   if ((s.day - 1) % SEASON_DAYS === 0) {
     graduateAcademyClass(s);
+    for(const objective of seasonalChallenges(s))if(objective.current>=objective.goal){
+      s.fame+=objective.prestige;
+      s.seasonHonors!.unshift({season:s.season,title:objective.title,prestige:objective.prestige});
+      note(s,"Honraria sazonal: "+objective.title+" · +"+objective.prestige+" prestígio.");
+    }
+    s.seasonHonors=s.seasonHonors!.slice(0,30);
+    for(const region of Object.keys(s.regionalInfluence||{}))
+      s.regionalInfluence![region]=Math.max(0,regionInfluence(s,region)-5);
     const ranking=standings(s), bestHeroes=heroLeaderboard(s);
     const place = ranking.findIndex(r => r.id === "player") + 1, oldTier = s.leagueTier, prize = leaguePrize(place, oldTier);
     s.seasonAwards!.unshift({season:s.season,guildWinners:ranking.slice(0,3).map(g=>({id:g.id,name:g.name})),heroWinners:bestHeroes.slice(0,3).map(h=>({id:h.id,name:h.name,race:h.race,guild:h.guild})),guildPlace:place});
@@ -1362,6 +1428,7 @@ function advance(s: Campaign, used: string[]) {
     if (place <= 10 && oldTier > 1) { s.leagueTier = (oldTier - 1) as LeagueTier; movement = "PROMOÇÃO para a " + LEAGUE_TIERS[s.leagueTier].name + "."; }
     else if (place >= 91 && oldTier < 3) { s.leagueTier = (oldTier + 1) as LeagueTier; movement = "REBAIXAMENTO para a " + LEAGUE_TIERS[s.leagueTier].name + "."; }
     note(s, "Temporada " + s.season + " encerrada em " + place + "º lugar na " + LEAGUE_TIERS[oldTier].name + ". Prêmio: " + prize + " ouro. " + movement);
+    s.seasonMissionVictories=0;
     s.season++; s.points = 0; s.wins = 0; s.losses = 0; s.leagueWins = 0; s.leagueDraws = 0; s.leagueLosses = 0;
     s.rivals.forEach(r => { r.points = 0; r.victories = 0; });
     s.cup = { season: s.season, stage: "oitavas", wins: 0, history: [] };
@@ -1391,7 +1458,8 @@ function startBattle(s: Campaign, m: Mission, team: Hero[]) {
   const fighters: Combatant[] = team.map(h => {
     const base = heroStats(h, s), position = s.formation[h.id] || defaultFormationLine(h.class);
     const missionBoost=Math.min(.15,h.nextMissionBoost||0);
-    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion * (1+familiarity.defense) * (prepared?1+TAVERN_RUMOR_DEFENSE_BONUS:1), attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage) * (prepared?1+TAVERN_RUMOR_ATTACK_BONUS:1), magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage) * (prepared?1+TAVERN_RUMOR_ATTACK_BONUS:1), speed: base.speed + (position === "back" ? 2 : 0), critical: Math.min(.48,base.critical+familiarity.critical),healing:base.healing*(1+familiarity.healing) };
+    const regionalPreparedness=regionInfluence(s,m.location)*.0006; // até 6% nas terras apoiadas
+    const n = { ...base, defense: base.defense * (position === "front" ? 1.1 : 1) * cohesion * (1+familiarity.defense) * (prepared?1+TAVERN_RUMOR_DEFENSE_BONUS:1), attack: base.attack * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage) * (prepared?1+TAVERN_RUMOR_ATTACK_BONUS:1) * (1+regionalPreparedness), magic: base.magic * (position === "back" ? 1.06 : 1) * cohesion * (1+missionBoost) * (1+familiarity.damage) * (prepared?1+TAVERN_RUMOR_ATTACK_BONUS:1) * (1+regionalPreparedness), speed: base.speed + (position === "back" ? 2 : 0), critical: Math.min(.48,base.critical+familiarity.critical),healing:base.healing*(1+familiarity.healing) };
     delete h.nextMissionBoost;
     const hp = Math.round((80 + n.defense * 3 + h.level * 15 + n.hp)*(1+familiarity.hp));
     return { ...n, id: h.id, name: h.name, side: "hero", class: h.class, hp, maxHp: hp, position, statuses: [], energy: h.energy,
@@ -1433,6 +1501,13 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   registerTeamExpedition(s.teamFamiliarity!,battleTeam);
   if (won) {
     entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s,m);
+    s.seasonMissionVictories=(s.seasonMissionVictories||0)+1;
+    const influenceBefore=regionInfluence(s,m.location);
+    s.regionalInfluence![m.location]=Math.min(100,influenceBefore+(m.kind==="boss"?18:2+m.rank));
+    for(const milestone of [25,50,75,100])if(influenceBefore<milestone&&regionInfluence(s,m.location)>=milestone){
+      s.fame+=5;
+      note(s,"Apoio regional em "+m.location+" alcançou "+milestone+"/100: +5 prestígio. A experiência da população melhora a preparação e os contratos.");
+    }
     if (m.kind === "boss") {
       s.bossSeasons.push(s.season);
       if (s.activeRegion >= s.region && s.region < WORLD_REGIONS.length) { s.region++; b.regionUnlocked = s.region; }
@@ -1713,6 +1788,20 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
   if (["mission", "next-day", "rest", "train", "train-hero", "story-step", "start-journey"].includes(action.type)) requireRule(!s.event, "Resolva o evento do conselho antes de avançar ou organizar viagens.");
   if (battleActive(s) && ["rest", "train"].includes(action.type)) requireRule(false, "Há expedições em andamento. Administre a sede ou treine individualmente os heróis que ficaram; descanso e treino de equipe voltam quando as equipes retornarem.");
   switch (action.type) {
+    case "league-auto-reserve": {
+      requireRule(typeof action.enabled==="boolean","Escolha válida de reservas obrigatória.");
+      s.leagueAutoSub=action.enabled;
+      note(s,"Reservas automáticos da Liga e Copa: "+(action.enabled?"ligados.":"desligados."));
+      break;
+    }
+    case "emergency-contract": {
+      const quote=emergencyContractQuote(s);
+      requireRule(quote.available,quote.used?"Esse serviço emergencial já foi prestado nesta semana.":"O serviço emergencial só é oferecido quando o tesouro não cobre a próxima folha e a manutenção, sem Conselho ou batalha pendente.");
+      entry(s,"Serviço comunitário emergencial",quote.reward);
+      s.dailyActions!.reliefWeek=quote.week;
+      note(s,"A guilda ajudou a comunidade e recebeu "+quote.reward+" ouro. Novo trabalho disponível somente na próxima semana, se necessário.");
+      break;
+    }
     case "league-lineup": {
       requireRule(!battleActive(s),"Conclua as expedições ativas antes de salvar a equipe da Liga.");
       const selected=selectTeam(s,action.team,action.tactic,action.formation);

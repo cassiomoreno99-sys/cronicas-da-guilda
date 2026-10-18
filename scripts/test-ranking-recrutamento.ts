@@ -62,7 +62,7 @@ assert.ok(persuaded>0&&refused>0,"Persuasão deveria produzir aceites e recusas"
  assert.throws(()=>applyAction(s,{type:"rank-recruit",guildId:s.rivals[0].id,heroId:own.id,method:"buyout"}),GameRuleError);
  const outsider=s.rivals.at(-1)!,h=outsider.heroes.at(-1)!;
  if(!heroLeaderboard(s).slice(0,10).some(x=>x.id===h.id)){
-  assert.throws(()=>applyAction(s,{type:"rank-recruit",guildId:outsider.id,heroId:h.id,method:"buyout"}),/Top 10/);
+  assert.throws(()=>applyAction(s,{type:"rank-recruit",guildId:outsider.id,heroId:h.id,method:"buyout"}),/10 melhores/);
  }
  const first=heroLeaderboard(s).slice(0,10).find(x=>!x.owned)!;
  const guild=s.rivals.find(g=>g.heroes.some(h=>h.id===first.id))!,hero=guild.heroes.find(h=>h.id===first.id)!;

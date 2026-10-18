@@ -1,5 +1,6 @@
 import {useState,type CSSProperties} from "react";
 import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide-react";
+import { statusEmPortugues, textoEmPortugues } from "../lib/texto-portugues";
 import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,combatReport,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
@@ -110,7 +111,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
      {queuedUnit(f.id)&&f.side==="hero"&&<em>HABILIDADE</em>}
       {focus?.id===f.id&&<em>FOCO</em>}
       {!!f.statuses?.length&&<span className="guild2d-effects">{f.statuses.slice(0,3).map((status,i)=>
-        <abbr key={status.kind+"-"+i} title={status.kind+" · "+status.rounds+" turno(s)"}>{status.kind==="shield"?"🛡️":status.kind==="poison"?"☠️":status.kind==="regen"?"✚":status.kind==="stun"?"✦":"●"}{status.rounds}</abbr>)}</span>}
+        <abbr key={status.kind+"-"+i} title={statusEmPortugues(status.kind)+" · "+status.rounds+" turno(s)"}>{status.kind==="shield"?"🛡️":status.kind==="poison"?"☠️":status.kind==="regen"?"✚":status.kind==="stun"?"✦":"●"}{status.rounds}</abbr>)}</span>}
   </div>;
  }
  function queueAbility(ability:ReturnType<typeof availableAbilities>[number]){
@@ -166,7 +167,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    </div>
    <p className="guild2d-target-tip">O foco direciona golpes comuns e habilidades automáticas contra um inimigo vivo; curas e habilidades manuais respeitam seus alvos.</p>
   <div className="guild2d-log" aria-live="polite"><b>CRÔNICA · {active?"COMBATE REAL":"RESULTADO"}</b>
-   {log.length?log.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}>{l.text}</p>):<p>Os combatentes tomam suas posições.</p>}
+   {log.length?log.map((l,i)=><p key={battle.log.length-i} data-kind={l.kind}>{textoEmPortugues(l.text)}</p>):<p>Os combatentes tomam suas posições.</p>}
   </div>
   <div className="guild2d-actions">
    <button type="button" className="guild2d-attack" disabled={!active||busy} onClick={()=>{setTip("Avançou a próxima ação da ordem de iniciativa.");act({type:"battle-round",expeditionId:expedition.id});}}><Swords size={19}/> Atacar <small>{focus?"Alvo focado":"Ator e alvo automáticos"}</small></button>

@@ -37,7 +37,7 @@ export default function OfflineInstall() {
           await new Promise<void>((resolve,reject)=>{
             const changed=()=>{
               if(candidate.state==="activated"){candidate.removeEventListener("statechange",changed);resolve();}
-              else if(candidate.state==="redundant"){candidate.removeEventListener("statechange",changed);reject(new Error("Atualização offline interrompida"));}
+              else if(candidate.state==="redundant"){candidate.removeEventListener("statechange",changed);reject(new Error("Atualização sem internet interrompida"));}
             };
             candidate.addEventListener("statechange",changed);
             changed();
@@ -66,8 +66,8 @@ export default function OfflineInstall() {
     }catch {setOffer(null);}
   };
   return <aside className="offline-mobile-bar" aria-live="polite">
-    {failed ? <span><WifiOff size={15}/> Não foi possível completar o download offline. Conecte ao Wi-Fi e reabra o jogo.</span> :
-      ready ? <span><CheckCircle2 size={15}/> {online?"Jogo completo salvo · offline pronto":"Jogando sem internet"}</span> :
+    {failed ? <span><WifiOff size={15}/> Não foi possível baixar os arquivos para jogar sem internet. Conecte ao Wi-Fi e reabra o jogo.</span> :
+      ready ? <span><CheckCircle2 size={15}/> {online?"Jogo completo salvo · pronto para jogar sem internet":"Jogando sem internet"}</span> :
       <span>Baixando jogo e trilha completa… mantenha o Wi-Fi ligado.</span>}
     {!installed && offer && ready && <button onClick={()=>void install()}><Download size={14}/> Instalar</button>}
     {!installed && ready && !offer && <small>Chrome ⋮ → Adicionar à tela inicial</small>}

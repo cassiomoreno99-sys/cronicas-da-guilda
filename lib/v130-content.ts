@@ -12,13 +12,13 @@ export const V130_BASE_STATS: Record<string, { attack: number; defense: number; 
 
 export const WORLD_REGIONS = [
   { name: "Vale de Valen", minLevel: 1, theme: "Campos, estradas e ruínas antigas", enemies: ["Bandido", "Saqueador", "Lobo sombrio", "Esqueleto"] },
-  { name: "Terras de Brumavale", minLevel: 4, theme: "Florestas cobertas por névoa", enemies: ["Emboscador", "Pantera das brumas", "Aranha ancestral", "Troll"] },
+  { name: "Terras de Brumavale", minLevel: 4, theme: "Florestas cobertas por névoa", enemies: ["Emboscador", "Pantera das brumas", "Aranha ancestral", "Trol"] },
   { name: "Ruínas de Ashen", minLevel: 8, theme: "Torres queimadas e criptas arcanas", enemies: ["Cultista", "Espectro", "Guardião antigo", "Cavaleiro espectral"] },
   { name: "Fronteira dos Dragões", minLevel: 12, theme: "Montanhas vulcânicas e fortalezas dracônicas", enemies: ["Draco selvagem", "Salteador dracônico", "Guerreiro draco", "Guardião de obsidiana"] },
-  { name: "Deserto de Sahir", minLevel: 16, theme: "Dunas, tumbas e caravanas perdidas", enemies: ["Escorpião gigante", "Saqueador do deserto", "Múmia real", "Djinn corrompido"] },
+  { name: "Deserto de Sahir", minLevel: 16, theme: "Dunas, tumbas e caravanas perdidas", enemies: ["Escorpião gigante", "Saqueador do deserto", "Múmia real", "Gênio corrompido"] },
   { name: "Costa de Namar", minLevel: 20, theme: "Portos, ilhas e cavernas inundadas", enemies: ["Pirata", "Serpente marinha", "Afogado", "Corsário espectral"] },
-  { name: "Bosque de Elarin", minLevel: 24, theme: "Bosques antigos e círculos élficos", enemies: ["Ent corrompido", "Caçador feérico", "Fera lunar", "Espírito selvagem"] },
-  { name: "Picos de Kharum", minLevel: 28, theme: "Minas, fortalezas anãs e gelo eterno", enemies: ["Golem de pedra", "Yeti", "Rebelde das minas", "Dragão de gelo"] },
+  { name: "Bosque de Elarin", minLevel: 24, theme: "Bosques antigos e círculos élficos", enemies: ["Guardião arbóreo corrompido", "Caçador feérico", "Fera lunar", "Espírito selvagem"] },
+  { name: "Picos de Kharum", minLevel: 28, theme: "Minas, fortalezas anãs e gelo eterno", enemies: ["Golem de pedra", "Iéti", "Rebelde das minas", "Dragão de gelo"] },
   { name: "Pântano de Morn", minLevel: 32, theme: "Águas negras, veneno e magia proibida", enemies: ["Bruxa do pântano", "Hidra jovem", "Carniçal", "Limo ancestral"] },
   { name: "Império de Solkar", minLevel: 36, theme: "Cidades fortificadas e exércitos imperiais", enemies: ["Legionário", "Mago imperial", "Carrasco", "Golem de guerra"] },
   { name: "Abismo de Nhal", minLevel: 42, theme: "Fendas sombrias e criaturas impossíveis", enemies: ["Demônio menor", "Arauto do vazio", "Devorador", "Cavaleiro do abismo"] },
@@ -31,7 +31,7 @@ export const HQ_BUILDINGS = {
   academy: { name: "Academia", max: 10, baseCost: 240, description: "Treina heróis da Guilda e forma até 10 cidadãos por temporada. Até 2 podem se tornar heróis; mentor e dedicação aumentam as chances." },
   library: { name: "Biblioteca Arcana", max: 10, baseCost: 250, description: "Aumenta magia, cura e evolução de habilidades." },
   stables: { name: "Estábulos", max: 10, baseCost: 200, description: "Melhora escoltas, viagens e recuperação entre expedições." },
-  warroom: { name: "Sala de Guerra", max: 10, baseCost: 300, description: "Melhora equipes prontas, raids e batalhas contra guildas." },
+  warroom: { name: "Sala de Guerra", max: 10, baseCost: 300, description: "Melhora equipes prontas, incursões e batalhas contra guildas." },
 } as const;
 
 export const HERO_SCARS = [
@@ -135,7 +135,7 @@ export const LEVEL_ABILITIES: Record<string, Array<{ level: number; id: string; 
   bard: [
     { level: 1, id: "pierrot-loaded-dice", name: "Dado Viciado", description: "A sorte escolhe um golpe certeiro.", target: "enemy", cooldown: 3, effect: "execution" },
     { level: 5, id: "pierrot-rabbit-foot", name: "Pé de Coelho", description: "Aumenta a proteção dos aliados pela sorte.", target: "all-allies", cooldown: 3, effect: "anthem" },
-    { level: 12, id: "pierrot-jackpot", name: "Jackpot", description: "Uma explosão caótica atinge os inimigos.", target: "all-enemies", cooldown: 4, effect: "storm" },
+    { level: 12, id: "pierrot-jackpot", name: "Grande Prêmio", description: "Uma explosão caótica atinge os inimigos.", target: "all-enemies", cooldown: 4, effect: "storm" },
     { level: 22, id: "pierrot-trick", name: "Truque Impossível", description: "Confunde e interrompe um inimigo.", target: "enemy", cooldown: 4, effect: "control" },
     { level: 35, id: "pierrot-fortune", name: "Fortuna do Tolo", description: "Inspira e protege a equipe.", target: "all-allies", cooldown: 4, effect: "sanctuary" },
     { level: 50, id: "pierrot-seventh", name: "Sétima Sorte", description: "O impossível acontece a favor da equipe.", target: "all-allies", cooldown: 6, effect: "anthem" },

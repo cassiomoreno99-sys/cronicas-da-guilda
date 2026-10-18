@@ -8,7 +8,7 @@ import {
   Target, Tent, Trophy, Upload, Users, Volume2, VolumeX, Beer, Settings, X
 } from "lucide-react";
 import {
-  CLASSES, RACES, TACTICS, ITEMS, KIND_NAMES, PATH_NAMES, RACIAL_PATH_NAMES,
+  CLASSES, RACES, TACTICS, ITEMS, KIND_NAMES, PATH_NAMES, RACIAL_PATH_NAMES, RARITY_NAMES,
   SPECIALIZATIONS, SPECIALIZATION_BRANCHES, RACE_TREES, HERO_STORIES,
   HQ_DEFINITIONS, WORLD_MAP, NEGOTIATION_MODES, JOURNEY_CHOICES,
   activeExpeditions, freeExpeditionSlots, available, activeJourney, heroOnExpedition,
@@ -31,6 +31,7 @@ import {heroSex,HERO_SEX_LABEL} from "@/lib/hero-identity";
 import {heroArtProgress} from "@/lib/hero-art";
 import { chestCapacity, storageUsed } from "@/lib/storage";
 import { familiarityBonus } from "@/lib/team-familiarity";
+import { textoEmPortugues } from "@/lib/texto-portugues";
 import { EXCLUSIVE_BY_ID } from "@/lib/exclusive-gear";
 import { tavernArtwork } from "@/lib/scene-art/tavern";
 import merchantPortrait from "@/lib/portrait-art/merchant";
@@ -85,8 +86,8 @@ function leagueCrest(guild:{id:string;name:string}){
 }
 const itemSlots = new Set(["weapon","offhand","helmet","armor","gloves","boots","accessory"]);
 const specialtyNames: Record<string,string> = {
-  warrior:"Guerreiro", paladin:"Paladino", rogue:"Ladino", ranger:"Arqueiro",
-  undead:"Mago / Paladino", boss:"Equipe completa"
+  warrior:"Guerreiro", paladin:"Cavaleiro", rogue:"Assassino", ranger:"Arqueiro",
+  undead:"Mago / Cavaleiro", boss:"Equipe completa"
 };
 const specialtyName = (value: string) => specialtyNames[value] || value;
 const raceLabel = (hero: Pick<Hero,"id"|"name"|"class"|"race">): string => RACES[heroRace(hero)].name;
@@ -293,10 +294,10 @@ function MissionPage({
           </div>
           <div className="mission-rewards">
             <span><GameSymbol kind="reward"/> {m.reward} Ouro</span>
-            <span><GameSymbol kind="experience"/> Até +{missionRewardXp(m)} XP</span>
+            <span><GameSymbol kind="experience"/> Até +{missionRewardXp(m)} EXP</span>
             {!!missionLootPreview(state,m).length&&<small className="mission-special-loot"><GameSymbol kind="objective"/> Item de objetivo: {missionLootPreview(state,m).join(", ")}</small>}
             <small className="mission-material-loot"><GameSymbol kind="treasure"/> Materiais regionais e chance de equipamento</small>
-             {m.kind==="boss"&&state.activeRegion>=6&&<small className="mission-special-loot"><Crown aria-hidden="true"/> Drop Supremo Imperial: {(imperialDropChance(state,m,state.team)*100).toFixed(1)}% com a equipe atual (20% base + sorte + entrosamento).</small>}
+             {m.kind==="boss"&&state.activeRegion>=6&&<small className="mission-special-loot"><Crown aria-hidden="true"/> Chance de obter peça Suprema Imperial: {(imperialDropChance(state,m,state.team)*100).toFixed(1)}% com a equipe atual (20% base + sorte + entrosamento).</small>}
             
             <button
               className={"action-button " + (index % 3 === 0 ? "red" : index % 3 === 1 ? "green" : "blue")}
@@ -479,7 +480,7 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
         <strong>{i+1}</strong><span><img className="league-rival-crest" src={leagueCrest(g)} alt={"Brasão de "+g.name} width={42} height={48}/>{g.name}</span><b><img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={25} height={25}/> {g.points}</b><small><GameSymbol kind="reward"/> {leaguePrize(i+1, state.leagueTier)} ouro</small>
       </div>)}
     </div>
-    {place>10&&<div className="league-close-ranking parchment" aria-label="Sua posição na classificação"><strong>Sua posição no ranking completo · {place}º/100</strong>
+    {place>10&&<div className="league-close-ranking parchment" aria-label="Sua posição na classificação"><strong>Sua posição na classificação geral · {place}º/100</strong>
       {closeRank.map(g=><div key={g.id} data-player={g.id==="player"}><span>{table.indexOf(g)+1}º · {g.name}</span><b>{g.points} pontos</b></div>)}
     </div>}
     <div className="league-fase2-grid">
@@ -487,7 +488,7 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
         <h3>Próximos jogos da Liga</h3><small>Um confronto por dia; confira o adversário antes de encerrar a rodada.</small>
         {fixtures.map(f=><div className="league-fixture" key={f.day}><b>Dia {String(f.day).padStart(2,"0")}</b><span>{f.opponent.name}{f.rivalry?" · Rivalidade":""}</span><strong>{f.match?f.match.playerScore+" × "+f.match.opponentScore:"A jogar"}</strong></div>)}
         <h4>Últimos resultados</h4>
-        {latest.length?latest.map(m=><div className="league-fixture" key={m.season+"-"+m.day}><b>Dia {m.day}</b><span>{m.opponentName}</span><strong>{m.forfeit?"W.O.":m.playerScore+" × "+m.opponentScore}</strong></div>):<p>Nenhuma partida disputada nesta temporada.</p>}
+        {latest.length?latest.map(m=><div className="league-fixture" key={m.season+"-"+m.day}><b>Dia {m.day}</b><span>{m.opponentName}</span><strong>{m.forfeit?"Derrota por ausência":m.playerScore+" × "+m.opponentScore}</strong></div>):<p>Nenhuma partida disputada nesta temporada.</p>}
       </section>
       <section className="league-fase2-cup parchment" aria-label="Chaveamento da Copa das Guildas">
         <h3>Copa das Guildas</h3><p>Situação: <strong>{cupStageLabel(state.cup.stage)}</strong></p>
@@ -495,15 +496,15 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
         {CUP_DAYS.map((day,i)=>{
           const match=state.cup.history.find(m=>m.day===day);
           const stage=["Oitavas","Quartas","Semifinal","Final"][i];
-          return <div className="cup-stage" key={day} data-result={match?.result||"pending"}><b>{stage} · Dia {day}</b><span>{match?match.opponentName:state.cup.stage==="eliminated"?"Não disputada":"A definir"}</span><strong>{match?(match.forfeit?"W.O.":match.playerScore+" × "+match.opponentScore)+" · "+(match.result==="win"?"Vitória":"Eliminação"):"—"}</strong></div>;
+          return <div className="cup-stage" key={day} data-result={match?.result||"pending"}><b>{stage} · Dia {day}</b><span>{match?match.opponentName:state.cup.stage==="eliminated"?"Não disputada":"A definir"}</span><strong>{match?(match.forfeit?"Derrota por ausência":match.playerScore+" × "+match.opponentScore)+" · "+(match.result==="win"?"Vitória":"Eliminação"):"—"}</strong></div>;
         })}
       </section>
     </div>
-    <ParchmentTitle icon={<GameSymbol kind="squad"/>} title="Ranking dos 10 Melhores Heróis" side={<span>Equipamentos e evolução contam no poder</span>}/>
-    <section className="heroes-top10 parchment" aria-label="Ranking dos 10 melhores heróis">
+    <ParchmentTitle icon={<GameSymbol kind="squad"/>} title="Classificação dos 10 Melhores Heróis" side={<span>Equipamentos e evolução contam no poder</span>}/>
+    <section className="heroes-top10 parchment" aria-label="Classificação dos 10 melhores heróis">
       {ranking.map((h,i)=><article key={h.id} className="hero-ranking-card" data-player={h.owned}>
         <b>{i+1}º</b><HeroPortrait hero={h.hero}/><div className="rank-hero-identity"><strong>{h.name}</strong><small>{h.guild} · {RACES[h.race].name} · Nv. {h.hero.level}</small></div>
-        <div className="rank-card-actions"><span>{fmt(h.score)} poder{i<3&&<small>Top 3: ouro + relíquia racial</small>}</span>
+        <div className="rank-card-actions"><span>{fmt(h.score)} poder{i<3&&<small>3 primeiros: ouro + relíquia racial</small>}</span>
           <button type="button" className="rank-profile-trigger" onClick={()=>setRankHeroId(h.id)} aria-label={"Ver características de "+h.name}>Ver ficha</button>
         </div>
       </article>)}
@@ -520,7 +521,7 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
     </div>
     {state.lastNegotiation&&state.lastNegotiation.day===state.day&&<div className="rank-transfer-result parchment" role="status">
       <strong>{state.lastNegotiation.success?"Contratação realizada":"Proposta recusada"}</strong>
-      <p>{state.lastNegotiation.message}</p>
+      <p>{textoEmPortugues(state.lastNegotiation.message)}</p>
     </div>}
     {rankHeroId&&<div className="rank-hero-backdrop" onMouseDown={e=>{if(e.target===e.currentTarget)setRankHeroId(null);}}>
       <section ref={rankDialogRef} className="rank-hero-modal" role="dialog" aria-modal="true" aria-label={inspected?"Características de "+inspected.name:"Herói não disponível"} tabIndex={-1}>
@@ -530,13 +531,13 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
           return <>
             <div className="rank-modal-heading">
               <HeroPortrait hero={hero} large/>
-              <div><small>{ranking.findIndex(h=>h.id===inspected.id)+1}º no ranking · {fmt(inspected.score)} poder</small>
+              <div><small>{ranking.findIndex(h=>h.id===inspected.id)+1}º na classificação · {fmt(inspected.score)} poder</small>
                 <h2>{inspected.name}</h2>
                 <p>{CLASSES[hero.class].name} · {RACES[inspected.race].name} · {HERO_SEX_LABEL[heroSex(hero)]}</p>
                 <small>{inspected.guild} · Nível {hero.level}</small>
               </div>
             </div>
-            <p className="rank-hero-trait">{hero.trait||"Aventureiro experiente da Liga"}</p>
+            <p className="rank-hero-trait">{textoEmPortugues(hero.trait||"Aventureiro experiente da Liga")}</p>
             <div className="rank-modal-stats">
               {[
                 ["Ataque",Math.round(stats.attack)],["Defesa",Math.round(stats.defense)],
@@ -568,11 +569,11 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
                   </button>
                   {quoteBuyout.reason&&<small className="rank-contract-reason">{quoteBuyout.reason}</small>}
                   <p className="rank-contract-budget">Seu tesouro: {fmt(state.gold)} ouro · Seu prestígio: {fmt(state.fame)} pontos. Limite compartilhado: 3 propostas por semana.</p>
-                </>:<p>Este herói não está mais disponível na guilda indicada. Atualize o ranking.</p>}
-              {state.lastNegotiation?.heroId===inspected.id&&state.lastNegotiation.day===state.day&&<p className="rank-contract-feedback" role="status">{state.lastNegotiation.message}</p>}
+                </>:<p>Este herói não está mais disponível na guilda indicada. Atualize a classificação.</p>}
+              {state.lastNegotiation?.heroId===inspected.id&&state.lastNegotiation.day===state.day&&<p className="rank-contract-feedback" role="status">{textoEmPortugues(state.lastNegotiation.message)}</p>}
             </div>
           </>;
-        })():<div className="rank-modal-unavailable"><h2>Ranking atualizado</h2><p>Esse herói saiu do Top 10. Feche a ficha e escolha outro participante.</p></div>}
+        })():<div className="rank-modal-unavailable"><h2>Classificação atualizada</h2><p>Esse herói saiu da lista dos 10 melhores. Feche a ficha e escolha outro participante.</p></div>}
       </section>
     </div>}
   </section>;
@@ -596,7 +597,7 @@ function RestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => v
         <div><h3>{h.name}</h3><span className={injured ? "danger-text" : "ok-text"}>{injured ? "Ferido" : h.energy < 100 ? "Recuperando" : "Pronto"}</span>
           <ProgressBar value={h.energy} tone={injured ? "red" : "green"} /><small><GameSymbol kind="energy"/> Energia {h.energy}% · Nv. {h.level}</small>
         </div>
-        <button className="action-button blue" disabled={busy || !!state.event || !available(h,state) || state.gold < plan.cost || state.hqActionDay[h.id]===state.day} onClick={() => act({ type:"train-hero", heroId:h.id })}>Treinar +{plan.xp} XP</button>
+        <button className="action-button blue" disabled={busy || !!state.event || !available(h,state) || state.gold < plan.cost || state.hqActionDay[h.id]===state.day} onClick={() => act({ type:"train-hero", heroId:h.id })}>Treinar +{plan.xp} EXP</button>
       </article>;
     })}</div>
         <button className="action-button green rest-all" disabled={busy || !!state.event || activeExpeditions(state).length>0 || state.gold<8 || state.dailyActions?.restDay===state.day} onClick={() => act({ type:"rest" })}><GameSymbol kind="sanctuary"/> Descansar na sede · 8 ouro</button>
@@ -625,8 +626,8 @@ function HeroPage({ state, selectedId, selectHero, openEquipment, act, busy }: {
         </button>)}
       </aside>
       <article className="hero-sheet parchment">
-        <div className="hero-feature"><div className="feature-portrait"><HeroPortrait hero={hero} large /></div><div><h2>{hero.name}</h2><p>{hero.trait}</p></div></div>
-        <div className="hero-level"><strong>Nv. {hero.level}</strong><ProgressBar value={hero.level >= 50 ? 100 : hero.xp / threshold(hero) * 100} tone="gold" /><span>{hero.xp}/{hero.level >= 50 ? "MAX" : threshold(hero)} XP</span></div>
+        <div className="hero-feature"><div className="feature-portrait"><HeroPortrait hero={hero} large /></div><div><h2>{hero.name}</h2><p>{textoEmPortugues(hero.trait)}</p></div></div>
+        <div className="hero-level"><strong>Nv. {hero.level}</strong><ProgressBar value={hero.level >= 50 ? 100 : hero.xp / threshold(hero) * 100} tone="gold" /><span>{hero.xp}/{hero.level >= 50 ? "MÁX." : threshold(hero)} EXP</span></div>
         <div className="hero-core"><div><span>Classe</span><strong>{CLASSES[hero.class].name}</strong></div><div><span>Raça</span><strong>{raceLabel(hero)}</strong></div><div><span>Sexo</span><strong>{HERO_SEX_LABEL[heroSex(hero)]}</strong></div><div><span>Força</span><strong>{fmt(teamPower(state,[hero.id]))}</strong></div></div>
         <section className="sheet-section"><label>Atributos</label><div className="stat-grid">
           <b><GameSymbol kind="health"/> Vida <em>{stats.hp}</em></b><b><GameSymbol kind="attack"/> Ataque <em>{stats.attack}</em></b><b><GameSymbol kind="defense"/> Defesa <em>{stats.defense}</em></b><b><GameSymbol kind="magic"/> Magia <em>{stats.magic}</em></b><b><GameSymbol kind="critical"/> Crítico <em>{Math.round(stats.critical*100)}%</em></b><b><GameSymbol kind="speed"/> Velocidade <em>{stats.speed}</em></b>
@@ -635,7 +636,7 @@ function HeroPage({ state, selectedId, selectHero, openEquipment, act, busy }: {
           {!hero.talent && <div className="choice-grid">{(Object.keys(PATH_NAMES) as TalentPath[]).map(p => <button disabled={busy || !canAct || points < 1} key={p} onClick={() => act({type:"specialize",heroId:hero.id,path:p})}><strong>{PATH_NAMES[p]}</strong><small>{SPECIALIZATIONS[hero.class][p].name}</small></button>)}</div>}
           {hero.talent && <div className="talent-box"><h3>{SPECIALIZATIONS[hero.class][hero.talent.path].name} · Grau {hero.talent.rank}</h3><p>{branchSpec?.description || SPECIALIZATIONS[hero.class][hero.talent.path].description}</p>
             {hero.talent.rank === 1 && points > 0 && <div className="choice-grid">{(["a","b"] as EvolutionBranch[]).map(b => <button key={b} disabled={busy || !canAct} onClick={() => act({type:"specialize",heroId:hero.id,path:hero.talent!.path,branch:b})}><strong>{SPECIALIZATION_BRANCHES[hero.class][hero.talent!.path][b].name}</strong><small>Escolha permanente</small></button>)}</div>}
-            {hero.talent.rank === 2 && points > 0 && <button className="small-button gold" disabled={busy || !canAct} onClick={() => act({type:"specialize",heroId:hero.id,path:hero.talent!.path,branch:hero.talent!.branch})}>Desbloquear Ultimate</button>}
+            {hero.talent.rank === 2 && points > 0 && <button className="small-button gold" disabled={busy || !canAct} onClick={() => act({type:"specialize",heroId:hero.id,path:hero.talent!.path,branch:hero.talent!.branch})}>Desbloquear habilidade suprema</button>}
           </div>}
         </section>
         <section className="sheet-section"><label>Evolução Racial</label>
@@ -646,11 +647,11 @@ function HeroPage({ state, selectedId, selectHero, openEquipment, act, busy }: {
           <button className="small-button" disabled={busy || !canAct || state.hqActionDay[hero.id]===state.day || (hero.storyStage || 0) >= 3} onClick={() => act({type:"story-step",heroId:hero.id})}>{(hero.storyStage || 0) >= 3 ? "História concluída" : "Avançar história"}</button>
         </section>
         <section className="sheet-section"><label>Viagem</label>
-          {journey ? <div className="journey-box"><strong>{journey.remaining} dia(s) restantes · +{journey.xpEarned} XP</strong><div className="choice-grid">{(Object.keys(JOURNEY_CHOICES) as JourneyChoice[]).map(c => <button data-active={journey.choice === c} key={c} onClick={() => act({type:"journey-choice",journeyId:journey.id,choice:c})}>{JOURNEY_CHOICES[c].name}</button>)}</div></div>
+          {journey ? <div className="journey-box"><strong>{journey.remaining} dia(s) restantes · +{journey.xpEarned} EXP</strong><div className="choice-grid">{(Object.keys(JOURNEY_CHOICES) as JourneyChoice[]).map(c => <button data-active={journey.choice === c} key={c} onClick={() => act({type:"journey-choice",journeyId:journey.id,choice:c})}>{JOURNEY_CHOICES[c].name}</button>)}</div></div>
           : <div className="choice-grid">{([3,5,7] as JourneyDuration[]).map(d => <button key={d} disabled={busy || !canAct} onClick={() => act({type:"start-journey",heroId:hero.id,duration:d})}><strong>{d} dias</strong><small>Desenvolvimento individual</small></button>)}</div>}
         </section>
         <section className="sheet-section"><label>Equipamentos</label><div className="equipment-row">{equipped.length ? equipped.map(i => <ItemArt key={i.id} itemKey={i.key} />) : <small>Nenhum equipamento.</small>}</div><button type="button" className="hero-equipment-link" onClick={openEquipment}><GameSymbol kind="defense" aria-hidden="true"/> Ver equipamentos · 12 espaços <ChevronRight aria-hidden="true" /></button></section>
-        <button className="action-button blue huge" disabled={busy || !canAct || hero.energy < 15 || state.hqActionDay[hero.id]===state.day} onClick={() => act({type:"train-hero",heroId:hero.id})}>Treino Individual · +{trainingPlan(state,hero).xp} XP</button>
+        <button className="action-button blue huge" disabled={busy || !canAct || hero.energy < 15 || state.hqActionDay[hero.id]===state.day} onClick={() => act({type:"train-hero",heroId:hero.id})}>Treino Individual · +{trainingPlan(state,hero).xp} EXP</button>
       </article>
     </div>
   </section>;
@@ -898,8 +899,8 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
           <p><b>Classes:</b> {detail.classes.join(", ")}</p>
           <p><b>Requisito:</b> Nível {detail.nivel}</p>
           <p><b>Atributos:</b> {Object.entries(detail.atributos).filter(([,v])=>v!==0).map(([key,value])=>key+" +"+value).join(" · ")||"Habilidade especial"}</p>
-          <p><b>Função:</b> {detail.efeito}</p>
-          <p><b>Como obter:</b> {detail.obtencao}</p><SetItemInfo itemKey={detail.id}/>
+          <p><b>Função:</b> {textoEmPortugues(detail.efeito)}</p>
+          <p><b>Como obter:</b> {textoEmPortugues(detail.obtencao)}</p><SetItemInfo itemKey={detail.id}/>
           <p className="catalog-price"><GameSymbol kind="gold"/><b> Valor:</b> {detail.preco_compra!==null?fmt(detail.preco_compra)+" ouro de compra":"Não vendido por mercador"} · {fmt(detail.preco_venda)} de venda</p>
           <small>Esta tela é para consulta. A disponibilidade dos itens e dos livros depende da evolução da campanha; livros Supremos Imperiais custam 500.000 de ouro e exigem a classe correspondente.</small>
         </article>}
@@ -921,9 +922,9 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
         <ItemArt itemKey={item.key} /><span>{ITEMS[item.key].name}</span>{item.equippedTo && <b>✓</b>}
       </button>)}</div>
       {selected && def ? <article className="item-detail parchment">
-        <span className="rarity-label">{def.rarity.toUpperCase()}</span><h2>{def.name}</h2>
+        <span className="rarity-label">{RARITY_NAMES[def.rarity].toUpperCase()}</span><h2>{def.name}</h2>
         <div className="selected-item-art"><ItemArt itemKey={selected.key} /></div>
-        <p>{def.description}</p><SetItemInfo itemKey={selected.key}/>
+        <p>{textoEmPortugues(def.description)}</p><SetItemInfo itemKey={selected.key}/>
         <div className="item-stats">{([["Ataque",def.attack],["Defesa",def.defense],["Magia",def.magic],["Vida",def.hp],["Velocidade",def.speed]] as Array<[string,number|undefined]>).filter(([,v]) => v).map(([k,v]) => <span key={k}><b><GameSymbol kind={ATTRIBUTE_SYMBOLS[k]}/>{k}</b><em>+{v}</em></span>)}</div>
         {def.levelReq && <small>Nível necessário: {def.levelReq}</small>}
         {owner && <small>Equipado por {owner.name}</small>}
@@ -983,7 +984,7 @@ function ImperialShopPanel({state,act,busy}:{state:Campaign;act:(a:Action)=>void
      const sold=state.shopPurchases.includes(Math.floor((state.day-1)/7)+":"+state.activeRegion+":"+d.id);
      return <div key={d.id}><ItemArt itemKey={d.id}/><span><strong>{d.nome}</strong>
        <small>{d.raridade} · Nv. {d.nivel}{d.classes[0]?" · "+d.classes[0]:""} · {d.slot}</small>
-       <small>{d.efeito}</small>
+       <small>{textoEmPortugues(d.efeito)}</small>
      </span><button type="button" className="small-button gold" disabled={busy||!unlocked||sold||storageUsed(state.chest)>=chestCapacity(state)||state.gold<(d.preco_compra||0)}
        onClick={()=>act({type:"buy",key:d.id})}>{sold?"Esgotado":fmt(d.preco_compra||0)+" ouro"}</button></div>;
    })}</div>
@@ -1065,10 +1066,10 @@ function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) 
   }
   return <div className="guild-mini parchment academy-system">
     <h3>Academia · Treinamento e Formação</h3>
-    <p><strong>Treinamento de heróis:</strong> seus heróis já contratados ganham experiência diariamente sem lutar, desde que estejam na sede. A Academia oferece até 4 vagas e um mentor aumenta o XP recebido.</p>
+    <p><strong>Treinamento de heróis:</strong> seus heróis já contratados ganham experiência diariamente sem lutar, desde que estejam na sede. A Academia oferece até 4 vagas e um mentor aumenta o EXP recebido.</p>
     {!slots ? <p>Melhore a Academia na Sede (nível 1) para liberar o treinamento dos heróis e a seleção de pessoas comuns.</p> : <>
       <h4>Heróis em treinamento · {draft.length}/{slots}</h4>
-      <small>Cada herói matriculado e disponível recebe {dailyXp} XP por dia. Heróis em expedição ou viagem não treinam.</small>
+      <small>Cada herói matriculado e disponível recebe {dailyXp} EXP por dia. Heróis em expedição ou viagem não treinam.</small>
       <div className="academy-heroes">{state.heroes.slice(0,12).map(h => <button key={h.id} data-active={draft.includes(h.id)} onClick={() => toggleStudent(h.id)}><HeroPortrait hero={h}/><span>{h.name.split(" ")[0]}</span></button>)}</div>
       <button className="small-button" disabled={busy} onClick={() => act({type:"academy-trainees",heroIds:draft})}>Salvar heróis em treinamento</button>
       <label className="academy-mentor-label">Mentor (herói de nível 5+):
@@ -1098,7 +1099,7 @@ function AcademyPanel({ state, act, busy }: { state: Campaign; act: (a: Action) 
       {!!state.academy.reserve.length && <div className="academy-reserve"><h4>Formados esperando vaga · {state.academy.reserve.length}</h4>
         <small>A Guilda comporta 12 heróis. Você pode admitir um formado gratuitamente ou dispensá-lo da reserva. A dispensa é definitiva, mas não afeta heróis já contratados.</small>
         {state.academy.reserve.map(h=><div className="academy-candidate" key={h.id}>
-          <div><strong>{h.name}</strong><small>{CLASSES[h.class].name} · Nv. {h.level} · {h.trait}</small></div>
+          <div><strong>{h.name}</strong><small>{CLASSES[h.class].name} · Nv. {h.level} · {textoEmPortugues(h.trait)}</small></div>
           {pendingDismissId===h.id ? (
             <div className="academy-dismiss-confirm" role="group" aria-label={"Confirmar dispensa de "+h.name}>
               <strong>Dispensar {h.name} da reserva?</strong>
@@ -1129,7 +1130,7 @@ function RivalRecruitPanel({ state, act, busy }: { state: Campaign; act: (a: Act
   const [heroId,setHeroId] = useState(guild?.heroes[0]?.id || "");
   useEffect(() => { if (guild && !guild.heroes.some(h => h.id === heroId)) setHeroId(guild.heroes[0]?.id || ""); }, [guildId, guild?.heroes.length]);
   const hero = guild?.heroes.find(h => h.id === heroId) || guild?.heroes[0];
-  return <div className="rival-recruit parchment"><h3>Recrutar de outra Guilda · Top 10</h3><select value={guild?.id || ""} onChange={e => setGuildId(e.target.value)}>{availableGuilds.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
+  return <div className="rival-recruit parchment"><h3>Recrutar de outra Guilda · 10 melhores</h3><select value={guild?.id || ""} onChange={e => setGuildId(e.target.value)}>{availableGuilds.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
     {guild && hero && <><div className="rival-hero"><HeroPortrait hero={hero}/><span><strong>{hero.name}</strong><small>{CLASSES[hero.class].name} · {raceLabel(hero)} · {HERO_SEX_LABEL[heroSex(hero)]} · Nv. {hero.level}</small></span><select value={hero.id} onChange={e => setHeroId(e.target.value)}>{guild.heroes.map(h => <option key={h.id} value={h.id}>{h.name}</option>)}</select></div>
       <div className="negotiation-grid">{(Object.keys(NEGOTIATION_MODES) as NegotiationMode[]).map(mode => {
         const q = negotiationQuote(state,guild,hero,mode);
@@ -1240,7 +1241,7 @@ function GuildPage({
       {safeTreasury<0&&<p className="guild-budget-warning">Atenção: o tesouro não cobre simultaneamente os próximos salários e um dia de manutenção.</p>}
       <small>Projeção para {forecast.days} dia(s): manutenção −{fmt(forecast.maintenance)} e salários −{fmt(forecast.wages)} = saldo estimado {fmt(forecast.projected)} ouro. Não inclui receitas futuras.</small>
       <div className="guild-relief"><strong>Trabalho comunitário emergencial</strong>
-        <small>Apenas quando o tesouro não cobre a próxima folha e a manutenção. Uma vez por semana, sem XP.</small>
+        <small>Apenas quando o tesouro não cobre a próxima folha e a manutenção. Uma vez por semana, sem EXP.</small>
         <button type="button" className="action-button green" disabled={busy||!relief.available}
           onClick={()=>act({type:"emergency-contract"})}>
            {relief.used?"Já realizado nesta semana":relief.available?"Trabalhar · +"+fmt(relief.reward)+" ouro":"Tesouro ainda cobre as despesas"}
@@ -1257,7 +1258,7 @@ function GuildPage({
     </section>
     {state.event && <div className="council parchment"><img src="/reference/guild-council-2026.jpg" alt="" /><div><h2>Decisão do Conselho</h2><p>{state.event.title}</p><small>{state.event.text}</small><div className="council-actions">{state.event.choices.map(c => <button key={c.id} disabled={busy || (!!c.cost && state.gold < c.cost)} onClick={() => act({type:"event",eventId:state.event!.id,choiceId:c.id})}>{c.label}<small>{c.effect}{c.cost?` · Custo: ${fmt(c.cost)} ouro`:" · Sem custo adicional"}</small></button>)}</div></div></div>}
     <div className="hero-art-library parchment" aria-label="Biblioteca de artes dos heróis">
-      <strong>Biblioteca Visual dos Heróis</strong><small>{heroArtProgress().portraits}/84 retratos e {heroArtProgress().battle}/84 sprites completos.
+      <strong>Biblioteca Visual dos Heróis</strong><small>{heroArtProgress().portraits}/84 retratos e {heroArtProgress().battle}/84 imagens de combate completas.
       Novas imagens serão reconhecidas automaticamente pela raça, classe e sexo depois de adicionadas ao projeto e publicadas. Nenhum retrato de outra identidade será utilizado.</small>
     </div>
     <ParchmentTitle icon={<GameSymbol kind="guild"/>} title="Sede da Guilda" />
@@ -1267,7 +1268,7 @@ function GuildPage({
       const nextEffects:Record<HQBuilding,string>={
         infirmary:"Recuperação diária +"+(nextLvl*3)+" energia · ferimento reduzido até "+Math.floor(nextLvl/2)+" dias",
         forge:"Baú "+Math.min(300,30+nextLvl*30)+"/300 espaços · desconto até "+Math.min(20,nextLvl*2)+"%",
-        academy:"Até "+(nextLvl?Math.min(4,1+nextLvl):0)+" aprendizes · treinamento +"+(nextLvl*7)+" XP",
+        academy:"Até "+(nextLvl?Math.min(4,1+nextLvl):0)+" aprendizes · treinamento +"+(nextLvl*7)+" EXP",
         library:"Magia +"+Math.ceil(nextLvl*.8)+" · cura +"+(nextLvl*2)+"%",
         stables:"Recuperação diária +"+(nextLvl*2)+" energia · menor fadiga",
         warroom:"Poder de expedição +"+(nextLvl*1.2).toFixed(1)+"%"
@@ -1275,7 +1276,7 @@ function GuildPage({
       const effects:Record<HQBuilding,string>={
        infirmary:"Recuperação diária +"+(lvl*3)+" energia · ferimento reduzido até "+Math.floor(lvl/2)+" dias",
        forge:"Baú "+chestCapacity(state)+"/300 espaços · criação com até "+Math.min(20,lvl*2)+"% de desconto · itens reforçados",
-       academy:"Até "+academySlots(state)+" aprendizes · treinamento diário +"+(lvl*7)+" XP",
+       academy:"Até "+academySlots(state)+" aprendizes · treinamento diário +"+(lvl*7)+" EXP",
        library:"Magia +"+Math.ceil(lvl*.8)+" · cura +"+(lvl*2)+"%",
        stables:"Recuperação diária +"+(lvl*2)+" energia · menos fadiga e escoltas mais rápidas",
        warroom:"Poder de expedição +"+(lvl*1.2).toFixed(1)+"% · bônus nas batalhas entre guildas"
@@ -1330,11 +1331,11 @@ function GuildPage({
         </button>)}</div></section>
       <AcademyPanel state={state} act={act} busy={busy} />
       <section className="guild-mini parchment"><h3>Sala de Guerra · Guerra de Guildas</h3>
-        <p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0 || state.raidHistory.some(r=>r.day===state.day) || state.rivalBattleHistory.some(r=>r.day===state.day)} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar Raid 3×3</button>{state.raidHistory[0] && <small>Última raid: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
+        <p>Envie três frentes simultâneas com 3 heróis cada.</p><button className="action-button red" disabled={busy || raidTeams.length !== 3 || activeExpeditions(state).length > 0 || state.raidHistory.some(r=>r.day===state.day) || state.rivalBattleHistory.some(r=>r.day===state.day)} onClick={() => raidTeams.length === 3 && act({type:"guild-raid",teams:raidTeams})}>Iniciar incursão 3×3</button>{state.raidHistory[0] && <small>Última incursão: {state.raidHistory[0].won ? "Vitória" : "Derrota"} · {state.raidHistory[0].fronts.filter(f=>f.won).length}/3 frentes</small>}</section>
     </div>
     <RivalRecruitPanel state={state} act={act} busy={busy} />
     <SymbolGuide />
-    <ParchmentTitle icon={<GameSymbol kind="help"/>} title="Save e Configurações" />
+    <ParchmentTitle icon={<GameSymbol kind="help"/>} title="Salvamento e Configurações" />
     <div id="guild-settings" className="guild-settings-controls parchment">
       <div className="guild-setting-row">
         <div><strong>Trilha de fantasia · {RPG_MUSIC_TRACKS.length} músicas</strong><small>Tocando: {RPG_MUSIC_TRACKS[musicIndex].name} ({RPG_MUSIC_TRACKS[musicIndex].mood}). A sequência avança automaticamente sem repetir faixas até o final; volume pelos botões do celular.</small><button className="music-next-button" onClick={nextTrack} aria-label="Pular para a próxima música">Próxima música →</button></div>
@@ -1344,9 +1345,9 @@ function GuildPage({
         <div><strong>Modo leve · melhor desempenho</strong><small>Reduz sombras, efeitos e animações para melhorar a fluidez e poupar bateria. Não altera missões, cálculos ou salvamentos.</small></div>
         <button className="small-button" aria-pressed={liteMode} onClick={() => setLiteMode(!liteMode)}>{liteMode ? "Ativado" : "Desativado"}</button>
       </div>
-      <small className="music-credit">Trilhas de Juhani Junkala / SubspaceAudio, HydroGene, RandomMind (CC0) e Kevin MacLeod (CC BY 4.0). <a href="/music/CREDITOS.txt" target="_blank" rel="noreferrer">Ver licenças e créditos completos</a>. Mais de 30 minutos de faixas diferentes, disponíveis offline após o primeiro carregamento.</small>
+      <small className="music-credit">Trilhas de Juhani Junkala / SubspaceAudio, HydroGene, RandomMind (CC0) e Kevin MacLeod (CC BY 4.0). <a href="/music/CREDITOS.txt" target="_blank" rel="noreferrer">Ver licenças e créditos completos</a>. Mais de 30 minutos de faixas diferentes, disponíveis sem internet após o primeiro carregamento.</small>
     </div>
-    <div className="settings-panel parchment"><button onClick={onExport}><Download /> Baixar backup</button><button onClick={onImport}><Upload /> Importar backup</button><button onClick={onRecover} disabled={!recoveryAvailable()}><Archive /> Recuperar salvamento anterior</button><button className="danger" onClick={onReset}><X /> Reiniciar campanha</button></div>
+    <div className="settings-panel parchment"><button onClick={onExport}><Download /> Baixar cópia de segurança</button><button onClick={onImport}><Upload /> Importar cópia de segurança</button><button onClick={onRecover} disabled={!recoveryAvailable()}><Archive /> Recuperar salvamento anterior</button><button className="danger" onClick={onReset}><X /> Reiniciar campanha</button></div>
   </section>;
 }
 
@@ -1468,7 +1469,7 @@ export default function Game() {
   const restore = async (file: File) => {
     if(!window.confirm("Importar este backup e substituir a campanha atual? A versão anterior será preservada para recuperação."))return;
     try { const next = importLocalCampaign(await file.text()); hydrate({state:next.state,revision:next.revision}); }
-    catch(e){ setError(e instanceof Error ? e.message : "Backup inválido."); }
+    catch(e){ setError(e instanceof Error ? e.message : "Cópia de segurança inválida."); }
   };
 
   return <div className="app-shell">

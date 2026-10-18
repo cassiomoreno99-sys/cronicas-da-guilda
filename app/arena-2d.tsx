@@ -112,7 +112,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const target=all.find(f=>f.id===evt?.targetId);
  const actorIndex=actor?all.filter(f=>f.side===actor.side).findIndex(f=>f.id===actor.id):0;
  const targetIndex=target?all.filter(f=>f.side===target.side).findIndex(f=>f.id===target.id):0;
- const evtKey=expedition.id+"-"+evtIndex;
+ const evtKey=expedition.id+"-"+battle.rounds+"-"+evtIndex+"-"+(evt?.actorId||"")+"-"+(evt?.targetId||"");
  const lastAnimated=useRef(evtKey);
  const school=visualSchool(actor,evt?.kind||"hit");
  const projectile=!!evt&&!!actor&&!!target&&isRangedVisual(school);
@@ -177,7 +177,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"} data-fighter-id={f.id}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
-    <span className="guild2d-sprite" data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"} data-school={acting?school:""}>
+    <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>
      <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
 
     </span>
@@ -218,7 +218,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
-   {evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} aria-hidden="true" style={visualPath}>
+   {evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} aria-hidden="true" style={visualPath}>
       {projectile&&<span className="guild2d-projectile"><i/></span>}
       <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>
         <i className="guild2d-impact-core"/>

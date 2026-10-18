@@ -12,7 +12,8 @@ import "./arena-2d.css";
 /** Profundidade para quatro personagens de cada lado, sem cortes nas laterais.
  * Coordenadas espelhadas preservam a identidade do cenário aprovado. */
 const HERO_POSITIONS=[[19,36],[35,51],[14,63],[34,69]] as const;
-const ENEMY_POSITIONS=[[81,36],[65,51],[86,63],[66,69]] as const;
+// Inimigos com arte de busto não podem usar o mesmo espaço alto dos heróis.
+const ENEMY_POSITIONS=[[85,29],[62,44],[85,59],[62,74]] as const;
 const pos=(side:"hero"|"enemy",i:number)=>{
  const [x,y]=(side==="hero"?HERO_POSITIONS:ENEMY_POSITIONS)[Math.max(0,Math.min(i,3))];
  return {x,y};
@@ -40,10 +41,11 @@ const recentHit=(logs:BattleLog[])=>{
 };
 /** Coreografia visual: o motor continua sendo a fonte real de dano e PV.
  * Cada evento tem um movimento próprio, não depende do texto do registro. */
-type VisualSchool="blade"|"steel"|"arrow"|"shadow"|"arcane"|"holy"|"song"|"nature";
+type VisualSchool="blade"|"steel"|"arrow"|"shadow"|"arcane"|"holy"|"song"|"nature"|"claw";
 export function visualSchool(actor:Pick<BattleFighter,"class">|undefined,kind:BattleLog["kind"]):VisualSchool{
  if(kind==="heal")return "holy";
- switch(actor?.class){
+ if(!actor?.class)return "claw";
+ switch(actor.class){
  case "warrior":case "monk":return "blade";
  case "paladin":return "steel";
  case "ranger":return "arrow";
@@ -244,8 +246,11 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} aria-hidden="true" style={visualPath}>
        <span className="guild2d-windup"/>
        {!projectile&&<span className="guild2d-step-dust"/>}
+      {!projectile&&school!=="claw"&&evt.kind!=="heal"&&<span className="guild2d-sword-strike"><i className="guild2d-sword-blade"/><i className="guild2d-sword-guard"/></span>}
        {!projectile&&evt.kind!=="heal"&&<span className="guild2d-motion-trail"/>}
       {projectile&&<span className="guild2d-projectile"><i/></span>}
+      {projectile&&<span className="guild2d-cast-ring"/>}
+      {school==="claw"&&<span className="guild2d-claw-mark"><i/><i/><i/></span>}
       <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>
         <i className="guild2d-impact-core"/>
         <i className="guild2d-shockwave"/>

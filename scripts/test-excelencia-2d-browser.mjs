@@ -83,7 +83,7 @@ try{
     const arr=[...stage.querySelectorAll(".guild2d-unit")].map(el=>{
       const r=el.getBoundingClientRect();
       return {side:el.classList.contains("guild2d-hero")?"hero":"enemy",
-        x:r.x+r.width/2,y:r.y+r.height/2,left:r.left,right:r.right,width:r.width};
+        x:r.x+r.width/2,y:r.y+r.height/2,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,portraitRadius:getComputedStyle(el.querySelector(".guild2d-sprite")).borderRadius};
     });
     const hud=[...stage.querySelectorAll(".guild2d-hud")].map(el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};});
     const ready=[...stage.querySelectorAll(".guild2d-unit img")].every(img=>img.complete&&img.naturalWidth>0);
@@ -97,6 +97,17 @@ try{
    if(info.hero!==4||info.enemy!==4||info.bars!==8)throw Error("4x4/HUD inválido: "+JSON.stringify({hero:info.hero,enemy:info.enemy,bars:info.bars}));
    if(!info.ready||!info.background.includes("arena-aprovada.webp")||!info.cover.includes("cover"))throw Error("Arte oficial indisponível ou distorcida: "+JSON.stringify({loaded:info.ready,bg:info.background,cover:info.cover}));
    if(info.overflow>5)throw Error("Rolagem horizontal: "+info.overflow);
+   // Regressão registrada por captura Android 18/10: retratos de lobo eram
+   // gigantes e sobrepostos, ocupando a altura dos personagens humanos.
+   const beasts=info.units.filter(u=>u.side==="enemy");
+   if(beasts.some(u=>u.width>98||u.height>108||!u.portraitRadius.includes("50%")))
+     throw Error("Inimigos estão como cartões verticais gigantes: "+JSON.stringify(beasts));
+   for(let i=0;i<beasts.length;i++)for(let j=i+1;j<beasts.length;j++){
+     const a=beasts[i],b=beasts[j];
+     const overlapX=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left));
+     const overlapY=Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+     if(overlapX>4&&overlapY>4)throw Error("Retratos inimigos se sobrepõem no Android: "+JSON.stringify({a,b,overlapX,overlapY}));
+   }
    if(info.units.some(u=>u.left<info.stage.left-3||u.right>info.stage.right+3))throw Error("Sprite cortado lateralmente no Android");
    if(info.hud.some(h=>h.left<info.stage.left-3||h.right>info.stage.right+3||h.bottom>info.stage.bottom+4))throw Error("HUD cortado nos limites do cenário "+width+": "+JSON.stringify({stage:info.stage,hud:info.hud}));
    for(const side of ["hero","enemy"]){

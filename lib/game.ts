@@ -537,6 +537,12 @@ export function treasuryForecast(s:Campaign){
   projected:s.gold-payroll(s)-8*days};
 }
 /** Objetivos verificáveis por temporada, sem inflação adicional de ouro. */
+/** A curva de ouro cresce até o teto de progressão e depois desacelera.
+ * Mantém a economia original das primeiras 250 temporadas. */
+export function seasonalGoldScale(season:number){
+ const elapsed=Math.max(0,season-1);
+ return 1+Math.min(elapsed,249)*.04+Math.min(1.5,Math.log1p(Math.max(0,elapsed-249))*.35);
+}
 export function seasonalChallenges(s:Campaign){
  return [
   {title:"Disciplina da Liga",current:s.leagueWins,goal:15,prestige:20},
@@ -1091,7 +1097,7 @@ export function missions(s: Campaign): Mission[] {
       ][i],
       rank: difficulty,
       force: Math.round(forceBase * scaling),
-      reward: Math.round(rewardBase * (1 + regionIndex * .10 + (s.season - 1) * .04)),
+      reward: Math.round(rewardBase * (seasonalGoldScale(s.season) + regionIndex * .10) * (1+regionInfluence(s,region.name)*.0005)),
       enemy, count: authored?.count||(i===0?3:i>=3?4:3),
       specialty: authored?.specialty||(kind==="hunt"?"ranger":kind==="dungeon"?"rogue":"warrior"),
       flavor: authored?.flavor||(kind==="hunt"?"Arqueiros e Assassinos se destacam na perseguição."
@@ -1114,7 +1120,7 @@ export function seasonBoss(s: Campaign): Mission | null {
     description:guardian?.description||"Uma ameaça de elite bloqueia a expansão da guilda nesta região.",
     rank: 5,
     force: Math.max(Math.round(135 * regionThreat(regionIndex) * seasonalThreat(s.season,.045)),Math.round(missions(s)[4].force * 1.13)),
-    reward: Math.round((165 + regionIndex * 28) * (1 + (s.season - 1) * .04)),
+    reward: Math.round((165 + regionIndex * 28) * seasonalGoldScale(s.season) * (1+regionInfluence(s,region.name)*.0005)),
     enemy, count: 3, specialty: "boss",
     flavor:guardian?.flavor||"Chefe regional: batalha de elite, renome e cicatrizes memoráveis.",
     kind: "boss", requiredFame: 0, boss: regionIndex,
@@ -1496,7 +1502,12 @@ function finishBattle(s: Campaign, b: Battle, status: "won" | "lost" | "retreate
   if (won) {
     entry(s, "Missão · " + m.title, m.reward); s.wins++; s.fame += m.kind === "boss" ? 28 : 4 + m.rank * 4; b.loot = awardCatalogLoot(s,m);
     s.seasonMissionVictories=(s.seasonMissionVictories||0)+1;
-    s.regionalInfluence![m.location]=Math.min(100,regionInfluence(s,m.location)+(m.kind==="boss"?18:2+m.rank));
+    const influenceBefore=regionInfluence(s,m.location);
+    s.regionalInfluence![m.location]=Math.min(100,influenceBefore+(m.kind==="boss"?18:2+m.rank));
+    for(const milestone of [25,50,75,100])if(influenceBefore<milestone&&regionInfluence(s,m.location)>=milestone){
+      s.fame+=5;
+      note(s,"Apoio regional em "+m.location+" alcançou "+milestone+"/100: +5 prestígio. A experiência da população melhora a preparação e os contratos.");
+    }
     if (m.kind === "boss") {
       s.bossSeasons.push(s.season);
       if (s.activeRegion >= s.region && s.region < WORLD_REGIONS.length) { s.region++; b.regionUnlocked = s.region; }

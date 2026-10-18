@@ -3020,3 +3020,34 @@ img.game-symbol.game-coin{
 .set-attribute[data-active="true"][data-stat="critical"]{color:#b41f36}
 .set-attribute[data-active="true"][data-stat="healing"]{color:#08745d}
 .set-attribute[data-active="true"][data-stat="luck"]{color:#806008}
+
+
+/* Estratégia 7/7: painéis compactos, com navegação facilitada no Android. */
+.regional-progress,.guild-quick-actions,.guild-season-goals{display:grid;gap:9px;margin:10px 0;padding:13px}
+.regional-progress strong,.guild-quick-actions>strong{font:700 16px/1.4 Georgia;color:#644321}
+.regional-progress span{font:700 12px/1.45 system-ui;color:#286046}
+.regional-progress small,.guild-season-goals p{font:12px/1.55 system-ui}
+.league-reserve-controls{display:grid;gap:6px;align-items:start;padding:9px;border:1px solid #a99879;border-radius:7px;min-width:0}
+.league-reserve-controls label,.equip-only-set{display:flex;gap:9px;align-items:center;font:700 12px/1.45 system-ui;cursor:pointer}
+.league-reserve-controls input,.equip-only-set input{min-width:19px;min-height:19px;accent-color:#28683f}
+.league-reserve-controls small{font:11px/1.55 system-ui;overflow-wrap:anywhere}
+.equip-only-set{padding:11px;margin:10px 0;border:1px solid #a58a63;border-radius:7px;background:#f5e9ce}
+.equipment-comparison{display:block;padding-top:4px;font:700 11px/1.4 system-ui;color:#21613e;overflow-wrap:anywhere}
+.inventory-search{display:grid;gap:5px;margin:10px 0;font:700 12px/1.4 system-ui}
+.inventory-search input{box-sizing:border-box;width:100%;max-width:540px;min-height:44px;padding:10px;border:1px solid #96805b;border-radius:7px;background:#fff9e8;color:#362b1c;font:14px system-ui}
+.guild-quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.guild-quick-grid button{display:flex;justify-content:space-between;align-items:center;min-width:0;min-height:44px;padding:10px 9px;background:#dec99c;color:#3e2a14;border:1px solid #9f814f;border-radius:6px;font:700 12px/1.4 system-ui;cursor:pointer}
+.guild-quick-grid button:focus-visible,.inventory-search input:focus-visible{outline:3px solid #256a92;outline-offset:2px}
+.guild-quick-alert{display:block;padding:8px;border-left:4px solid #aa5629;background:#f8e9d6;color:#7b341c;font:700 11px/1.5 system-ui}
+.guild-relief{display:grid;gap:7px;padding:10px;margin-top:10px;border:1px solid #bb9c6b;border-radius:7px;background:rgba(217,189,128,.12)}
+.guild-relief strong{font:700 14px Georgia;color:#664322}
+.guild-relief small{font:11px/1.5 system-ui}
+.guild-relief button{min-height:44px;max-width:100%;justify-self:start}
+.guild-season-goals h3{display:flex;align-items:center;gap:6px;color:#634827;font:700 18px Georgia;margin:0}
+.guild-season-goals p{margin:0}
+.guild-goal-list{display:grid;gap:6px}
+.guild-goal-list>div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid #c2b398;padding:7px 2px}
+.guild-goal-list span{font:12px/1.4 system-ui}
+.guild-goal-list strong{font:700 11px/1.4 system-ui;white-space:nowrap;color:#286044}
+.guild-season-goals>small{font:11px/1.5 system-ui}
+@media(max-width:390px){.regional-progress,.guild-quick-actions,.guild-season-goals{padding:10px}.guild-goal-list>div{flex-wrap:wrap}.guild-relief button{width:100%}.league-reserve-controls{padding:7px}}

@@ -14,6 +14,15 @@ try{
    await page.getByRole("button",{name:"Guilda",exact:true}).last().click();
    const cards=page.locator(".building-list article.guild-building-card");
    if(await cards.count()!==6)throw Error("As seis instalações precisam manter as artes originais.");
+   // Imagens abaixo da dobra são carregadas sob demanda no Android.
+   // Percorrer os seis cartões reproduz a rolagem real do jogador.
+   for(let i=0;i<6;i++){
+    await cards.nth(i).scrollIntoViewIfNeeded();
+    await page.waitForFunction(index=>{
+      const image=document.querySelectorAll(".building-list article.guild-building-card img.guild-room-art.compact")[index];
+      return image?.complete&&image.naturalWidth>100;
+    },i,{timeout:12000});
+   }
    const sizes=await cards.evaluateAll(elements=>elements.map(card=>{
     const image=card.querySelector("img.guild-room-art.compact");
     const cr=card.getBoundingClientRect(),ir=image?.getBoundingClientRect();

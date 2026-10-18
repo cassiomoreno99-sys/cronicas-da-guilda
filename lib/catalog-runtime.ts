@@ -1,5 +1,6 @@
 import { CATALOG_BY_ID, CATALOG_ITEMS, RECIPE_BY_ID, testShop, equippedPosition, isTwoHanded, SETS } from "./catalog-test.ts";
-import { heroRace, type Campaign,type Action,type HeroClass,type Mission } from "./game.ts";
+import { heroRace, type Campaign,type Action,type HeroClass,type HeroRace,type Mission } from "./game.ts";
+import { imperialMarket, imperialSetBonuses } from "./imperial-content.ts";
 import { chestCapacity, storageUsed } from "./storage.ts";
 type AddEntry=(s:Campaign,title:string,delta:number)=>void;
 export class CatalogRuleError extends Error {}
@@ -27,7 +28,7 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
  switch(action.type){
  case "buy":{
   const d=CATALOG_BY_ID[action.key];ensure(d&&d.preco_compra!==null,"Item indisponível.");
-  ensure(testShop(s).some(x=>x.id===d.id),"O mercador não oferece esse item.");
+  ensure(testShop(s).some(x=>x.id===d.id)||imperialMarket(s.activeRegion).some(x=>x.id===d.id),"O mercador não oferece esse item.");
   const stock=Math.floor((s.day-1)/7)+":"+s.activeRegion+":"+d.id;
   ensure(!s.shopPurchases.includes(stock),"Estoque esgotado nesta semana.");
   ensure(s.gold>=d.preco_compra,"Ouro insuficiente.");
@@ -96,12 +97,20 @@ export function handleCatalogAction(s:Campaign,action:Action,entry:AddEntry):voi
  case "learn-book":{
   const owned=s.chest.find(i=>i.id===action.itemId),hero=s.heroes.find(h=>h.id===action.heroId);
   ensure(owned&&!owned.equippedTo&&hero,"Herói ou livro indisponível.");
-  const d=CATALOG_BY_ID[owned.key];ensure(d?.categoria==="Livro de magia suprema","Selecione um livro supremo.");
+  const d=CATALOG_BY_ID[owned.key];const imperial=d?.categoria==="Livro Imperial";
+  ensure(d&&(imperial||d.categoria==="Livro de magia suprema"),"Selecione um livro supremo.");
   ensure(d.classes.some(c=>NAMES[c]===hero.class)&&hero.level>=d.nivel,"Classe ou nível incompatível.");
-  ensure(hero.storyStage===3,"Conclua a história pessoal do herói antes de aprender este livro.");
-  ensure(!hero.supremeBook,"O herói já aprendeu um livro supremo.");
   ensure(!s.expeditions.some(e=>e.battle.status==="active"&&e.team.includes(hero.id)),"Herói está em expedição.");
-  hero.supremeBook=d.id;s.chest=s.chest.filter(i=>i.id!==owned.id);break;
+  if(imperial){
+   ensure(d.race===heroRace(hero),"Livro imperial reservado a outra raça.");
+   ensure(!hero.imperialBook,"Este herói já aprendeu um livro imperial.");
+   hero.imperialBook=d.id;
+  }else{
+   ensure(hero.storyStage===3,"Conclua a história pessoal do herói antes de aprender este livro.");
+   ensure(!hero.supremeBook,"O herói já aprendeu um livro supremo.");
+   hero.supremeBook=d.id;
+  }
+  s.chest=s.chest.filter(i=>i.id!==owned.id);break;
  }
  case "reset-specialization":{
   const hero=s.heroes.find(h=>h.id===action.heroId);
@@ -164,7 +173,7 @@ export function equipmentSetCombatEffects(heroClass:HeroClass,equippedKeys:strin
   skillDamage:complete.has("Fortuna do Espetáculo")?.03:0
  };
 }
-export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[]){
+export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[],race?:HeroRace){
  const n={attack:0,defense:0,magic:0,hp:0,speed:0,critical:0,healing:0,luck:0};
  for(const [name,def] of Object.entries(SETS)){
   if(NAMES[def.classe]!==heroClass)continue;
@@ -186,6 +195,10 @@ export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[])
    if(name==="Aurora Guardiã"){n.hp+=42;n.healing+=.04;}
    if(name==="Fortuna do Espetáculo"){n.magic+=9;n.critical+=.02;}
   }
+ }
+ if(race){
+  const bonus=imperialSetBonuses(race,equippedKeys);
+  for(const key of Object.keys(n) as Array<keyof typeof n>)n[key]+=bonus[key];
  }
  return n;
 }

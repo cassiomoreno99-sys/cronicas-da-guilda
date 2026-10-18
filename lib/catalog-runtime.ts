@@ -136,24 +136,29 @@ export function imperialDropChance(s:Campaign,m:Mission,team:readonly string[]):
  return Math.min(.40,Math.round((IMPERIAL_DROP_BASE+level*.015+luck*.20)*1000)/1000);
 }
 export function awardCatalogLoot(s:Campaign,m:Mission,team:readonly string[]=[]):string[]{
- if(storageUsed(s.chest)>=chestCapacity(s))return [];
  const won:string[]=[];
+ // Ouro e equipamentos não se perdem com o baú cheio: os itens raros
+ // e objetivos usam a fila de prêmios já existente no jogo.
+ const grantImportant=(key:string)=>{
+  if(storageUsed(s.chest)<chestCapacity(s))add(s,key);
+  else{s.pendingRewards??=[];s.pendingRewards.push({id:"item-"+(++s.itemSequence),key});}
+  won.push(key);
+ };
  const pick=(candidates:typeof CATALOG_ITEMS)=>candidates[Math.floor(roll(s)*candidates.length)];
  // Peça rara primeiro para o inventário cheio não consumir a chance com material comum.
  const chance=imperialDropChance(s,m,team);
  if(chance>0&&roll(s)<chance){
   const classes=team.map(id=>s.heroes.find(h=>h.id===id)?.class).filter((c):c is HeroClass=>!!c);
   const eligible=IMPERIAL_SETS.filter(d=>classes.some(c=>d.classes.some(n=>NAMES[n]===c)));
-  if(eligible.length){const d=eligible[Math.floor(roll(s)*eligible.length)];add(s,d.id);won.push(d.id);}
+  if(eligible.length){const d=eligible[Math.floor(roll(s)*eligible.length)];grantImportant(d.id);}
  }
  const material=CATALOG_ITEMS.filter(d=>d.categoria==="Materiais"&&d.regiao===m.location);
  if(material.length&&storageUsed(s.chest)<chestCapacity(s)){const d=pick(material);add(s,d.id);won.push(d.id);}
  const index=m.kind==="boss"?6:Number(m.id.split("-").at(-1));
  const quest=CATALOG_ITEMS.filter(d=>d.categoria==="Outros"&&d.preco_compra===null&&d.regiao===m.location&&questMissionIndex(d.id,m.location)===index);
  for(const d of quest){
-  if(storageUsed(s.chest)>=chestCapacity(s))break;
   if(s.claimedQuestItems.includes(d.id))continue;
-  add(s,d.id);won.push(d.id);s.claimedQuestItems.push(d.id);
+  grantImportant(d.id);s.claimedQuestItems.push(d.id);
  }
  // Uma segunda recompensa de equipamento é possível, mas não garantida.
  const eligible=CATALOG_ITEMS.filter(d=>d.regiao===m.location&&d.categoria!=="Materiais"&&d.categoria!=="Livro de magia suprema"&&d.preco_compra!==null&&d.raridade!=="SUPREMO");
@@ -161,7 +166,11 @@ export function awardCatalogLoot(s:Campaign,m:Mission,team:readonly string[]=[])
  const candidates=eligible.filter(d=>m.kind==="boss"||d.raridade!=="LENDÁRIO");
  // No máximo um item extra, com probabilidade de raridade condicionada à missão.
  const gated=candidates.filter(d=>roll(s)<(probability[d.raridade]||0)*(m.kind==="boss"?1.5:1));
- if(gated.length&&storageUsed(s.chest)<chestCapacity(s)){const d=pick(gated);add(s,d.id);won.push(d.id);}
+ if(gated.length){
+  const d=pick(gated);
+  if(["RARO","ÉPICO","LENDÁRIO"].includes(d.raridade))grantImportant(d.id);
+  else if(storageUsed(s.chest)<chestCapacity(s)){add(s,d.id);won.push(d.id);}
+ }
  return won;
 }
 

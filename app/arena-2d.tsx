@@ -12,7 +12,8 @@ import "./arena-2d.css";
 /** Profundidade para quatro personagens de cada lado, sem cortes nas laterais.
  * Coordenadas espelhadas preservam a identidade do cenário aprovado. */
 const HERO_POSITIONS=[[19,36],[35,51],[14,63],[34,69]] as const;
-const ENEMY_POSITIONS=[[81,36],[65,51],[86,63],[66,69]] as const;
+// Inimigos com arte de busto não podem usar o mesmo espaço alto dos heróis.
+const ENEMY_POSITIONS=[[85,29],[62,44],[85,59],[62,74]] as const;
 const pos=(side:"hero"|"enemy",i:number)=>{
  const [x,y]=(side==="hero"?HERO_POSITIONS:ENEMY_POSITIONS)[Math.max(0,Math.min(i,3))];
  return {x,y};
@@ -244,8 +245,10 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} aria-hidden="true" style={visualPath}>
        <span className="guild2d-windup"/>
        {!projectile&&<span className="guild2d-step-dust"/>}
+      {!projectile&&evt.kind!=="heal"&&<span className="guild2d-sword-strike"><i className="guild2d-sword-blade"/><i className="guild2d-sword-guard"/></span>}
        {!projectile&&evt.kind!=="heal"&&<span className="guild2d-motion-trail"/>}
       {projectile&&<span className="guild2d-projectile"><i/></span>}
+      {projectile&&<span className="guild2d-cast-ring"/>}
       <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>
         <i className="guild2d-impact-core"/>
         <i className="guild2d-shockwave"/>

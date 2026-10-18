@@ -2,6 +2,7 @@
 import raw from "./catalogo-314.json" with { type: "json" };
 import type { HeroClass, ItemDef, ItemSlot, Campaign, HeroRace } from "./game.ts";
 import { EXCLUSIVE_GEAR } from "./exclusive-gear.ts";
+import { IMPERIAL_ITEMS } from "./imperial-content.ts";
 export type CatalogEntry = {
  id:string; nome:string; raridade:string; categoria:string; subcategoria:string; classes:string[]; race?:HeroRace;
  nivel:number; regiao:string; slot:string; atributos:Record<string,number>;
@@ -18,7 +19,7 @@ const EXCLUSIVE_ITEMS:CatalogEntry[]=EXCLUSIVE_GEAR.map(x=>({
  preco_compra:null,preco_venda:0,obtencao:x.race?"Ranking dos melhores heróis":"Forja após prêmio das três melhores guildas",
  race:x.race
 }));
-export const CATALOG_BY_ID:Record<string,CatalogEntry> = Object.fromEntries([...CATALOG_ITEMS,...EXCLUSIVE_ITEMS].map(i=>[i.id,i]));
+export const CATALOG_BY_ID:Record<string,CatalogEntry> = Object.fromEntries([...CATALOG_ITEMS,...EXCLUSIVE_ITEMS,...IMPERIAL_ITEMS].map(i=>[i.id,i]));
 export const CATALOG_RULES=raw.regras;
 const CLASS_NAMES:Record<string,HeroClass> = {
  "Guerreiro":"warrior","Cavaleiro":"paladin","Arqueiro":"ranger","Assassino":"rogue",
@@ -50,7 +51,7 @@ function legacySlot(d:CatalogEntry):ItemSlot {
  if(["ring","amulet"].includes(slot||""))return "accessory";
  if(d.categoria==="Materiais")return "material";
  if(d.categoria==="Consumíveis")return "consumable";
- if(d.categoria==="Livro de magia suprema")return "quest";
+ if(d.categoria==="Livro de magia suprema"||d.categoria==="Livro Imperial")return "quest";
  return "treasure";
 }
 function rarity(r:string):ItemDef["rarity"] {

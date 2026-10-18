@@ -1,4 +1,4 @@
-import {useMemo,useState,type CSSProperties} from "react";
+import {useEffect,useMemo,useRef,useState,type CSSProperties} from "react";
 import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide-react";
 import { statusEmPortugues, textoEmPortugues } from "../lib/texto-portugues";
 import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,combatReport,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
@@ -46,8 +46,28 @@ const recentHit=(logs:BattleLog[])=>{
  }
  return undefined;
 };
+/** Coreografia visual: o motor continua sendo a fonte real de dano e PV.
+ * Cada evento tem um movimento próprio, não depende do texto do registro. */
+type VisualSchool="blade"|"steel"|"arrow"|"shadow"|"arcane"|"holy"|"song"|"nature";
+export function visualSchool(actor:Pick<BattleFighter,"class">|undefined,kind:BattleLog["kind"]):VisualSchool{
+ if(kind==="heal")return "holy";
+ switch(actor?.class){
+ case "warrior":case "monk":return "blade";
+ case "paladin":return "steel";
+ case "ranger":return "arrow";
+ case "rogue":return "shadow";
+ case "mage":case "necromancer":return "arcane";
+ case "healer":return "holy";
+ case "bard":return "song";
+ case "druid":return "nature";
+ default:return "blade";
+ }
+}
+const isRangedVisual=(school:VisualSchool)=>["arrow","arcane","holy","song","nature"].includes(school);
 const hpWidth=(hp:number,max:number)=>(max?Math.max(0,Math.min(100,100*hp/max)):0)+"%";
 type PosStyle=CSSProperties&{"--x":string;"--y":string;"--dash-x":string;"--dash-y":string};
+type VisualPath=CSSProperties&{"--start-x":string;"--start-y":string;"--flight-x":string;"--flight-y":string};
+
 
 export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  state:Campaign;expedition:Expedition;act:(action:Action)=>void;close:()=>void;
@@ -68,6 +88,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    if(f.side!=="enemy"||seenEnemies.has(f.id))return false;
    seenEnemies.add(f.id);return true;
  }).slice(0,4);
+ const stageRef=useRef<HTMLDivElement>(null);
  const [heroId,setHeroId]=useState("");
  const [enemyId,setEnemyId]=useState("");
  const [allyTargetId,setAllyTargetId]=useState("");
@@ -92,7 +113,58 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const actorIndex=actor?all.filter(f=>f.side===actor.side).findIndex(f=>f.id===actor.id):0;
  const targetIndex=target?all.filter(f=>f.side===target.side).findIndex(f=>f.id===target.id):0;
  const evtKey=expedition.id+"-"+evtIndex;
+ const lastAnimated=useRef(evtKey);
+ const school=visualSchool(actor,evt?.kind||"hit");
+ const projectile=!!evt&&!!actor&&!!target&&isRangedVisual(school);
+ const visualStart=actor?pos(actor.side,actorIndex):undefined;
  const targetPos=target?pos(target.side,targetIndex):undefined;
+ const visualPath:VisualPath|undefined=visualStart&&targetPos?{
+  "--start-x":visualStart.x+"%","--start-y":visualStart.y+"%",
+  "--flight-x":(targetPos.x-visualStart.x)+"cqw",
+  "--flight-y":(targetPos.y-visualStart.y)+"cqh"
+ }:undefined;
+ // Animações nativas no mesmo nó do sprite: não recarregam as imagens.
+ // Ataque, pausa de impacto e reação estão sincronizados com o log real.
+ useEffect(()=>{
+  const previous=lastAnimated.current;
+  lastAnimated.current=evtKey;
+  if(previous===evtKey||!actor||!target||!evt||!stageRef.current)return;
+  const stage=stageRef.current;
+  const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if(reduced)return;
+  const light=document.documentElement.classList.contains("guild-lite-mode");
+  const duration=light?520:school==="shadow"?650:school==="arcane"?960:820;
+  const allUnits=[...stage.querySelectorAll<HTMLElement>(".guild2d-unit")];
+  const actorNode=allUnits.find(node=>node.dataset.fighterId===actor.id)?.querySelector<HTMLElement>(".guild2d-sprite");
+  const targetNode=allUnits.find(node=>node.dataset.fighterId===target.id)?.querySelector<HTMLElement>(".guild2d-sprite");
+  if(!actorNode||!targetNode)return;
+  const from=pos(actor.side,actorIndex),to=pos(target.side,targetIndex);
+  // Guerreiro e assassino avançam; arqueiros e conjuradores lançam à distância.
+  const ranged=isRangedVisual(school);
+  const dx=ranged?(actor.side==="hero"?-9:9):Math.max(-155,Math.min(155,(to.x-from.x)*stage.clientWidth/100*.56));
+  const dy=ranged?-7:Math.max(-55,Math.min(55,(to.y-from.y)*stage.clientHeight/100*.48));
+  const swing=school==="shadow"?-12:school==="steel"?-7:-5;
+  const actorMotion=actorNode.animate([
+   {offset:0,transform:"translate(0,0) rotate(0deg) scale(1)"},
+   {offset:.18,transform:`translate(${-dx*.13}px,-6px) rotate(${swing}deg) scale(1.02)`},
+   {offset:.48,transform:`translate(${dx}px,${dy}px) rotate(${-swing}deg) scale(1.08)`},
+   {offset:.48+(.085*820/duration),transform:`translate(${dx}px,${dy}px) rotate(${-swing}deg) scale(1.08)`},
+   {offset:.83,transform:`translate(${dx*.2}px,${dy*.2}px) rotate(0deg) scale(1.01)`},
+   {offset:1,transform:"translate(0,0) rotate(0deg) scale(1)"}
+  ],{duration,easing:"ease-in-out",fill:"none"});
+  const motions=[actorMotion];
+  if(actor.id!==target.id){
+   const recoil=target.side==="enemy"?12:-12;
+   motions.push(targetNode.animate([
+    {offset:0,transform:"translateX(0) rotate(0deg)"},
+    {offset:.24,transform:`translateX(${recoil}px) rotate(${recoil*.45}deg)`},
+    {offset:.42,transform:`translateX(${-recoil*.22}px) rotate(-2deg)`},
+    {offset:1,transform:"translateX(0) rotate(0deg)"}
+   ],{delay:duration*.45,duration:Math.max(260,duration*.46),easing:"ease-out",fill:"none"}));
+  }
+  return ()=>motions.forEach(animation=>animation.cancel());
+ },[evtKey]);
+
  const queuedUnit=(id:string)=>battle.combat?.pendingAbilities?.some(p=>p.heroId===id);
  function unit(f:BattleFighter,i:number){
   const p=pos(f.side,i),acting=actor?.id===f.id&&!!targetPos&&f.hp>0;
@@ -102,10 +174,10 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={style} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
-    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"}
+    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"} data-fighter-id={f.id}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
-    <span className="guild2d-sprite" data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"}>
+    <span className="guild2d-sprite" data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"} data-school={acting?school:""}>
      <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
 
     </span>
@@ -142,10 +214,20 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  return <section className="guild2d-shell battle-sheet" aria-label="Combate 2D real de até quatro contra quatro">
   <header className="guild2d-header"><strong>⚔️ Crônicas da Guilda <small>COMBATE 2D · ARENA REALISTA</small></strong><button type="button" onClick={close} aria-label="Fechar arena"><X size={19}/></button></header>
   <div className="guild2d-mission"><h2>{battle.title}</h2><span>Rodada {battle.rounds}{battle.objective?.targetRounds?"/"+battle.objective.targetRounds:""}</span><small>{battle.combat?.mission.location||battle.objective?.name||"Terras da Guilda"}</small></div>
-  <div className="guild2d-stage" role="group" aria-label={heroes.length+" heróis contra "+enemies.length+" inimigos"}>
+  <div ref={stageRef} className="guild2d-stage" data-cinematic="real-2d" role="group" aria-label={heroes.length+" heróis contra "+enemies.length+" inimigos"}>
    <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
+   {evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} aria-hidden="true" style={visualPath}>
+      {projectile&&<span className="guild2d-projectile"><i/></span>}
+      <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>
+        <i className="guild2d-impact-core"/>
+        <i className="guild2d-impact-streak a"/>
+        <i className="guild2d-impact-streak b"/>
+        <i className="guild2d-impact-streak c"/>
+      </span>
+      {evt.kind==="critical"&&<span className="guild2d-cinema-flash"/>}
+   </div>}
    <div className="guild2d-hud-layer">{heroes.map(hud)}{enemies.map(hud)}</div>
    <div className="guild2d-ground"/>
    {!active&&<div className="guild2d-result"><strong>{battle.won?"🏆 VITÓRIA":battle.status==="retreated"?"EQUIPE RETIRADA":"☠️ DERROTA"}</strong></div>}

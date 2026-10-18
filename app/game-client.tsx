@@ -38,7 +38,7 @@ import { GameSymbol, GAME_SYMBOLS, type GameSymbolKind } from "./game-symbols";
 import { EQUIPMENT_SLOTS, type EquipmentSlotId } from "@/lib/equipment-layout";
 import { testShop, CATALOG_ITEMS, CATALOG_GALLERY_ITEMS, CATALOG_BY_ID, filterCatalogGallery, type CatalogGalleryGroup, TEST_RECIPES, SETS, equippedPosition } from "@/lib/catalog-test";
 import { missionLootPreview, equipmentSetProgress, imperialDropChance } from "@/lib/catalog-runtime";
-import { IMPERIAL_WEAPONS, IMPERIAL_SETS, IMPERIAL_BOOKS, IMPERIAL_CLASSES, IMPERIAL_WEAPON_IDS, IMPERIAL_MIN_REGION, imperialSetProgress } from "@/lib/imperial-content";
+import { IMPERIAL_WEAPONS, IMPERIAL_SETS, IMPERIAL_BOOKS, IMPERIAL_CLASSES, IMPERIAL_WEAPON_IDS, IMPERIAL_MIN_REGION, imperialSetProgress, imperialArtwork } from "@/lib/imperial-content";
 
 type Save = Pick<LocalSave, "state" | "revision">;
 type Screen = "mission" | "team" | "league" | "rest" | "heroes" | "equipment" | "chest" | "tavern" | "guild";
@@ -191,9 +191,15 @@ function HeroPortrait({ hero, large = false }: { hero: Pick<Hero, "id" | "name" 
 
 function ItemArt({ itemKey }: { itemKey: string }) {
  const item=CATALOG_BY_ID[itemKey];
+ const imperialArt=imperialArtwork(itemKey);
  const artKey=EXCLUSIVE_BY_ID[itemKey]?.icon||itemKey;
  const index=/^CG-\d{3}$/.test(artKey)?Number(artKey.slice(3))-1:-1;
- if(itemKey.startsWith("IMP-")&&item) return <span role="img" className="item-art imperial-item-art rarity-legendary" aria-label={item.nome}>{item.categoria==="Livro Imperial"?<BookOpen aria-hidden="true"/>:item.categoria==="Arma Suprema Imperial"?<Swords aria-hidden="true"/>:<Crown aria-hidden="true"/>}</span>;
+ if(imperialArt&&item) {
+   const x=(imperialArt.index%4)/3*100,y=Math.floor(imperialArt.index/4)/3*100;
+   return <span role="img" className="item-art imperial-item-art imperial-catalog-image rarity-legendary" aria-label={item.nome}
+     style={{backgroundImage:`url("${imperialArt.src}")`,backgroundSize:"400% 400%",
+       backgroundPosition:`${x}% ${y}%`,backgroundRepeat:"no-repeat"}}/>;
+ }
  if(item && index>=0 && index<314) {
    const sheet=index<300?Math.floor(index/100)+1:4;
    const position=index<300?index%100:index-300;
@@ -863,7 +869,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
     ];
     return <section className="screen chest-screen catalog-gallery">
       <div className="inventory-top"><button onClick={()=>setShowCatalog(false)}><GameSymbol kind="inventory"/> Meu inventário</button><strong><GameSymbol kind="book"/> Catálogo · {CATALOG_GALLERY_ITEMS.length} itens</strong></div>
-      <p className="catalog-note">Catálogo completo: 314 itens originais, 18 exclusivos e 98 Supremos Imperiais. Os novos itens imperiais usam ícones simbólicos. Consultar um item não significa possuí-lo ou ter a região liberada.</p>
+      <p className="catalog-note">Catálogo completo: 314 itens originais, 18 exclusivos e 98 Supremos Imperiais. Os itens Supremos Imperiais possuem artes próprias para as sete classes. Consultar um item não significa possuí-lo ou ter a região liberada.</p>
       <div className="catalog-category-filters" role="group" aria-label="Filtrar catálogo por categoria">
         {categories.map(category=><button key={category.key} type="button" data-active={catalogGroup===category.key} onClick={()=>{setCatalogGroup(category.key);setCatalogPage(0);setCatalogSelection("");}}>{category.label}</button>)}
       </div>

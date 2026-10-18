@@ -77,6 +77,18 @@ export const IMPERIAL_BOOKS:CatalogEntry[]=BOOKS.map(b=>{
  preco_compra:IMPERIAL_BOOK_PRICE},IMPERIAL_BOOK_PRICE);
 });
 export const IMPERIAL_ITEMS:CatalogEntry[]=[...IMPERIAL_WEAPONS,...IMPERIAL_SETS,...IMPERIAL_BOOKS];
+/** Arte individual exibida via sete atlas WebP (14 imagens por classe).
+ * Índices: 0=arma suprema, 1..12=peças do conjunto, 13=livro.
+ * O atlas é uma grade 4x4; 2 células finais são vazias. */
+export function imperialArtwork(key:string):{src:string;index:number}|null{
+ const match=/^IMP-(W|S|B)-(WARRIOR|PALADIN|RANGER|ROGUE|MAGE|HEALER|BARD)(?:-(\d{2}))?$/.exec(key);
+ if(!match)return null;
+ const kind=match[1],digit=match[3];
+ if((kind==="S"&&!digit)||(kind!=="S"&&digit))return null;
+ const index=kind==="W"?0:kind==="B"?13:Number(digit);
+ if(!Number.isInteger(index)||index<0||index>13||(kind==="S"&&(index<1||index>12)))return null;
+ return {src:"/items/imperial/"+match[2].toLowerCase()+".webp",index};
+}
 export const IMPERIAL_BY_ID:Record<string,CatalogEntry>=Object.fromEntries(IMPERIAL_ITEMS.map(i=>[i.id,i]));
 export function imperialMarket(region:number){return region>=IMPERIAL_MIN_REGION?IMPERIAL_ITEMS:[];}
 /** Converte IDs raciais da implementação anterior em IDs da classe do proprietário. */

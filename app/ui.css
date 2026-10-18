@@ -3087,3 +3087,88 @@ img.game-symbol.game-coin{
 .imperial-milestones span{text-align:center;padding:8px 3px;border:1px solid #ad9871;border-radius:5px;background:#e5d6b5;color:#775f3e;font-weight:700;font-size:11px}
 .imperial-milestones span[data-active="true"]{background:#286b52;border-color:#1c513e;color:white}
 @media(max-width:550px){.imperial-market{padding:10px}.imperial-market .catalog-shop>div{grid-template-columns:32px minmax(0,1fr);gap:6px}.imperial-market .catalog-shop button{grid-column:2;max-width:100%;min-width:0}.imperial-controls{align-items:stretch}.imperial-tabs{width:100%}.imperial-tabs button{flex:1 1 auto}.imperial-market .catalog-shop .item-art{width:31px;height:31px}}
+
+
+/* Revisão 2D / Android: a arte das seis instalações é protagonista do cartão. */
+.building-list article.guild-building-card {
+  grid-template-columns:minmax(0,46%) minmax(0,1fr);
+  gap:clamp(12px,1.7vw,20px);
+  align-items:center;
+}
+.building-list article.guild-building-card img.guild-room-art.compact {
+  grid-column:1;
+  grid-row:1 / span 2;
+  width:100%;
+  max-width:100%;
+  height:auto;
+  aspect-ratio:16/9;
+  object-fit:contain;
+  border:2px solid #a77b45;
+  box-shadow:0 4px 16px #27150c42;
+  border-radius:8px;
+  align-self:center;
+}
+.building-list article.guild-building-card>div:nth-child(2){
+  grid-column:2;
+  grid-row:1;
+  align-self:end;
+  gap:8px;
+}
+.building-list article.guild-building-card>div:last-child{
+  grid-column:2;
+  grid-row:2;
+  align-self:start;
+  gap:9px;
+}
+.building-list article.guild-building-card h3 {font-size:clamp(19px,2vw,28px)}
+.building-list article.guild-building-card p {font-size:clamp(12px,1.1vw,16px);line-height:1.45}
+.building-list article.guild-building-card .guild-building-effect,
+.building-list article.guild-building-card .guild-building-next{line-height:1.4}
+@media (max-width:760px) {
+  .building-list article.guild-building-card{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    gap:12px;
+    padding:12px;
+    align-items:stretch;
+  }
+  .building-list article.guild-building-card img.guild-room-art.compact{
+    grid-column:1;
+    grid-row:1;
+    width:100%;
+    min-width:0;
+    max-width:100%;
+    height:auto;
+    max-height:none;
+    aspect-ratio:16/9;
+    object-fit:contain;
+    border-radius:8px;
+  }
+  .building-list article.guild-building-card>div:nth-child(2){
+    grid-column:1;grid-row:2;gap:9px;align-self:stretch;
+  }
+  .building-list article.guild-building-card>div:last-child{
+    grid-column:1;grid-row:3;gap:10px;align-self:stretch;
+  }
+  .building-list article.guild-building-card h3{
+    font-size:clamp(20px,5.2vw,26px);
+    line-height:1.2;
+  }
+  .building-list article.guild-building-card h3 small{font-size:12px}
+  .building-list article.guild-building-card p{
+    font-size:clamp(12px,3.4vw,15px);
+    line-height:1.45;
+  }
+  .building-list article.guild-building-card .guild-building-effect{
+    font-size:clamp(12px,3.4vw,15px);
+    padding:9px 11px;
+  }
+  .building-list article.guild-building-card .guild-building-next{
+    font-size:clamp(14px,3.8vw,18px);
+  }
+  .building-list article.guild-building-card .action-button{
+    width:100%;
+    min-height:46px;
+    font-size:clamp(14px,3.7vw,17px);
+  }
+}

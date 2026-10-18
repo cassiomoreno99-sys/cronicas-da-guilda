@@ -166,7 +166,11 @@ export function awardCatalogLoot(s:Campaign,m:Mission,team:readonly string[]=[])
  const candidates=eligible.filter(d=>m.kind==="boss"||d.raridade!=="LENDÁRIO");
  // No máximo um item extra, com probabilidade de raridade condicionada à missão.
  const gated=candidates.filter(d=>roll(s)<(probability[d.raridade]||0)*(m.kind==="boss"?1.5:1));
- if(gated.length&&storageUsed(s.chest)<chestCapacity(s)){const d=pick(gated);add(s,d.id);won.push(d.id);}
+ if(gated.length){
+  const d=pick(gated);
+  if(["RARO","ÉPICO","LENDÁRIO"].includes(d.raridade))grantImportant(d.id);
+  else if(storageUsed(s.chest)<chestCapacity(s)){add(s,d.id);won.push(d.id);}
+ }
  return won;
 }
 

@@ -34,5 +34,9 @@ export function battleSource(hero:{id:string;name:string;class:HeroClass;race?:H
  if(exact)return exact;
  if(coreSprites[hero.id]&&coreRaces[hero.id]===race&&coreClasses[hero.id]===hero.class&&knownSex[hero.id]===sex)
    return "/battle/sprite-"+coreSprites[hero.id]+".webp";
+ // Preserva o sprite 2D aprovado; para os demais heróis usa o retrato correto,
+ // evitando o aviso "SPRITE PENDENTE" durante a batalha.
+ const portrait=officialHeroArt("portrait",race,hero.class,sex);
+ if(portrait)return portrait;
  return heroArtPlaceholder(race,hero.class,sex,"battle");
 }

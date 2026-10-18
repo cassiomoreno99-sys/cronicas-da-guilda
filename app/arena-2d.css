@@ -253,3 +253,130 @@
 .guild-lite-mode .guild2d-hud,
 .guild-lite-mode .guild2d-sprite img{filter:none!important;box-shadow:none!important}
 .guild-lite-mode .guild2d-sprite{will-change:auto}
+
+
+/* Excelência visual 2D: iluminação e profundidade sem substituir a arte aprovada. */
+.guild2d-shell{--guild-gold:#edd2a0;--guild-ink:#071421;--guild-azure:#79c6ec;--guild-ruby:#e99c99}
+.guild2d-stage{background-color:#0a1829;border-block:2px solid #947248;box-shadow:inset 0 0 0 1px #f5deb337}
+.guild2d-scene{background-size:cover!important;background-position:center 57%!important;filter:saturate(1.07) contrast(1.04)}
+.guild2d-stage:before{
+ content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+ background:radial-gradient(ellipse 37% 42% at 19% 48%,#214c6d42,transparent),
+            radial-gradient(ellipse 37% 42% at 81% 48%,#65303b42,transparent),
+            linear-gradient(180deg,#03101d57,transparent 23%,transparent 75%,#03091078)
+}
+.guild2d-stage:after{background:radial-gradient(ellipse at 50% 48%,transparent 36%,#040b1688 96%)}
+.guild2d-label{
+ border-block:1px solid #d7ad6c80;min-height:35px;
+ background:linear-gradient(90deg,#092a42eb,#101c2ce9 50%,#3a1e2dea)!important;
+ text-shadow:0 1px 2px #000c;letter-spacing:.075em
+}
+.guild2d-label span:first-child{color:#a8e6ff}.guild2d-label span:last-child{color:#ffc3bf}
+.guild2d-label b{color:#ffe8b1;padding:2px 7px;border-radius:12px;background:#0a152cc9;border:1px solid #b99a63b3}
+.guild2d-unit{--unit-accent:#bdc7d1;isolation:isolate;touch-action:manipulation}
+.guild2d-unit[data-class="warrior"]{--unit-accent:#eab970}
+.guild2d-unit[data-class="paladin"]{--unit-accent:#ffe6a4}
+.guild2d-unit[data-class="ranger"]{--unit-accent:#86dec1}
+.guild2d-unit[data-class="rogue"]{--unit-accent:#dba5d7}
+.guild2d-unit[data-class="mage"]{--unit-accent:#b0b0ff}
+.guild2d-unit[data-class="healer"]{--unit-accent:#f7e4a6}
+.guild2d-unit[data-class="bard"]{--unit-accent:#f7accd}
+.guild2d-unit[data-class="enemy"]{--unit-accent:#ed9b96}
+.guild2d-unit:before{
+ left:15%;width:70%;height:13px;
+ background:radial-gradient(ellipse,#020610ec 20%,#02061073 64%,transparent);
+ filter:blur(3px)
+}
+.guild2d-unit[data-dead="false"][data-selected="true"]{
+ filter:drop-shadow(0 5px 7px #02071099) drop-shadow(0 0 8px var(--unit-accent))
+}
+.guild2d-unit[data-dead="false"][data-focused="true"]{
+ filter:drop-shadow(0 0 7px #f1cd7c) drop-shadow(0 7px 9px #010715)
+}
+.guild2d-unit[data-dead="true"]{opacity:.33;filter:grayscale(.95) brightness(.6)}
+.guild2d-unit:focus-visible{outline:2px solid var(--unit-accent);outline-offset:4px;border-radius:14px}
+.guild2d-sprite{backface-visibility:hidden}
+.guild2d-sprite img{object-position:center bottom!important}
+.guild2d-hud{
+ z-index:1;padding:3px 4px 4px;border:1px solid #b79a6c83;
+ border-radius:8px;background:linear-gradient(180deg,#071829ed,#0b1f2bec);
+ box-shadow:0 4px 10px #02071088;gap:2px
+}
+.guild2d-hud-hero{border-color:#5ca7c27f}.guild2d-hud-enemy{border-color:#d081817f}
+.guild2d-hud strong{
+ border:0!important;border-radius:4px;background:transparent;
+ padding:1px 1px 2px;line-height:1.25;
+ color:#fff1cf;text-shadow:0 1px 2px #02070c
+}
+.guild2d-hud[data-selected="true"]{border-color:#ffe9ac;box-shadow:0 0 0 1px #ffdea655,0 4px 12px #0008}
+.guild2d-hud[data-dead="true"]{opacity:.45;filter:grayscale(.8)}
+.guild2d-hud .guild2d-meter{border:1px solid #c6ad804a;border-radius:7px;background:linear-gradient(#46232d,#241925);overflow:hidden}
+.guild2d-hud .guild2d-meter>span{box-shadow:inset 0 1px 0 #fff6;transition:width .2s linear}
+.guild2d-hud small{color:#e9edf0;text-shadow:0 1px 3px #000}
+.guild2d-hud em{z-index:1;border:1px solid #a2cbdf86;border-radius:5px}
+.guild2d-number{font-size:clamp(19px,4.8cqw,34px);-webkit-text-stroke:.5px #1d0f13}
+.guild2d-critical{
+ position:absolute;z-index:26;top:-42px;left:50%;white-space:nowrap;pointer-events:none;
+ padding:3px 7px;border:1px solid #ffe69b;border-radius:5px;
+ color:#ffecb7;background:#5e251bed;
+ font:900 clamp(11px,2.9cqw,16px) system-ui;text-shadow:0 1px 2px #250908;
+ animation:guild2d-critical .9s ease-out both
+}
+.guild2d-action-trail{
+ position:absolute;z-index:9;left:50%;top:40%;
+ width:35%;height:28%;border-radius:50%;
+ border:2px solid #ffdba277;
+ background:radial-gradient(ellipse,#ffecae88,#ffa76d44 35%,transparent 70%);
+ box-shadow:0 0 13px #e7b15b5c;pointer-events:none;
+ animation:guild2d-trail .8s ease-out both
+}
+.guild2d-action-magic{
+ border-color:#a6d4ff80;
+ background:radial-gradient(ellipse,#e1f6ffad,#8ba8ff60 35%,transparent 70%);
+ box-shadow:0 0 16px #9bb9ff70
+}
+@keyframes guild2d-trail{
+ 0%{opacity:0;transform:translate(-50%,0) scale(.35)}
+ 22%{opacity:1;transform:translate(-50%,-7%) scale(1)}
+ 76%{opacity:.55;transform:translate(calc(-50% + var(--dash-x)),calc(var(--dash-y) * .55)) scale(.8)}
+ 100%{opacity:0;transform:translate(calc(-50% + var(--dash-x)),var(--dash-y)) scale(.15)}
+}
+@keyframes guild2d-critical{
+ 0%{opacity:0;transform:translate(-50%,10px) scale(.85)}
+ 18%{opacity:1;transform:translate(-50%,-3px) scale(1.1)}
+ 100%{opacity:0;transform:translate(-50%,-25px) scale(1)
+}}
+.guild2d-chosen{background:linear-gradient(90deg,#0b273b,#171d31 50%,#352127);border-block-color:#b39363;color:#ffedcf}
+.guild2d-chosen span:first-child{color:#a4dfff}.guild2d-chosen span:last-child{color:#ffb6b6}
+.guild2d-log{background:linear-gradient(135deg,#0b2132,#162739);border-color:#b99660}
+.guild2d-log p[data-kind="critical"]{color:#ffe09d;font-weight:700}
+.guild2d-log p[data-kind="heal"]{color:#a9f4d2}
+.guild2d-shell button:focus-visible{outline:2px solid #ffe3a3;outline-offset:2px}
+.guild2d-actions button:not(:disabled):active{transform:translateY(1px);filter:brightness(1.1)}
+@media(max-width:760px){
+ .guild2d-stage{height:clamp(475px,67dvh,620px);min-height:475px}
+ .guild2d-unit{width:clamp(77px,23cqw,142px);height:clamp(125px,29cqh,182px)}
+ .guild2d-hud{width:clamp(61px,18.8cqw,113px);transform:translate(-50%,calc(min(14.5cqh,90px) - 22px));padding:2px 3px 3px}
+ .guild2d-hud strong{font-size:clamp(8px,1.9cqw,10px)}
+ .guild2d-hud small{font-size:clamp(8px,1.7cqw,10px)}
+ .guild2d-stage .guild2d-label{padding:6px}
+ .guild2d-help{font-size:9px}
+}
+@media(max-width:420px){
+ .guild2d-stage{height:490px;min-height:490px}
+ .guild2d-unit{width:23cqw;height:142px}
+ .guild2d-hud{width:18.8cqw;transform:translate(-50%,50px)}
+ .guild2d-hud strong{font-size:8px;letter-spacing:0}
+ .guild2d-hud small{font-size:8px}
+ .guild2d-sprite img{filter:none!important}
+ .guild2d-unit{filter:drop-shadow(0 5px 6px #020710c0)}
+ .guild2d-number{font-size:21px}
+ .guild2d-action-trail{box-shadow:none}
+}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-action-trail,.guild2d-critical{animation:none!important;opacity:0!important}
+ .guild2d-hud .guild2d-meter>span{transition:none}
+}
+.guild-lite-mode .guild2d-action-trail,.guild-lite-mode .guild2d-critical{animation:none!important;opacity:0!important}
+.guild-lite-mode .guild2d-scene{filter:none}
+.guild-lite-mode .guild2d-hud{box-shadow:none}

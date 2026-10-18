@@ -35,10 +35,14 @@ jobs:
           cat /tmp/vite.log
           exit 1
       - run: node scripts/visual-smoke.mjs
+      - name: Auditar excelência do 2D em seis resoluções, quatro contra quatro e sprites estáveis
+        run: node scripts/test-excelencia-2d-browser.mjs
       - name: Guardar capturas como artefatos de QA (não publicar no jogo)
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: revisao-visual-mobile
-          path: visual-report/*.png
+          path: |
+            visual-report/*.png
+            visual-report/excelencia-2d-*.jpg
           if-no-files-found: ignore

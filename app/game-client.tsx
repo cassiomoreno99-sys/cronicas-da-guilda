@@ -12,7 +12,7 @@ import {
   SPECIALIZATIONS, SPECIALIZATION_BRANCHES, RACE_TREES, HERO_STORIES,
   HQ_DEFINITIONS, WORLD_MAP, NEGOTIATION_MODES, JOURNEY_CHOICES,
   activeExpeditions, freeExpeditionSlots, available, activeJourney, heroOnExpedition,
-  heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss, tavernRumorReady, tavernRumorHint,
+  heroRace, heroStats, threshold, missions, missionLocks, missionReadiness, missionSuggestedLevel, missionRewardXp, seasonBoss, bossTacticHint, tavernRumorReady, tavernRumorHint,
   teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, leagueLineup, leagueCalendar, CUP_DAYS, cupStageLabel, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
   hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, MAX_HERO_LEVEL, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
@@ -289,6 +289,7 @@ function MissionPage({
             <div className="specialist"><GameSymbol kind="squad"/><span>Especialistas: {specialtyName(m.specialty)}</span></div>
             <div className="specialist"><GameSymbol kind="experience"/><span><strong>Nível recomendado: {Math.min(MAX_HERO_LEVEL,missionSuggestedLevel(m) + Math.floor((state.season - 1) / 3))}</strong> · {m.kind==="boss"?"Chefe de elite":"Perigo desta região"}</span></div>
             {regionInfluence(state,m.location)>0&&<small className="mission-rumor-ready"><GameSymbol kind="scouting"/> Influência local: {regionInfluence(state,m.location)}/100 · combate e prêmio melhores</small>}
+            {m.kind==="boss"&&<small className="mission-boss-warning"><GameSymbol kind="defense"/> Aviso tático: {bossTacticHint(Math.max(0,state.activeRegion-1))}</small>}
             {tavernRumorReady(state,m.id)&&<small className="mission-rumor-ready"><GameSymbol kind="scouting"/> Rumor investigado · +10% ataque/magia e +5% defesa nesta expedição</small>}
             {!!locks.length && <small className="locked-copy"><GameSymbol kind="locked"/> {locks[0]}</small>}
           </div>
@@ -1243,6 +1244,13 @@ function GuildPage({
       </div>
       {safeTreasury<0&&<p className="guild-budget-warning">Atenção: o tesouro não cobre simultaneamente os próximos salários e um dia de manutenção.</p>}
       <small>Projeção para {forecast.days} dia(s): manutenção −{fmt(forecast.maintenance)} e salários −{fmt(forecast.wages)} = saldo estimado {fmt(forecast.projected)} ouro. Não inclui receitas futuras.</small>
+      <div className="guild-economy-ledger" aria-label="Balanço real dos últimos sete dias">
+        <strong>Livro-caixa · últimos 7 dias</strong>
+        <span>Entradas: +{fmt(forecast.recentIncome)} ouro</span>
+        <span>Saídas: −{fmt(forecast.recentExpense)} ouro</span>
+        <b data-negative={forecast.recentNet<0}>Resultado: {forecast.recentNet>=0?"+":""}{fmt(forecast.recentNet)} ouro</b>
+        <small>Somente lançamentos reais; missões futuras não são receita garantida.</small>
+      </div>
       <div className="guild-relief"><strong>Trabalho comunitário emergencial</strong>
         <small>Apenas quando o tesouro não cobre a próxima folha e a manutenção. Uma vez por semana, sem EXP.</small>
         <button type="button" className="action-button green" disabled={busy||!relief.available}
@@ -1385,6 +1393,9 @@ export default function Game() {
   const [selectedHeroId,setSelectedHeroId] = useState("");
   const [battleExpeditionId,setBattleExpeditionId] = useState<string | null>(null);
   const saveRef = useRef<Save | null>(null);
+  const [lastBackupDay,setLastBackupDay] = useState(() => {
+    try {const value=Number(window.localStorage.getItem("cronicas-backup-dia"));return Number.isSafeInteger(value)&&value>0?value:0;}catch{return 0;}
+  });
   const fileRef = useRef<HTMLInputElement>(null);
   const { musicEnabled, toggleMusic, musicIndex, nextTrack } = useAmbientRpgMusic();
   const [liteMode,setLiteMode] = useState(() => {
@@ -1468,6 +1479,8 @@ export default function Game() {
     const blob = new Blob([exportLocalCampaign()],{type:"application/json"});
     const url = URL.createObjectURL(blob), a = document.createElement("a");
     a.href=url; a.download="cronicas-da-guilda-copia-de-seguranca.json"; a.click(); URL.revokeObjectURL(url);
+    const day=saveRef.current?.state.day||0;
+    if(day){setLastBackupDay(day);try{localStorage.setItem("cronicas-backup-dia",String(day));}catch{}}
   };
   const restore = async (file: File) => {
     if(!window.confirm("Importar esta cópia de segurança e substituir a campanha atual? A versão anterior será preservada para recuperação."))return;
@@ -1478,6 +1491,10 @@ export default function Game() {
   return <div className="app-shell">
     <TopBar state={state} goGuild={() => go("guild")} goSettings={openSettings} />
     <div className="campaign-day-strip" role="status">Temporada {state.season} · Dia {String(seasonDay(state)).padStart(2,"0")}/{SEASON_DAYS} <span>· Próximo dia na Guilda</span></div>
+    {state.day>=7&&(lastBackupDay===0||state.day-lastBackupDay>=7)&&<div className="guild-backup-reminder" role="status">
+      <span>O progresso fica neste aparelho. Faça uma cópia antes de limpar o navegador ou trocar de celular.</span>
+      <button type="button" onClick={downloadBackup}><Download size={16}/> Fazer cópia</button>
+    </div>}
     <OfflineInstall />
     <div className="layout-frame">
       <aside className="nav-sidebar" aria-label="Navegação do jogo">

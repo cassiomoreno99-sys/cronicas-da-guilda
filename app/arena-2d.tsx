@@ -1,4 +1,4 @@
-import {useState,type CSSProperties} from "react";
+import {useMemo,useState,type CSSProperties} from "react";
 import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide-react";
 import { statusEmPortugues, textoEmPortugues } from "../lib/texto-portugues";
 import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,combatReport,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
@@ -33,7 +33,13 @@ function combatArt(f:BattleFighter,hero?:Hero):{src:string;full:boolean}{
  if(!hero)return {src:portraitSource(f.name,f.id,f.class||"warrior",race),full:false};
  return {src:battleSource(hero,race),full:true};
 }
-const recentHit=(logs:BattleLog[])=>[...logs].reverse().find(x=>x.actorId&&x.targetId&&["hit","critical","heal","fall","ability"].includes(x.kind)&&x.amount!==0);
+const recentHit=(logs:BattleLog[])=>{
+ for(let i=logs.length-1;i>=0;i--){
+  const x=logs[i];
+  if(x.actorId&&x.targetId&&["hit","critical","heal","fall","ability"].includes(x.kind)&&x.amount!==0)return x;
+ }
+ return undefined;
+};
 const hpWidth=(hp:number,max:number)=>(max?Math.max(0,Math.min(100,100*hp/max)):0)+"%";
 type PosStyle=CSSProperties&{"--x":string;"--y":string;"--dash-x":string;"--dash-y":string};
 
@@ -73,6 +79,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const upcoming=battle.combat?.liveOrder?.slice(battle.combat.liveCursor||0).map(id=>all.find(f=>f.id===id)).filter((f):f is BattleFighter=>!!f&&f.hp>0)||[];
  const log=battle.log.slice(-3).reverse();
  const evt=recentHit(battle.log);
+ const performance=useMemo(()=>active?[]:combatReport(battle,state.heroes),[battle,state.heroes,active]);
  const evtIndex=evt?battle.log.lastIndexOf(evt):-1;
  const actor=all.find(f=>f.id===evt?.actorId);
  const target=all.find(f=>f.id===evt?.targetId);
@@ -92,7 +99,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" key={acting?evtKey:f.id} data-acting={acting} data-hit={struck} data-magic={evt?.kind==="ability"||evt?.kind==="heal"}>
-     <img src={image.src} alt="" draggable={false} decoding="sync" loading="eager" fetchPriority="high" onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
+     <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):enemyArtSource(f.name);node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
 
     </span>
 
@@ -145,14 +152,14 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     <h3>Relatório tático da equipe</h3>
     <p>Valores calculados do registro real de ações nesta expedição.</p>
     <div className="guild2d-performance-grid">
-      {combatReport(battle,state.heroes).slice(0,8).map(person=><div key={person.id}>
+      {performance.slice(0,8).map(person=><div key={person.id}>
         <strong>{person.name}</strong>
         <span>⚔️ Dano: {person.damage}</span>
         <span>💚 Cura: {person.healing}</span>
         <span>🛡️ Sofreu: {person.received}</span>
         <small>Críticos: {person.criticalHits}</small>
       </div>)}
-      {!combatReport(battle,state.heroes).length&&<small>Sem ações de combate registradas para os heróis.</small>}
+      {!performance.length&&<small>Sem ações de combate registradas para os heróis.</small>}
     </div>
   </section>}
   <div className="guild2d-command-center" aria-label="Comandos táticos do combate">

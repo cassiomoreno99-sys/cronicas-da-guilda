@@ -16,7 +16,7 @@ import {
   teamPower, standings, heroLeaderboard, rivalRecruitCandidates, leaguePrize, leagueLineup, leagueCalendar, CUP_DAYS, cupStageLabel, market, talentPoints, racialPoints,
   trainingPlan, defaultFormationLine, formationValid, suggestSpecialistTeam,
   hqUpgradeCost, academySlots, academyCandidateChance, seasonDay, SEASON_DAYS, MAX_HERO_LEVEL, dailyContractsUsed, DAILY_CONTRACT_LIMIT, payroll,
-  ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rankingRecruitQuote, rank,
+  ACADEMY_COMMONER_CAPACITY, ACADEMY_ENROLL_COST, ACADEMY_FOCUS_COST, negotiationQuote, rankingRecruitQuote, rank, emergencyContractQuote, treasuryForecast, seasonalChallenges, regionInfluence,
   type Action, type Battle, type Campaign, type ChestItem,
   type EvolutionBranch, type Expedition, type ExpeditionSlot, type FormationLine,
   type Hero, type HQBuilding, type JourneyChoice, type JourneyDuration,
@@ -261,6 +261,11 @@ function MissionPage({
   const boss = seasonBoss(state);
   const cards = [...board, ...(boss ? [boss] : [])];
   return <section className="screen mission-screen">
+    <div className="regional-progress parchment" aria-label="Influência regional">
+      <strong><GameSymbol kind="scouting"/> Apoio regional: {WORLD_MAP[state.activeRegion-1]?.name}</strong>
+      <span>{regionInfluence(state,WORLD_MAP[state.activeRegion-1]?.name||"")}/100 · até +6% ataque/magia e +5% recompensa quando completo</span>
+      <small>Vitórias aumentam o apoio. Marcos de 25, 50, 75 e 100 rendem prestígio. No fim da temporada, a influência diminui 5 pontos.</small>
+    </div>
     <div className="mission-daily-budget" role="status"><GameSymbol kind="scouting"/> Expedições do dia: <strong>{dailyContractsUsed(state)}/{DAILY_CONTRACT_LIMIT}</strong> · Um contrato pode ser tentado apenas uma vez por dia. Próximo dia libera novos contratos.</div>
     <div className="mission-list">
       {cards.map((m, index) => {
@@ -274,6 +279,7 @@ function MissionPage({
             <div className="difficulty"><GameSymbol kind="difficulty"/><b>Dificuldade:</b>{[0,1,2,3,4].map(i => <i key={i} data-on={i < m.rank}>◆</i>)}</div>
             <div className="specialist"><GameSymbol kind="squad"/><span>Especialistas: {specialtyName(m.specialty)}</span></div>
             <div className="specialist"><GameSymbol kind="experience"/><span><strong>Nível recomendado: {Math.min(MAX_HERO_LEVEL,missionSuggestedLevel(m) + Math.floor((state.season - 1) / 3))}</strong> · {m.kind==="boss"?"Chefe de elite":"Perigo desta região"}</span></div>
+            {regionInfluence(state,m.location)>0&&<small className="mission-rumor-ready"><GameSymbol kind="scouting"/> Influência local: {regionInfluence(state,m.location)}/100 · combate e prêmio melhores</small>}
             {tavernRumorReady(state,m.id)&&<small className="mission-rumor-ready"><GameSymbol kind="scouting"/> Rumor investigado · +10% ataque/magia e +5% defesa nesta expedição</small>}
             {!!locks.length && <small className="locked-copy"><GameSymbol kind="locked"/> {locks[0]}</small>}
           </div>
@@ -448,6 +454,13 @@ function LeaguePage({ state, team, act, busy, openTeam }: { state: Campaign; tea
         <small>A partida acontece ao encerrar o dia na Guilda.</small></div>
       <div><strong>Escalação oficial {lineup.ids.length}/4</strong><small>{lineup.ids.map(id=>state.heroes.find(h=>h.id===id)?.name).join(" · ")||"Nenhum herói pronto"} · </small><small>{lineup.ready?"Pronta para Liga e Copa · "+TACTICS[state.leagueTactic??state.tactic].name:"ATENÇÃO: menos de 3 heróis prontos. Derrota por W.O. se encerrar o dia."}</small></div>
       <button type="button" className="action-button blue" onClick={openTeam}>Preparar equipe</button>
+      <div className="league-reserve-controls">
+        <label><input type="checkbox" checked={!!state.leagueAutoSub} disabled={busy}
+          onChange={e=>act({type:"league-auto-reserve",enabled:e.target.checked})}/>
+          <strong>Reservas automáticos (opcional)</strong></label>
+        <small>{state.leagueAutoSub?"Se titulares estiverem indisponíveis, reservas aptos entram automaticamente.":"Apenas titulares escalados podem jogar."}
+          {!!lineup.reserves.length&&" Substitutos: "+lineup.reserves.map(id=>state.heroes.find(h=>h.id===id)?.name).join(", ")+"."}</small>
+      </div>
     </div>
     <ParchmentTitle icon={<img className="league-trophy-art" src={LEAGUE_TROPHY} alt="" width={31} height={31}/>} title="Classificação da Liga" side={<span>Temporada {state.season}</span>} />
     <div className="league-table parchment">
@@ -714,13 +727,23 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
 }) {
   const hero = state.heroes.find(h => h.id === selectedId) || state.heroes[0];
   const [selectedSlot, setSelectedSlot] = useState<EquipmentSlotId>("weapon");
+  const [onlySets,setOnlySets]=useState(false);
   const activeSlot = EQUIPMENT_SLOTS.find(s => s.id === selectedSlot) || EQUIPMENT_SLOTS[0];
   const equippedCount = state.chest.filter(i => i.equippedTo === hero.id && ITEMS[i.key]).length;
   const used=state.chest.filter(i=>i.equippedTo===hero.id);
   const current=used.find(i=>(i.equippedSlot||equippedPosition(i.key))===selectedSlot);
-  const candidates=state.chest.filter(i=>!i.equippedTo&&((equippedPosition(i.key)===selectedSlot)||(equippedPosition(i.key)==="ring"&&["ring1","ring2"].includes(selectedSlot))) &&
+  const candidates=state.chest.filter(i=>!i.equippedTo&&(!onlySets||!!ITEMS[i.key]?.set)&&((equippedPosition(i.key)===selectedSlot)||(equippedPosition(i.key)==="ring"&&["ring1","ring2"].includes(selectedSlot))) &&
     (ITEMS[i.key]?.classes||[]).includes(hero.class)&&hero.level>=(ITEMS[i.key]?.levelReq||0));
 
+  const comparison=(item:ChestItem)=>{
+    const before=heroStats(hero,state);
+    const hypothesis={...state,chest:state.chest.map(entry=>entry.id===item.id?{...entry,equippedTo:hero.id,equippedSlot:selectedSlot}:entry)};
+    const after=heroStats(hero,hypothesis);
+    const deltas=[["ATQ",Math.round(after.attack-before.attack)],["DEF",Math.round(after.defense-before.defense)],
+      ["MAG",Math.round(after.magic-before.magic)],["PV",Math.round(after.hp-before.hp)],
+      ["VEL",Math.round(after.speed-before.speed)]].filter(([,n])=>Number(n)!==0);
+    return deltas.map(([k,n])=>String(k)+" "+(Number(n)>0?"+":"")+n).join(" · ")||"Sem mudança significativa";
+  };
   return <section className="screen equipment-screen" aria-label="Equipamentos de 12 espaços">
     <header className="equipment-page-header">
       <button type="button" className="equipment-back" onClick={back}>
@@ -758,12 +781,14 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
         </button>;
       })}
     </div>
+    <label className="equip-only-set"><input type="checkbox" checked={onlySets} onChange={e=>setOnlySets(e.target.checked)}/>
+      Mostrar apenas peças de conjuntos</label>
     <section className="equipment-slot-detail parchment" aria-live="polite">
       <span className="equipment-detail-label">{activeSlot.group}</span>
       <h3>{activeSlot.label}</h3><p>{activeSlot.description}</p>
       {current?<div><strong>{ITEMS[current.key]?.name}</strong><p>{ITEMS[current.key]?.description}</p><SetItemInfo itemKey={current.key}/><button className="action-button blue" disabled={busy} onClick={()=>act({type:"unequip",itemId:current.id})}>Desequipar</button></div>:
       <div><p>Sem item equipado neste espaço.</p><div className="catalog-equippable">
-        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}><ItemArt itemKey={i.key}/>{ITEMS[i.key]?.name}{ITEMS[i.key]?.set&&<small className="equipment-candidate-set"> · {ITEMS[i.key]?.set}</small>}</button>)}
+        {candidates.slice(0,8).map(i=><button key={i.id} className="small-button" disabled={busy} onClick={()=>act({type:"equip",itemId:i.id,heroId:hero.id})}><ItemArt itemKey={i.key}/><span>{ITEMS[i.key]?.name}{ITEMS[i.key]?.set&&<small className="equipment-candidate-set">Conjunto: {ITEMS[i.key]?.set}</small>}<small className="equipment-comparison">{comparison(i)}</small></span></button>)}
       </div>{!candidates.length&&<small>Sem itens compatíveis no baú.</small>}</div>}
     </section>
     <button type="button" className="equipment-bottom-back" onClick={back}><ChevronLeft aria-hidden="true"/> Voltar à ficha do herói</button>
@@ -772,6 +797,7 @@ function EquipmentPage({ state, selectedId, selectHero, back, act, busy }: {
 
 function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => void; busy: boolean }) {
   const [filter,setFilter] = useState("all");
+  const [itemQuery,setItemQuery]=useState("");
   const [itemPage,setItemPage] = useState(0);
   const [showCatalog,setShowCatalog] = useState(false);
   const [catalogPage,setCatalogPage] = useState(0);
@@ -779,7 +805,9 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   const [selectedId,setSelectedId] = useState(state.chest.find(i=>!i.equippedTo)?.id || "");
   const [recipient,setRecipient] = useState(state.heroes[0]?.id || "");
   const [useHero,setUseHero] = useState(state.heroes[0]?.id || "");
-  const filtered = state.chest.filter(i => !i.equippedTo).filter(i => {
+  const filtered = state.chest.filter(i => !i.equippedTo)
+    .filter(i=>!itemQuery.trim()||(ITEMS[i.key]?.name||"").toLocaleLowerCase("pt-BR").includes(itemQuery.trim().toLocaleLowerCase("pt-BR"))||i.key.toLowerCase().includes(itemQuery.trim().toLowerCase()))
+    .filter(i => {
     const slot = ITEMS[i.key]?.slot;
     if (filter === "all") return true;
     if (filter === "weapons") return slot === "weapon" || slot === "offhand";
@@ -830,6 +858,7 @@ function ChestPage({ state, act, busy }: { state: Campaign; act: (a: Action) => 
   return <section className="screen chest-screen">
     <div className="inventory-top"><button data-active><GameSymbol kind="inventory"/> Inventário</button><button onClick={()=>setShowCatalog(true)}><GameSymbol kind="book"/> Ver 314 itens</button><button onClick={() => {setFilter("material");setItemPage(0);setSelectedId("");}} data-active={filter === "material"}><GameSymbol kind="forge"/> Materiais</button><span><GameSymbol kind="inventory"/> {storageUsed(state.chest)}/{chestCapacity(state)}</span></div>
     <p className="inventory-capacity-note">Forja Nv. {state.hq.forge} · {storageUsed(state.chest)} guardados · {state.chest.filter(i=>!!i.equippedTo).length} equipados nos heróis · {Math.max(0,chestCapacity(state)-storageUsed(state.chest))} espaços livres</p>
+    <label className="inventory-search">Pesquisar no baú <input type="search" placeholder="Nome ou código do item" value={itemQuery} onChange={e=>{setItemQuery(e.target.value);setItemPage(0);setSelectedId("");}}/></label>
     <div className="inventory-filters">{[["all","Todos"],["weapons","Armas"],["armor","Armaduras"],["accessory","Acessórios"],["consumable","Consumíveis"],["other","Outros"]].map(([id,label]) => <button key={id} data-active={filter === id} onClick={() => {setFilter(id);setItemPage(0);setSelectedId("");}}>{label}</button>)}</div>
     <nav className="inventory-pagination" aria-label="Páginas dos itens no baú">
       <button type="button" disabled={page===0} onClick={()=>{setItemPage(page-1);setSelectedId("");}}>‹ Anterior</button>

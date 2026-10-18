@@ -833,3 +833,30 @@
  .guild2d-enemy[data-enemy-bestiary="true"] .guild2d-sprite{animation:none}
  .guild2d-sword-strike,.guild2d-cast-ring{display:none!important;animation:none!important}
 }
+
+/* Criaturas sem classe usam garras reais na cena: jamais exibem espada humana. */
+.guild2d-cinema-claw{--fx-accent:#e8a18c;--fx-core:#ffe9c8}
+.guild2d-claw-mark{
+ position:absolute;left:calc(var(--start-x) + var(--flight-x));
+ top:calc(var(--start-y) + var(--flight-y));
+ width:clamp(39px,13cqw,110px);height:clamp(43px,12cqw,100px);
+ translate:-50% -50%;display:flex;align-items:center;justify-content:space-evenly;
+ rotate:-38deg;opacity:0;z-index:6;
+ animation:guild2d-claw-strike var(--cinema-ms,820ms) ease-out both;
+}
+.guild2d-claw-mark i{
+ display:block;height:91%;width:12%;border-radius:65% 45% 60% 45%;
+ background:linear-gradient(90deg,#b45e4a,#ffdab2 46%,#fff4d9 53%,transparent 100%);
+ clip-path:polygon(48% 0,99% 35%,72% 100%,0% 100%,0 35%);
+ box-shadow:1px 1px 3px #f6aa76;
+}
+.guild2d-claw-mark i:first-child{translate:0 11px}
+.guild2d-claw-mark i:last-child{translate:0 -10px}
+@keyframes guild2d-claw-strike{
+ 0%,49%{opacity:0;scale:.5;rotate:-60deg}
+ 56%{opacity:1;scale:1.12;rotate:-37deg}
+ 73%{opacity:.75;scale:1.25;rotate:-34deg}
+ 100%{opacity:0;scale:1.35;rotate:-32deg}
+}
+.guild-lite-mode .guild2d-claw-mark i{box-shadow:none}
+@media(prefers-reduced-motion:reduce){.guild2d-claw-mark{display:none!important;animation:none!important}}

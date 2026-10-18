@@ -47,9 +47,11 @@ function persist(save: LocalSave, keepSnapshot=true): LocalSave {
     const previous=localStorage.getItem(LOCAL_SAVE_KEY);
     if(previous){
       try{
-        // Preserva o estado anterior, já validado, antes de substituir a campanha.
-        const parsed=parseSave(previous);
-        localStorage.setItem(LOCAL_RECOVERY_KEY,JSON.stringify(parsed));
+        // JSON já validado no salvamento anterior: não remigrar nem recriar
+        // centenas de NPCs em toda atualização de um combatente.
+        const candidate=JSON.parse(previous) as Partial<LocalSave>;
+        if(validState(candidate?.state)&&Number.isSafeInteger(candidate.revision)&&candidate.revision!>=0)
+          localStorage.setItem(LOCAL_RECOVERY_KEY,previous);
       }catch{/* Nunca sobreponha a cópia de resgate com dados corrompidos. */}
     }
   }
@@ -71,8 +73,8 @@ export function readLocalCampaign(): LocalSave {
     try{localStorage.setItem(LOCAL_SAVE_KEY+":corrupted:"+Date.now(),raw);}catch{}
     throw new Error("Salvamento inválido. O arquivo original foi preservado. Use 'Recuperar campanha' ou importe um backup, sem reiniciar o jogo.");
   }
-  // Migra saves antigos sem mexer na cópia de segurança com o mesmo revision.
-  localStorage.setItem(LOCAL_SAVE_KEY,JSON.stringify(parsed));
+  // Migra em memória e grava apenas após a próxima ação. Ler ou verificar
+  // conflito entre abas não dispara gravação redundante no Android.
   return parsed;
 }
 export function restoreRecoveryCampaign(): LocalSave {

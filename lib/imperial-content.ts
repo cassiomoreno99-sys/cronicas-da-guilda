@@ -48,7 +48,7 @@ const BOOKS=[
  {race:"elf",name:"Codex Imperial da Lua Eterna",effect:"Lua de Lúmen: atinge todos os inimigos e concede regeneração aos aliados."},
  {race:"dwarf",name:"Codex Imperial da Montanha",effect:"Muralha Primordial: concede escudos e proteção à equipe por 2 turnos."},
  {race:"orc",name:"Codex Imperial do Trono de Sangue",effect:"Fúria do Trono: golpe devastador e aumento de ataque do conjurador."},
- {race:"beastkin",name:"Codex Imperial da Chama Dracônica",effect:"Sopro Ancestral: atinge todos os inimigos e fortalece a velocidade do herói."},
+ {race:"beastkin",name:"Codex Imperial da Chama Dracônica",effect:"Sopro Ancestral: atinge todos os inimigos e concede esquiva ao herói."},
  {race:"umbral",name:"Codex Imperial do Eclipse",effect:"Eclipse Absoluto: dano mágico em área, lentidão e vulnerabilidade."}
 ] as const;
 function joinStats(a:Bonuses,b:Bonuses):Bonuses{

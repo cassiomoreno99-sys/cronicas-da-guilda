@@ -41,10 +41,11 @@ const recentHit=(logs:BattleLog[])=>{
 };
 /** Coreografia visual: o motor continua sendo a fonte real de dano e PV.
  * Cada evento tem um movimento próprio, não depende do texto do registro. */
-type VisualSchool="blade"|"steel"|"arrow"|"shadow"|"arcane"|"holy"|"song"|"nature";
+type VisualSchool="blade"|"steel"|"arrow"|"shadow"|"arcane"|"holy"|"song"|"nature"|"claw";
 export function visualSchool(actor:Pick<BattleFighter,"class">|undefined,kind:BattleLog["kind"]):VisualSchool{
  if(kind==="heal")return "holy";
- switch(actor?.class){
+ if(!actor?.class)return "claw";
+ switch(actor.class){
  case "warrior":case "monk":return "blade";
  case "paladin":return "steel";
  case "ranger":return "arrow";
@@ -245,10 +246,11 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} aria-hidden="true" style={visualPath}>
        <span className="guild2d-windup"/>
        {!projectile&&<span className="guild2d-step-dust"/>}
-      {!projectile&&evt.kind!=="heal"&&<span className="guild2d-sword-strike"><i className="guild2d-sword-blade"/><i className="guild2d-sword-guard"/></span>}
+      {!projectile&&school!=="claw"&&evt.kind!=="heal"&&<span className="guild2d-sword-strike"><i className="guild2d-sword-blade"/><i className="guild2d-sword-guard"/></span>}
        {!projectile&&evt.kind!=="heal"&&<span className="guild2d-motion-trail"/>}
       {projectile&&<span className="guild2d-projectile"><i/></span>}
       {projectile&&<span className="guild2d-cast-ring"/>}
+      {school==="claw"&&<span className="guild2d-claw-mark"><i/><i/><i/></span>}
       <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>
         <i className="guild2d-impact-core"/>
         <i className="guild2d-shockwave"/>

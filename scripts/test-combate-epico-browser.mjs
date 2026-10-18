@@ -58,7 +58,7 @@ try{
     return [...document.querySelectorAll(".guild2d-unit")].map(u=>u.dataset.fighterId);
    });
    if(baseNodes.length<6)throw Error("Combatentes ausentes da arena "+baseNodes.length);
-   let animated=false,motion=false,visual="";
+   let animated=false,motion=false,visibleAttack=false,visual="";
    for(let t=0;t<12;t++){
     const attack=page.getByRole("button",{name:/^Atacar/}).first();
     if(!(await attack.isEnabled()))break;
@@ -72,17 +72,20 @@ try{
           a.effect?.getKeyframes?.().some(frame=>/translate\((-?\d+)(?:\.\d+)?px,/.test(String(frame.transform||""))))),
        targeted:nodes.some(u=>u.querySelector(".guild2d-sprite")?.getAnimations().some(a=>
           a.effect?.getKeyframes?.().some(frame=>String(frame.transform||"").includes("rotate(")))),
+       sword:!!document.querySelector(".guild2d-sword-strike"),
+       casting:!!document.querySelector(".guild2d-cast-ring"),
        kept:nodes.every(u=>globalThis.__epicSprites.get(u.dataset.fighterId)===u.querySelector(".guild2d-sprite img")),
        school:document.querySelector(".guild2d-cinema")?.getAttribute("data-school")||"",
        fxDisplay:document.querySelector(".guild2d-impact-mark")?getComputedStyle(document.querySelector(".guild2d-impact-mark")).display:"none"};
     });
     if(!result.kept)throw Error("Os sprites foram recarregados durante o combate, causando piscadas.");
     animated ||=result.hasFx&&result.fxDisplay!=="none";
+    visibleAttack ||= result.sword||result.casting;
     motion ||=result.spriteMove;
     visual ||=result.school;
-    if(animated&&motion)break;
+    if(animated&&motion&&visibleAttack)break;
    }
-   if(!animated||!motion)throw Error("Combate sem movimento real ou impacto: "+JSON.stringify({animated,motion,visual}));
+   if(!animated||!motion||!visibleAttack)throw Error("Combate sem movimento, espada ou magia visíveis: "+JSON.stringify({animated,motion,visibleAttack,visual}));
    const angle=await page.locator(".guild2d-cinema").evaluate(el=>el.style.getPropertyValue("--shot-angle"));
    if(!angle.includes("deg")||Number.isNaN(parseFloat(angle)))
      throw Error("Projétil sem direção baseada na posição real dos combatentes.");

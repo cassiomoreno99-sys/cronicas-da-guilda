@@ -114,7 +114,7 @@ export type Action =
   | { type: "battle-consumable"; key: BattleConsumableKey; targetId: string; expeditionId?: string }
   | { type: "battle-ability"; heroId: string; abilityId: string; targetId?: string; expeditionId?: string }
   | { type: "event"; eventId: string; choiceId: string }
-  | { type: "equip"; itemId: string; heroId: string } | { type: "unequip"; itemId: string }
+  | { type: "equip"; itemId: string; heroId: string; slot?: "ring1"|"ring2" } | { type: "swap-equip"; itemId: string; heroId: string; oldItemId: string; slot: string } | { type: "unequip"; itemId: string }
   | { type: "sell"; itemId: string } | { type: "buy"; key: string }
   | { type: "specialize"; heroId: string; path: TalentPath; branch?: EvolutionBranch }
   | { type: "racial-specialize"; heroId: string; path: RacialPath }
@@ -2129,6 +2129,7 @@ export function applyAction(previous: Campaign, action: Action): Campaign {
     }
     case "event": resolveEvent(s, action); break;
     case "equip":
+    case "swap-equip":
     case "unequip":
     case "sell":
     case "buy":

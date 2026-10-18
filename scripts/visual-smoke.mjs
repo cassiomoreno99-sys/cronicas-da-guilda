@@ -127,7 +127,7 @@ const imperialUrls=await page.locator(".catalog-gallery-grid .imperial-catalog-i
  return bg.startsWith("url(")?bg.slice(4,-1).replaceAll('"',"").replaceAll("'",""):"";
 }));
 if(new Set(imperialUrls).size!==7||imperialUrls.some(url=>!url.includes("/items/imperial/")))
-  throw new Error("Os atlas das sete classes não foram atribuídos às armas Supremas Imperiais.");
+  throw new Error("Os atlas das sete classes não foram atribuídos às armas Supremas Imperiais: "+JSON.stringify(imperialUrls));
 const imperialLoaded=await page.evaluate(async urls=>Promise.all(urls.map(async url=>{
  const resp=await fetch(url);const bytes=await resp.arrayBuffer();
  return {url,ok:resp.ok,type:resp.headers.get("content-type"),size:bytes.byteLength};

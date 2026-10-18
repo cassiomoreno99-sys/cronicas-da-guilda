@@ -132,7 +132,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const stage=stageRef.current;
   const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(reduced)return;
-  const light=document.documentElement.classList.contains("guild-lite-mode");
+  const light=!!stage.closest(".guild-lite-mode")||document.documentElement.classList.contains("guild-lite-mode");
   const duration=light?520:school==="shadow"?650:school==="arcane"?960:820;
   const allUnits=[...stage.querySelectorAll<HTMLElement>(".guild2d-unit")];
   const actorNode=allUnits.find(node=>node.dataset.fighterId===actor.id)?.querySelector<HTMLElement>(".guild2d-sprite");
@@ -141,9 +141,12 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const from=pos(actor.side,actorIndex),to=pos(target.side,targetIndex);
   // Guerreiro e assassino avançam; arqueiros e conjuradores lançam à distância.
   const ranged=isRangedVisual(school);
-  const dx=ranged?(actor.side==="hero"?-9:9):Math.max(-155,Math.min(155,(to.x-from.x)*stage.clientWidth/100*.56));
-  const dy=ranged?-7:Math.max(-55,Math.min(55,(to.y-from.y)*stage.clientHeight/100*.48));
-  const swing=school==="shadow"?-12:school==="steel"?-7:-5;
+  const absoluteFlight=(to.x-from.x)*stage.clientWidth/100;
+  const strikeDistance=Math.max(0,Math.abs(absoluteFlight)-Math.max(24,Math.min(54,stage.clientWidth*.11)));
+  // Terminar o golpe ao alcance real do oponente (antes a investida parava muito longe).
+  const dx=ranged?(actor.side==="hero"?-14:14):Math.sign(absoluteFlight)*Math.min(strikeDistance,Math.abs(absoluteFlight)*.84,Math.max(190,stage.clientWidth*.58));
+  const dy=ranged?-10:Math.max(-95,Math.min(95,(to.y-from.y)*stage.clientHeight/100*.77));
+  const swing=school==="shadow"?-17:school==="steel"?-11:school==="blade"?-10:-6;
   const actorMotion=actorNode.animate([
    {offset:0,transform:"translate(0,0) rotate(0deg) scale(1)"},
    {offset:.18,transform:`translate(${-dx*.13}px,-6px) rotate(${swing}deg) scale(1.02)`},
@@ -154,13 +157,27 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   ],{duration,easing:"ease-in-out",fill:"none"});
   const motions=[actorMotion];
   if(actor.id!==target.id){
-   const recoil=target.side==="enemy"?12:-12;
-   motions.push(targetNode.animate([
+   const recoil=(target.side==="enemy"?1:-1)*(evt.kind==="critical"?22:school==="steel"?17:13);
+   motions.push(targetNode.animate(evt.kind==="heal"?[
+    {offset:0,transform:"scale(1)",filter:"brightness(1)"},
+    {offset:.38,transform:"scale(1.065)",filter:"brightness(1.45)"},
+    {offset:1,transform:"scale(1)",filter:"brightness(1)"}
+   ]:[
     {offset:0,transform:"translateX(0) rotate(0deg)"},
-    {offset:.24,transform:`translateX(${recoil}px) rotate(${recoil*.45}deg)`},
-    {offset:.42,transform:`translateX(${-recoil*.22}px) rotate(-2deg)`},
+    {offset:.23,transform:`translateX(${recoil}px) rotate(${recoil*.48}deg) scale(.97)`},
+    {offset:.43,transform:`translateX(${-recoil*.27}px) rotate(-2deg)`},
     {offset:1,transform:"translateX(0) rotate(0deg)"}
-   ],{delay:duration*.45,duration:Math.max(260,duration*.46),easing:"ease-out",fill:"none"}));
+   ],{delay:duration*.45,duration:Math.max(260,duration*.49),easing:"ease-out",fill:"none"}));
+  }
+  if(!light&&evt.kind==="critical"&&evt.amount!==0){
+    const scene=stage.querySelector<HTMLElement>(".guild2d-scene");
+    if(scene)motions.push(scene.animate([
+      {offset:0,transform:"translate(0,0)"},
+      {offset:.22,transform:"translate(-4px,1px)"},
+      {offset:.5,transform:"translate(4px,-3px)"},
+      {offset:.75,transform:"translate(-2px,2px)"},
+      {offset:1,transform:"translate(0,0)"}
+    ],{delay:duration*.54,duration:160,easing:"steps(3,end)"}));
   }
   return ()=>motions.forEach(animation=>animation.cancel());
  },[evtKey]);
@@ -222,6 +239,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
       {projectile&&<span className="guild2d-projectile"><i/></span>}
       <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>
         <i className="guild2d-impact-core"/>
+        <i className="guild2d-shockwave"/>
+        <i className="guild2d-impact-slash"/>
+        <i className="guild2d-impact-dust"/>
         <i className="guild2d-impact-streak a"/>
         <i className="guild2d-impact-streak b"/>
         <i className="guild2d-impact-streak c"/>

@@ -1,0 +1,36 @@
+name: Sete melhorias - Mobile 320 390 1024
+on:
+  push:
+    branches: [sete-melhorias-completas-20261017]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Preparar aplicativo e Playwright
+        run: |
+          npm install --no-audit --no-fund --package-lock=false
+          npm install --no-save --no-audit --no-fund --package-lock=false playwright@1.56.1
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "CHROMIUM_EXECUTABLE_PATH=$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            npx playwright install --with-deps chromium
+          fi
+      - name: Build produção
+        run: npm run build
+      - name: Verificar sete melhorias em 320 390 1024
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 --strictPort &
+          PID=$!
+          trap "kill $PID 2>/dev/null || true" EXIT
+          for i in $(seq 1 40); do if curl -fsS http://127.0.0.1:4173 -o /dev/null; then break; fi; sleep 1; done
+          node scripts/test-sete-melhorias-browser.mjs

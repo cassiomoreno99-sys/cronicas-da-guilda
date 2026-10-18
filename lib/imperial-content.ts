@@ -58,7 +58,7 @@ const imperial=(x:Omit<CatalogEntry,"raridade"|"regiao"|"nivel"|"preco_venda"|"o
  ...x,raridade:"SUPREMO",regiao:IMPERIAL_REGION,nivel:IMPERIAL_MIN_LEVEL,
  preco_compra:price,preco_venda:0,obtencao:"Mercador Imperial — liberado no Império de Solkar (região 10)."
 });
-export const IMPERIAL_WEAPON_IDS=WEAPONS.map(w=>w.id);
+export const IMPERIAL_WEAPON_IDS:string[]=WEAPONS.map(w=>w.id);
 export const IMPERIAL_WEAPONS:CatalogEntry[]=WEAPONS.map(w=>imperial({
  id:w.id,nome:w.name,categoria:"Arma Suprema Imperial",subcategoria:w.classe,classes:[w.classe],
  slot:"Arma principal",atributos:w.stats,efeito:"Arma suprema exclusiva da classe "+w.classe+". Substitui a arma do conjunto racial imperial.",conjunto:null,preco_compra:150_000

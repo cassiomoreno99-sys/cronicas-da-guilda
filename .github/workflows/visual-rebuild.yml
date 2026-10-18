@@ -37,6 +37,8 @@ jobs:
       - run: node scripts/visual-smoke.mjs
       - name: Auditar excelência do 2D em seis resoluções, quatro contra quatro e sprites estáveis
         run: node scripts/test-excelencia-2d-browser.mjs
+      - name: Verificar imagens grandes da Sede e coreografia em cinco telas Android/desktop
+        run: node scripts/test-combate-epico-browser.mjs
       - name: Guardar capturas como artefatos de QA (não publicar no jogo)
         if: always()
         uses: actions/upload-artifact@v4

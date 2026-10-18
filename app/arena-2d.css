@@ -380,3 +380,277 @@
 .guild-lite-mode .guild2d-action-trail,.guild-lite-mode .guild2d-critical{animation:none!important;opacity:0!important}
 .guild-lite-mode .guild2d-scene{filter:none}
 .guild-lite-mode .guild2d-hud{box-shadow:none}
+
+
+/* Coreografia 2D: eventos do motor, sem trocar regras, vida ou recompensas.
+   As imagens ficam montadas no DOM enquanto a camada de impacto atravessa o campo. */
+.guild2d-cinema{
+  --fx-accent:#ffe0a0;
+  --fx-core:#fff4d2;
+  position:absolute;
+  inset:0;
+  z-index:17;
+  pointer-events:none;
+  overflow:hidden;
+  contain:layout style;
+}
+.guild2d-cinema-blade{--fx-accent:#f7c77e;--fx-core:#fff0bc}
+.guild2d-cinema-steel{--fx-accent:#d3e7ff;--fx-core:#ffffff}
+.guild2d-cinema-arrow{--fx-accent:#c2f0b0;--fx-core:#f5ffd7}
+.guild2d-cinema-shadow{--fx-accent:#d1a5ff;--fx-core:#f4d9ff}
+.guild2d-cinema-arcane{--fx-accent:#7dcdff;--fx-core:#e6f7ff}
+.guild2d-cinema-holy{--fx-accent:#ffe7a2;--fx-core:#fffcec}
+.guild2d-cinema-song{--fx-accent:#ffa5d8;--fx-core:#fff3fc}
+.guild2d-cinema-nature{--fx-accent:#88edbc;--fx-core:#ecffdf}
+.guild2d-projectile{
+  position:absolute;
+  left:var(--start-x);
+  top:var(--start-y);
+  width:39px;
+  height:39px;
+  margin:-19px 0 0 -19px;
+  opacity:0;
+  transform-origin:50% 50%;
+  animation:guild2d-projectile-travel .87s cubic-bezier(.17,.5,.12,1) both;
+}
+.guild2d-projectile:before,.guild2d-projectile:after{
+  content:"";
+  position:absolute;
+  display:block;
+}
+.guild2d-projectile:before{
+  top:17px;left:3px;
+  width:31px;height:5px;
+  border-radius:10px;
+  background:linear-gradient(90deg,transparent,var(--fx-core));
+  box-shadow:0 0 12px var(--fx-accent);
+}
+.guild2d-projectile:after{
+  top:12px;right:1px;
+  width:13px;height:13px;
+  border-top:3px solid var(--fx-core);
+  border-right:3px solid var(--fx-core);
+  transform:rotate(45deg);
+}
+.guild2d-cinema[data-direction="enemy"] .guild2d-projectile{
+  rotate:180deg;
+}
+.guild2d-cinema-arcane .guild2d-projectile,
+.guild2d-cinema-holy .guild2d-projectile,
+.guild2d-cinema-song .guild2d-projectile,
+.guild2d-cinema-nature .guild2d-projectile{
+  border-radius:50%;
+  background:radial-gradient(circle,var(--fx-core) 0 13%,var(--fx-accent) 36%,transparent 76%);
+  box-shadow:0 0 16px var(--fx-accent);
+}
+.guild2d-cinema-arcane .guild2d-projectile:before,
+.guild2d-cinema-holy .guild2d-projectile:before,
+.guild2d-cinema-song .guild2d-projectile:before,
+.guild2d-cinema-nature .guild2d-projectile:before{
+  width:32px;height:32px;
+  inset:4px;
+  border-radius:50%;
+  background:transparent;
+  border:2px solid var(--fx-accent);
+  box-shadow:inset 0 0 6px var(--fx-accent);
+}
+.guild2d-cinema-arcane .guild2d-projectile:after,
+.guild2d-cinema-holy .guild2d-projectile:after,
+.guild2d-cinema-song .guild2d-projectile:after,
+.guild2d-cinema-nature .guild2d-projectile:after{
+  display:none;
+}
+.guild2d-impact-mark{
+  position:absolute;
+  left:calc(var(--start-x) + var(--flight-x));
+  top:calc(var(--start-y) + var(--flight-y));
+  width:84px;height:84px;
+  margin:-42px 0 0 -42px;
+  display:block;
+  opacity:0;
+  animation:guild2d-impact-bloom .86s ease-out both;
+}
+.guild2d-impact-core{
+  position:absolute;
+  inset:22%;
+  display:block;
+  border-radius:50%;
+  background:radial-gradient(circle,var(--fx-core),var(--fx-accent) 29%,transparent 75%);
+  box-shadow:0 0 14px var(--fx-accent);
+}
+.guild2d-impact-streak{
+  position:absolute;
+  left:8%;right:8%;
+  top:49%;
+  height:3px;
+  border-radius:100%;
+  background:linear-gradient(90deg,transparent,var(--fx-core),transparent);
+  box-shadow:0 0 5px var(--fx-accent);
+}
+.guild2d-impact-streak.b{transform:rotate(60deg)}
+.guild2d-impact-streak.c{transform:rotate(120deg)}
+.guild2d-cinema-blade .guild2d-impact-streak.a,
+.guild2d-cinema-steel .guild2d-impact-streak.a{
+  height:7px;
+  transform:rotate(-35deg) scaleX(1.5);
+}
+.guild2d-cinema-shadow .guild2d-impact-streak.a{
+  transform:rotate(-50deg) scaleX(1.7);
+  height:5px;
+}
+.guild2d-cinema-song .guild2d-impact-core{
+  background:repeating-radial-gradient(circle,transparent 0 8px,var(--fx-accent) 9px 11px,transparent 12px 16px);
+}
+.guild2d-impact-mark[data-heal="true"] .guild2d-impact-core{
+  background:radial-gradient(circle,#e7fff5,#8ddcc1 30%,transparent 73%);
+}
+.guild2d-impact-mark[data-critical="true"]{scale:1.22}
+.guild2d-cinema-flash{
+  position:absolute;inset:0;
+  background:radial-gradient(ellipse 32% 30% at 50% 55%,#fff8e82b,transparent);
+  animation:guild2d-hit-flash .68s ease-out both;
+}
+@keyframes guild2d-projectile-travel {
+  0%{opacity:0;transform:translate(0,0) scale(.45)}
+  14%{opacity:1;transform:translate(0,0) scale(.9)}
+  59%,65%{opacity:1;transform:translate(var(--flight-x),var(--flight-y)) scale(1.15)}
+  79%{opacity:0;transform:translate(var(--flight-x),var(--flight-y)) scale(.15)}
+  100%{opacity:0;transform:translate(var(--flight-x),var(--flight-y)) scale(0)}
+}
+@keyframes guild2d-impact-bloom {
+  0%,55%{opacity:0;transform:scale(.2) rotate(-40deg)}
+  63%,68%{opacity:1;transform:scale(1.2) rotate(8deg)}
+  82%{opacity:.65;transform:scale(1.35) rotate(15deg)}
+  100%{opacity:0;transform:scale(1.65) rotate(24deg)}
+}
+@keyframes guild2d-hit-flash{
+  0%,54%,100%{opacity:0}
+  60%{opacity:1}
+  72%{opacity:.1}
+}
+@media(max-width:760px){
+  .guild2d-projectile{width:28px;height:28px;margin:-14px 0 0 -14px}
+  .guild2d-projectile:before{width:24px;top:12px;height:4px}
+  .guild2d-projectile:after{width:10px;height:10px;top:9px}
+  .guild2d-impact-mark{width:58px;height:58px;margin:-29px 0 0 -29px}
+}
+.guild-lite-mode .guild2d-projectile{
+  box-shadow:none;
+  animation-duration:.55s;
+}
+.guild-lite-mode .guild2d-impact-mark{
+  animation-duration:.55s;
+}
+.guild-lite-mode .guild2d-impact-core,.guild-lite-mode .guild2d-impact-streak,
+.guild-lite-mode .guild2d-projectile:before{
+  box-shadow:none;
+}
+.guild-lite-mode .guild2d-cinema-flash{display:none}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-projectile,.guild2d-impact-mark,.guild2d-cinema-flash{animation:none!important;display:none}
+}
+
+
+/* Refino final: contato, trilha de arma e choque físico — o sangue não é o efeito principal. */
+.guild2d-unit[data-cinematic-actor="true"]{z-index:12;pointer-events:auto}
+.guild2d-sprite[data-cinematic-actor="true"]{backface-visibility:hidden;transform-origin:50% 85%}
+.guild2d-cinema .guild2d-impact-slash,
+.guild2d-cinema .guild2d-shockwave,
+.guild2d-cinema .guild2d-impact-dust{
+ position:absolute;display:block;pointer-events:none;
+}
+.guild2d-impact-slash{
+ left:4%;top:14%;width:90%;height:67%;
+ border-radius:50%;
+ border:solid var(--fx-core);
+ border-width:0 0 7px 0;
+ box-shadow:0 5px 1px -3px var(--fx-accent);
+ transform:rotate(-42deg);
+ animation:guild2d-slash-reveal .85s ease-out both;
+}
+.guild2d-cinema-steel .guild2d-impact-slash{
+ border-width:0 0 10px 0;
+ border-color:#e1f2ff;
+ transform:rotate(-33deg);
+}
+.guild2d-cinema-shadow .guild2d-impact-slash{
+ border-width:0 0 4px 0;
+ border-color:#ead4ff;
+ transform:rotate(-65deg);
+ box-shadow:0 8px 0 -4px #c18ce5;
+}
+.guild2d-cinema-arrow .guild2d-impact-slash,
+.guild2d-cinema-arcane .guild2d-impact-slash,
+.guild2d-cinema-holy .guild2d-impact-slash,
+.guild2d-cinema-song .guild2d-impact-slash,
+.guild2d-cinema-nature .guild2d-impact-slash{display:none}
+.guild2d-shockwave{
+ inset:12%;
+ border-radius:50%;
+ border:3px solid var(--fx-accent);
+ animation:guild2d-shock-ring .85s cubic-bezier(.12,.6,.25,1) both;
+}
+.guild2d-cinema-arcane .guild2d-shockwave{
+ border:3px double #9be8ff;
+ box-shadow:inset 0 0 6px #74b7fc;
+}
+.guild2d-cinema-holy .guild2d-shockwave{
+ border:3px solid #ffeaa6;
+}
+.guild2d-cinema-song .guild2d-shockwave{
+ border-style:dashed;
+ border-color:#ffb3e3;
+}
+.guild2d-cinema-nature .guild2d-shockwave{
+ border-style:dotted;
+ border-color:#8cf5b1;
+}
+.guild2d-impact-dust{
+ left:10%;right:10%;bottom:-22%;
+ height:16px;border-radius:50%;
+ background:radial-gradient(ellipse,#f8dec48c,#bd9a7650 50%,transparent 77%);
+ animation:guild2d-impact-ground .85s ease-out both;
+}
+.guild2d-cinema-holy .guild2d-impact-dust,
+.guild2d-cinema-song .guild2d-impact-dust{display:none}
+@keyframes guild2d-slash-reveal{
+ 0%,51%{opacity:0;clip-path:inset(0 100% 0 0);transform:rotate(-42deg) scale(.4)}
+ 58%{opacity:1;clip-path:inset(0 0 0 0);transform:rotate(-42deg) scale(1.2)}
+ 78%{opacity:.65;transform:rotate(-42deg) scale(1.4)}
+ 100%{opacity:0;transform:rotate(-42deg) scale(1.5)}
+}
+@keyframes guild2d-shock-ring{
+ 0%,55%{opacity:0;transform:scale(.1)}
+ 63%{opacity:.92;transform:scale(.9)}
+ 83%{opacity:.35;transform:scale(1.8)}
+ 100%{opacity:0;transform:scale(2.1)}
+}
+@keyframes guild2d-impact-ground{
+ 0%,51%{opacity:0;transform:scale(.3)}
+ 65%{opacity:.82;transform:scale(1.6)}
+ 100%{opacity:0;transform:scale(2.4)}
+}
+/* A habilidade suprema realça o impacto, sem sobrepor botões ou causar poluição visual. */
+.guild2d-cinema[data-school="arcane"] .guild2d-impact-streak{
+ background:linear-gradient(90deg,transparent,#b0f0ff,transparent);
+}
+.guild2d-cinema[data-school="holy"] .guild2d-impact-core{
+ background:radial-gradient(circle,#fffcee,#ffe4a2 30%,transparent 72%);
+}
+.guild2d-cinema[data-school="nature"] .guild2d-impact-core{
+ background:radial-gradient(circle,#eaffdd,#8ee0af 29%,transparent 72%);
+}
+.guild2d-cinema[data-school="song"] .guild2d-impact-streak.b{
+ transform:rotate(45deg) scaleX(1.4);
+}
+@media(max-width:420px){
+ .guild2d-impact-slash{border-width:0 0 4px 0}
+ .guild2d-shockwave{border-width:2px}
+ .guild2d-impact-dust{height:8px}
+}
+.guild-lite-mode .guild2d-impact-slash{box-shadow:none}
+.guild-lite-mode .guild2d-impact-dust{display:none}
+.guild-lite-mode .guild2d-shockwave{box-shadow:none}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-impact-slash,.guild2d-shockwave,.guild2d-impact-dust{display:none!important;animation:none!important}
+}

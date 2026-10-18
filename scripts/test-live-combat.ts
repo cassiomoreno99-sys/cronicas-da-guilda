@@ -62,6 +62,6 @@ assert.notEqual(instant.expeditions[0].battle.status,"active");
 const ui=fs.readFileSync("app/game-client.tsx","utf8");
 const arena=fs.readFileSync("app/arena-2d.tsx","utf8");
 assert.ok(ui.includes("<Arena2D key={expedition.id}")&&!ui.includes("function CinematicBattlePage("),"Tela de combate não usa a única arena real.");
-assert.ok(arena.includes('data-hit={struck}')&&arena.includes('className="guild2d-log"'),"Dano ao vivo não chega aos bonecos nem ao registro.");
+assert.ok(arena.includes('data-cinematic-target={struck}')&&arena.includes('className="guild2d-log"')&&arena.includes("targetNode.animate("),"Dano ao vivo deve causar reação física do alvo e permanecer no registro.");
 assert.ok(arena.includes('type:"battle-auto"')&&arena.includes("Pular resultado"),"Pular resultado não é acessível na arena.");
 console.log("COMBATE AO VIVO OK: 1 ator/tick, cronômetro, retomar no save, iniciativa, PV e pular resultado.");

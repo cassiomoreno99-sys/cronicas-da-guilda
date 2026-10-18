@@ -26,7 +26,7 @@ function combatArt(f:BattleFighter,hero?:Hero):{src:string;full:boolean}{
    ambusher:"cultista",ancient_guardian:"esqueleto",bandit:"cultista",
    border_lord:"necromante",cultist:"cultista",draconic_raider:"cultista",
    drake_warrior:"esqueleto",fallback:"cultista",goblin:"cultista",
-   matriarch:"necromante",obsidian_guardian:"esqueleto",orc:"esqueleto",
+   matriarch:"necromante",obsidian_guardian:"esqueleto",orc:"orc",
    panther:"espectro",raider:"cultista",skeleton:"esqueleto",
    specter:"espectro",spectral_knight:"esqueleto",spider:"espectro",
    troll:"esqueleto",watcher:"espectro",wild_drake:"espectro",wolf:"espectro"
@@ -35,7 +35,9 @@ function combatArt(f:BattleFighter,hero?:Hero):{src:string;full:boolean}{
  }
  const race=hero?heroRace(hero):"human";
  if(!hero)return {src:portraitSource(f.name,f.id,f.class||"warrior",race),full:false};
- return {src:battleSource(hero,race),full:true};
+ const src=battleSource(hero,race);
+ // Retratos não são bonecos recortados: aplicar moldura em vez de esticá-los.
+ return {src,full:!src.includes("/heroes/portraits/")&&!src.startsWith("data:image/svg+")};
 }
 const recentHit=(logs:BattleLog[])=>{
  for(let i=logs.length-1;i>=0;i--){

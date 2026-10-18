@@ -11,8 +11,8 @@ import "./arena-2d.css";
 /** Posições aprovadas: quatro heróis à esquerda, quatro inimigos à direita. */
 /** Profundidade para quatro personagens de cada lado, sem cortes nas laterais.
  * Coordenadas espelhadas preservam a identidade do cenário aprovado. */
-const HERO_POSITIONS=[[19,36],[35,53],[14,68],[34,80]] as const;
-const ENEMY_POSITIONS=[[81,36],[65,53],[86,68],[66,80]] as const;
+const HERO_POSITIONS=[[19,36],[35,51],[14,63],[34,69]] as const;
+const ENEMY_POSITIONS=[[81,36],[65,51],[86,63],[66,69]] as const;
 const pos=(side:"hero"|"enemy",i:number)=>{
  const [x,y]=(side==="hero"?HERO_POSITIONS:ENEMY_POSITIONS)[Math.max(0,Math.min(i,3))];
  return {x,y};

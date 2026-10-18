@@ -196,5 +196,9 @@ export function setBonuses(s:Campaign,heroClass:HeroClass,equippedKeys:string[],
    if(name==="Fortuna do Espetáculo"){n.magic+=9;n.critical+=.02;}
   }
  }
+ if(race){
+  const bonus=imperialSetBonuses(race,equippedKeys);
+  for(const key of Object.keys(n) as Array<keyof typeof n>)n[key]+=bonus[key];
+ }
  return n;
 }

@@ -69,7 +69,7 @@ try{
      return {hasFx:!!document.querySelector(".guild2d-cinema"),hasProjectile:!!document.querySelector(".guild2d-projectile"),
        // "Respirar" parado não conta. Exigir trajetória do Web Animations API.
        spriteMove:nodes.some(u=>[...u.querySelector(".guild2d-sprite")?.getAnimations()||[]].some(a=>a.playState==="running"&&
-          a.effect?.getKeyframes?.().some(frame=>/translate\\((-?\\d+)(?:\\.\\d+)?px,/.test(String(frame.transform||""))))),
+          a.effect?.getKeyframes?.().some(frame=>/translate\((-?\d+)(?:\.\d+)?px,/.test(String(frame.transform||""))))),
        targeted:nodes.some(u=>u.querySelector(".guild2d-sprite")?.getAnimations().some(a=>
           a.effect?.getKeyframes?.().some(frame=>String(frame.transform||"").includes("rotate(")))),
        kept:nodes.every(u=>globalThis.__epicSprites.get(u.dataset.fighterId)===u.querySelector(".guild2d-sprite img")),

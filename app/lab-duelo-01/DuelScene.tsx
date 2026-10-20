@@ -190,7 +190,9 @@ function Warrior({pose}:{pose:Pose}){
    <path d="M-2 -33 L17 -33 11 -27Z" fill="#6b4d45"/>
    {/* Sword: shoulder rotation, elbow metal, articulated blade */}
    <g data-testid="duel-sword-arm" transform={"translate(27 -12) rotate("+pose.swordArm+")"}>
-    <path d="M-6 -11 L18 -7 43 17 67 10 72 32 42 42 17 27 -4 18Z" fill="url(#duel-steel)" stroke="#102234" strokeWidth="5"/>
+    <path d="M-6 -11 L18 -7 43 17 43 34 17 27 -4 18Z" fill="url(#duel-steel)" stroke="#102234" strokeWidth="5"/>
+    <circle cx="43" cy="23" r="12" fill="#647b8c" stroke="#d3c8ad" strokeWidth="3"/>
+    <g data-testid="duel-forearm" transform={"translate(43 23) rotate("+pose.heroElbow+") translate(-43 -23)"}>
     <path d="M12 1 L35 20 22 33 -1 13Z" fill="url(#duel-armor-blue)" stroke="#bdccd2" strokeWidth="3"/>
     <path d="M35 16 L58 12 70 26 52 38 37 33Z" fill="#8e9ea4" stroke="#213047" strokeWidth="3"/>
     <path d="M53 19 L72 21 76 34 55 35Z" fill="#e5b998" stroke="#604b3e" strokeWidth="3"/>
@@ -198,23 +200,26 @@ function Warrior({pose}:{pose:Pose}){
     <path d="M63 28 L81 26" fill="none" stroke="#e1b166" strokeWidth="2.5"/>
     <path d="M80 11 L86 38" stroke="#e5b66e" strokeWidth="9" strokeLinecap="round"/>
     <circle cx="82" cy="25" r="6" fill="url(#duel-gold)" stroke="#402c26" strokeWidth="2"/>
+    <g data-testid="duel-wrist" transform={"translate(83 25) rotate("+pose.heroWrist+") translate(-83 -25)"}>
     <path d="M84 21 L174 10 208 18 179 32 84 31Z" fill="url(#duel-blade)" stroke="#496c86" strokeWidth="4" strokeLinejoin="round"/>
     <path d="M93 23 L199 19" fill="none" stroke="#ffffff" strokeWidth="3" opacity=".85"/>
     <path d="M119 28 L183 28" fill="none" stroke="#5587a9" strokeWidth="2" opacity=".65"/>
+    </g>
+    </g>
    </g>
   </g>
  </g>;
 }
 
 function Monster({pose}:{pose:Pose}){
- return <g data-testid="duel-monster" transform={"translate("+(730+pose.monsterX)+" 420) scale(-1.11 "+(1.11*pose.monsterSquash)+")"}>
+ return <g data-testid="duel-monster" transform={"translate("+(730+pose.monsterX)+" "+(420+pose.monsterY)+") scale(-1.11 "+(1.11*pose.monsterSquash)+")"}>
   <ellipse cx="0" cy="4" rx="70" ry="11" fill="#020a14" opacity=".68"/>
-  <g transform="translate(-19 -82) rotate(-9)">
+  <g data-testid="duel-monster-back-leg" transform={"translate(-19 -82) rotate("+(-9+pose.monsterBackLeg)+")"}>
    <path d="M-26 -4 L16 -3 25 37 22 57 39 71 30 82 -27 79 -28 62 -18 31Z" fill="url(#duel-goblin)" stroke="#15251d" strokeWidth="6"/>
    <path d="M-22 49 L23 48 27 64 -26 67Z" fill="#44483e" stroke="#9ea176" strokeWidth="3"/>
    <path d="M-24 70 L35 73 29 83 -28 82Z" fill="#1f3027" stroke="#73805a" strokeWidth="3"/>
   </g>
-  <g transform="translate(19 -84) rotate(10)">
+  <g data-testid="duel-monster-front-leg" transform={"translate(19 -84) rotate("+(10+pose.monsterFrontLeg)+")"}>
    <path d="M-20 -2 L20 0 29 38 22 60 44 72 36 84 -21 82 -29 57 -15 30Z" fill="url(#duel-goblin)" stroke="#18291f" strokeWidth="6"/>
    <path d="M-25 48 L27 46 30 64 -27 65Z" fill="#424e39" stroke="#aaa47a" strokeWidth="3"/>
    <path d="M-26 73 L42 75 35 86 -28 84Z" fill="#203729" stroke="#758766" strokeWidth="3"/>
@@ -271,7 +276,10 @@ const STYLES=[
  '.duel-lab__note{font-size:11px;letter-spacing:.05em;color:#a8c5d4}',
  '.duel-lab__stage{width:100%;background:#101e30;border-radius:10px;overflow:hidden;position:relative;border:1px solid #6a788b}',
  '.duel-lab__stage svg{display:block;width:100%;height:auto;min-height:245px;max-height:550px}',
- '.duel-lab__controls{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:12px}',
+ '.duel-lab__controls{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:10px}',
+ '.duel-lab__selector{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 3px}',
+ '.duel-lab__selector button{background:#233952;color:#d3e3ee;border:1px solid #6b859b;min-width:0;padding:9px 8px;font-size:13px}',
+ '.duel-lab__selector button[aria-pressed=true]{border:2px solid #f2cb8b;background:#4d3b2d;color:#ffedcb;box-shadow:inset 0 0 0 1px #b3905b}',
  '.duel-lab button{min-height:47px;min-width:140px;background:linear-gradient(#ffda96,#c68f53);color:#13283a;border:2px solid #ffe9bc;border-radius:9px;padding:10px 18px;font-weight:850;font-size:15px;cursor:pointer;touch-action:manipulation}',
  '.duel-lab button:disabled{filter:grayscale(.7);cursor:wait;opacity:.8}',
  '.duel-lab button:focus-visible{outline:3px solid #b6e8ff;outline-offset:3px}',
@@ -284,6 +292,7 @@ const STYLES=[
 
 export default function DuelScene(){
  const [ms,setMs]=useState<number|null>(null);
+ const [selectedStyle,setSelectedStyle]=useState<AttackStyle>("slash");
  const [idleMs,setIdleMs]=useState(0);
  const clock=useRef(0);
  const raf=useRef<number|null>(null);
@@ -308,31 +317,32 @@ export default function DuelScene(){
  const attack=useCallback(()=>{
   if(raf.current!==null)return;
   if(prefersReduced){
-   setMs(805);
+   setMs(selectedStyle==="heavy"?Math.round(805*HEAVY_LENGTH/LENGTH):805);
    window.setTimeout(()=>setMs(null),450);
    return;
   }
   clock.current=performance.now();
+  const length=selectedStyle==="heavy"?HEAVY_LENGTH:LENGTH;
   const tick=(now:number)=>{
-   const elapsed=Math.min(LENGTH,now-clock.current);
+   const elapsed=Math.min(length,now-clock.current);
    setMs(elapsed);
-   if(elapsed>=LENGTH){raf.current=null;setMs(null);return;}
+   if(elapsed>=length){raf.current=null;setMs(null);return;}
    raf.current=requestAnimationFrame(tick);
   };
   raf.current=requestAnimationFrame(tick);
- },[prefersReduced]);
+ },[prefersReduced,selectedStyle]);
  useEffect(()=>()=>{if(raf.current!==null)cancelAnimationFrame(raf.current);},[]);
- const pose=ms===null?IdlePose(idleMs):duelPose(ms);
+ const pose=ms===null?IdlePose(idleMs):(selectedStyle==="heavy"?duelHeavyPose(ms):duelPose(ms));
  const label=ms===null?"PRONTO":({
   anticipation:"PREPARANDO","dash":"AVANÇANDO","plant":"FIRMANDO A BASE",
   swing:"GOLPE DE ESPADA","impact":"IMPACTO","reaction":"INIMIGO RECUANDO",
   recover:"RECUPERANDO","return":"RETORNANDO","idle":"PRONTO"
  } as Record<Phase,string>)[pose.phase];
- const camera=ms!==null&&pose.hit>0?"translate("+(Math.sin(ms*.22)*pose.hit*2.5).toFixed(1)+" 0)":"";
+ const camera=ms!==null&&pose.hit>0?"translate("+(Math.sin(ms*.22)*pose.hit*(selectedStyle==="heavy"?4:2.5)).toFixed(1)+" 0)":"";
  const slashPath="M0 -80 Q104 -132 184 -4";
- return <section className="duel-lab" aria-label="Laboratório isolado: guerreiro contra monstro" data-lab="duel-01" data-phase={pose.phase} data-hero-x={pose.heroX.toFixed(1)} data-monster-x={pose.monsterX.toFixed(1)}>
+ return <section className="duel-lab" aria-label="Laboratório isolado: guerreiro contra monstro" data-lab="duel-01" data-style={selectedStyle} data-phase={pose.phase} data-hero-x={pose.heroX.toFixed(1)} data-monster-x={pose.monsterX.toFixed(1)}>
   <style>{STYLES}</style>
-  <div className="duel-lab__header"><h2>Duelo 02 — movimento + arte</h2>
+  <div className="duel-lab__header"><h2>Duelo 03 — dois golpes reais</h2>
    <span className="duel-lab__note">GOLPE ARTICULADO · ENSAIO ISOLADO</span></div>
   <div className="duel-lab__stage">
    <svg role="img" aria-label="Guerreiro articulado avança, golpeia o monstro e retorna à formação"
@@ -409,11 +419,17 @@ export default function DuelScene(){
     <text x="24" y="483" fill="#d5e5eb" fontSize="16">Armadura, arma e criatura com articulações independentes</text>
    </svg>
   </div>
+  <div className="duel-lab__selector" role="group" aria-label="Estilo de ataque">
+   <button type="button" aria-label="Selecionar corte rápido" aria-pressed={selectedStyle==="slash"}
+    disabled={ms!==null} data-style-option="slash" onClick={()=>setSelectedStyle("slash")}>Corte rápido</button>
+   <button type="button" aria-label="Selecionar golpe pesado" aria-pressed={selectedStyle==="heavy"}
+    disabled={ms!==null} data-style-option="heavy" onClick={()=>setSelectedStyle("heavy")}>Golpe pesado</button>
+  </div>
   <div className="duel-lab__controls">
    <button type="button" onClick={attack} disabled={ms!==null} aria-label="Atacar o monstro e ver a animação completa">
     {ms===null?"⚔ ATACAR / REPETIR":"GOLPE EM ANDAMENTO"}
    </button>
-   <span role="status" className="duel-lab__status">Fase: <strong>{label}</strong></span>
+   <span role="status" className="duel-lab__status"><strong>{selectedStyle==="heavy"?"Golpe pesado":"Corte rápido"}</strong> · {label}</span>
   </div>
   <p className="duel-lab__footer">Protótipo visual independente. Nenhum ponto de vida, inventário ou progresso do jogo é alterado.
    {prefersReduced?" Movimento reduzido: exibição de impacto sem sequência acelerada.":""}</p>

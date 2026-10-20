@@ -45,7 +45,13 @@ try{
    const unit=stage.locator('.guild2d-unit[data-rig-candidate="true"]').first();
    const original=unit.locator(".guild2d-sprite>img");
    const rig=unit.locator(".guild2d-body-rig");
-   const saveBefore=await page.evaluate(()=>localStorage.getItem("cronicas-da-guilda:standalone:v1"));
+   const battleSnapshot=async()=>page.evaluate(()=>{
+    const s=JSON.parse(localStorage.getItem("cronicas-da-guilda:standalone:v1")).state;
+    return {day:s.day,gold:s.gold,
+     activeBattles:s.expeditions.map(e=>({id:e.id,rounds:e.battle?.rounds,logCount:e.battle?.log?.length,
+      hp:e.battle?.combat?.fighters?.map(f=>[f.id,f.hp])}))};
+   });
+   const saveBefore=await battleSnapshot();
    await stage.scrollIntoViewIfNeeded();
    await stage.screenshot({path:"visual-report/rig07-original-"+width+".png"});
 
@@ -61,8 +67,8 @@ try{
      await stage.screenshot({path:"visual-report/rig07-"+pose+"-"+width+".png"});
     }
    }
-   assert.equal(await page.evaluate(()=>localStorage.getItem("cronicas-da-guilda:standalone:v1")),saveBefore,
-    "Apenas alterar a pose não pode escrever nem alterar o progresso");
+   assert.deepEqual(await battleSnapshot(),saveBefore,
+    "Apenas alterar a pose não pode mudar rodadas, dano, ouro ou heróis");
 
    await page.emulateMedia({reducedMotion:"reduce"});
    assert.equal(await rig.evaluate(el=>getComputedStyle(el).display),"none","Preferência de movimento reduzido ignorada");

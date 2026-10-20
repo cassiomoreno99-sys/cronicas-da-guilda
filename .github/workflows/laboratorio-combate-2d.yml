@@ -48,6 +48,8 @@ jobs:
         run: node scripts/test-combat-spectacle-ui.mjs
       - name: Bloco 13A - ícones, alvo e cooldown reais
         run: node --experimental-strip-types scripts/test-combat-ability-presentation.ts
+      - name: Bloco 13B - integração do grimório
+        run: node scripts/test-combat-ability-ui.mjs
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
       - name: Preparar navegador de auditoria (apenas CI)
@@ -74,6 +76,8 @@ jobs:
         run: node scripts/test-combat-reactions-browser.mjs
       - name: Bloco 12C - efeitos especiais Android e PC
         run: node scripts/test-combat-spectacle-browser.mjs
+      - name: Bloco 13C - barra de habilidades e ordens Android PC
+        run: node scripts/test-combat-ability-browser.mjs
       - name: Gravar confronto animado e barra de habilidades (laboratório)
         run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
@@ -91,4 +95,5 @@ jobs:
             visual-report/magia10-*.png
             visual-report/bloco11-*.png
             visual-report/bloco12-*.png
+            visual-report/bloco13-*.png
           if-no-files-found: ignore

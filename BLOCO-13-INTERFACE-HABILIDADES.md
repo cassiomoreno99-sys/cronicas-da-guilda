@@ -25,3 +25,9 @@ Branch exclusiva: `laboratorio-combate-2d-fluido-20261020`. **Não alterar `main
 - Recarga circular proporcional aos turnos restantes do motor, texto especial para poderes de uso limitado.
 - Grimório com seleção/inspeção do poder, descrição, alvo e confirmação explícita. A barra rápida continua com um toque para preservar o fluxo antigo.
 - Botões indisponíveis seguem a mesma validação do motor; o código da campanha não foi editado.
+
+## 13C — teste em navegador e auditoria da interface
+- Chromium mobile 320×750, Android 390×844 e desktop 1440×900.
+- Verifica todos os ícones SVG, acessibilidade e alvos, ausência de rolagem horizontal na barra, alvos/descrição, seleção sem enviar, confirmação, fila real e cancelamento pelo motor.
+- Desktop: atalho 1 prepara habilidade usando o mesmo comando que o toque; no Android a barra mantém hit area >=44 px.
+- Capturas `visual-report/bloco13-barra-*.png` e `bloco13-grimorio-*.png` nos artefatos CI. Salvo separadamente do motor; aprovação estética depende de avaliação humana.

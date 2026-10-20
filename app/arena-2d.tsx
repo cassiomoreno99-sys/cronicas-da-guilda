@@ -232,6 +232,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   setTip("Ordem enviada: "+ability.name+" no próximo turno de "+hero.name+".");
   setOpenSkill(false);
  }
+ // O alvo e o cooldown são os do motor da campanha, não estados paralelos.
+ const slotSymbol=(targetKind:string)=>targetKind==="ally"?"✚":targetKind==="all-allies"?"✦":targetKind==="self"?"◆":targetKind==="all-enemies"?"✺":"⚔";
+ const slotTarget=(targetKind:string)=>targetKind==="ally"?"Aliado":targetKind==="all-allies"?"Equipe":targetKind==="self"?"Próprio":targetKind==="all-enemies"?"Área":"Inimigo";
  const label=active?"AO VIVO":battle.won?"VITÓRIA":battle.status==="retreated"?"RETIRADA":"FIM DE BATALHA";
  return <section className="guild2d-shell battle-sheet" aria-label="Combate 2D real de até quatro contra quatro">
   <header className="guild2d-header"><strong>⚔️ Crônicas da Guilda <small>COMBATE 2D · ARENA REALISTA</small></strong><button type="button" onClick={close} aria-label="Fechar arena"><X size={19}/></button></header>
@@ -305,16 +308,53 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <button type="button" className="guild2d-defend" disabled={!active||busy} onClick={()=>{setTip("Tática defensiva ativada para a equipe.");act({type:"battle-tactic",tactic:"defensive",expeditionId:expedition.id});}}><Shield size={19}/> Defender <small>{TACTICS[battle.combat?.tactic||expedition.tactic].name}</small></button>
    <button type="button" className="guild2d-retreat" disabled={!active||busy} onClick={()=>act({type:"battle-retreat",expeditionId:expedition.id})}><ArrowLeft size={19}/> Retirar equipe <small>Encerrar missão</small></button>
   </div>
-  {openSkill&&active&&<div className="guild2d-skills"><b>Habilidades de {hero?.name}</b>
+  {active&&hero&&<nav className="guild2d-quickbar" aria-label={"Habilidades rápidas de "+hero.name}>
+   <span className="guild2d-quickbar-label"><Sparkles size={14}/> Habilidades <b>{hero.name.split(" ")[0]}</b></span>
+   <div className="guild2d-quickbar-slots">
+    {abilities.slice(0,5).map(a=>{const cd=abilityCooldownRemaining(battle,hero.id,a.id);return <button
+     key={a.id} type="button" className="guild2d-quick-slot" data-target={a.target}
+     disabled={busy||!!queued||cd>0} title={a.name+" — "+a.description}
+     aria-label={a.name+(cd>0?" — recarga "+cd+" turnos":queued?" — existe ordem preparada":" — pronta")}
+     onClick={()=>queueAbility(a)}>
+      <span aria-hidden="true" className="guild2d-quick-icon">{slotSymbol(a.target)}</span>
+      <small>{a.name}</small>
+      {cd>0&&<b className="guild2d-quick-cooldown" aria-hidden="true">{cd}</b>}
+    </button>;})}
+    <button type="button" className="guild2d-quick-more" aria-expanded={openSkill} onClick={()=>setOpenSkill(v=>!v)}>
+     <Sparkles size={17}/><small>{openSkill?"Fechar":"Ver todas"}</small>
+    </button>
+   </div>
+   {queued&&<span className="guild2d-quick-pending">Ordem preparada para {hero.name}</span>}
+  </nav>}
+  {openSkill&&active&&<section className="guild2d-skills" aria-label={"Painel de habilidades de "+(hero?.name||"herói")}>
+    <header className="guild2d-skill-heading">
+      <div><span>GRIMÓRIO DE COMBATE</span><h3>{hero?.name||"Escolha um herói"}</h3></div>
+      <button type="button" onClick={()=>setOpenSkill(false)} aria-label="Fechar painel de habilidades"><X size={19}/></button>
+    </header>
+    <p className="guild2d-skill-hint">Escolha o combatente tocando nele na arena. As habilidades usam os turnos e as recargas reais.</p>
     {queued&&hero&&<button type="button" className="guild2d-cancel-order" disabled={busy}
-      onClick={()=>{act({type:"battle-cancel-ability",expeditionId:expedition.id,heroId:hero.id});setTip("");}}>Cancelar habilidade preparada</button>}<p>Toque em um personagem para mudar quem usa a habilidade. Selecione abaixo quem recebe curas ou escudos. Inimigos tocados recebem golpes direcionados.</p>
-   <label className="guild2d-ally-selector">Alvo aliado para cura ou proteção
-    <select value={allyTarget?.id||""} onChange={event=>setAllyTargetId(event.target.value)} disabled={busy}>
-     {heroes.filter(f=>f.hp>0).map(f=><option key={f.id} value={f.id}>{f.name} · {f.hp}/{f.maxHp} PV</option>)}
-    </select>
-   </label>
-   <div>{abilities.map(a=>{const cd=abilityCooldownRemaining(battle,hero!.id,a.id);return <button type="button" key={a.id} disabled={busy||!!queued||cd>0} onClick={()=>queueAbility(a)}>{a.name}{cd>0?" · recarga "+cd:""}<small>{a.description}</small></button>;})}</div>
-  </div>}
+      onClick={()=>{act({type:"battle-cancel-ability",expeditionId:expedition.id,heroId:hero.id});setTip("");}}>Cancelar ordem preparada</button>}
+    <div className="guild2d-skill-targets">
+      <span><Swords size={13}/> Inimigo selecionado: <strong>{enemy?.name||"Nenhum"}</strong></span>
+      {abilities.some(a=>a.target==="ally")&&<label className="guild2d-ally-selector">Alvo aliado de cura/proteção
+       <select value={allyTarget?.id||""} onChange={event=>setAllyTargetId(event.target.value)} disabled={busy}>
+        {heroes.filter(f=>f.hp>0).map(f=><option key={f.id} value={f.id}>{f.name} · {f.hp}/{f.maxHp} PV</option>)}
+       </select>
+      </label>}
+    </div>
+    <div className="guild2d-skill-grid">
+      {abilities.map(a=>{const cd=hero?abilityCooldownRemaining(battle,hero.id,a.id):0;return <button
+        type="button" key={a.id} className="guild2d-skill-card" data-target={a.target} data-cooldown={cd>0}
+        disabled={busy||!!queued||cd>0||!hero}
+        aria-label={a.name+". "+a.description+(cd>0?" Em recarga por "+cd+" turnos.":" Pronta.")}
+        onClick={()=>queueAbility(a)}>
+         <span className="guild2d-skill-glyph" aria-hidden="true">{slotSymbol(a.target)}</span>
+         <span className="guild2d-skill-text"><strong>{a.name}</strong><small>{a.description}</small></span>
+         <span className="guild2d-skill-tag" aria-hidden="true">{cd>0?cd+" t":queued?"Fila":slotTarget(a.target)}</span>
+       </button>})}
+      {!abilities.length&&<p className="guild2d-no-skills">Este herói não possui habilidades disponíveis.</p>}
+    </div>
+   </section>}
   {tip&&<div className="guild2d-tip" role="status"><Check size={15}/>{tip}</div>}
   {active&&<div className="guild2d-consumables">
     <strong>Itens de combate</strong>

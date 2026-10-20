@@ -18,5 +18,7 @@ jobs:
         run: node --experimental-strip-types scripts/test-combat-choreography.ts
       - name: Validar camadas visuais
         run: node --experimental-strip-types scripts/test-combat-vfx.ts
+      - name: Verificar habilidades reais
+        run: node --experimental-strip-types scripts/test-habilidades-laboratorio.ts
       - name: Verificar preservação de combate e TypeScript
         run: npm run build

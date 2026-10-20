@@ -1028,3 +1028,67 @@
 .guild-lite-mode .guild2d-vfx-particle:nth-of-type(n+6){display:none}
 .guild-lite-mode .guild2d-vfx-core{box-shadow:none}
 @media(prefers-reduced-motion:reduce){.guild2d-vfx{display:none!important}}
+
+/* Laboratório fase 3 — habilidades táteis sem modificar cooldown, Pv ou regras. */
+.guild2d-quickbar{margin:10px 9px;padding:10px 9px;border:1px solid #bd985d;
+ border-radius:12px;background:linear-gradient(155deg,#1b324a,#101c30 78%);
+ box-shadow:0 5px 14px #0008;color:#f7e9cc}
+.guild2d-quickbar-label{display:flex;align-items:center;gap:5px;font:800 10px system-ui;letter-spacing:.04em;color:#d6b97e;margin-bottom:9px}
+.guild2d-quickbar-label b{margin-left:auto;font:700 11px Georgia,serif;color:#b4ddeb}
+.guild2d-quickbar-slots{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+.guild2d-quick-slot,.guild2d-quick-more{
+ --skill-hue:34;position:relative;min-width:0;min-height:75px;border:1px solid hsl(var(--skill-hue) 38% 61%);
+ border-radius:10px;display:flex;align-items:center;flex-direction:column;justify-content:center;
+ gap:5px;color:#f4e7cb;background:linear-gradient(145deg,#314354,#132a3d);
+ box-shadow:inset 0 1px 0 #ffffff31,0 2px 8px #0008;padding:6px 3px;overflow:hidden;
+}
+.guild2d-quick-slot[data-target="ally"],.guild2d-quick-slot[data-target="all-allies"]{--skill-hue:144}
+.guild2d-quick-slot[data-target="all-enemies"]{--skill-hue:276}
+.guild2d-quick-slot[data-target="self"]{--skill-hue:203}
+.guild2d-quick-slot:active:not(:disabled),.guild2d-skill-card:active:not(:disabled){transform:scale(.97)}
+.guild2d-quick-icon{font:900 26px/1 system-ui;color:hsl(var(--skill-hue) 82% 79%);text-shadow:0 0 8px hsl(var(--skill-hue) 74% 48% / .75)}
+.guild2d-quick-slot small,.guild2d-quick-more small{font:700 9px/1.16 system-ui;max-width:100%;
+ text-align:center;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word}
+.guild2d-quick-more{border-style:dashed;background:linear-gradient(155deg,#31496a,#152d42);color:#c1deec}
+.guild2d-quick-cooldown{position:absolute;inset:0;display:grid;place-items:center;
+ background:#071324d9;color:#fce7a5;font:900 21px system-ui}
+.guild2d-quick-pending{display:block;font:700 10px system-ui;color:#ffdfa0;margin-top:7px;text-align:center}
+.guild2d-skills{padding:13px;margin:9px;background:linear-gradient(155deg,#192e45,#0c192c);
+ border:1px solid #c0a575;border-radius:12px;box-shadow:0 4px 20px #0008}
+.guild2d-skill-heading{display:flex;justify-content:space-between;align-items:center;gap:9px;margin-bottom:6px}
+.guild2d-skill-heading div>span{font:900 9px system-ui;letter-spacing:.11em;color:#9ed4ee}
+.guild2d-skill-heading h3{margin:3px 0 0;color:#ffe8bc;font:700 21px Georgia,serif}
+.guild2d-skill-heading>button{min-height:38px;min-width:38px;padding:5px;border-radius:8px;background:#19394c;color:#f6dfb7}
+.guild2d-skill-hint{font:11px/1.45 system-ui;color:#d0dee9;margin:8px 0}
+.guild2d-skill-targets{display:grid;gap:5px;margin:9px 0 11px;font:700 11px system-ui;color:#d2e8f0}
+.guild2d-skill-targets>span{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
+.guild2d-skill-targets strong{color:#ffdaa8}
+.guild2d-skills .guild2d-ally-selector{margin:3px 0}
+.guild2d-skills .guild2d-skill-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.guild2d-skills .guild2d-skill-card{--skill-hue:35;display:flex;text-align:left;align-items:center;justify-content:flex-start;
+ gap:9px;min-height:91px;padding:10px;border:1px solid hsl(var(--skill-hue) 39% 62%);
+ background:linear-gradient(130deg,#253d55,#14283e);border-radius:10px;color:#f8e9c6;min-width:0;
+ box-shadow:inset 0 1px 0 #ffffff21}
+.guild2d-skills .guild2d-skill-card[data-target="ally"],.guild2d-skills .guild2d-skill-card[data-target="all-allies"]{--skill-hue:142}
+.guild2d-skills .guild2d-skill-card[data-target="all-enemies"]{--skill-hue:276}
+.guild2d-skills .guild2d-skill-card[data-target="self"]{--skill-hue:195}
+.guild2d-skill-glyph{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:10px;
+ background:hsl(var(--skill-hue) 35% 20%);border:1px solid hsl(var(--skill-hue) 50% 55%);
+ font:900 21px/1 system-ui;color:hsl(var(--skill-hue) 75% 77%)}
+.guild2d-skill-text{display:grid;gap:4px;flex:1;min-width:0}
+.guild2d-skill-text strong{font:800 12px/1.3 system-ui;overflow-wrap:anywhere;color:#ffe3ac}
+.guild2d-skill-text small{font:10px/1.36 system-ui;color:#cbdbe2;padding:0;overflow-wrap:anywhere}
+.guild2d-skill-tag{flex:none;font:800 9px system-ui;padding:4px 5px;border:1px solid #738aa0;
+ border-radius:5px;background:#0b1d31;color:#d3e7f2}
+.guild2d-skill-card[data-cooldown="true"]{filter:grayscale(.4)}
+.guild2d-no-skills{grid-column:1/-1;font:12px system-ui}
+@media(max-width:420px){
+ .guild2d-quickbar{padding:8px 5px;margin:8px 4px}
+ .guild2d-quickbar-slots{gap:3px}
+ .guild2d-quick-slot,.guild2d-quick-more{min-height:66px;padding:4px 1px}
+ .guild2d-quick-icon{font-size:22px}
+ .guild2d-quick-slot small,.guild2d-quick-more small{font-size:8px}
+ .guild2d-skills .guild2d-skill-grid{grid-template-columns:1fr}
+ .guild2d-skills .guild2d-skill-card{min-height:73px}
+}
+@media(prefers-reduced-motion:reduce){.guild2d-quick-slot:active,.guild2d-skill-card:active{transform:none}}

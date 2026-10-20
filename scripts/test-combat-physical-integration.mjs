@@ -11,7 +11,7 @@ for(const fragment of [
  '<PhysicalStrikeFX',
  "key={\"physical-\"+evtKey}",
  "visualPath&&!physicalAttack&&!spell&&!spectacle&&<ArenaVfx",
- "visualPath&&!physicalAttack&&!spell&&<div key={\"cinema-\"+evtKey}"
+ "visualPath&&!physicalAttack&&!spell&&!spectacle&&<div key={\"cinema-\"+evtKey}"
  ]) assert.ok(s.includes(fragment),"Não integrado: "+fragment);
 for(const fragment of ["data-style={attack.style}","data-ranged={attack.ranged}","data-variant={attack.variant}",
  "guild2d-physical-contact","guild2d-physical-windup","guild2d-physical-arrow",

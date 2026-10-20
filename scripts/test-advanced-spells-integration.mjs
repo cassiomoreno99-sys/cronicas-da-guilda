@@ -5,7 +5,7 @@ const fx=readFileSync(new URL("../app/advanced-spell-fx.tsx",import.meta.url),"u
 const css=readFileSync(new URL("../app/arena-2d.css",import.meta.url),"utf8");
 for(const fragment of [
  "spellPlan({","fighter:actor,event:evt,ability:cueSkill?.ability",
- "spellImpactPoints(areaTargets)","physicalAttack?undefined:spellPlan",
+ "spellImpactPoints(areaTargets)","spell=spectacle||physicalAttack?undefined:spellPlan",
  'visualPath&&!physicalAttack&&!spell&&!spectacle&&<div key={"cinema-"+evtKey}',
  'visualPath&&!physicalAttack&&!spell&&!spectacle&&<ArenaVfx',
  'visualPath&&spell&&<AdvancedSpellFX',

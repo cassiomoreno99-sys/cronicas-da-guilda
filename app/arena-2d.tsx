@@ -204,7 +204,19 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>
       {acting&&<i className={"guild2d-weapon-sweep guild2d-weapon-"+school} aria-hidden="true"/>}
-     <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onError={e=>{const node=e.currentTarget;if(node.dataset.fallback==="1")return;node.dataset.fallback="1";node.src=f.side==="hero"?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):"/battle/sprite-cultista.webp";node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");}}/>
+     <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onError={e=>{
+      const node=e.currentTarget;
+      const attempt=Number(node.dataset.fallback||"0");
+      if(attempt>=3){node.style.visibility="hidden";return;}
+      node.dataset.fallback=String(attempt+1);
+      node.src=f.side==="enemy"
+       ?(attempt===0?enemyArtSource(f.name):attempt===1?"/enemies/fallback.webp":"/battle/sprite-cultista.webp")
+       :(attempt===0?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):"/battle/sprite-aric.webp");
+      node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");
+      stageRef.current?.querySelectorAll<HTMLElement>(".guild2d-hud").forEach(hud=>{
+       if(hud.dataset.fighterId===f.id)hud.dataset.fullArt="false";
+      });
+     }}/>
 
     </span>
     {acting&&<span key={"trail-"+evtKey} className={"guild2d-action-trail "+((evt?.kind==="ability"||evt?.kind==="heal")?"guild2d-action-magic":"")} aria-hidden="true"/>}
@@ -218,7 +230,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <div key={f.id} className={"guild2d-hud "+(f.side==="hero"?"guild2d-hud-hero":"guild2d-hud-enemy")}
     style={{"--x":p.x+"%","--y":p.y+"%"} as CSSProperties} data-dead={f.hp<=0} data-selected={selected}
-    data-class={f.side==="hero"?f.class:"enemy"} data-full-art={combatArt(f).full} data-line={f.position||"back"}>
+    data-class={f.side==="hero"?f.class:"enemy"} data-fighter-id={f.id} data-full-art={combatArt(f).full} data-line={f.position||"back"}>
      <strong>{f.name.split(" ").slice(0,2).join(" ")}</strong>
      <div className="guild2d-meter" role="progressbar" aria-label={"Pontos de vida de "+f.name} aria-valuemin={0} aria-valuemax={f.maxHp} aria-valuenow={Math.max(0,f.hp)}><span style={{width:hpWidth(f.hp,f.maxHp)}}/></div>
      <small>{Math.max(0,f.hp)} / {f.maxHp} PV</small>

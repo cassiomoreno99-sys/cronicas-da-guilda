@@ -864,8 +864,8 @@
 /* Artes reais de corpo inteiro: sem moldura, sem avatar redondo, em todos os
    tamanhos de tela. O fallback continua como retrato compacto. */
 .guild2d-stage .guild2d-unit.guild2d-enemy[data-enemy-bestiary="true"][data-full-art="true"]{
-  width:clamp(65px,21cqw,125px)!important;
-  height:clamp(104px,27cqh,184px)!important;
+  width:clamp(69px,22.4cqw,135px)!important;
+  height:clamp(116px,30cqh,190px)!important;
   min-width:0!important;min-height:0!important;
   max-width:none!important;max-height:none!important;
   overflow:visible!important;
@@ -885,7 +885,7 @@
 .guild2d-stage .guild2d-unit.guild2d-enemy[data-full-art="true"] .guild2d-sprite::before{display:none!important}
 .guild2d-stage .guild2d-hud.guild2d-hud-enemy[data-full-art="true"]{
   width:clamp(76px,21cqw,129px)!important;
-  transform:translate(-50%,calc(clamp(104px,27cqh,184px) * .48))!important;
+  transform:translate(-50%,calc(clamp(116px,30cqh,190px) * .48))!important;
 }
 .guild2d-stage .guild2d-unit.guild2d-enemy[data-full-art="true"][data-selected="true"] .guild2d-sprite{
   filter:drop-shadow(0 0 7px #ffe6a8);

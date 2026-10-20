@@ -1,4 +1,4 @@
-name: Duelo 03 — dois ataques articulados (sem deploy)
+name: Duelo 04 — combate com bloqueio e contra-ataque (sem deploy)
 on:
   push:
     branches: [laboratorio-combate-2d-fluido-20261020]
@@ -34,6 +34,8 @@ jobs:
           exit 1
       - name: Prova visual real do duelo 01 (Android e PC)
         run: node scripts/test-lab-duelo-01-browser.mjs
+      - name: Duelo 04 — monstro ataca, escudo bloqueia, espada contra-ataca
+        run: node scripts/test-duel04-exchange-browser.mjs
       - name: Salvar gravações MP4 para assistir pelo Chrome (somente no laboratório)
         run: |
           set -euo pipefail
@@ -41,17 +43,21 @@ jobs:
           FFMPEG="$(node -p "require('ffmpeg-static')")"
           "$FFMPEG" -hide_banner -loglevel error -y -i visual-report/duelo03-movimento-390.webm -c:v libx264 -pix_fmt yuv420p -profile:v baseline -level 3.1 -movflags +faststart -an public/lab-duelo-01/duelo03-android.mp4
           "$FFMPEG" -hide_banner -loglevel error -y -i visual-report/duelo03-movimento-960.webm -c:v libx264 -pix_fmt yuv420p -movflags +faststart -an public/lab-duelo-01/duelo03-pc.mp4
+          "$FFMPEG" -hide_banner -loglevel error -y -i visual-report/duelo04-troca-390.webm -c:v libx264 -pix_fmt yuv420p -profile:v baseline -level 3.1 -movflags +faststart -an public/lab-duelo-01/duelo04-android.mp4
+          "$FFMPEG" -hide_banner -loglevel error -y -i visual-report/duelo04-troca-960.webm -c:v libx264 -pix_fmt yuv420p -movflags +faststart -an public/lab-duelo-01/duelo04-pc.mp4
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/lab-duelo-01/duelo03-android.mp4 public/lab-duelo-01/duelo03-pc.mp4
+          git add public/lab-duelo-01/duelo03-android.mp4 public/lab-duelo-01/duelo03-pc.mp4 public/lab-duelo-01/duelo04-android.mp4 public/lab-duelo-01/duelo04-pc.mp4
           git commit -m "assets(lab): vídeos MP4 do duelo para assistir no Chrome"
           git push origin "HEAD:${GITHUB_REF_NAME}"
       - name: Vídeos e capturas — NÃO publica o jogo
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: duelo-03-comprovacao-visual
+          name: duelo-04-comprovacao-visual
           path: |
             visual-report/duelo03-*.png
             visual-report/duelo03-*.webm
+            visual-report/duelo04-*.png
+            visual-report/duelo04-*.webm
           if-no-files-found: ignore

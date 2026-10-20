@@ -8,7 +8,7 @@ for(const phase of ["anticipation","dash","plant","swing","impact","reaction","r
 }
 for(const piece of ["duel-warrior","duel-monster","duel-sword-arm","heroFrontLeg","heroBackLeg",
  "heroTorso","monsterTorso","monsterHead","monsterSquash","duel-slash","duel-impact",
- "requestAnimationFrame","cancelAnimationFrame","data-phase={pose.phase}","duelHeavyPose","duel-forearm","duel-wrist","duel-monster-front-leg","data-style={selectedStyle}"]){
+ "requestAnimationFrame","cancelAnimationFrame","data-phase={pose.phase}","duelExchangePose","duel-claw","duel-shield-block","data-style-option=\"exchange\"","duelHeavyPose","duel-forearm","duel-wrist","duel-monster-front-leg","data-style={selectedStyle}"]){
  assert.ok(code.includes(piece),"Articulação/segurança ausente: "+piece);
 }
 assert.ok(!/from ["'].*lib\/game|localStorage|window\.location|fetch\(/.test(code));

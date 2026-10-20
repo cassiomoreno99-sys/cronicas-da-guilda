@@ -13,6 +13,8 @@ import {rigEligible,chooseRigPose} from "@/lib/combat-body-rig";
 import {BodyRig,rigImageSafe} from "./body-rig";
 import {isPhysicalStrike,physicalStyle,physicalStrikePlan} from "@/lib/combat-physical-strikes";
 import {PhysicalStrikeFX} from "./physical-strike-fx";
+import {spellPlan,spellImpactPoints} from "@/lib/combat-spell-plan";
+import {AdvancedSpellFX} from "./advanced-spell-fx";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -137,6 +139,12 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   ?physicalStrikePlan(physicalStyle(actor,catalogueWeapon
     ?{name:catalogueWeapon.nome,subtype:catalogueWeapon.subcategoria}:undefined),
     evtIndex,evt?.kind==="critical",cinemaDuration(school)):undefined;
+ // Não atribui magia a um ataque físico. Efeitos derivam do lançamento efetivo.
+ const spell=physicalAttack?undefined:spellPlan({
+  fighter:actor,event:evt,ability:cueSkill?.ability,castOnly:cue?.castOnly||false,
+  targetCount:areaTargets.length,lightMode:!!stageRef.current?.closest(".guild-lite-mode")
+ });
+ const spellTargets=spellImpactPoints(areaTargets);
  const projectile=!!evt&&!!actor&&!!target&&isRangedVisual(school);
  const visualStart=actor?pos(actor.side,actorIndex):undefined;
  const targetPos=target?pos(target.side,targetIndex):undefined;
@@ -293,7 +301,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
-   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} data-cast-only={cue?.castOnly||false} data-ability-effect={skillEffect} aria-hidden="true" style={visualPath}>
+   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&!spell&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} data-cast-only={cue?.castOnly||false} data-ability-effect={skillEffect} aria-hidden="true" style={visualPath}>
        <span className="guild2d-windup"/>
        {!projectile&&!cue?.castOnly&&<span className="guild2d-step-dust"/>}
       {!projectile&&!cue?.castOnly&&school!=="claw"&&evt.kind!=="heal"&&<span className="guild2d-sword-strike"><i className="guild2d-sword-blade"/><i className="guild2d-sword-guard"/></span>}
@@ -314,7 +322,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    </div>}
    {playingEvent===evtKey&&evt&&visualPath&&physicalAttack&&actor&&<PhysicalStrikeFX
       key={"physical-"+evtKey} attack={physicalAttack} side={actor.side} style={visualPath}/>}
-   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&<ArenaVfx key={"vfx-"+evtKey} school={school} kind={cue?.castOnly?"cast":evt.kind} effect={skillEffect} targets={areaTargets} critical={evt.kind==="critical"} style={visualPath}/>}
+   {playingEvent===evtKey&&evt&&visualPath&&spell&&<AdvancedSpellFX
+     key={"magic10-"+evtKey} plan={spell} style={visualPath} targets={spellTargets}/>}
+   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&!spell&&<ArenaVfx key={"vfx-"+evtKey} school={school} kind={cue?.castOnly?"cast":evt.kind} effect={skillEffect} targets={areaTargets} critical={evt.kind==="critical"} style={visualPath}/>}
    <div className="guild2d-hud-layer">{heroes.map(hud)}{enemies.map(hud)}</div>
    <div className="guild2d-ground"/>
    {!active&&<div className="guild2d-result"><strong>{battle.won?"🏆 VITÓRIA":battle.status==="retreated"?"EQUIPE RETIRADA":"☠️ DERROTA"}</strong></div>}

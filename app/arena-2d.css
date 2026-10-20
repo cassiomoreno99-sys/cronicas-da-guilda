@@ -1355,3 +1355,121 @@
 .guild-lite-mode .guild2d-physical-spark{box-shadow:none}
 @media(max-width:420px){.guild2d-physical-spark:nth-of-type(n+8){display:none}.guild2d-physical-arrow{scale:.78}}
 @media(prefers-reduced-motion:reduce){.guild2d-physical-strike{display:none!important}}
+
+/* BLOCO 10B — magias distintas, um único compositor visual por lançamento.
+   É proibida a renderização simultânea do VFX genérico e desta camada. */
+.guild2d-advanced-spell{
+ --magic:#9acfff;--magic-bright:#eefaff;--magic-dark:#5172bd;
+ --duration:var(--cinema-ms,960ms);position:absolute;inset:0;pointer-events:none;
+ z-index:19;overflow:hidden;contain:layout style;
+}
+.guild2d-advanced-spell[data-family="flame"]{--magic:#ff9c51;--magic-bright:#fff0ad;--magic-dark:#db3e26}
+.guild2d-advanced-spell[data-family="storm"]{--magic:#adcaff;--magic-bright:#ffffff;--magic-dark:#6567e7}
+.guild2d-advanced-spell[data-family="frost"]{--magic:#8cf4ff;--magic-bright:#f6ffff;--magic-dark:#5b9ad7}
+.guild2d-advanced-spell[data-family="shadow"]{--magic:#bc82f6;--magic-bright:#f2d9ff;--magic-dark:#56265f}
+.guild2d-advanced-spell[data-family="radiant"]{--magic:#ffe5a0;--magic-bright:#ffffeb;--magic-dark:#e7aa4a}
+.guild2d-advanced-spell[data-family="verdant"]{--magic:#9af5a6;--magic-bright:#efffde;--magic-dark:#438d57}
+.guild2d-advanced-spell[data-family="ward"]{--magic:#90ddf9;--magic-bright:#e7faff;--magic-dark:#4773a0}
+.guild2d-advanced-spell[data-family="resonance"]{--magic:#ff9bd7;--magic-bright:#fff0fa;--magic-dark:#a24bb9}
+.guild2d-magic-origin,.guild2d-magic-impact{position:absolute;width:0;height:0;
+ left:var(--start-x);top:var(--start-y);pointer-events:none}
+.guild2d-magic-impact{left:calc(var(--start-x) + var(--flight-x));top:calc(var(--start-y) + var(--flight-y))}
+.guild2d-magic-origin>i,.guild2d-magic-impact>i{position:absolute;display:block;left:0;top:0;pointer-events:none}
+.guild2d-magic-outer-circle{width:clamp(58px,15cqw,125px);height:clamp(58px,15cqw,125px);translate:-50% -50%;
+ border:2px solid var(--magic);border-radius:50%;box-shadow:0 0 12px var(--magic-dark),inset 0 0 9px var(--magic);
+ animation:magic10-sigil var(--duration) ease-out both}
+.guild2d-magic-outer-circle:after{content:"";position:absolute;inset:8px;border:1px dashed var(--magic-bright);border-radius:50%}
+.guild2d-magic-inner-circle{width:clamp(32px,8cqw,72px);height:clamp(32px,8cqw,72px);
+ translate:-50% -50%;border:2px dotted var(--magic-bright);border-radius:50%;
+ animation:magic10-inner var(--duration) ease-out both}
+.guild2d-magic-glyph{width:53px;height:53px;translate:-50% -50%;
+ animation:magic10-glyph var(--duration) ease-out both}
+.guild2d-magic-glyph b{position:absolute;display:block;width:18px;height:18px;
+ top:50%;left:50%;border:2px solid var(--magic-bright);transform:translate(-50%,-50%) rotate(45deg)}
+.guild2d-magic-glyph b:nth-child(2){rotate:45deg;scale:1.3}
+.guild2d-magic-glyph b:nth-child(3){rotate:90deg;scale:.8}
+.guild2d-magic-glyph b:nth-child(4){rotate:135deg;scale:.5}
+.guild2d-magic-charging{width:clamp(22px,7cqw,65px);height:clamp(22px,7cqw,65px);translate:-50% -50%;
+ border-radius:50%;background:radial-gradient(circle,var(--magic-bright),var(--magic) 32%,transparent 70%);
+ filter:drop-shadow(0 0 9px var(--magic));animation:magic10-charge var(--duration) ease-out both}
+.guild2d-magic-projectile{position:absolute;left:var(--start-x);top:var(--start-y);width:0;height:0;
+ pointer-events:none;animation:magic10-flight var(--duration) cubic-bezier(.2,.75,.2,1) both}
+.guild2d-magic-projectile i{position:absolute;display:block;left:0;top:0}
+.guild2d-magic-bolt{width:clamp(22px,6cqw,58px);height:clamp(22px,6cqw,58px);
+ translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,var(--magic-bright) 5%,var(--magic) 36%,transparent 72%);
+ box-shadow:0 0 12px var(--magic-dark)}
+.guild2d-magic-bolt-ring{width:50px;height:50px;translate:-50% -50%;border:2px solid var(--magic);
+ border-radius:50%;animation:magic10-rotor .33s linear infinite}
+.guild2d-magic-bolt-tail{width:80px;height:11px;translate:-100% -50%;
+ rotate:var(--shot-angle);background:linear-gradient(90deg,transparent,var(--magic-dark),var(--magic-bright));
+ filter:blur(3px);transform-origin:100% 50%}
+.guild2d-magic-core{width:clamp(34px,10cqw,95px);height:clamp(34px,10cqw,95px);
+ translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,#fff,var(--magic-bright) 18%,var(--magic) 44%,transparent 72%);
+ filter:drop-shadow(0 0 14px var(--magic-dark));animation:magic10-impact var(--duration) ease-out both}
+.guild2d-magic-ripple{width:75px;height:75px;translate:-50% -50%;border:3px solid var(--magic);
+ border-radius:50%;box-shadow:0 0 9px var(--magic-dark);animation:magic10-ring var(--duration) ease-out both}
+.guild2d-magic-ripple.second{animation-delay:75ms;border-style:dashed}
+.guild2d-magic-barrier{width:clamp(60px,15cqw,130px);height:clamp(60px,15cqw,130px);translate:-50% -56%;
+ border:3px double var(--magic-bright);border-radius:44% 44% 30% 30%;
+ background:radial-gradient(circle,var(--magic-dark) 5%,transparent 68%);
+ box-shadow:inset 0 0 13px var(--magic),0 0 12px var(--magic-dark);
+ animation:magic10-shield var(--duration) ease-out both}
+.guild2d-magic-burst{width:clamp(68px,18cqw,175px);height:clamp(68px,18cqw,175px);translate:-50% -50%;
+ border-radius:50%;background:conic-gradient(from 15deg,transparent 0 12%,var(--magic) 16%,transparent 22% 39%,var(--magic-bright) 45%,transparent 52% 76%,var(--magic-dark) 81%,transparent 88%);
+ mask-image:radial-gradient(circle,transparent 19%,black 28% 63%,transparent 74%);
+ animation:magic10-burst var(--duration) ease-out both}
+.guild2d-magic-lightning{width:clamp(30px,8cqw,80px);height:clamp(68px,18cqw,170px);
+ translate:-50% -35%;clip-path:polygon(49% 0,17% 44%,46% 42%,19% 100%,88% 43%,57% 47%,74% 4%);
+ background:linear-gradient(var(--magic-bright),var(--magic),var(--magic-dark));
+ filter:drop-shadow(0 0 5px var(--magic-bright));
+ animation:magic10-strike var(--duration) ease-out both}
+.guild2d-magic-lightning.b{rotate:39deg;scale:.76;animation-delay:40ms}
+.guild2d-magic-lightning.c{rotate:-33deg;scale:.65;animation-delay:75ms}
+.guild2d-magic-helix{width:clamp(55px,13cqw,117px);height:clamp(64px,16cqw,132px);
+ translate:-50% -50%;border-radius:50%;border:solid var(--magic);
+ border-width:0 5px 0 0;filter:drop-shadow(0 0 6px var(--magic-dark));
+ animation:magic10-helix var(--duration) ease-in-out both}
+.guild2d-magic-helix.b{rotate:180deg;animation-delay:45ms}
+.guild2d-magic-particle{--angle:calc(var(--magic-ray)*360deg/var(--magic-count));
+ width:clamp(4px,1.5cqw,9px);height:clamp(8px,2.4cqw,16px);border-radius:75% 20% 75% 25%;
+ background:var(--magic-bright);box-shadow:0 0 6px var(--magic-dark);
+ animation:magic10-particle var(--duration) ease-out both}
+.guild2d-magic-area{position:absolute;width:clamp(45px,12cqw,110px);height:clamp(45px,12cqw,110px);
+ translate:-50% -50%;border:3px solid var(--magic);border-radius:50%;
+ background:radial-gradient(circle,var(--magic-bright),var(--magic) 22%,transparent 70%);
+ box-shadow:0 0 12px var(--magic-dark);animation:magic10-multi var(--duration) ease-out both}
+/* A forma de magia altera o GESTO, não apenas a cor. */
+.guild2d-advanced-spell:not([data-motion="barrier"]) .guild2d-magic-barrier{display:none}
+.guild2d-advanced-spell:not([data-motion="lightning"]) .guild2d-magic-lightning{display:none}
+.guild2d-advanced-spell:not([data-motion="drain"]) .guild2d-magic-helix{display:none}
+.guild2d-advanced-spell:not([data-motion="nova"]) .guild2d-magic-burst{display:none}
+.guild2d-advanced-spell[data-motion="barrier"] .guild2d-magic-core,
+.guild2d-advanced-spell[data-motion="barrier"] .guild2d-magic-projectile{display:none}
+.guild2d-advanced-spell[data-motion="aura"] .guild2d-magic-projectile{display:none}
+.guild2d-advanced-spell[data-motion="aura"] .guild2d-magic-ripple{border-style:dashed}
+.guild2d-advanced-spell[data-family="frost"] .guild2d-magic-particle{clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);border-radius:0}
+.guild2d-advanced-spell[data-family="flame"] .guild2d-magic-particle{clip-path:polygon(50% 0,88% 54%,54% 100%,19% 79%,0 53%);border-radius:0}
+.guild2d-advanced-spell[data-family="verdant"] .guild2d-magic-particle{border-radius:0 90% 0 90%}
+.guild2d-advanced-spell[data-family="shadow"] .guild2d-magic-outer-circle{border-style:dotted}
+.guild2d-advanced-spell[data-family="resonance"] .guild2d-magic-ripple{border-style:dotted}
+@keyframes magic10-sigil{0%,5%{opacity:0;transform:scale(.16) rotate(-35deg)}19%{opacity:1;transform:scale(.78) rotate(0)}42%{opacity:.75;transform:scale(1.12) rotate(65deg)}61%,100%{opacity:0;transform:scale(1.6) rotate(97deg)}}
+@keyframes magic10-inner{0%,8%{opacity:0;transform:scale(.2) rotate(60deg)}22%{opacity:.85;transform:scale(.95) rotate(0)}43%{opacity:.7;transform:scale(1.15) rotate(-60deg)}60%,100%{opacity:0;transform:scale(1.6) rotate(-95deg)}}
+@keyframes magic10-glyph{0%,6%{opacity:0;transform:scale(.1) rotate(-30deg)}24%{opacity:1;transform:scale(1) rotate(5deg)}43%{opacity:.82;transform:scale(1.13) rotate(32deg)}60%,100%{opacity:0;transform:scale(1.7) rotate(66deg)}}
+@keyframes magic10-charge{0%,8%{opacity:0;transform:scale(.2)}25%{opacity:.7;transform:scale(1)}48%{opacity:1;transform:scale(1.3)}60%,100%{opacity:0;transform:scale(2.1)}}
+@keyframes magic10-rotor{to{transform:rotate(360deg)}}
+@keyframes magic10-flight{0%,25%{opacity:0;transform:translate(0,0) scale(.45)}32%{opacity:1;transform:translate(0,0) scale(.9)}54%,61%{opacity:1;transform:translate(var(--flight-x),var(--flight-y)) scale(1.22)}72%,100%{opacity:0;transform:translate(var(--flight-x),var(--flight-y)) scale(.2)}}
+@keyframes magic10-impact{0%,50%{opacity:0;transform:scale(.2)}54%,61%{opacity:1;transform:scale(1.24)}78%{opacity:.62;transform:scale(2)}100%{opacity:0;transform:scale(2.8)}}
+@keyframes magic10-ring{0%,51%{opacity:0;transform:scale(.1)}60%{opacity:.93;transform:scale(.9)}83%{opacity:.45;transform:scale(2.1)}100%{opacity:0;transform:scale(2.6)}}
+@keyframes magic10-shield{0%,23%{opacity:0;transform:scale(.15)}35%{opacity:.83;transform:scale(.9)}54%,65%{opacity:1;transform:scale(1.12)}100%{opacity:0;transform:scale(1.5)}}
+@keyframes magic10-burst{0%,50%{opacity:0;transform:scale(.14) rotate(-50deg)}58%{opacity:1;transform:scale(1.1) rotate(10deg)}80%{opacity:.58;transform:scale(1.7) rotate(40deg)}100%{opacity:0;transform:scale(2.2) rotate(75deg)}}
+@keyframes magic10-strike{0%,50%{opacity:0;transform:scale(.1)}55%,59%{opacity:1;transform:scale(1.1)}64%{opacity:.25;transform:scale(.94)}70%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(1.8)}}
+@keyframes magic10-helix{0%,22%{opacity:0;transform:scale(.2) rotate(-90deg)}36%{opacity:.7;transform:scale(.9) rotate(0)}54%,61%{opacity:1;transform:scale(1.2) rotate(130deg)}100%{opacity:0;transform:scale(1.6) rotate(290deg)}}
+@keyframes magic10-particle{0%,51%{opacity:0;transform:rotate(var(--angle)) translateY(0) scale(.2)}57%{opacity:1;transform:rotate(var(--angle)) translateY(-14px) scale(1)}82%{opacity:.7;transform:rotate(var(--angle)) translateY(-47px) scale(.8)}100%{opacity:0;transform:rotate(var(--angle)) translateY(-72px) scale(.1)}}
+@keyframes magic10-multi{0%,48%{opacity:0;transform:scale(.1)}57%{opacity:.95;transform:scale(1.15)}83%{opacity:.5;transform:scale(1.8)}100%{opacity:0;transform:scale(2.15)}}
+.guild-lite-mode .guild2d-magic-glyph,.guild-lite-mode .guild2d-magic-inner-circle,
+.guild-lite-mode .guild2d-magic-lightning.b,.guild-lite-mode .guild2d-magic-lightning.c,
+.guild-lite-mode .guild2d-magic-ripple.second,
+.guild-lite-mode .guild2d-magic-particle:nth-of-type(n+6){display:none!important}
+.guild-lite-mode .guild2d-magic-particle{box-shadow:none}
+@media(max-width:420px){.guild2d-magic-lightning.c{display:none}.guild2d-magic-bolt-ring{display:none}}
+@media(prefers-reduced-motion:reduce){.guild2d-advanced-spell{display:none!important}}

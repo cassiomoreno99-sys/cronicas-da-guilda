@@ -17,6 +17,8 @@ import {spellPlan,spellImpactPoints} from "@/lib/combat-spell-plan";
 import {AdvancedSpellFX} from "./advanced-spell-fx";
 import {reactionForEvent,reactionFrames,lastStatusReaction,statusVisuals,type ReactionVisual} from "@/lib/combat-reactions";
 import {StatusAura,ReactionFlash} from "./combat-status-fx";
+import {bossSpectacle,supremeSpectacle,bossPressure,spectacleTargets} from "@/lib/combat-spectacle-plan";
+import {SpectacleFX,BossPresence} from "./combat-spectacle-fx";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -139,16 +141,30 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const areaTargets:{x:number;y:number}[]=cueSkill&&["all-enemies","all-allies"].includes(cueSkill.ability.target)
   ?cueSkill.targets.flatMap(id=>{const f=all.find(x=>x.id===id);return f?[pos(f.side,all.filter(x=>x.side===f.side).findIndex(x=>x.id===id))]:[];})
   :[];
+ // Nenhum golpe fictício: o espetáculo exige um evento real do motor.
+ const bossEvent=bossSpectacle(battle.combat?.mission,actor,evt,
+  !!stageRef.current?.closest(".guild-lite-mode"));
+ const supremeEvent=supremeSpectacle(cueSkill?.ability,actor,evt,
+  !!stageRef.current?.closest(".guild-lite-mode"));
+ const spectacle=bossEvent||supremeEvent;
+ const bossAreaTargets=bossEvent?.hitsAll?battle.log.filter(entry=>
+  entry.round===evt?.round&&entry.actorId===actor?.id&&entry.targetId&&
+  entry.kind===evt?.kind&&entry.text.slice(0,28)===evt?.text.slice(0,28)
+ ).flatMap(entry=>{
+  const f=all.find(x=>x.id===entry.targetId);
+  return f?[pos(f.side,all.filter(x=>x.side===f.side).findIndex(x=>x.id===f.id))]:[];
+ }):[];
+ const spectaclePoints=spectacleTargets(bossEvent?bossAreaTargets:areaTargets);
  // A arma da campanha prevalece sobre o estilo genérico da classe.
  const equipped=actor?.side==="hero"?state.chest.find(item=>item.equippedTo===actor.id&&
   (item.equippedSlot==="weapon"||ITEMS[item.key]?.slot==="weapon")):undefined;
  const catalogueWeapon=equipped?CATALOG_BY_ID[equipped.key]:undefined;
- const physicalAttack=actor&&isPhysicalStrike(evt,actor,cueSkill?.ability.effect,cue?.castOnly||false)
+ const physicalAttack=!spectacle&&actor&&isPhysicalStrike(evt,actor,cueSkill?.ability.effect,cue?.castOnly||false)
   ?physicalStrikePlan(physicalStyle(actor,catalogueWeapon
     ?{name:catalogueWeapon.nome,subtype:catalogueWeapon.subcategoria}:undefined),
     evtIndex,evt?.kind==="critical",cinemaDuration(school)):undefined;
  // Não atribui magia a um ataque físico. Efeitos derivam do lançamento efetivo.
- const spell=physicalAttack?undefined:spellPlan({
+ const spell=spectacle||physicalAttack?undefined:spellPlan({
   fighter:actor,event:evt,ability:cueSkill?.ability,castOnly:cue?.castOnly||false,
   targetCount:areaTargets.length,lightMode:!!stageRef.current?.closest(".guild-lite-mode")
  });
@@ -163,7 +179,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   "--shot-angle":Math.atan2((targetPos.y-visualStart.y)*(stageRef.current?.clientHeight||590),
                 (targetPos.x-visualStart.x)*(stageRef.current?.clientWidth||800))*180/Math.PI+"deg",
    "--flight-distance":Math.hypot((targetPos.x-visualStart.x)*(stageRef.current?.clientWidth||800)/100,(targetPos.y-visualStart.y)*(stageRef.current?.clientHeight||590)/100)+"px",
-   "--cinema-ms":(stageRef.current?.closest(".guild-lite-mode")?"520":cinemaDuration(school))+"ms"
+   "--cinema-ms":(stageRef.current?.closest(".guild-lite-mode")?"520":spectacle?.duration||cinemaDuration(school))+"ms"
  }:undefined;
  // Animações nativas no mesmo nó do sprite: não recarregam as imagens.
  // Ataque, pausa de impacto e reação estão sincronizados com o log real.
@@ -177,7 +193,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const reduced=window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if(reduced){setPlayingEvent(null);return;}
   const light=!!stage.closest(".guild-lite-mode")||document.documentElement.classList.contains("guild-lite-mode");
-  const duration=light?520:cinemaDuration(school);
+  const duration=light?520:spectacle?.duration||cinemaDuration(school);
   const allUnits=[...stage.querySelectorAll<HTMLElement>(".guild2d-unit")];
   const actorNode=allUnits.find(node=>node.dataset.fighterId===actor.id)?.querySelector<HTMLElement>(".guild2d-sprite");
   const targetNode=allUnits.find(node=>node.dataset.fighterId===target.id)?.querySelector<HTMLElement>(".guild2d-sprite");
@@ -263,6 +279,8 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const rigPose=chooseRigPose(acting,struck,f.hp<=0,isRangedVisual(school));
   const aura=statusVisuals(f.statuses);
   const statusReaction=statusPlaying?.reaction.targetId===f.id?statusPlaying.reaction:undefined;
+  const bossUnit=battle.combat?.mission.kind==="boss"&&f.side==="enemy"&&f.id==="enemy-0";
+  const pressure=bossUnit?bossPressure(f.hp,f.maxHp):undefined;
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={{...style,"--rig-duration":(stageRef.current?.closest(".guild-lite-mode")?520:cinemaDuration(school))+"ms"} as PosStyle} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
@@ -270,6 +288,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     data-physical-style={acting?physicalAttack?.style||"none":"none"}
     data-physical-variant={acting?physicalAttack?.variant:-1}
     data-status-count={aura.length} data-reaction={struck?eventReaction?.kind||"none":statusReaction?.kind||"none"}
+    data-boss={bossUnit} data-boss-pressure={pressure||"none"}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-move-shadow" aria-hidden="true"/>
@@ -294,7 +313,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
       });
      }}/>
      {rigCandidate&&<BodyRig src={image.src}/>}
-     {f.hp>0&&<StatusAura statuses={aura}/>}
+     {f.hp>0&&<StatusAura statuses={aura}/>}\n     {f.hp>0&&pressure&&<BossPresence pressure={pressure}/>}
      {struck&&eventReaction&&<ReactionFlash key={"reaction-"+evtKey} reaction={eventReaction}/>}
      {statusReaction&&<ReactionFlash key={statusPlaying?.key} reaction={statusReaction} variant="status"/>}
     </span>
@@ -338,7 +357,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
-   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&!spell&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} data-cast-only={cue?.castOnly||false} data-ability-effect={skillEffect} aria-hidden="true" style={visualPath}>
+   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&!spell&&!spectacle&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} data-cast-only={cue?.castOnly||false} data-ability-effect={skillEffect} aria-hidden="true" style={visualPath}>
        <span className="guild2d-windup"/>
        {!projectile&&!cue?.castOnly&&<span className="guild2d-step-dust"/>}
       {!projectile&&!cue?.castOnly&&school!=="claw"&&evt.kind!=="heal"&&<span className="guild2d-sword-strike"><i className="guild2d-sword-blade"/><i className="guild2d-sword-guard"/></span>}
@@ -357,11 +376,13 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
       </span>
       {evt.kind==="critical"&&<span className="guild2d-cinema-flash"/>}
    </div>}
+   {playingEvent===evtKey&&evt&&visualPath&&spectacle&&<SpectacleFX
+     key={"spectacle12-"+evtKey} plan={spectacle} style={visualPath} targets={spectaclePoints}/>}
    {playingEvent===evtKey&&evt&&visualPath&&physicalAttack&&actor&&<PhysicalStrikeFX
       key={"physical-"+evtKey} attack={physicalAttack} side={actor.side} style={visualPath}/>}
    {playingEvent===evtKey&&evt&&visualPath&&spell&&<AdvancedSpellFX
      key={"magic10-"+evtKey} plan={spell} style={visualPath} targets={spellTargets}/>}
-   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&!spell&&<ArenaVfx key={"vfx-"+evtKey} school={school} kind={cue?.castOnly?"cast":evt.kind} effect={skillEffect} targets={areaTargets} critical={evt.kind==="critical"} style={visualPath}/>}
+   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&!spell&&!spectacle&&<ArenaVfx key={"vfx-"+evtKey} school={school} kind={cue?.castOnly?"cast":evt.kind} effect={skillEffect} targets={areaTargets} critical={evt.kind==="critical"} style={visualPath}/>}
    <div className="guild2d-hud-layer">{heroes.map(hud)}{enemies.map(hud)}</div>
    <div className="guild2d-ground"/>
    {!active&&<div className="guild2d-result"><strong>{battle.won?"🏆 VITÓRIA":battle.status==="retreated"?"EQUIPE RETIRADA":"☠️ DERROTA"}</strong></div>}

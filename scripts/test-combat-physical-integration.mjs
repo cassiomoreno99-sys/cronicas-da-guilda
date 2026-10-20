@@ -10,7 +10,7 @@ for(const fragment of [
  "data-physical-style={acting?physicalAttack?.style",
  '<PhysicalStrikeFX',
  "key={\"physical-\"+evtKey}",
- "visualPath&&!physicalAttack&&!spell&&<ArenaVfx",
+ "visualPath&&!physicalAttack&&!spell&&!spectacle&&<ArenaVfx",
  "visualPath&&!physicalAttack&&!spell&&<div key={\"cinema-\"+evtKey}"
  ]) assert.ok(s.includes(fragment),"Não integrado: "+fragment);
 for(const fragment of ["data-style={attack.style}","data-ranged={attack.ranged}","data-variant={attack.variant}",

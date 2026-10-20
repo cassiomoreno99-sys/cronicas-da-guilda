@@ -20,3 +20,9 @@
 - Testes unitários de 21 livros e padrões reais de chefes, integração, Chromium Android/desktop e vídeo.
 - Distinguir claramente teste de demonstração isolada de observação de evento real.
 - Não confundir aprovação automatizada com validação estética definitiva.
+
+## 12B — integração
+- Cena exclusiva para o grimório supremo lançado ou ação de chefe confirmada pelo log; sem VFX normal simultâneo.
+- Padrões por escola: ondas, esmagamento, luz, escudo, drenagem e partículas, sincronizados ao impacto.
+- Halos em chefes `enemy-0` de missão `boss` derivados apenas de PV; não há fases adicionais de IA.
+- Todas as artes originais e a arena 4×4 ficam intactas.

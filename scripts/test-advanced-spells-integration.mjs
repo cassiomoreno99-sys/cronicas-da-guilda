@@ -6,8 +6,8 @@ const css=readFileSync(new URL("../app/arena-2d.css",import.meta.url),"utf8");
 for(const fragment of [
  "spellPlan({","fighter:actor,event:evt,ability:cueSkill?.ability",
  "spellImpactPoints(areaTargets)","physicalAttack?undefined:spellPlan",
- 'visualPath&&!physicalAttack&&!spell&&<div key={"cinema-"+evtKey}',
- 'visualPath&&!physicalAttack&&!spell&&<ArenaVfx',
+ 'visualPath&&!physicalAttack&&!spell&&!spectacle&&<div key={"cinema-"+evtKey}',
+ 'visualPath&&!physicalAttack&&!spell&&!spectacle&&<ArenaVfx',
  'visualPath&&spell&&<AdvancedSpellFX',
  'key={"magic10-"+evtKey}'
  ])assert.ok(arena.includes(fragment),"Integração não encontrada: "+fragment);

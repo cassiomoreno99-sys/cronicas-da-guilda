@@ -1563,3 +1563,81 @@
  .guild2d-status-signal .guild2d-status-loop,
  .guild2d-status-signal .guild2d-status-core{animation:none!important}
 }
+
+/* BLOCO 12B: supremos/chefes no contato real do hit-stop .54-.61. */
+.guild2d-spectacle{--light:#ffefcb;--glow:#efbc65;--dark:#986d50;--t:var(--cinema-ms,920ms);
+ position:absolute;inset:0;z-index:21;overflow:hidden;pointer-events:none;contain:layout style}
+.guild2d-spectacle[data-school="storm"]{--light:#f3f4ff;--glow:#9db8ff;--dark:#5265ce}
+.guild2d-spectacle[data-school="light"]{--light:#ffffdd;--glow:#ffe198;--dark:#d6a451}
+.guild2d-spectacle[data-school="shadow"]{--light:#e8c9ff;--glow:#a87ada;--dark:#5a3b82}
+.guild2d-spectacle[data-school="nature"]{--light:#e4ffd0;--glow:#9adbaf;--dark:#3a9974}
+.guild2d-spectacle[data-school="iron"]{--light:#edf5ff;--glow:#abc2d5;--dark:#66798e}
+.guild2d-spectacle[data-school="astral"]{--light:#dce0ff;--glow:#ab8ff2;--dark:#564fa9}
+.guild2d-spectacle[data-school="harmony"]{--light:#ffe2f1;--glow:#f5b2df;--dark:#9d5d8e}
+.guild2d-spectacle-origin,.guild2d-spectacle-impact{position:absolute;left:var(--start-x);top:var(--start-y);width:0;height:0}
+.guild2d-spectacle-impact{left:calc(var(--start-x) + var(--flight-x));top:calc(var(--start-y) + var(--flight-y))}
+.guild2d-spectacle-origin i,.guild2d-spectacle-impact i{position:absolute;display:block;left:0;top:0}
+.guild2d-spectacle-sigil{width:clamp(85px,16cqw,160px);height:clamp(85px,16cqw,160px);
+ translate:-50% -50%;border:3px double var(--glow);border-radius:50%;box-shadow:0 0 15px var(--dark);
+ animation:guild12-sigil var(--t) ease-out both}
+.guild2d-spectacle-charge{width:clamp(55px,10cqw,110px);height:clamp(55px,10cqw,110px);
+ translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,var(--light),var(--glow) 25%,transparent 73%);
+ animation:guild12-charge var(--t) ease-out both}
+.guild2d-spectacle-sweep{width:clamp(100px,23cqw,220px);height:clamp(68px,17cqw,155px);
+ translate:-50% -50%;border:solid var(--light);border-width:0 0 10px;border-radius:40% 75% 70% 40%;
+ filter:drop-shadow(0 0 10px var(--glow));animation:guild12-sweep var(--t) ease-out both}
+.guild2d-spectacle-crush{width:clamp(70px,16cqw,160px);height:clamp(70px,16cqw,160px);
+ translate:-50% -50%;border:4px solid var(--light);border-radius:50%;box-shadow:0 0 14px var(--glow);
+ animation:guild12-crush var(--t) ease-out both}
+.guild2d-spectacle-shield{width:clamp(78px,18cqw,175px);height:clamp(85px,20cqw,185px);translate:-50% -50%;
+ border:4px double var(--glow);border-radius:45% 45% 24% 24%;
+ background:radial-gradient(circle,var(--dark),transparent 74%);
+ animation:guild12-shield var(--t) ease-out both}
+.guild2d-spectacle-rift{width:clamp(30px,7cqw,70px);height:clamp(85px,20cqw,185px);translate:-50% -50%;
+ clip-path:polygon(45% 0,82% 24%,50% 48%,86% 63%,28% 100%,16% 66%,40% 47%,14% 21%);
+ background:linear-gradient(var(--light),var(--glow),var(--dark));
+ animation:guild12-rift var(--t) ease-out both}
+.guild2d-spectacle-nova{width:clamp(110px,25cqw,240px);height:clamp(110px,25cqw,240px);
+ translate:-50% -50%;border-radius:50%;
+ background:conic-gradient(transparent 10%,var(--glow) 14%,transparent 23% 43%,var(--light) 48%,transparent 55% 79%,var(--dark) 83%,transparent 90%);
+ mask-image:radial-gradient(circle,transparent 15%,black 26% 66%,transparent 76%);
+ animation:guild12-nova var(--t) ease-out both}
+.guild2d-spectacle-drain{width:clamp(75px,17cqw,165px);height:clamp(80px,19cqw,175px);
+ translate:-50% -50%;border:solid var(--glow);border-width:0 6px 0 0;border-radius:50%;
+ animation:guild12-drain var(--t) ease-in-out both}
+.guild2d-spectacle-shard{--ray:calc(var(--n)*360deg/var(--count));width:7px;height:17px;
+ border-radius:25% 80%;background:var(--light);box-shadow:0 0 7px var(--glow);
+ animation:guild12-shard var(--t) ease-out both}
+.guild2d-spectacle-area{position:absolute;width:clamp(63px,14cqw,130px);height:clamp(63px,14cqw,130px);
+ translate:-50% -50%;border:3px solid var(--glow);border-radius:50%;
+ background:radial-gradient(circle,var(--light),var(--glow) 20%,transparent 73%);
+ animation:guild12-area var(--t) ease-out both}
+.guild2d-spectacle:not([data-variant="ward"]):not([data-variant="sanctuary"]) .guild2d-spectacle-shield,
+.guild2d-spectacle:not([data-variant="drain"]) .guild2d-spectacle-drain,
+.guild2d-spectacle[data-variant="ward"] .guild2d-spectacle-sweep,
+.guild2d-spectacle[data-variant="sanctuary"] .guild2d-spectacle-sweep{display:none}
+.guild2d-boss-presence{position:absolute;inset:0;z-index:5;pointer-events:none;--boss:#e5be93}
+.guild2d-boss-presence[data-pressure="strained"]{--boss:#ecaa79}
+.guild2d-boss-presence[data-pressure="critical"]{--boss:#f57f8d}
+.guild2d-boss-presence i{position:absolute;display:block;left:50%;border:2px solid var(--boss);
+ border-radius:50%;box-shadow:0 0 12px var(--boss)}
+.guild2d-boss-halo{bottom:4%;width:clamp(65px,12cqw,135px);height:clamp(16px,3cqw,35px);
+ translate:-50% 0;animation:guild12-boss-aura 3.2s ease-in-out infinite alternate}
+.guild2d-boss-crown{top:2%;width:clamp(50px,10cqw,105px);height:clamp(19px,4cqw,45px);
+ translate:-50% 0;border-style:double!important;animation:guild12-boss-crown 4s linear infinite}
+@keyframes guild12-sigil{0%,9%{opacity:0;transform:scale(.2) rotate(-45deg)}24%{opacity:1;transform:scale(1) rotate(0)}45%{opacity:1;transform:scale(1.2) rotate(70deg)}61%,100%{opacity:0;transform:scale(1.7) rotate(135deg)}}
+@keyframes guild12-charge{0%,10%{opacity:0;transform:scale(.2)}28%{opacity:.85;transform:scale(1)}48%{opacity:1;transform:scale(1.5)}61%,100%{opacity:0;transform:scale(2.5)}}
+@keyframes guild12-sweep{0%,47%{opacity:0;transform:rotate(-80deg) scale(.2)}54%,61%{opacity:1;transform:rotate(20deg) scale(1.2)}80%{opacity:.5;transform:rotate(60deg) scale(1.7)}100%{opacity:0;transform:rotate(85deg) scale(2)}}
+@keyframes guild12-crush{0%,48%{opacity:0;transform:scale(.2)}54%,61%{opacity:1;transform:scale(1.2)}82%{opacity:.5;transform:scale(2)}100%{opacity:0;transform:scale(2.5)}}
+@keyframes guild12-shield{0%,12%{opacity:0;transform:scale(.2)}36%{opacity:.8;transform:scale(1)}54%,61%{opacity:1;transform:scale(1.2)}100%{opacity:0;transform:scale(1.5)}}
+@keyframes guild12-rift{0%,49%{opacity:0;transform:scale(.2) rotate(-20deg)}54%,61%{opacity:1;transform:scale(1.2) rotate(10deg)}82%{opacity:.5;transform:scale(1.7) rotate(25deg)}100%{opacity:0;transform:scale(2) rotate(45deg)}}
+@keyframes guild12-nova{0%,49%{opacity:0;transform:scale(.2) rotate(-20deg)}54%,61%{opacity:1;transform:scale(1.15) rotate(10deg)}80%{opacity:.6;transform:scale(2) rotate(40deg)}100%{opacity:0;transform:scale(2.8) rotate(70deg)}}
+@keyframes guild12-drain{0%,26%{opacity:0;transform:scale(.2) rotate(-80deg)}42%{opacity:.8;transform:scale(1) rotate(0)}54%,61%{opacity:1;transform:scale(1.25) rotate(140deg)}100%{opacity:0;transform:scale(1.7) rotate(310deg)}}
+@keyframes guild12-shard{0%,50%{opacity:0;transform:rotate(var(--ray)) translateY(0) scale(.2)}57%{opacity:1;transform:rotate(var(--ray)) translateY(-15px) scale(1)}80%{opacity:.6;transform:rotate(var(--ray)) translateY(-65px) scale(.7)}100%{opacity:0;transform:rotate(var(--ray)) translateY(-100px) scale(.1)}}
+@keyframes guild12-area{0%,48%{opacity:0;transform:scale(.1)}58%{opacity:.9;transform:scale(1.1)}81%{opacity:.5;transform:scale(1.9)}100%{opacity:0;transform:scale(2.3)}}
+@keyframes guild12-boss-aura{from{opacity:.3;transform:scale(.88)}to{opacity:.72;transform:scale(1.15)}}
+@keyframes guild12-boss-crown{from{opacity:.4;transform:rotate(0)}to{opacity:.77;transform:rotate(360deg)}}
+.guild-lite-mode .guild2d-spectacle-shard:nth-child(n+6){display:none!important}
+.guild-lite-mode .guild2d-boss-presence i{animation:none!important;box-shadow:none}
+@media(max-width:420px){.guild2d-spectacle-shard:nth-child(n+9){display:none}}
+@media(prefers-reduced-motion:reduce){.guild2d-spectacle{display:none!important}.guild2d-boss-presence i{animation:none!important;box-shadow:none!important}}

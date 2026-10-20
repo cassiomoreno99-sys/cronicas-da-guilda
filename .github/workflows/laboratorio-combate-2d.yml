@@ -40,6 +40,8 @@ jobs:
           exit 1
       - name: Fotografar e verificar arena (6 tamanhos, inclusive Android)
         run: node scripts/test-excelencia-2d-browser.mjs
+      - name: Revisar articulação e fallback Android / desktop
+        run: node scripts/test-body-rig-browser.mjs
       - name: Gravar confronto animado e barra de habilidades (laboratório)
         run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
@@ -51,4 +53,5 @@ jobs:
             visual-report/excelencia-2d-*.jpg
             visual-report/lab-combate-*.webm
             visual-report/lab-*.png
+            visual-report/rig07-*.png
           if-no-files-found: ignore

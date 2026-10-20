@@ -1473,3 +1473,93 @@
 .guild-lite-mode .guild2d-magic-particle{box-shadow:none}
 @media(max-width:420px){.guild2d-magic-lightning.c{display:none}.guild2d-magic-bolt-ring{display:none}}
 @media(prefers-reduced-motion:reduce){.guild2d-advanced-spell{display:none!important}}
+
+/* BLOCO 11B — feedback concentrado no sprite. O HUD e o fundo não mudam.
+   Estado persistente vem somente do status do motor; sem animação no save. */
+.guild2d-status-aura,.guild2d-reaction-flash{position:absolute;inset:0;pointer-events:none;overflow:visible;isolation:isolate}
+.guild2d-status-aura{z-index:6}
+.guild2d-status-signal{--aura:#b1ddf8;--aura-glow:#347fac;
+ position:absolute;inset:0;pointer-events:none;opacity:.75}
+.guild2d-status-signal[data-tone="danger"]{--aura:#a0de76;--aura-glow:#34764c}
+.guild2d-status-signal[data-status="bleed"]{--aura:#ff8d94;--aura-glow:#a1283f}
+.guild2d-status-signal[data-tone="heal"]{--aura:#aaf5bd;--aura-glow:#2d9c68}
+.guild2d-status-signal[data-tone="control"]{--aura:#d4b5ff;--aura-glow:#8f50c2}
+.guild2d-status-signal[data-tone="buff"]{--aura:#ffe0a2;--aura-glow:#bd8741}
+.guild2d-status-loop{position:absolute;display:block;left:50%;bottom:2%;
+ width:clamp(52px,9cqw,105px);height:clamp(12px,2.4cqw,30px);
+ border:2px solid var(--aura);border-radius:50%;transform:translateX(-50%);
+ box-shadow:0 0 10px var(--aura-glow),inset 0 0 6px var(--aura-glow);
+ animation:guild2d-status-pulse 2.5s ease-in-out infinite alternate}
+.guild2d-status-core{position:absolute;display:block;left:50%;bottom:5%;width:14px;height:14px;
+ border-radius:50%;background:radial-gradient(circle,var(--aura),transparent 75%);
+ filter:drop-shadow(0 0 7px var(--aura-glow));transform:translateX(-50%);
+ animation:guild2d-status-float 3s ease-in-out infinite}
+.guild2d-status-signal[data-status="shield"] .guild2d-status-loop,
+.guild2d-status-signal[data-status="ward"] .guild2d-status-loop,
+.guild2d-status-signal[data-status="lastStand"] .guild2d-status-loop{
+ bottom:33%;height:clamp(64px,13cqw,140px);width:clamp(60px,12cqw,125px);
+ border-radius:43% 43% 38% 38%;border-style:double;
+ background:linear-gradient(145deg,transparent,var(--aura-glow) 35%,transparent 80%);
+ opacity:.50;animation:guild2d-status-ward 3s ease-in-out infinite alternate}
+.guild2d-status-signal[data-status="stun"] .guild2d-status-loop{
+ bottom:76%;height:clamp(24px,4cqw,38px);width:clamp(60px,10cqw,94px);
+ border-style:dotted;animation:guild2d-status-dizzy 2.2s linear infinite}
+.guild2d-status-signal[data-status="poison"] .guild2d-status-core,
+.guild2d-status-signal[data-status="bleed"] .guild2d-status-core{width:18px;height:24px}
+.guild2d-status-signal[data-status="regen"] .guild2d-status-core{bottom:25%}
+.guild2d-status-signal:nth-child(2) .guild2d-status-loop{animation-delay:-1s;scale:.82}
+.guild2d-status-signal:nth-child(3) .guild2d-status-loop{animation-delay:-1.7s;scale:1.08}
+.guild2d-status-signal:nth-child(4) .guild2d-status-loop{animation-delay:-.6s;scale:.9}
+.guild2d-reaction-flash{z-index:8;--reaction:#fff3b2;--reaction-dark:#dda35c}
+.guild2d-reaction-flash[data-reaction="poison"]{--reaction:#a6ff82;--reaction-dark:#39864c}
+.guild2d-reaction-flash[data-reaction="bleed"],
+.guild2d-reaction-flash[data-reaction="fall"]{--reaction:#ff9d98;--reaction-dark:#b93c45}
+.guild2d-reaction-flash[data-reaction="critical"]{--reaction:#fff2ab;--reaction-dark:#f19746}
+.guild2d-reaction-flash[data-reaction="heal"],
+.guild2d-reaction-flash[data-reaction="regen"]{--reaction:#b3ffdc;--reaction-dark:#36a77e}
+.guild2d-reaction-flash[data-reaction="shield"],
+.guild2d-reaction-flash[data-reaction="resist"],
+.guild2d-reaction-flash[data-reaction="dodge"]{--reaction:#b4e9ff;--reaction-dark:#467fac}
+.guild2d-reaction-flash[data-reaction="stun"]{--reaction:#e1c5ff;--reaction-dark:#835cca}
+.guild2d-reaction-flash>i{position:absolute;display:block;left:50%;top:45%;pointer-events:none}
+.guild2d-reaction-center{width:clamp(20px,4cqw,42px);height:clamp(20px,4cqw,42px);
+ transform:translate(-50%,-50%);border-radius:50%;
+ background:radial-gradient(circle,#fff,var(--reaction) 37%,transparent 78%);
+ filter:drop-shadow(0 0 10px var(--reaction-dark));animation:guild2d-react-core .68s ease-out both}
+.guild2d-reaction-wave{width:clamp(48px,11cqw,115px);height:clamp(48px,11cqw,115px);
+ border-radius:50%;border:3px solid var(--reaction);transform:translate(-50%,-50%);
+ box-shadow:0 0 10px var(--reaction-dark);animation:guild2d-react-wave .75s ease-out both}
+.guild2d-reaction-symbol{width:clamp(34px,8cqw,75px);height:clamp(34px,8cqw,75px);
+ border:2px dashed var(--reaction);border-radius:50%;
+ transform:translate(-50%,-50%);animation:guild2d-react-symbol .8s ease-out both}
+.guild2d-reaction-flash[data-reaction="shield"] .guild2d-reaction-wave,
+.guild2d-reaction-flash[data-reaction="resist"] .guild2d-reaction-wave{border-radius:40% 40% 29% 29%;border-style:double}
+.guild2d-reaction-flash[data-reaction="stun"] .guild2d-reaction-symbol{border-style:dotted;top:13%}
+.guild2d-reaction-flash[data-reaction="dodge"] .guild2d-reaction-center{opacity:.55}
+.guild2d-reaction-flash[data-reaction="fall"]{opacity:.8;filter:grayscale(.2)}
+.guild2d-reaction-particle{width:7px;height:15px;border-radius:50% 5% 50% 5%;
+ background:var(--reaction);box-shadow:0 0 5px var(--reaction-dark);
+ animation:guild2d-react-particle .75s ease-out both}
+.guild2d-reaction-particle.a{--dir:-45deg}
+.guild2d-reaction-particle.b{--dir:45deg}
+.guild2d-reaction-particle.c{--dir:160deg}
+@keyframes guild2d-status-pulse{from{opacity:.25;transform:translateX(-50%) scale(.86)}to{opacity:.72;transform:translateX(-50%) scale(1.15)}}
+@keyframes guild2d-status-float{0%,100%{opacity:.32;transform:translate(-50%,0)}50%{opacity:.8;transform:translate(-50%,-25px)}}
+@keyframes guild2d-status-ward{from{opacity:.28;transform:translateX(-50%) scale(.92)}to{opacity:.62;transform:translateX(-50%) scale(1.06)}}
+@keyframes guild2d-status-dizzy{from{transform:translateX(-50%) rotate(0)}to{transform:translateX(-50%) rotate(360deg)}}
+@keyframes guild2d-react-core{0%,18%{opacity:0;scale:.2}38%{opacity:1;scale:1.1}100%{opacity:0;scale:2}}
+@keyframes guild2d-react-wave{0%,20%{opacity:0;scale:.1}45%{opacity:.9;scale:1}100%{opacity:0;scale:1.8}}
+@keyframes guild2d-react-symbol{0%{opacity:0;rotate:-45deg;scale:.5}40%{opacity:.95;rotate:7deg;scale:1}100%{opacity:0;rotate:48deg;scale:1.5}}
+@keyframes guild2d-react-particle{0%,24%{opacity:0;transform:translate(-50%,-50%) rotate(var(--dir)) translateY(0) scale(.1)}46%{opacity:1;transform:translate(-50%,-50%) rotate(var(--dir)) translateY(-14px) scale(1)}
+ 100%{opacity:0;transform:translate(-50%,-50%) rotate(var(--dir)) translateY(-70px) scale(.2)}}
+/* Perda de HP não muda posição persistente nem interfere no HUD. */
+.guild-lite-mode .guild2d-status-core,.guild-lite-mode .guild2d-reaction-symbol,
+.guild-lite-mode .guild2d-reaction-particle{display:none!important}
+.guild-lite-mode .guild2d-status-signal:nth-child(n+3){display:none!important}
+.guild-lite-mode .guild2d-status-loop{animation:none!important;box-shadow:none}
+@media(max-width:420px){.guild2d-status-signal:nth-child(n+4){display:none!important}}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-reaction-flash{display:none!important}
+ .guild2d-status-signal .guild2d-status-loop,
+ .guild2d-status-signal .guild2d-status-core{animation:none!important}
+}

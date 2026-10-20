@@ -18,3 +18,10 @@
 - Casos unitários, teste React/CSS, Chromium Android e PC, verificação 4x4 e arquivos de capturas.
 - Critério: nenhum cálculo de HP, turno, cooldown ou inventário alterado.
 - Aprovação técnica não substitui revisão estética humana.
+
+## 11B — integração visual
+- O próprio sprite carrega a aura de estado, sem alterar coordenadas ou recriar retratos.
+- O alvo recebe `reactionFrames` em vez de recuo uniforme: crítico, cura, veneno, sangramento, escudo, resistência e queda ficam visualmente distintos.
+- Eventos `status` finais de escudo, esquiva, atordoamento e efeito periódico geram movimento temporário mesmo quando não há agressor no log.
+- O HUD original mantém os nomes e a duração; elementos novos são decorativos, sem leitura dupla por acessibilidade.
+- Modo leve desliga partículas e halos secundários, movimento reduzido desativa flashes e rotações contínuas.

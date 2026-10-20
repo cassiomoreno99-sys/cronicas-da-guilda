@@ -15,6 +15,8 @@ import {isPhysicalStrike,physicalStyle,physicalStrikePlan} from "@/lib/combat-ph
 import {PhysicalStrikeFX} from "./physical-strike-fx";
 import {spellPlan,spellImpactPoints} from "@/lib/combat-spell-plan";
 import {AdvancedSpellFX} from "./advanced-spell-fx";
+import {reactionForEvent,reactionFrames,lastStatusReaction,statusVisuals,type ReactionVisual} from "@/lib/combat-reactions";
+import {StatusAura,ReactionFlash} from "./combat-status-fx";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -117,8 +119,14 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const evt=cue?.entry;
  const performance=useMemo(()=>active?[]:combatReport(battle,state.heroes),[battle,state.heroes,active]);
  const evtIndex=cue?.index??-1;
+ const statusCue=lastStatusReaction(battle.log,all);
+ // Não repetir status antigo só porque a tela atualizou um relógio ou um HUD.
+ const statusCueKey=expedition.id+"-status-"+(statusCue?.index??-1);
+ const [statusPlaying,setStatusPlaying]=useState<{key:string;reaction:ReactionVisual}|null>(null);
+ const lastStatusAnimated=useRef(statusCueKey);
  const actor=all.find(f=>f.id===evt?.actorId);
  const target=all.find(f=>f.id===(evt?.targetId||evt?.actorId));
+ const eventReaction=reactionForEvent(evt,target);
  const actorIndex=actor?all.filter(f=>f.side===actor.side).findIndex(f=>f.id===actor.id):0;
  const targetIndex=target?all.filter(f=>f.side===target.side).findIndex(f=>f.id===target.id):0;
  // Rodadas e atualizações de HUD sem ação não repetem um golpe já reproduzido.
@@ -201,7 +209,10 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const movingShadow=allUnits.find(node=>node.dataset.fighterId===actor.id)?.querySelector<HTMLElement>(".guild2d-move-shadow");
   if(movingShadow)motions.push(movingShadow.animate(movement.shadowFrames,{duration,easing:"linear",fill:"none"}));
   if(actor.id!==target.id){
-   motions.push(targetNode.animate(evt.kind==="heal"?plan.healFrames:plan.targetFrames,{
+   const victimReaction=reactionForEvent(evt,target);
+   const targetFrames=victimReaction?reactionFrames(victimReaction,actor.side==="hero"?1:-1,targetSize)
+    :evt.kind==="heal"?plan.healFrames:plan.targetFrames;
+   motions.push(targetNode.animate(targetFrames,{
     delay:plan.impactDelay,duration:plan.recoveryDuration,easing:"cubic-bezier(.2,.7,.18,1)",fill:"none"
    }));
   }
@@ -222,6 +233,26 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    return ()=>{window.clearTimeout(cleanup);motions.forEach(animation=>animation.cancel());};
  },[evtKey]);
 
+ // Reações sem agressor registrado: absorção por escudo, esquiva e
+ // ticks periódicos. Não chama a animação de ataque e não altera HP.
+ useEffect(()=>{
+  const previous=lastStatusAnimated.current;
+  lastStatusAnimated.current=statusCueKey;
+  const cueNow=statusCue;
+  if(previous===statusCueKey||!cueNow||cueNow.index<=evtIndex||
+     cueNow.index!==battle.log.length-1||!stageRef.current)return;
+  if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const light=!!stageRef.current.closest(".guild-lite-mode");
+  const sprite=stageRef.current.querySelector<HTMLElement>(
+   '.guild2d-unit[data-fighter-id="'+CSS.escape(cueNow.reaction.targetId)+'"] .guild2d-sprite');
+  if(!sprite)return;
+  const frameSet=reactionFrames(cueNow.reaction,1,{width:sprite.offsetWidth,height:sprite.offsetHeight});
+  const motion=sprite.animate(frameSet,{duration:light?330:570,easing:"ease-out",fill:"none"});
+  setStatusPlaying({key:statusCueKey,reaction:cueNow.reaction});
+  const cleanup=window.setTimeout(()=>setStatusPlaying(cur=>cur?.key===statusCueKey?null:cur),light?400:700);
+  return ()=>{window.clearTimeout(cleanup);motion.cancel();};
+ },[statusCueKey]);
+
  const queuedUnit=(id:string)=>battle.combat?.pendingAbilities?.some(p=>p.heroId===id);
  function unit(f:BattleFighter,i:number){
   const p=pos(f.side,i),acting=playingEvent===evtKey&&actor?.id===f.id&&!!targetPos&&f.hp>0;
@@ -230,12 +261,15 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const image=combatArt(f,f.side==="hero"?state.heroes.find(h=>h.id===f.id):undefined);
   const rigCandidate=rigEligible(f.side,f.name,image.src,image.full);
   const rigPose=chooseRigPose(acting,struck,f.hp<=0,isRangedVisual(school));
+  const aura=statusVisuals(f.statuses);
+  const statusReaction=statusPlaying?.reaction.targetId===f.id?statusPlaying.reaction:undefined;
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={{...style,"--rig-duration":(stageRef.current?.closest(".guild-lite-mode")?520:cinemaDuration(school))+"ms"} as PosStyle} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
     data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting} data-move-kind={acting?(projectile?"cast":school==="claw"?"pounce":school==="shadow"?"sidestep":"charge"):"idle"} data-rig-candidate={rigCandidate} data-rig-pose={rigPose}
     data-physical-style={acting?physicalAttack?.style||"none":"none"}
     data-physical-variant={acting?physicalAttack?.variant:-1}
+    data-status-count={aura.length} data-reaction={struck?eventReaction?.kind||"none":statusReaction?.kind||"none"}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-move-shadow" aria-hidden="true"/>
@@ -260,6 +294,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
       });
      }}/>
      {rigCandidate&&<BodyRig src={image.src}/>}
+     {f.hp>0&&<StatusAura statuses={aura}/>}
+     {struck&&eventReaction&&<ReactionFlash key={"reaction-"+evtKey} reaction={eventReaction}/>}
+     {statusReaction&&<ReactionFlash key={statusPlaying?.key} reaction={statusReaction} variant="status"/>}
     </span>
     {acting&&!physicalAttack&&<span key={"trail-"+evtKey} className={"guild2d-action-trail "+((evt?.kind==="ability"||evt?.kind==="heal")?"guild2d-action-magic":"")} aria-hidden="true"/>}
     {struck&&evt?.kind==="critical"&&<span key={"critical-"+evtKey} className="guild2d-critical" aria-hidden="true">CRÍTICO!</span>}

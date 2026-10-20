@@ -160,6 +160,7 @@ const STYLES=[
 
 export default function DuelScene(){
  const [ms,setMs]=useState<number|null>(null);
+ const [idleMs,setIdleMs]=useState(0);
  const clock=useRef(0);
  const raf=useRef<number|null>(null);
  const [prefersReduced,setPrefersReduced]=useState(false);
@@ -169,6 +170,17 @@ export default function DuelScene(){
   onChange();mq.addEventListener("change",onChange);
   return ()=>mq.removeEventListener("change",onChange);
  },[]);
+ useEffect(()=>{
+  if(prefersReduced)return;
+  let frame=0;
+  let last=0;
+  const idle=(now:number)=>{
+   if(now-last>=42){last=now;setIdleMs(now);}
+   frame=requestAnimationFrame(idle);
+  };
+  frame=requestAnimationFrame(idle);
+  return ()=>cancelAnimationFrame(frame);
+ },[prefersReduced]);
  const attack=useCallback(()=>{
   if(raf.current!==null)return;
   if(prefersReduced){
@@ -186,7 +198,7 @@ export default function DuelScene(){
   raf.current=requestAnimationFrame(tick);
  },[prefersReduced]);
  useEffect(()=>()=>{if(raf.current!==null)cancelAnimationFrame(raf.current);},[]);
- const pose=ms===null?IdlePose(0):duelPose(ms);
+ const pose=ms===null?IdlePose(idleMs):duelPose(ms);
  const label=ms===null?"PRONTO":({
   anticipation:"PREPARANDO","dash":"AVANÇANDO","plant":"FIRMANDO A BASE",
   swing:"GOLPE DE ESPADA","impact":"IMPACTO","reaction":"INIMIGO RECUANDO",
@@ -194,7 +206,7 @@ export default function DuelScene(){
  } as Record<Phase,string>)[pose.phase];
  const camera=ms!==null&&pose.hit>0?"translate("+(Math.sin(ms*.22)*pose.hit*2.5).toFixed(1)+" 0)":"";
  const slashPath="M0 -80 Q104 -132 184 -4";
- return <section className="duel-lab" aria-label="Laboratório isolado: guerreiro contra monstro" data-lab="duel-01">
+ return <section className="duel-lab" aria-label="Laboratório isolado: guerreiro contra monstro" data-lab="duel-01" data-phase={pose.phase} data-hero-x={pose.heroX.toFixed(1)} data-monster-x={pose.monsterX.toFixed(1)}>
   <style>{STYLES}</style>
   <div className="duel-lab__header"><h2>Duelo 01 — prova de movimento</h2>
    <span className="duel-lab__note">CENA ISOLADA · SEM MOTOR DO JOGO</span></div>

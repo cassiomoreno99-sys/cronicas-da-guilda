@@ -1,0 +1,45 @@
+name: Duelo 01 — prova visual isolada (sem deploy)
+on:
+  push:
+    branches: [laboratorio-combate-2d-fluido-20261020]
+    paths:
+      - 'app/lab-duelo-01/**'
+      - 'lab-duelo-01.html'
+      - 'scripts/test-lab-duelo-01-*.mjs'
+      - '.github/workflows/lab-duelo-01.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-duelo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Verificar componente e TypeScript
+        run: |
+          node scripts/test-lab-duelo-01-component.mjs
+          npm run typecheck
+      - run: npm install --no-save --no-package-lock playwright@1.55.0
+      - run: npx playwright install --with-deps chromium
+      - name: Servidor Vite local sem publicação
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/duelo01.log 2>&1 &
+          for i in {1..40}; do curl -fsS http://127.0.0.1:5173/lab-duelo-01.html >/dev/null && exit 0; sleep 1; done
+          cat /tmp/duelo01.log
+          exit 1
+      - name: Prova visual real do duelo 01 (Android e PC)
+        run: node scripts/test-lab-duelo-01-browser.mjs
+      - name: Vídeos e capturas — NÃO publica o jogo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: duelo-01-comprovacao-visual
+          path: |
+            visual-report/duelo01-*.png
+            visual-report/duelo01-*.webm
+          if-no-files-found: ignore

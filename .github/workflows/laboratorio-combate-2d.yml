@@ -46,6 +46,8 @@ jobs:
         run: node --experimental-strip-types scripts/test-combat-spectacle-plan.ts
       - name: Bloco 12B - integração especial
         run: node scripts/test-combat-spectacle-ui.mjs
+      - name: Bloco 13A - ícones, alvo e cooldown reais
+        run: node --experimental-strip-types scripts/test-combat-ability-presentation.ts
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
       - name: Preparar navegador de auditoria (apenas CI)

@@ -1,5 +1,5 @@
 import {useEffect,useMemo,useRef,useState,type CSSProperties} from "react";
-import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check} from "lucide-react";
+import {ArrowLeft,Swords,Shield,Sparkles,ChevronsRight,X,Zap,Check,Flame,Skull,Leaf,Heart,Star,Crosshair,type LucideIcon} from "lucide-react";
 import { statusEmPortugues, textoEmPortugues } from "../lib/texto-portugues";
 import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,combatReport,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
@@ -19,6 +19,7 @@ import {reactionForEvent,reactionFrames,lastStatusReaction,statusVisuals,type Re
 import {StatusAura,ReactionFlash} from "./combat-status-fx";
 import {bossSpectacle,supremeSpectacle,bossPressure,spectacleTargets} from "@/lib/combat-spectacle-plan";
 import {SpectacleFX,BossPresence} from "./combat-spectacle-fx";
+import {abilityVisual,abilityAvailability,abilityHotkey,type AbilityGlyph} from "@/lib/combat-ability-presentation";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -76,6 +77,14 @@ const isRangedVisual=(school:VisualSchool)=>["arrow","arcane","holy","song","nat
 /** Coreografia uniforme sem alterar o motor da batalha. */
 const cinemaDuration=(school:VisualSchool)=>school==="shadow"?650:school==="arcane"?960:school==="steel"?920:school==="arrow"?780:820;
 const hpWidth=(hp:number,max:number)=>(max?Math.max(0,Math.min(100,100*hp/max)):0)+"%";
+const SKILL_ICONS:Record<AbilityGlyph,LucideIcon>={
+ swords:Swords,flame:Flame,zap:Zap,skull:Skull,leaf:Leaf,heart:Heart,
+ shield:Shield,crosshair:Crosshair,sparkles:Sparkles,star:Star
+};
+function AbilityIcon({glyph,size=23}:{glyph:AbilityGlyph;size?:number}){
+ const Component=SKILL_ICONS[glyph];
+ return <Component size={size} strokeWidth={1.9} aria-hidden="true"/>;
+}
 type PosStyle=CSSProperties&{"--x":string;"--y":string;"--dash-x":string;"--dash-y":string};
 type VisualPath=CSSProperties&{"--start-x":string;"--start-y":string;"--flight-x":string;"--flight-y":string;"--shot-angle":string;"--flight-distance":string;"--cinema-ms":string};
 
@@ -104,6 +113,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const [enemyId,setEnemyId]=useState("");
  const [allyTargetId,setAllyTargetId]=useState("");
  const [openSkill,setOpenSkill]=useState(false);
+ const [selectedAbilityId,setSelectedAbilityId]=useState("");
  const [tip,setTip]=useState("");
  const [playingEvent,setPlayingEvent]=useState<string|null>(null);
  const active=battle.status==="active"&&!!battle.combat;
@@ -113,6 +123,11 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const heroData=state.heroes.find(h=>h.id===hero?.id);
  const abilities=heroData?availableAbilities(heroData):[];
  const queued=battle.combat?.pendingAbilities?.some(p=>p.heroId===hero?.id);
+ const selectedAbility=abilities.find(a=>a.id===selectedAbilityId)||abilities[0];
+ const selectedAvailability=selectedAbility?abilityAvailability(selectedAbility,{
+  cooldown:hero?abilityCooldownRemaining(battle,hero.id,selectedAbility.id):0,
+  queued:!!queued,busy:!!busy,hasAlly:!!allyTarget,hasEnemy:!!enemy
+ }):undefined;
  const focus=active?enemies.find(f=>f.id===battle.combat?.focusTargetId&&f.hp>0):undefined;
  const autoSkills=battle.combat?.autoAbilities!==false;
  const upcoming=battle.combat?.liveOrder?.slice(battle.combat.liveCursor||0).map(id=>all.find(f=>f.id===id)).filter((f):f is BattleFighter=>!!f&&f.hp>0)||[];
@@ -343,6 +358,11 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  }
  function queueAbility(ability:ReturnType<typeof availableAbilities>[number]){
   if(!active||busy||!hero||queued)return;
+  const availability=abilityAvailability(ability,{
+   cooldown:abilityCooldownRemaining(battle,hero.id,ability.id),
+   queued:!!queued,busy:!!busy,hasAlly:!!allyTarget,hasEnemy:!!enemy
+  });
+  if(availability.disabled){setTip(availability.stateLabel);return;}
   const targetId=ability.target==="enemy"?enemy?.id:ability.target==="ally"?allyTarget?.id:undefined;
   if((ability.target==="enemy"||ability.target==="ally")&&!targetId){setTip("Selecione um alvo vivo.");return;}
   act({type:"battle-ability",expeditionId:expedition.id,heroId:hero.id,abilityId:ability.id,...(targetId?{targetId}:{})});
@@ -350,10 +370,23 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   setOpenSkill(false);
  }
  // O alvo e o cooldown são os do motor da campanha, não estados paralelos.
- const slotSymbol=(targetKind:string)=>targetKind==="ally"?"✚":targetKind==="all-allies"?"✦":targetKind==="self"?"◆":targetKind==="all-enemies"?"✺":"⚔";
  const slotTarget=(targetKind:string)=>targetKind==="ally"?"Aliado":targetKind==="all-allies"?"Equipe":targetKind==="self"?"Próprio":targetKind==="all-enemies"?"Área":"Inimigo";
+ const skillState=(a:ReturnType<typeof availableAbilities>[number])=>abilityAvailability(a,{
+  cooldown:hero?abilityCooldownRemaining(battle,hero.id,a.id):0,
+  queued:!!queued,busy:!!busy,hasAlly:!!allyTarget,hasEnemy:!!enemy
+ });
+ const hotkeys=(event:React.KeyboardEvent<HTMLElement>)=>{
+  if(!active||busy||event.altKey||event.ctrlKey||event.metaKey||event.repeat)return;
+  const origin=event.target as HTMLElement;
+  if(origin.closest("input,textarea,select,[contenteditable='true']"))return;
+  if(event.key==="Escape"&&openSkill){setOpenSkill(false);return;}
+  if(/^[1-5]$/.test(event.key)){
+   const a=abilities[Number(event.key)-1];
+   if(a){event.preventDefault();queueAbility(a);}
+  }
+ };
  const label=active?"AO VIVO":battle.won?"VITÓRIA":battle.status==="retreated"?"RETIRADA":"FIM DE BATALHA";
- return <section className="guild2d-shell battle-sheet" aria-label="Combate 2D real de até quatro contra quatro">
+ return <section className="guild2d-shell battle-sheet" aria-label="Combate 2D real de até quatro contra quatro" onKeyDown={hotkeys}>
   <header className="guild2d-header"><strong>⚔️ Crônicas da Guilda <small>COMBATE 2D · ARENA REALISTA</small></strong><button type="button" onClick={close} aria-label="Fechar arena"><X size={19}/></button></header>
   <div className="guild2d-mission"><h2>{battle.title}</h2><span>Rodada {battle.rounds}{battle.objective?.targetRounds?"/"+battle.objective.targetRounds:""}</span><small>{battle.combat?.mission.location||battle.objective?.name||"Terras da Guilda"}</small></div>
   <div ref={stageRef} className="guild2d-stage" data-cinematic="real-2d" data-vfx="enhanced" role="group" aria-label={heroes.length+" heróis contra "+enemies.length+" inimigos"}>
@@ -434,20 +467,27 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   {active&&hero&&<nav className="guild2d-quickbar" aria-label={"Habilidades rápidas de "+hero.name}>
    <span className="guild2d-quickbar-label"><Sparkles size={14}/> Habilidades <b>{hero.name.split(" ")[0]}</b></span>
    <div className="guild2d-quickbar-slots">
-    {abilities.slice(0,5).map(a=>{const cd=abilityCooldownRemaining(battle,hero.id,a.id);return <button
+    {abilities.slice(0,5).map((a,i)=>{const availability=skillState(a);
+     const identity=abilityVisual(a);return <button
      key={a.id} type="button" className="guild2d-quick-slot" data-target={a.target}
-     disabled={busy||!!queued||cd>0} title={a.name+" — "+a.description}
-     aria-label={a.name+(cd>0?" — recarga "+cd+" turnos":queued?" — existe ordem preparada":" — pronta")}
-     onClick={()=>queueAbility(a)}>
-      <span aria-hidden="true" className="guild2d-quick-icon">{slotSymbol(a.target)}</span>
+     data-tone={identity.tone} data-state={availability.state} data-ability-id={a.id}
+     style={{"--cooldown-percent":availability.percent+"%"} as CSSProperties}
+     disabled={availability.disabled} title={a.name+" — "+a.description+" · "+availability.stateLabel}
+     aria-label={a.name+" — "+availability.stateLabel+" — "+identity.targetLabel}
+     aria-keyshortcuts={abilityHotkey(i)} onClick={()=>queueAbility(a)}>
+      <span className="guild2d-quick-radial" aria-hidden="true"/>
+      <kbd className="guild2d-quick-key" aria-hidden="true">{abilityHotkey(i)}</kbd>
+      <span aria-hidden="true" className="guild2d-quick-icon"><AbilityIcon glyph={identity.glyph}/></span>
       <small>{a.name}</small>
-      {cd>0&&<b className="guild2d-quick-cooldown" aria-hidden="true">{cd}</b>}
+      {availability.cooldown>0&&<b className="guild2d-quick-cooldown" aria-hidden="true">{a.effect==="supreme"?"USADA":availability.cooldown}</b>}
+      {availability.state==="queued"&&<span className="guild2d-quick-queued" aria-hidden="true"><Check size={17}/></span>}
     </button>;})}
     <button type="button" className="guild2d-quick-more" aria-expanded={openSkill} onClick={()=>setOpenSkill(v=>!v)}>
      <Sparkles size={17}/><small>{openSkill?"Fechar":"Ver todas"}</small>
     </button>
    </div>
-   {queued&&<span className="guild2d-quick-pending">Ordem preparada para {hero.name}</span>}
+   <span className="guild2d-quick-caption">1–5: habilidade rápida · toque em «Ver todas» para escolher um poder e conferir o alvo.</span>
+   {queued&&<span className="guild2d-quick-pending"><Check size={13}/> Ordem preparada para {hero.name}</span>}
   </nav>}
   {openSkill&&active&&<section className="guild2d-skills" aria-label={"Painel de habilidades de "+(hero?.name||"herói")}>
     <header className="guild2d-skill-heading">
@@ -465,18 +505,34 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
        </select>
       </label>}
     </div>
-    <div className="guild2d-skill-grid">
-      {abilities.map(a=>{const cd=hero?abilityCooldownRemaining(battle,hero.id,a.id):0;return <button
-        type="button" key={a.id} className="guild2d-skill-card" data-target={a.target} data-cooldown={cd>0}
-        disabled={busy||!!queued||cd>0||!hero}
-        aria-label={a.name+". "+a.description+(cd>0?" Em recarga por "+cd+" turnos.":" Pronta.")}
-        onClick={()=>queueAbility(a)}>
-         <span className="guild2d-skill-glyph" aria-hidden="true">{slotSymbol(a.target)}</span>
-         <span className="guild2d-skill-text"><strong>{a.name}</strong><small>{a.description}</small></span>
-         <span className="guild2d-skill-tag" aria-hidden="true">{cd>0?cd+" t":queued?"Fila":slotTarget(a.target)}</span>
+    <div className="guild2d-skill-grid" role="group" aria-label="Selecione uma habilidade para ver detalhes">
+      {abilities.map(a=>{const availability=skillState(a);const identity=abilityVisual(a);
+       return <button type="button" key={a.id} className="guild2d-skill-card"
+        data-target={a.target} data-cooldown={availability.cooldown>0}
+        data-tone={identity.tone} data-state={availability.state}
+        data-ability-id={a.id} data-selected={selectedAbility?.id===a.id}
+        aria-pressed={selectedAbility?.id===a.id}
+        aria-label={a.name+". "+identity.family+". "+availability.stateLabel+". "+a.description}
+        onClick={()=>setSelectedAbilityId(a.id)}>
+         <span className="guild2d-skill-glyph" aria-hidden="true"><AbilityIcon glyph={identity.glyph}/></span>
+         <span className="guild2d-skill-text"><strong>{a.name}</strong><small>{identity.family} · {identity.targetLabel}</small></span>
+         <span className="guild2d-skill-tag" aria-hidden="true">{availability.cooldown>0?(a.effect==="supreme"?"Usada":availability.cooldown+" t"):queued?"Fila":slotTarget(a.target)}</span>
        </button>})}
       {!abilities.length&&<p className="guild2d-no-skills">Este herói não possui habilidades disponíveis.</p>}
     </div>
+    {selectedAbility&&selectedAvailability&&<section className="guild2d-skill-inspector" aria-label="Detalhes da habilidade escolhida"
+      data-ability-id={selectedAbility.id} data-tone={abilityVisual(selectedAbility).tone}>
+     <div className="guild2d-skill-inspector-title">
+      <span className="guild2d-skill-glyph" aria-hidden="true"><AbilityIcon glyph={abilityVisual(selectedAbility).glyph} size={26}/></span>
+      <div><small>{abilityVisual(selectedAbility).legend}</small><h4>{selectedAbility.name}</h4></div>
+      <span className="guild2d-skill-tag">{selectedAvailability.stateLabel}</span>
+     </div>
+     <p>{selectedAbility.description}</p>
+     <div className="guild2d-skill-inspector-info"><span>Alvo: <strong>{abilityVisual(selectedAbility).targetLabel}</strong></span>
+      <span>Recarga da habilidade: <strong>{selectedAbility.effect==="supreme"?"Uso especial":selectedAbility.cooldown+" turnos"}</strong></span></div>
+     <button className="guild2d-skill-confirm" type="button" disabled={selectedAvailability.disabled||!hero}
+      onClick={()=>queueAbility(selectedAbility)}><Check size={17}/> {selectedAvailability.actionLabel}</button>
+    </section>}
    </section>}
   {tip&&<div className="guild2d-tip" role="status"><Check size={15}/>{tip}</div>}
   {active&&<div className="guild2d-consumables">

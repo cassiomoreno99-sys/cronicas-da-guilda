@@ -4,7 +4,7 @@ const arena=readFileSync(new URL("../app/arena-2d.tsx",import.meta.url),"utf8");
 const fx=readFileSync(new URL("../app/combat-status-fx.tsx",import.meta.url),"utf8");
 const css=readFileSync(new URL("../app/arena-2d.css",import.meta.url),"utf8");
 for(const term of ["reactionForEvent(evt,target)","reactionFrames(victimReaction",
- "lastStatusReaction(battle.log,all)","statusVisuals(f.statuses)",
+ "lastStatusReaction(battle.log,all)","statusVisuals(f.statuses,quality.statusCount)",
  "<StatusAura statuses={aura}/>","<ReactionFlash key={\"reaction-\"+evtKey}",
  "data-reaction={struck?eventReaction?.kind", "data-status-count={aura.length}"]){
  assert.ok(arena.includes(term),"Falta integração: "+term);

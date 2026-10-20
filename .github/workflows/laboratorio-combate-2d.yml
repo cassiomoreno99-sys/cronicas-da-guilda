@@ -1,0 +1,20 @@
+name: Laboratório de combate 2D (sem publicar)
+on:
+  push:
+    branches: [laboratorio-combate-2d-fluido-20261020]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validar-laboratorio:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - name: Coreografia real (6 dimensões)
+        run: node --experimental-strip-types scripts/test-combat-choreography.ts
+      - name: Verificar preservação de combate e TypeScript
+        run: npm run build

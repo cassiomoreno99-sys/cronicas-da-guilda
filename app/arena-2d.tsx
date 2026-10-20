@@ -5,6 +5,7 @@ import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,comba
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
 import {enemyArtSource,fullEnemyArtSource} from "@/lib/enemy-art";
+import {choreographyPlan,type MotionSchool} from "@/lib/combat-choreography";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -42,7 +43,7 @@ const recentHit=(logs:BattleLog[])=>{
 };
 /** Coreografia visual: o motor continua sendo a fonte real de dano e PV.
  * Cada evento tem um movimento próprio, não depende do texto do registro. */
-type VisualSchool="blade"|"steel"|"arrow"|"shadow"|"arcane"|"holy"|"song"|"nature"|"claw";
+type VisualSchool=MotionSchool;
 export function visualSchool(actor:Pick<BattleFighter,"class">|undefined,kind:BattleLog["kind"]):VisualSchool{
  if(kind==="heal")return "holy";
  if(!actor?.class)return "claw";
@@ -143,35 +144,17 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const targetNode=allUnits.find(node=>node.dataset.fighterId===target.id)?.querySelector<HTMLElement>(".guild2d-sprite");
   if(!actorNode||!targetNode)return;
   const from=pos(actor.side,actorIndex),to=pos(target.side,targetIndex);
-  // Guerreiro e assassino avançam; arqueiros e conjuradores lançam à distância.
-  const ranged=isRangedVisual(school);
-  const absoluteFlight=(to.x-from.x)*stage.clientWidth/100;
-  const strikeDistance=Math.max(0,Math.abs(absoluteFlight)-Math.max(24,Math.min(54,stage.clientWidth*.11)));
-  // Terminar o golpe ao alcance real do oponente (antes a investida parava muito longe).
-  const dx=ranged?(actor.side==="hero"?-14:14):Math.sign(absoluteFlight)*Math.min(strikeDistance,Math.abs(absoluteFlight)*.84,Math.max(190,stage.clientWidth*.58));
-  const dy=ranged?-10:Math.max(-95,Math.min(95,(to.y-from.y)*stage.clientHeight/100*.77));
-  const swing=school==="shadow"?-23:school==="steel"?-13:school==="blade"?-15:school==="arrow"?-8:-6;
-  const actorMotion=actorNode.animate([
-   {offset:0,transform:"translate(0,0) rotate(0deg) scale(1)"},
-   {offset:.16,transform:`translate(${-dx*.13}px,-6px) rotate(${swing}deg) scale(1.02)`},
-   {offset:.51,transform:`translate(${dx}px,${dy}px) rotate(${-swing}deg) scale(1.08)`},
-   {offset:.51+(.065*820/duration),transform:`translate(${dx}px,${dy}px) rotate(${-swing}deg) scale(1.08)`},
-   {offset:.83,transform:`translate(${dx*.2}px,${dy*.2}px) rotate(0deg) scale(1.01)`},
-   {offset:1,transform:"translate(0,0) rotate(0deg) scale(1)"}
-  ],{duration,easing:"ease-in-out",fill:"none"});
-  const motions=[actorMotion];
+  const plan=choreographyPlan({
+   school,kind:evt.kind,from,to,width:stage.clientWidth,height:stage.clientHeight,
+   duration,critical:evt.kind==="critical"
+  });
+  // Mesmo elemento de imagem e mesmo estado do combate; só muda a interpolação visual.
+  const actorMotion=actorNode.animate(plan.actorFrames,{duration,easing:"linear",fill:"none"});
+  const motions:Animation[]=[actorMotion];
   if(actor.id!==target.id){
-   const recoil=Math.sign(to.x-from.x)*(evt.kind==="critical"?27:school==="steel"?20:14);
-   motions.push(targetNode.animate(evt.kind==="heal"?[
-    {offset:0,transform:"scale(1)",filter:"brightness(1)"},
-    {offset:.38,transform:"scale(1.065)",filter:"brightness(1.45)"},
-    {offset:1,transform:"scale(1)",filter:"brightness(1)"}
-   ]:[
-    {offset:0,transform:"translateX(0) rotate(0deg)"},
-    {offset:.23,transform:`translateX(${recoil}px) rotate(${recoil*.48}deg) scale(.97)`},
-    {offset:.43,transform:`translateX(${-recoil*.27}px) rotate(-2deg)`},
-    {offset:1,transform:"translateX(0) rotate(0deg)"}
-   ],{delay:duration*.51,duration:Math.max(260,duration*.43),easing:"ease-out",fill:"none"}));
+   motions.push(targetNode.animate(evt.kind==="heal"?plan.healFrames:plan.targetFrames,{
+    delay:plan.impactDelay,duration:plan.recoveryDuration,easing:"cubic-bezier(.2,.7,.18,1)",fill:"none"
+   }));
   }
   if(!light&&evt.amount!==0){
     const scene=stage.querySelector<HTMLElement>(".guild2d-scene");

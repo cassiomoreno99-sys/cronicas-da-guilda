@@ -896,3 +896,14 @@
   }
 }
 .guild-lite-mode .guild2d-unit.guild2d-enemy[data-full-art="true"] .guild2d-sprite img{filter:none!important}
+
+/* Laboratório (fase 1): idles leves e transições de seleção sem recalcular layout.
+   O palco oficial e as artes aprovadas permanecem intactos. */
+.guild2d-stage .guild2d-unit[data-dead="false"] .guild2d-sprite{transform-origin:50% 89%;backface-visibility:hidden}
+.guild2d-stage .guild2d-unit[data-dead="false"][data-cinematic-actor="true"] .guild2d-sprite{
+ animation:none!important;will-change:transform;
+}
+.guild2d-stage .guild2d-unit[data-dead="false"] .guild2d-sprite img{transform:translateZ(0)}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-stage .guild2d-unit .guild2d-sprite{animation:none!important;will-change:auto!important}
+}

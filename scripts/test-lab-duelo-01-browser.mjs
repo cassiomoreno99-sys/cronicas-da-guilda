@@ -43,8 +43,10 @@ try{
      await root.screenshot({path:"visual-report/duelo01-"+name+"-"+width+".png"});
     assert.ok(result.sword?.includes("rotate"),"Braço sem articulação: "+phase);
    }
-   assert.ok(xs[1]>xs[0]+40,"Avanço inexistente");
-   assert.ok(xs[4]>xs[1]+40,"Não alcançou o monstro");
+   // A fase dash começa ANTES de avançar. Verificar a posição em 'plant',
+   // quando o deslocamento já terminou, em vez de no início da corrida.
+   assert.ok(xs[2]>initialX+340,"Avanço insuficiente até o inimigo");
+   assert.ok(xs[4]>=xs[2]-1,"O guerreiro perdeu a posição no contato");
    // A fase 'return' começa ainda junto do inimigo; o deslocamento de volta
    // ocorre DURANTE os 350ms seguintes. Validar a posição final, não o início.
    await page.waitForFunction(()=>document.querySelector('[data-lab="duel-01"]')?.getAttribute("data-phase")==="idle",{timeout:5500});

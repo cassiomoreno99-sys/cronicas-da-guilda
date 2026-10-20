@@ -67,8 +67,18 @@ try{
      await stage.screenshot({path:"visual-report/rig07-"+pose+"-"+width+".png"});
     }
    }
-   assert.deepEqual(await battleSnapshot(),saveBefore,
-    "Apenas alterar a pose não pode mudar rodadas, dano, ouro ou heróis");
+   // O motor avança o combate automaticamente enquanto a página está aberta.
+   // Não confundir esse avanço legítimo com alterações produzidas pela pose visual.
+   const saveAfter=await battleSnapshot();
+   assert.equal(saveAfter.day,saveBefore.day,"Mudar pose não pode avançar o dia");
+   assert.equal(saveAfter.gold,saveBefore.gold,"Mudar pose não pode alterar ouro");
+   assert.deepEqual(saveAfter.activeBattles.map(e=>e.id),saveBefore.activeBattles.map(e=>e.id),
+    "Mudar pose não pode trocar expedições");
+   assert.ok(saveAfter.activeBattles.every(b=>b.rounds>=0&&b.hp.every(([id,hp])=>typeof id==="string"&&hp>=0)),
+    "Estado de combate ficou inválido");
+   const rawSave=await page.evaluate(()=>localStorage.getItem("cronicas-da-guilda:standalone:v1"));
+   assert.ok(!rawSave.includes("guild2d-rig-")&&!rawSave.includes("data-rig-pose"),
+    "Detalhes visuais não podem ser persistidos no save");
 
    await page.emulateMedia({reducedMotion:"reduce"});
    assert.equal(await rig.evaluate(el=>getComputedStyle(el).display),"none","Preferência de movimento reduzido ignorada");

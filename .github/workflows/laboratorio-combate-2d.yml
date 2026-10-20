@@ -36,10 +36,12 @@ jobs:
           exit 1
       - name: Fotografar e verificar arena (6 tamanhos, inclusive Android)
         run: node scripts/test-excelencia-2d-browser.mjs
+      - name: Gravar confronto animado e barra de habilidades (laboratório)
+        run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: laboratorio-combate-2d-capturas
-          path: visual-report/excelencia-2d-*.jpg
+          path: |\n            visual-report/excelencia-2d-*.jpg\n            visual-report/lab-combate-*.webm\n            visual-report/lab-*.png
           if-no-files-found: ignore

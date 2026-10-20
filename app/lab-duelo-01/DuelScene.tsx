@@ -7,9 +7,11 @@ import type {CSSProperties} from "react";
  * Controls: ATTACK / ENTER / SPACE; client-side animation only.
  */
 type Phase="idle"|"anticipation"|"dash"|"plant"|"swing"|"impact"|"reaction"|"recover"|"return";
+export type AttackStyle="slash"|"heavy";
+const HEAVY_LENGTH=2280;
 type Pose={
  phase:Phase;heroX:number;heroY:number;heroTorso:number;heroBackLeg:number;heroFrontLeg:number;
- swordArm:number;shieldArm:number;cape:number;monsterX:number;monsterTorso:number;
+ swordArm:number;heroElbow:number;heroWrist:number;shieldArm:number;cape:number;monsterX:number;monsterTorso:number;monsterY:number;monsterFrontLeg:number;monsterBackLeg:number;
  monsterHead:number;monsterArm:number;monsterSquash:number;slash:number;dust:number;hit:number;
 };
 const LENGTH=1700;
@@ -50,15 +52,72 @@ export function duelPose(ms:number):Pose{
    isStrike?-27:t<170?-8*anticipation:0,
   heroFrontLeg:t>=170&&t<430?-stride*30:phase==="plant"?28:
    isStrike?24:t<170?14*anticipation:0,
-  swordArm,shieldArm:phase==="dash"?-40:phase==="plant"?-16:isStrike?-8:8,
+  swordArm,
+  heroElbow:phase==="swing"?lerp(-24,23,swing):phase==="impact"?23:
+   phase==="reaction"?lerp(23,5,ease((t-840)/270)):phase==="recover"?lerp(5,-10,calm):-10,
+  heroWrist:phase==="swing"?lerp(-12,14,swing):phase==="impact"?14:0,
+  shieldArm:phase==="dash"?-40:phase==="plant"?-16:isStrike?-8:8,
   cape:phase==="dash"?-20:phase==="swing"?14:phase==="return"?-14:0,
-  monsterX,monsterTorso:isRecoil?lerp(0,24,recoil)*(1-calm*.25):t>=1320?lerp(24,0,ease((t-1320)/350)):0,
+  monsterX,
+  monsterY:isRecoil?9*recoil:t>=1320?lerp(9,0,ease((t-1320)/350)):0,
+  monsterFrontLeg:isRecoil?19*recoil:t>=1320?lerp(19,0,ease((t-1320)/350)):0,
+  monsterBackLeg:isRecoil?-17*recoil:t>=1320?lerp(-17,0,ease((t-1320)/350)):0,
+  monsterTorso:isRecoil?lerp(0,24,recoil)*(1-calm*.25):t>=1320?lerp(24,0,ease((t-1320)/350)):0,
   monsterHead:isRecoil?22*recoil:t>=1320?lerp(22,0,ease((t-1320)/350)):0,
   monsterArm:isRecoil?-24*recoil:0,
   monsterSquash:isRecoil?lerp(1,.87,recoil):t>=1320?lerp(.87,1,ease((t-1320)/350)):1,
   slash:phase==="swing"?pulse(swing,.84,.44):phase==="impact"?1:0,
   dust:phase==="dash"?pulse((t-170)/260,.66,.5):phase==="plant"?1-plant:0,
   hit:phase==="impact"?1:phase==="reaction"?1-ease((t-840)/260):0
+ };
+}
+
+
+/** Duelo 03: the original approved slash remains unchanged. Heavy attack uses
+ * a slower contact and a wider actual articulated recoil, not extra fake damage.
+ * Time map preserves the eight named phases for honest browser verification. */
+export function duelHeavyPose(ms:number):Pose{
+ const t=Math.max(0,Math.min(HEAVY_LENGTH,ms));
+ const scaled=t*LENGTH/HEAVY_LENGTH;
+ const base=duelPose(scaled);
+ const pre=ease(t/(170*HEAVY_LENGTH/LENGTH));
+ const dash=(scaled>=170&&scaled<430)?Math.sin((scaled-170)/260*Math.PI*3.1):0;
+ const swing=ease((scaled-550)/235);
+ const after=easeOut((scaled-785)/185);
+ const reset=ease((scaled-1330)/350);
+ const recoiling=scaled>=785&&scaled<1320;
+ return {...base,
+  heroY:base.heroY-(base.phase==="plant"?8:0),
+  heroTorso:base.phase==="anticipation"?-26*pre:base.phase==="plant"?-33:
+   base.phase==="swing"?lerp(-33,39,swing):base.phase==="impact"||base.phase==="reaction"?39:base.heroTorso,
+  heroFrontLeg:base.phase==="dash"?-dash*36:base.phase==="plant"?35:
+   base.phase==="swing"||base.phase==="impact"?34:base.heroFrontLeg,
+  heroBackLeg:base.phase==="dash"?dash*32:base.phase==="plant"?-33:
+   base.phase==="swing"||base.phase==="impact"?-31:base.heroBackLeg,
+  swordArm:base.phase==="anticipation"?lerp(-30,-137,pre):
+   base.phase==="dash"?-137:base.phase==="plant"?-145:
+   base.phase==="swing"?lerp(-145,73,swing):
+   base.phase==="impact"||base.phase==="reaction"?73:base.swordArm,
+  heroElbow:base.phase==="anticipation"?lerp(-10,-52,pre):
+   base.phase==="dash"||base.phase==="plant"?-52:
+   base.phase==="swing"?lerp(-52,44,swing):
+   base.phase==="impact"||base.phase==="reaction"?44:base.heroElbow,
+  heroWrist:base.phase==="anticipation"?lerp(0,-16,pre):
+   base.phase==="dash"||base.phase==="plant"?-16:
+   base.phase==="swing"?lerp(-16,23,swing):
+   base.phase==="impact"||base.phase==="reaction"?23:base.heroWrist,
+  shieldArm:base.phase==="plant"?-48:base.phase==="swing"?lerp(-48,19,swing):base.shieldArm,
+  cape:base.phase==="dash"?-30:base.phase==="swing"?22:base.cape,
+  monsterX:recoiling?52*after:scaled>=1320?lerp(52,0,reset):0,
+  monsterY:recoiling?20*after:scaled>=1320?lerp(20,0,reset):0,
+  monsterTorso:recoiling?43*after:scaled>=1320?lerp(43,0,reset):0,
+  monsterHead:recoiling?38*after:scaled>=1320?lerp(38,0,reset):0,
+  monsterArm:recoiling?-47*after:scaled>=1320?lerp(-47,0,reset):0,
+  monsterFrontLeg:recoiling?31*after:scaled>=1320?lerp(31,0,reset):0,
+  monsterBackLeg:recoiling?-32*after:scaled>=1320?lerp(-32,0,reset):0,
+  monsterSquash:recoiling?lerp(1,.74,after):scaled>=1320?lerp(.74,1,reset):1,
+  slash:base.phase==="swing"?pulse(swing,.79,.52):base.slash,
+  hit:base.hit
  };
 }
 

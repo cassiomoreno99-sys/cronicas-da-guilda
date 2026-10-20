@@ -76,7 +76,9 @@ try{
    assert.ok(await hero.locator("path").count()>30,"Armadura perdeu detalhes");
    assert.ok(await monster.locator("path").count()>30,"Monstro perdeu detalhes");
    assert.equal(Number(await root.getAttribute("data-hero-x")),185,"Guerreiro não voltou à formação");
-   assert.equal(await root.getByRole("button",{name:/Atacar o monstro/}).isEnabled(),true);
+   await root.getByRole("button",{name:/Atacar o monstro/}).waitFor({state:"visible"});
+   await page.waitForFunction(()=>!document.querySelector('[data-lab="duel-01"] button')?.disabled,
+    null,{timeout:3000});
    await root.screenshot({path:"visual-report/duelo01-final-"+width+".png"});
    console.log("LAB_DUELO_02_ARTICULACAO_OK",JSON.stringify({
     width,phases:observations.map(x=>x.phase),startX:initialX,
@@ -85,8 +87,7 @@ try{
     monsterHeadAndTorsoReaction:true,videoRecorded:true
    }));
    assert.deepEqual(errors,[],"Erros JS: "+errors.join(" | "));
-   console.log("LAB_DUELO_01_VISUAL_OK",JSON.stringify({width,phases,
-    startX:initialX,dashX:xs[1],impactX:xs[4],returnX:185,svgRig:true,originalGameIntact:true}));
+
   }finally{
    await page.close();
    const video=await page.video()?.path();

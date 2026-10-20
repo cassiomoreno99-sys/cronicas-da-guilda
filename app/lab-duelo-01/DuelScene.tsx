@@ -70,70 +70,135 @@ function IdlePose(now:number):Pose{
   monsterHead:breath*.8,phase:"idle"};
 }
 
-function Warrior({pose}: {pose:Pose}){
- return <g data-testid="duel-warrior" transform={"translate("+pose.heroX+" "+(418+pose.heroY)+")"}>
-  <ellipse cx="0" cy="5" rx="49" ry="9" fill="#040b13" opacity=".65"/>
-  <g transform={"translate(-9 -100) rotate("+pose.heroBackLeg+")"}>
-   <path d="M-11 0 L12 -1 17 43 11 75 23 89 19 100 -12 100 -16 83 -11 45Z" fill="#24384b" stroke="#09131e" strokeWidth="5"/>
-   <path d="M-10 40 L15 38 15 55 -12 58Z" fill="#84939b"/>
-   <path d="M-15 85 L14 83 24 95 17 102 -19 101Z" fill="#b7a897"/>
+/* V2 art: detailed jointed 2D characters, still driven by EXACT SAME duelPose timeline. */
+function Warrior({pose}:{pose:Pose}){
+ return <g data-testid="duel-warrior" transform={"translate("+pose.heroX+" "+(418+pose.heroY)+") scale(1.13)"}>
+  <ellipse cx="2" cy="4" rx="50" ry="9" fill="#020712" opacity=".67"/>
+  {/* Back boot and leg: separate pivot at hip */}
+  <g data-testid="duel-back-leg" transform={"translate(-10 -101) rotate("+pose.heroBackLeg+")"}>
+   <path d="M-13 0 L13 -4 21 38 10 67 14 87 26 97 16 104 -19 103 -20 87 -15 64 -18 34Z" fill="url(#duel-trouser)" stroke="#111827" strokeWidth="5"/>
+   <path d="M-17 37 L17 32 14 47 -13 55Z" fill="url(#duel-steel)" stroke="#0c1927" strokeWidth="3"/>
+   <path d="M-14 53 L12 50 14 86 -17 90Z" fill="#53657b" stroke="#1f3148" strokeWidth="3"/>
+   <path d="M-16 58 L11 54 M-16 67 L10 64 M-16 75 L12 73" stroke="#b7c3c5" strokeWidth="2.5" opacity=".55"/>
+   <path d="M-18 85 L14 84 30 98 25 105 -22 105Z" fill="#292f3c" stroke="#b6a16e" strokeWidth="3"/>
+   <path d="M-10 92 L17 93 M-14 98 L23 99" stroke="#bdc9c1" strokeWidth="2" opacity=".65"/>
   </g>
-  <g transform={"translate(15 -101) rotate("+pose.heroFrontLeg+")"}>
-   <path d="M-12 0 L13 0 18 45 9 78 24 89 20 100 -15 100 -18 83 -11 43Z" fill="#334e65" stroke="#101924" strokeWidth="5"/>
-   <path d="M-9 42 L14 40 13 57 -13 58Z" fill="#cad0c5"/>
-   <path d="M-16 85 L13 85 28 98 18 103 -19 101Z" fill="#b9a588"/>
+  {/* Front boot and leg, different stride to prove independent joints */}
+  <g data-testid="duel-front-leg" transform={"translate(13 -101) rotate("+pose.heroFrontLeg+")"}>
+   <path d="M-13 -1 L16 -5 19 34 10 61 15 89 29 98 19 106 -19 104 -22 87 -18 64 -21 33Z" fill="url(#duel-trouser)" stroke="#0a1727" strokeWidth="5"/>
+   <path d="M-19 38 L16 35 12 56 -17 56Z" fill="url(#duel-steel)" stroke="#1a2a3c" strokeWidth="3"/>
+   <path d="M-19 56 L13 55 16 87 -20 90Z" fill="#657991" stroke="#283c52" strokeWidth="3"/>
+   <path d="M-18 66 L12 64 M-20 77 L14 74" stroke="#deeadf" strokeWidth="2.5" opacity=".5"/>
+   <path d="M-20 87 L17 86 30 101 20 107 -23 105Z" fill="#303a4a" stroke="#ddc487" strokeWidth="3"/>
+   <path d="M-18 100 L26 101" stroke="#dce5e2" strokeWidth="2" opacity=".6"/>
   </g>
-  <g transform={"translate(0 -146) rotate("+pose.heroTorso+")"}>
-   <path d={"M-28 0 Q-50 40 "+(-56+pose.cape)+" 99 L-8 80 19 12Z"} fill="#a33c37" stroke="#46242a" strokeWidth="4"/>
-   <path d="M-30 -15 Q0 -32 29 -15 L39 54 18 72 -24 72 -42 41Z" fill="#3b6682" stroke="#0d1c2b" strokeWidth="6"/>
-   <path d="M-25 -7 L-4 -23 16 -8 13 46 -7 59 -27 39Z" fill="#bfc9c9" stroke="#8a754b" strokeWidth="4"/>
-   <path d="M7 -13 L26 -17 31 41 13 49Z" fill="#6f8696" stroke="#0a1a2a" strokeWidth="4"/>
-   <path d="M-34 43 L38 44 29 57 -33 56Z" fill="#52362a" stroke="#bf984e" strokeWidth="3"/>
-   <circle cx="4" cy="50" r="7" fill="#f7c771" stroke="#452919" strokeWidth="3"/>
-   <g transform={"translate(-29 -10) rotate("+pose.shieldArm+")"}>
-    <path d="M-2 -2 L-26 9 -36 52 -20 69 -5 40 3 8Z" fill="#c4b6a0" stroke="#172735" strokeWidth="5"/>
-    <path d="M-27 24 L-54 9 -74 18 -76 54 -55 77 -28 60Z" fill="#32577a" stroke="#e8c682" strokeWidth="6"/>
-    <path d="M-58 20 L-58 66 M-75 42 L-32 43" stroke="#e8c682" strokeWidth="5"/>
+  <g data-testid="duel-torso" transform={"translate(0 -146) rotate("+pose.heroTorso+")"}>
+   {/* Cape follows run direction independently */}
+   <path d={"M-25 -4 Q-47 10 "+(-59+pose.cape)+" 62 L"+(-55+pose.cape)+" 101 -18 79 24 3Z"} fill="url(#duel-cape)" stroke="#3c1723" strokeWidth="4"/>
+   <path d={"M-31 7 Q-51 61 "+(-52+pose.cape)+" 89 L-24 74"} fill="none" stroke="#ed8663" strokeWidth="2" opacity=".65"/>
+   <path d="M-27 61 L-26 75 -12 83" fill="none" stroke="#e8aa7c" strokeWidth="2" opacity=".45"/>
+   {/* Rigid plated torso: three distinct metal layers and a belt */}
+   <path d="M-32 -15 Q0 -32 33 -16 L43 37 29 64 -31 64 -46 36Z" fill="url(#duel-steel)" stroke="#071522" strokeWidth="6"/>
+   <path d="M-34 -7 L-6 -23 17 -14 19 18 -2 34 -30 22Z" fill="url(#duel-armor-blue)" stroke="#afc7d1" strokeWidth="3"/>
+   <path d="M5 -19 L30 -10 34 28 5 45 -2 31 18 15Z" fill="#425d77" stroke="#1e334a" strokeWidth="4"/>
+   <path d="M-22 25 L3 43 27 28 22 52 0 61 -23 47Z" fill="url(#duel-steel)" stroke="#283d52" strokeWidth="3"/>
+   <path d="M-26 36 L-7 48 6 45 25 35" fill="none" stroke="#edf5ed" strokeWidth="2" opacity=".56"/>
+   <path d="M-36 45 L37 45 32 58 -32 58Z" fill="#62432e" stroke="#d6a762" strokeWidth="3"/>
+   <path d="M-24 57 L-34 83 -10 91 8 75 24 88 37 77 26 57Z" fill="#23394e" stroke="#c59e5b" strokeWidth="3"/>
+   <path d="M-10 67 L2 80 14 67" fill="none" stroke="#dce3d2" strokeWidth="3" opacity=".8"/>
+   <circle cx="2" cy="50" r="9" fill="url(#duel-gold)" stroke="#3c291a" strokeWidth="3"/>
+   <circle cx="2" cy="50" r="3" fill="#fff4b7"/>
+   {/* Left shoulder, arm and shield are separately rotated */}
+   <g data-testid="duel-shield-arm" transform={"translate(-30 -12) rotate("+pose.shieldArm+")"}>
+    <path d="M0 -7 L-27 4 -41 44 -27 64 -12 49 5 10Z" fill="url(#duel-steel)" stroke="#132337" strokeWidth="5"/>
+    <path d="M-25 25 L-48 20 -63 41 -60 59 -30 64Z" fill="#758695" stroke="#1f2c3c" strokeWidth="3"/>
+    <path d="M-24 15 L-55 -2 -80 15 -82 56 -55 87 -21 65Z" fill="url(#duel-shield)" stroke="url(#duel-gold)" strokeWidth="6" strokeLinejoin="round"/>
+    <path d="M-51 3 L-55 81 M-74 37 L-27 38" stroke="#cfc3a0" strokeWidth="3" opacity=".7"/>
+    <path d="M-54 14 L-37 38 -55 68 -71 38Z" fill="#8eafc0" stroke="url(#duel-gold)" strokeWidth="3"/>
+    <path d="M-55 28 L-46 39 -55 57 -64 39Z" fill="#f6d58a"/>
+    <circle cx="-55" cy="39" r="4.5" fill="#fbf6d3"/>
+    <circle cx="-56" cy="6" r="3" fill="#d5dfe4"/><circle cx="-74" cy="34" r="3" fill="#d5dfe4"/>
+    <circle cx="-35" cy="36" r="3" fill="#d5dfe4"/><circle cx="-55" cy="72" r="3" fill="#d5dfe4"/>
    </g>
-   <path d="M-14 -31 L-16 -56 Q-9 -88 16 -84 35 -70 27 -40 L13 -21Z" fill="#b9c3c4" stroke="#1b2630" strokeWidth="5"/>
-   <path d="M-16 -62 Q-17 -89 12 -92 38 -79 34 -59 L19 -68 11 -52 -7 -55Z" fill="#253644" stroke="#bdac7d" strokeWidth="4"/>
-   <path d="M-11 -51 L25 -49 14 -38 -6 -40Z" fill="#dfbba1" stroke="#573d35" strokeWidth="2"/>
-   <path d="M-12 -49 L-8 -44 M14 -47 L20 -44" stroke="#2c3139" strokeWidth="3"/>
-   <g data-testid="duel-sword-arm" transform={"translate(26 -10) rotate("+pose.swordArm+")"}>
-    <path d="M-2 -3 L21 3 38 22 63 14 69 28 36 39 18 25 1 22Z" fill="#b3bbc2" stroke="#1b2736" strokeWidth="5"/>
-    <path d="M57 26 L83 22" stroke="#523b29" strokeWidth="10" strokeLinecap="round"/>
-    <path d="M76 9 L83 37" stroke="#d8ab69" strokeWidth="8" strokeLinecap="round"/>
-    <path d="M83 22 L179 12 204 18 179 30 83 30Z" fill="#e8f3fc" stroke="#4b6f8e" strokeWidth="4" strokeLinejoin="round"/>
-    <path d="M85 22 L190 19" stroke="#ffffff" strokeWidth="3" opacity=".85"/>
+   {/* Helm is separate art, centered over chest */}
+   <path d="M-15 -30 L-19 -58 Q-15 -85 10 -92 36 -79 29 -46 L18 -25Z" fill="#465a6f" stroke="#152334" strokeWidth="5"/>
+   <path d="M-18 -56 Q-22 -87 6 -94 30 -89 38 -66 L30 -52 16 -60 12 -45 -8 -50Z" fill="url(#duel-steel)" stroke="#c9aa68" strokeWidth="4"/>
+   <path d="M-10 -86 Q5 -101 22 -92 L8 -107 -6 -101Z" fill="#b34d43" stroke="#582f38" strokeWidth="3"/>
+   <path d="M-6 -90 Q5 -103 14 -99" fill="none" stroke="#f3a16e" strokeWidth="2"/>
+   <path d="M-15 -54 L29 -52 18 -35 -8 -36Z" fill="#dda98b" stroke="#75483d" strokeWidth="3"/>
+   <path d="M-14 -53 L-10 -46 23 -46 29 -56" fill="none" stroke="#14283c" strokeWidth="4"/>
+   <path d="M-8 -48 L-2 -46 M13 -48 L20 -46" stroke="#263039" strokeWidth="3"/>
+   <path d="M-2 -33 L17 -33 11 -27Z" fill="#6b4d45"/>
+   {/* Sword: shoulder rotation, elbow metal, articulated blade */}
+   <g data-testid="duel-sword-arm" transform={"translate(27 -12) rotate("+pose.swordArm+")"}>
+    <path d="M-6 -11 L18 -7 43 17 67 10 72 32 42 42 17 27 -4 18Z" fill="url(#duel-steel)" stroke="#102234" strokeWidth="5"/>
+    <path d="M12 1 L35 20 22 33 -1 13Z" fill="url(#duel-armor-blue)" stroke="#bdccd2" strokeWidth="3"/>
+    <path d="M35 16 L58 12 70 26 52 38 37 33Z" fill="#8e9ea4" stroke="#213047" strokeWidth="3"/>
+    <path d="M53 19 L72 21 76 34 55 35Z" fill="#e5b998" stroke="#604b3e" strokeWidth="3"/>
+    <path d="M60 27 L88 23" fill="none" stroke="#4c3028" strokeWidth="11" strokeLinecap="round"/>
+    <path d="M63 28 L81 26" fill="none" stroke="#e1b166" strokeWidth="2.5"/>
+    <path d="M80 11 L86 38" stroke="#e5b66e" strokeWidth="9" strokeLinecap="round"/>
+    <circle cx="82" cy="25" r="6" fill="url(#duel-gold)" stroke="#402c26" strokeWidth="2"/>
+    <path d="M84 21 L174 10 208 18 179 32 84 31Z" fill="url(#duel-blade)" stroke="#496c86" strokeWidth="4" strokeLinejoin="round"/>
+    <path d="M93 23 L199 19" fill="none" stroke="#ffffff" strokeWidth="3" opacity=".85"/>
+    <path d="M119 28 L183 28" fill="none" stroke="#5587a9" strokeWidth="2" opacity=".65"/>
    </g>
   </g>
  </g>;
 }
-function Monster({pose}: {pose:Pose}){
- return <g data-testid="duel-monster" transform={"translate("+(730+pose.monsterX)+" 420) scale(-1 "+pose.monsterSquash+")"}>
-  <ellipse cx="0" cy="1" rx="65" ry="12" fill="#020b10" opacity=".7"/>
-  <g transform="translate(-16 -79) rotate(-8)">
-   <path d="M-21 0 L13 -2 20 53 35 68 26 79 -17 79 -24 54Z" fill="#49533b" stroke="#152123" strokeWidth="6"/>
+
+function Monster({pose}:{pose:Pose}){
+ return <g data-testid="duel-monster" transform={"translate("+(730+pose.monsterX)+" 420) scale(-1.11 "+(1.11*pose.monsterSquash)+")"}>
+  <ellipse cx="0" cy="4" rx="70" ry="11" fill="#020a14" opacity=".68"/>
+  <g transform="translate(-19 -82) rotate(-9)">
+   <path d="M-26 -4 L16 -3 25 37 22 57 39 71 30 82 -27 79 -28 62 -18 31Z" fill="url(#duel-goblin)" stroke="#15251d" strokeWidth="6"/>
+   <path d="M-22 49 L23 48 27 64 -26 67Z" fill="#44483e" stroke="#9ea176" strokeWidth="3"/>
+   <path d="M-24 70 L35 73 29 83 -28 82Z" fill="#1f3027" stroke="#73805a" strokeWidth="3"/>
   </g>
-  <g transform="translate(19 -81) rotate(10)">
-   <path d="M-17 0 L15 0 27 60 39 72 29 81 -18 80 -26 58Z" fill="#515c40" stroke="#17211f" strokeWidth="6"/>
+  <g transform="translate(19 -84) rotate(10)">
+   <path d="M-20 -2 L20 0 29 38 22 60 44 72 36 84 -21 82 -29 57 -15 30Z" fill="url(#duel-goblin)" stroke="#18291f" strokeWidth="6"/>
+   <path d="M-25 48 L27 46 30 64 -27 65Z" fill="#424e39" stroke="#aaa47a" strokeWidth="3"/>
+   <path d="M-26 73 L42 75 35 86 -28 84Z" fill="#203729" stroke="#758766" strokeWidth="3"/>
   </g>
-  <g transform={"translate(0 -129) rotate("+pose.monsterTorso+")"}>
-   <path d="M-56 -22 Q0 -67 52 -26 L58 46 30 74 -35 74 -63 43Z" fill="#556b46" stroke="#243426" strokeWidth="7"/>
-   <path d="M-34 -25 Q0 -37 30 -23 L36 39 -8 58 -42 26Z" fill="#879261" stroke="#2e3d28" strokeWidth="5"/>
-   <path d="M-18 -9 L20 5 13 33 -18 30Z" fill="#59634b" stroke="#28372d" strokeWidth="5"/>
-   <path d="M-32 -6 L-66 18 -77 57 -59 71 -45 38 -21 20Z" fill="#556247" stroke="#1c2d28" strokeWidth="6"/>
-   <g transform={"translate(43 -14) rotate("+pose.monsterArm+")"}>
-    <path d="M-4 -9 L29 4 49 33 66 41 60 59 25 47 12 22 -9 20Z" fill="#60734d" stroke="#213023" strokeWidth="6"/>
-    <path d="M44 44 L72 41 89 58 70 57 77 70 59 61 48 67Z" fill="#c2c5a2" stroke="#39433b" strokeWidth="4"/>
+  <g data-testid="duel-monster-torso" transform={"translate(0 -129) rotate("+pose.monsterTorso+")"}>
+   {/* Spiked hide and leather armor */}
+   <path d="M-65 -13 L-72 -47 -46 -39 -25 -58 -6 -35 22 -55 47 -38 72 -46 65 -11 66 45 39 81 -39 82 -69 41Z" fill="url(#duel-goblin)" stroke="#182c20" strokeWidth="7"/>
+   <path d="M-46 -25 L-18 -39 22 -38 45 -22 51 47 19 68 -27 64 -53 40Z" fill="url(#duel-goblin-armor)" stroke="#32462b" strokeWidth="4"/>
+   <path d="M-46 14 L51 20 M-36 47 L36 54" stroke="#adb581" strokeWidth="3" opacity=".4"/>
+   <path d="M-40 -25 L-14 -32 -12 -13 -34 -9Z" fill="#d6d2a3" stroke="#525f40" strokeWidth="3"/>
+   <path d="M24 -30 L47 -23 45 -8 17 -15Z" fill="#d6d2a3" stroke="#525f40" strokeWidth="3"/>
+   <path d="M-14 -31 L22 9 -11 52" fill="none" stroke="#493c2b" strokeWidth="9" strokeLinecap="round"/>
+   <path d="M-16 -30 L21 10 -13 54" fill="none" stroke="#b49964" strokeWidth="2.5"/>
+   <path d="M-30 52 L35 53" stroke="#3a3029" strokeWidth="10"/>
+   <path d="M-31 52 L35 53" stroke="#ae9462" strokeWidth="3"/>
+   <circle cx="3" cy="53" r="6" fill="#b79f64" stroke="#463628" strokeWidth="3"/>
+   {/* Left claw */}
+   <g data-testid="duel-monster-back-arm" transform="translate(-38 -8) rotate(6)">
+    <path d="M-9 1 L-34 5 -55 40 -74 50 -72 67 -44 61 -15 29 0 22Z" fill="url(#duel-goblin)" stroke="#1a2d23" strokeWidth="6"/>
+    <path d="M-66 48 L-87 41 -91 55 -71 57 M-65 57 L-82 74 -67 69" fill="#d2d0a3" stroke="#35402b" strokeWidth="3"/>
    </g>
-   <g transform={"translate(2 -51) rotate("+pose.monsterHead+")"}>
-    <path d="M-44 -4 L-56 -43 -26 -30 Q2 -48 31 -27 L56 -46 46 -2 39 20 10 38 -33 24Z" fill="#647450" stroke="#283a2a" strokeWidth="6"/>
-    <path d="M-30 -13 Q-22 -21 -5 -11 M10 -12 Q25 -25 35 -9" stroke="#182521" strokeWidth="7" strokeLinecap="round"/>
-    <path d="M-24 -7 L-8 -4 M12 -4 L28 -9" stroke="#f0d57a" strokeWidth="6" strokeLinecap="round"/>
-    <path d="M-24 16 L31 13 17 34 -8 35Z" fill="#261e1f" stroke="#111717" strokeWidth="4"/>
-    <path d="M-15 15 L-7 25 0 15 M10 16 L17 25 26 15" stroke="#e5dfc2" strokeWidth="3"/>
-    <path d="M-23 -38 L-38 -65 -12 -44 M31 -35 L48 -63 43 -25Z" fill="#d8d8bb" stroke="#354030" strokeWidth="5"/>
+   {/* Front arm rotates independently to sell hit recoil */}
+   <g data-testid="duel-monster-front-arm" transform={"translate(43 -13) rotate("+pose.monsterArm+")"}>
+    <path d="M-8 -11 L25 -6 45 26 65 36 58 56 22 49 5 25 -12 19Z" fill="url(#duel-goblin)" stroke="#1b2b22" strokeWidth="6"/>
+    <path d="M26 22 L51 32 45 44 19 35Z" fill="#594a38" stroke="#aa9064" strokeWidth="3"/>
+    <path d="M47 45 L72 34 88 47 69 49 80 61 62 54 54 68 41 55Z" fill="#d4d1a2" stroke="#38432e" strokeWidth="3"/>
+   </g>
+   <g data-testid="duel-monster-head" transform={"translate(2 -51) rotate("+pose.monsterHead+")"}>
+    <path d="M-42 -6 L-68 -50 -37 -40 -25 -57 0 -45 26 -57 40 -41 69 -54 46 -3 43 19 14 38 -30 29Z" fill="url(#duel-goblin)" stroke="#243a29" strokeWidth="6"/>
+    <path d="M-44 -22 L-64 -47 -32 -32Z" fill="#b1a877" stroke="#3a5033" strokeWidth="3"/>
+    <path d="M39 -27 L65 -49 45 -8Z" fill="#abb785" stroke="#3a5033" strokeWidth="3"/>
+    <path d="M-29 -24 L-35 -51 -9 -42Z" fill="#d2d4ae" stroke="#455b3d" strokeWidth="3"/>
+    <path d="M30 -22 L35 -51 11 -41Z" fill="#dbd8ad" stroke="#455b3d" strokeWidth="3"/>
+    <path d="M-35 -12 L-8 -17 -1 -3 -27 4Z" fill="#29382c" stroke="#161f1d" strokeWidth="3"/>
+    <path d="M5 -2 L17 -18 38 -12 35 4Z" fill="#26382d" stroke="#1a251f" strokeWidth="3"/>
+    <path d="M-28 -7 L-7 -5 M15 -5 L34 -9" stroke="#fae49a" strokeWidth="6" strokeLinecap="round"/>
+    <circle cx="-14" cy="-4" r="2.5" fill="#ffffff"/><circle cx="27" cy="-7" r="2.5" fill="#ffffff"/>
+    <path d="M-11 7 L12 8 3 20Z" fill="#42533a" stroke="#1b2b24" strokeWidth="3"/>
+    <path d="M-35 14 Q2 4 34 13 L24 36 -19 36Z" fill="#251d22" stroke="#16171b" strokeWidth="4"/>
+    <path d="M-23 15 L-16 28 -8 16 M10 16 L19 28 26 15" fill="#f3e4c8" stroke="#b8ae9b" strokeWidth="2"/>
+    <path d="M-7 32 L10 33" stroke="#bb6664" strokeWidth="3"/>
+    <path d="M-29 -18 Q-11 -29 1 -14 M7 -14 Q26 -30 40 -17" fill="none" stroke="#213025" strokeWidth="5" strokeLinecap="round"/>
+    <path d="M-40 15 L-57 23" stroke="#b9a170" strokeWidth="3" opacity=".6"/>
    </g>
   </g>
  </g>;
@@ -220,6 +285,15 @@ export default function DuelScene(){
      <linearGradient id="duel-floor" x1="0" y1="0" x2="0" y2="1">
       <stop stopColor="#4f5660"/><stop offset="1" stopColor="#151f2b"/>
      </linearGradient>
+     <linearGradient id="duel-steel" x1="0" y1="0" x2="1" y2=".9"><stop stopColor="#f4f4e5"/><stop offset=".24" stopColor="#b4c4c9"/><stop offset=".58" stopColor="#4a657e"/><stop offset="1" stopColor="#293649"/></linearGradient>
+     <linearGradient id="duel-armor-blue" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#648eaa"/><stop offset=".32" stopColor="#345a80"/><stop offset="1" stopColor="#142d4a"/></linearGradient>
+     <linearGradient id="duel-trouser" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#455b71"/><stop offset="1" stopColor="#152437"/></linearGradient>
+     <linearGradient id="duel-gold" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#fff2bd"/><stop offset=".47" stopColor="#cf9852"/><stop offset="1" stopColor="#785030"/></linearGradient>
+     <linearGradient id="duel-shield" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#456e90"/><stop offset=".53" stopColor="#294768"/><stop offset="1" stopColor="#132942"/></linearGradient>
+     <linearGradient id="duel-cape" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#b8584d"/><stop offset=".58" stopColor="#84332f"/><stop offset="1" stopColor="#452029"/></linearGradient>
+     <linearGradient id="duel-blade" x1="0" y1="0" x2="1" y2=".5"><stop stopColor="#bce8ff"/><stop offset=".45" stopColor="#fcffff"/><stop offset="1" stopColor="#5f8dab"/></linearGradient>
+     <linearGradient id="duel-goblin" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#92a874"/><stop offset=".27" stopColor="#697b51"/><stop offset="1" stopColor="#334c39"/></linearGradient>
+     <linearGradient id="duel-goblin-armor" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#969e6c"/><stop offset=".45" stopColor="#69704d"/><stop offset="1" stopColor="#3b5136"/></linearGradient>
      <radialGradient id="duel-moon"><stop stopColor="#dbecff" stopOpacity=".5"/><stop offset="1" stopColor="#a8c7e1" stopOpacity="0"/></radialGradient>
     </defs>
     <rect width="900" height="500" fill="url(#duel-sky)"/>

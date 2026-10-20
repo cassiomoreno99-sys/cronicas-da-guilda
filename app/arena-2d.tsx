@@ -6,6 +6,7 @@ import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
 import {enemyArtSource,fullEnemyArtSource} from "@/lib/enemy-art";
 import {choreographyPlan,type MotionSchool} from "@/lib/combat-choreography";
+import {lastVisualCue,skillForCue} from "@/lib/combat-visual-cues";
 import {ArenaVfx} from "./arena-vfx";
 import "./arena-2d.css";
 
@@ -105,16 +106,24 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const autoSkills=battle.combat?.autoAbilities!==false;
  const upcoming=battle.combat?.liveOrder?.slice(battle.combat.liveCursor||0).map(id=>all.find(f=>f.id===id)).filter((f):f is BattleFighter=>!!f&&f.hp>0)||[];
  const log=battle.log.slice(-3).reverse();
- const evt=recentHit(battle.log);
+ const cue=lastVisualCue(battle.log);
+ const evt=cue?.entry;
  const performance=useMemo(()=>active?[]:combatReport(battle,state.heroes),[battle,state.heroes,active]);
- const evtIndex=evt?battle.log.lastIndexOf(evt):-1;
+ const evtIndex=cue?.index??-1;
  const actor=all.find(f=>f.id===evt?.actorId);
- const target=all.find(f=>f.id===evt?.targetId);
+ const target=all.find(f=>f.id===(evt?.targetId||evt?.actorId));
  const actorIndex=actor?all.filter(f=>f.side===actor.side).findIndex(f=>f.id===actor.id):0;
  const targetIndex=target?all.filter(f=>f.side===target.side).findIndex(f=>f.id===target.id):0;
- const evtKey=expedition.id+"-"+battle.rounds+"-"+evtIndex+"-"+(evt?.actorId||"")+"-"+(evt?.targetId||"");
+ // Rodadas e atualizações de HUD sem ação não repetem um golpe já reproduzido.
+ const evtKey=expedition.id+"-"+evtIndex+"-"+(evt?.actorId||"")+"-"+(evt?.targetId||"");
  const lastAnimated=useRef(evtKey);
- const school=visualSchool(actor,evt?.kind||"hit");
+ const actorHero=state.heroes.find(h=>h.id===actor?.id);
+ const cueSkill=skillForCue(battle.log,cue,actorHero?availableAbilities(actorHero):[]);
+ const skillEffect=cueSkill?.ability.effect||"basic";
+ const school=skillEffect==="venom"?"shadow":skillEffect==="renew"||skillEffect==="lifebloom"?"nature":visualSchool(actor,evt?.kind||"hit");
+ const areaTargets=cueSkill&&["all-enemies","all-allies"].includes(cueSkill.ability.target)
+  ?cueSkill.targets.map(id=>{const f=all.find(x=>x.id===id);return f?pos(f.side,all.filter(x=>x.side===f.side).findIndex(x=>x.id===id)):undefined;}).filter((p):p is {x:number;y:number}=>!!p)
+  :[];
  const projectile=!!evt&&!!actor&&!!target&&isRangedVisual(school);
  const visualStart=actor?pos(actor.side,actorIndex):undefined;
  const targetPos=target?pos(target.side,targetIndex):undefined;
@@ -146,7 +155,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   if(!actorNode||!targetNode){setPlayingEvent(null);return;}
   const from=pos(actor.side,actorIndex),to=pos(target.side,targetIndex);
   const plan=choreographyPlan({
-   school,kind:evt.kind,from,to,width:stage.clientWidth,height:stage.clientHeight,
+   school,kind:cue?.castOnly?"cast":evt.kind,from,to,width:stage.clientWidth,height:stage.clientHeight,
    duration,critical:evt.kind==="critical"
   });
   // Mesmo elemento de imagem e mesmo estado do combate; só muda a interpolação visual.
@@ -157,7 +166,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     delay:plan.impactDelay,duration:plan.recoveryDuration,easing:"cubic-bezier(.2,.7,.18,1)",fill:"none"
    }));
   }
-  if(!light&&evt.amount!==0){
+  if(!light&&!cue?.castOnly&&evt.amount!==0){
     const scene=stage.querySelector<HTMLElement>(".guild2d-scene");
     if(scene){
       const critical=evt.kind==="critical";
@@ -243,14 +252,14 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
-   {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} aria-hidden="true" style={visualPath}>
+   {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} data-cast-only={cue?.castOnly||false} data-ability-effect={skillEffect} aria-hidden="true" style={visualPath}>
        <span className="guild2d-windup"/>
-       {!projectile&&<span className="guild2d-step-dust"/>}
-      {!projectile&&school!=="claw"&&evt.kind!=="heal"&&<span className="guild2d-sword-strike"><i className="guild2d-sword-blade"/><i className="guild2d-sword-guard"/></span>}
-       {!projectile&&evt.kind!=="heal"&&<span className="guild2d-motion-trail"/>}
+       {!projectile&&!cue?.castOnly&&<span className="guild2d-step-dust"/>}
+      {!projectile&&!cue?.castOnly&&school!=="claw"&&evt.kind!=="heal"&&<span className="guild2d-sword-strike"><i className="guild2d-sword-blade"/><i className="guild2d-sword-guard"/></span>}
+       {!projectile&&!cue?.castOnly&&evt.kind!=="heal"&&<span className="guild2d-motion-trail"/>}
       {projectile&&<span className="guild2d-projectile"><i/></span>}
       {projectile&&<span className="guild2d-cast-ring"/>}
-      {school==="claw"&&<span className="guild2d-claw-mark"><i/><i/><i/></span>}
+      {!cue?.castOnly&&school==="claw"&&<span className="guild2d-claw-mark"><i/><i/><i/></span>}
       <span className="guild2d-impact-mark" data-critical={evt.kind==="critical"} data-heal={evt.kind==="heal"}>
         <i className="guild2d-impact-core"/>
         <i className="guild2d-shockwave"/>
@@ -262,7 +271,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
       </span>
       {evt.kind==="critical"&&<span className="guild2d-cinema-flash"/>}
    </div>}
-   {playingEvent===evtKey&&evt&&visualPath&&<ArenaVfx key={"vfx-"+evtKey} school={school} kind={evt.kind} critical={evt.kind==="critical"} style={visualPath}/>}
+   {playingEvent===evtKey&&evt&&visualPath&&<ArenaVfx key={"vfx-"+evtKey} school={school} kind={cue?.castOnly?"cast":evt.kind} effect={skillEffect} targets={areaTargets} critical={evt.kind==="critical"} style={visualPath}/>}
    <div className="guild2d-hud-layer">{heroes.map(hud)}{enemies.map(hud)}</div>
    <div className="guild2d-ground"/>
    {!active&&<div className="guild2d-result"><strong>{battle.won?"🏆 VITÓRIA":battle.status==="retreated"?"EQUIPE RETIRADA":"☠️ DERROTA"}</strong></div>}

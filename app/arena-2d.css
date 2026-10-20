@@ -1128,3 +1128,64 @@
  .guild2d-stage .guild2d-number{animation:none!important}
  .guild2d-quickbar *{transition:none!important}
 }
+
+/* Laboratório fase 5 — identidade de cada habilidade real da campanha.
+   Não há ataque "genérico": lançamento, esfera, raio, proteção e área são distintos. */
+.guild2d-vfx[data-effect="fireball"]{--vfx-main:#ff9a47;--vfx-soft:#ffe3a0;--vfx-dim:#e2462b}
+.guild2d-vfx[data-effect="storm"]{--vfx-main:#b39eff;--vfx-soft:#e6eeff;--vfx-dim:#475eeb}
+.guild2d-vfx[data-effect="venom"]{--vfx-main:#8cde58;--vfx-soft:#d9fc83;--vfx-dim:#326e28}
+.guild2d-vfx[data-effect="drain"]{--vfx-main:#bd78da;--vfx-soft:#fae3ff;--vfx-dim:#5a286d}
+.guild2d-vfx[data-effect="supreme"]{--vfx-main:#e6c9ff;--vfx-soft:#ffffff;--vfx-dim:#9f5ab9}
+.guild2d-vfx[data-effect="pinning"]{--vfx-main:#ffe9af;--vfx-soft:#ffffff;--vfx-dim:#d8a161}
+.guild2d-vfx[data-effect="aegis"],.guild2d-vfx[data-effect="sanctuary"],.guild2d-vfx[data-effect="fortress"],.guild2d-vfx[data-effect="challenge"]{--vfx-main:#a1dfff;--vfx-soft:#f6fdff;--vfx-dim:#5491c2}
+.guild2d-vfx[data-effect="renew"],.guild2d-vfx[data-effect="lifebloom"]{--vfx-main:#91f2b7;--vfx-soft:#e7ffe7;--vfx-dim:#388c55}
+.guild2d-vfx-ward{width:clamp(55px,12cqw,115px);height:clamp(55px,12cqw,115px);
+ margin:calc(clamp(55px,12cqw,115px) / -2);border:3px double var(--vfx-soft);
+ border-radius:35% 35% 45% 45%;background:radial-gradient(circle,var(--vfx-main) 4%,transparent 72%);
+ box-shadow:0 0 13px var(--vfx-main);animation:guild2d-vfx-ward var(--vfx-clock) ease-out both}
+.guild2d-vfx[data-protect="true"] .guild2d-vfx-impact,
+.guild2d-cinema[data-cast-only="true"] .guild2d-impact-mark,
+.guild2d-cinema[data-cast-only="true"] .guild2d-step-dust,
+.guild2d-cinema[data-cast-only="true"] .guild2d-sword-strike{display:none!important}
+.guild2d-vfx-arc{position:absolute;inset:0;pointer-events:none}
+.guild2d-vfx-arc i{position:absolute;left:calc(var(--start-x) + var(--flight-x));
+ top:calc(var(--start-y) + var(--flight-y));width:clamp(30px,10cqw,95px);height:clamp(60px,19cqw,170px);
+ clip-path:polygon(52% 0,12% 45%,51% 39%,19% 100%,89% 42%,55% 45%,72% 3%);
+ background:linear-gradient(#f3fcff,var(--vfx-main),var(--vfx-dim));
+ filter:drop-shadow(0 0 5px var(--vfx-main));transform-origin:50% 0;
+ animation:guild2d-vfx-lightning var(--vfx-clock) ease-out both}
+.guild2d-vfx-arc i:nth-child(2){rotate:41deg;scale:.65;animation-delay:40ms}
+.guild2d-vfx-arc i:nth-child(3){rotate:-33deg;scale:.8;animation-delay:80ms}
+.guild2d-vfx[data-effect="fireball"] .guild2d-vfx-arc i{border-radius:45%;clip-path:none;
+ width:clamp(24px,9cqw,80px);height:clamp(24px,9cqw,80px);
+ background:radial-gradient(circle,#fff,var(--vfx-soft) 15%,var(--vfx-main) 45%,transparent 80%)}
+.guild2d-vfx[data-effect="supreme"] .guild2d-vfx-arc i{scale:1.22}
+.guild2d-vfx-aoe{position:absolute;z-index:3;width:clamp(35px,10cqw,94px);
+ height:clamp(35px,10cqw,94px);border:2px solid var(--vfx-main);border-radius:50%;
+ background:radial-gradient(circle,var(--vfx-soft),transparent 65%);
+ box-shadow:0 0 12px var(--vfx-dim),inset 0 0 11px var(--vfx-main);
+ pointer-events:none;animation:guild2d-vfx-multi var(--vfx-clock) ease-out both}
+.guild2d-vfx[data-heal="true"] .guild2d-vfx-aoe{border-style:dashed}
+@keyframes guild2d-vfx-ward{
+ 0%{opacity:0;transform:scale(.2) rotate(-20deg)}
+ 19%{opacity:.9;transform:scale(.9) rotate(0deg)}
+ 48%{opacity:.86;transform:scale(1.15) rotate(9deg)}
+ 80%{opacity:.47;transform:scale(1.22)}
+ 100%{opacity:0;transform:scale(1.4)}
+}
+@keyframes guild2d-vfx-lightning{
+ 0%,48%{opacity:0;transform:translate(-50%,-50%) scale(.3)}
+ 54%,59%{opacity:1;transform:translate(-50%,-50%) scale(1.25)}
+ 73%{opacity:.35;transform:translate(-50%,-50%) scale(1.65)}
+ 100%{opacity:0;transform:translate(-50%,-50%) scale(2)}
+}
+@keyframes guild2d-vfx-multi{
+ 0%,47%{opacity:0;transform:translate(-50%,-50%) scale(.1)}
+ 58%{opacity:.95;transform:translate(-50%,-50%) scale(1.12)}
+ 75%{opacity:.6;transform:translate(-50%,-50%) scale(1.7)}
+ 100%{opacity:0;transform:translate(-50%,-50%) scale(2.1)}
+}
+.guild-lite-mode .guild2d-vfx-arc i:nth-child(n+2){display:none}
+.guild-lite-mode .guild2d-vfx-aoe{box-shadow:none}
+@media(max-width:420px){.guild2d-vfx-arc i:nth-child(3){display:none}}
+@media(prefers-reduced-motion:reduce){.guild2d-vfx-arc,.guild2d-vfx-aoe,.guild2d-vfx-ward{display:none!important}}

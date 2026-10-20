@@ -45,9 +45,12 @@ try{
    }
    assert.ok(xs[1]>xs[0]+40,"Avanço inexistente");
    assert.ok(xs[4]>xs[1]+40,"Não alcançou o monstro");
-   assert.ok(xs[7]<xs[4]-15,"Guerreiro não voltou");
+   // A fase 'return' começa ainda junto do inimigo; o deslocamento de volta
+   // ocorre DURANTE os 350ms seguintes. Validar a posição final, não o início.
    await page.waitForFunction(()=>document.querySelector('[data-lab="duel-01"]')?.getAttribute("data-phase")==="idle",{timeout:5500});
-   assert.equal(Number(await root.getAttribute("data-hero-x")),185,"Não recuperou a formação");
+   const finalX=Number(await root.getAttribute("data-hero-x"));
+   assert.equal(finalX,185,"Não recuperou a formação");
+   assert.ok(xs[4]-finalX>300,"Guerreiro não percorreu a distância de volta");
    assert.equal(await root.getByRole("button",{name:/Atacar o monstro/}).isEnabled(),true);
    assert.deepEqual(errors,[],"Erros JS: "+errors.join(" | "));
    console.log("LAB_DUELO_01_VISUAL_OK",JSON.stringify({width,phases,

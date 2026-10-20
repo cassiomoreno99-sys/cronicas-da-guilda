@@ -23,7 +23,7 @@ const normalize=(name:string)=>name.normalize("NFD").replace(/[\u0300-\u036f]/g,
 export type VisualSkill={ability:AbilitySpec;targets:string[];castIndex:number};
 /** Identifica o feitiço efetivamente usado, não a habilidade apenas selecionada na barra. */
 export function skillForCue(log:readonly BattleLog[],cue:VisualCue|undefined,abilities:readonly AbilitySpec[]):VisualSkill|undefined{
- if(!cue||!abilities.length||!cue.entry.actorId)return undefined;
+ if(!cue||!abilities.length||!cue.entry.actorId||cue.index>=log.length||log[cue.index]!==cue.entry)return undefined;
  const hit=cue.entry;
  if(!cue.castOnly&&hit.kind!=="ability"&&hit.kind!=="heal")return undefined;
  let castIndex=-1;

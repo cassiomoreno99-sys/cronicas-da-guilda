@@ -90,11 +90,14 @@ try{
     return {stableImages,noDuplicate,hud};
    },initial);
    assert.deepEqual(stable,{stableImages:true,noDuplicate:true,hud:true},"HUD ou imagem alterados");
+   // A marca de "ator em movimento" é temporária; buscar pelo ID persistente.
+   // Após o golpe, a classe deixa de existir, mas a unidade continua no palco.
+   const stableActor=stage.locator('.guild2d-unit[data-fighter-id="'+actorInfo.fighter+'"]').first();
    await page.emulateMedia({reducedMotion:"reduce"});
-   assert.equal(await moving.locator(".guild2d-move-shadow").evaluate(el=>getComputedStyle(el).display),"none");
+   assert.equal(await stableActor.locator(".guild2d-move-shadow").evaluate(el=>getComputedStyle(el).display),"none");
    await page.emulateMedia({reducedMotion:"no-preference"});
    await stage.evaluate(el=>el.classList.add("guild-lite-mode"));
-   assert.equal(await moving.locator(".guild2d-move-shadow").evaluate(el=>getComputedStyle(el).display),"none");
+   assert.equal(await stableActor.locator(".guild2d-move-shadow").evaluate(el=>getComputedStyle(el).display),"none");
    const save=await page.evaluate(()=>localStorage.getItem("cronicas-da-guilda:standalone:v1")||"");
    assert.ok(!save.includes("movement.actorFrames")&&!save.includes("rig08-"),"Persistência não pode guardar coreografia");
    assert.equal(errors.length,0,"Erro no navegador: "+errors.join(" | "));

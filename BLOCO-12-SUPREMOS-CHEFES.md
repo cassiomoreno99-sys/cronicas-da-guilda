@@ -26,3 +26,10 @@
 - Padrões por escola: ondas, esmagamento, luz, escudo, drenagem e partículas, sincronizados ao impacto.
 - Halos em chefes `enemy-0` de missão `boss` derivados apenas de PV; não há fases adicionais de IA.
 - Todas as artes originais e a arena 4×4 ficam intactas.
+
+## 12C — auditoria automatizada
+- Testes puros dos 21 grimórios, três ataques de chefes com log real e restrição a missões `boss`.
+- Integração com efeitos anteriores exclusiva, regressão 4x4 em seis resoluções, build e Node.
+- Chromium em Android 390x844 e desktop 1440x900: cenário real intacto; fixture VISUAL separada testa animações e estilos de supremo/chefe sem modificar campanha.
+- A missão inicial não prova execução real de uma suprema ou missão de chefe. A automação registra essa limitação explicitamente.
+- Movimento reduzido, Android leve, integridade do save, capturas de tela. Revisão estética e teste de campanha avançada continuam necessários antes de qualquer publicação.

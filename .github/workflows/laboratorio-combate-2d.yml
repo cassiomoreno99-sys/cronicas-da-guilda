@@ -70,6 +70,8 @@ jobs:
         run: node scripts/test-advanced-spells-browser.mjs
       - name: Bloco 11C - verificar dano e status no Android e desktop
         run: node scripts/test-combat-reactions-browser.mjs
+      - name: Bloco 12C - efeitos especiais Android e PC
+        run: node scripts/test-combat-spectacle-browser.mjs
       - name: Gravar confronto animado e barra de habilidades (laboratório)
         run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
@@ -86,4 +88,5 @@ jobs:
             visual-report/rig09-*.png
             visual-report/magia10-*.png
             visual-report/bloco11-*.png
+            visual-report/bloco12-*.png
           if-no-files-found: ignore

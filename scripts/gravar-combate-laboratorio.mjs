@@ -38,7 +38,15 @@ try{
    await stage.scrollIntoViewIfNeeded();
    await page.waitForTimeout(350);
    await stage.screenshot({path:output+"/lab-inicio-"+width+".png"});
-   for(let i=0;i<7;i++){
+   // Preparar uma habilidade REAL: o vídeo mostrará conjuração quando chegar a vez do herói.
+   const firstAbility=page.locator(".guild2d-quickbar .guild2d-quick-slot:not([disabled])").first();
+   if(await firstAbility.count()){
+    await firstAbility.scrollIntoViewIfNeeded();
+    await firstAbility.click();
+    await page.waitForTimeout(220);
+    await stage.scrollIntoViewIfNeeded();
+   }
+   for(let i=0;i<9;i++){
     const attack=page.getByRole("button",{name:/^Atacar/}).first();
     if(!(await attack.isVisible())||!(await attack.isEnabled()))break;
     await attack.click();

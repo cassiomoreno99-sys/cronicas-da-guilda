@@ -16,5 +16,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Coreografia real (6 dimensões)
         run: node --experimental-strip-types scripts/test-combat-choreography.ts
+      - name: Validar camadas visuais
+        run: node --experimental-strip-types scripts/test-combat-vfx.ts
       - name: Verificar preservação de combate e TypeScript
         run: npm run build

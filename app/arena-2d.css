@@ -907,3 +907,124 @@
 @media(prefers-reduced-motion:reduce){
  .guild2d-stage .guild2d-unit .guild2d-sprite{animation:none!important;will-change:auto!important}
 }
+
+/* Laboratório fase 2: partículas ligadas ao evento real da batalha.
+   Renderização CSS isolada, sem canvas nem bibliotecas pesadas. */
+.guild2d-vfx{--vfx-main:#f7c17e;--vfx-soft:#ffe7b0;--vfx-dim:#b76b47;
+ position:absolute;inset:0;z-index:19;pointer-events:none;overflow:hidden;
+ --vfx-clock:var(--cinema-ms,820ms);
+}
+.guild2d-vfx[data-school="blade"],.guild2d-vfx[data-school="steel"]{--vfx-main:#f9dca3;--vfx-soft:#ffffe4;--vfx-dim:#e49b62}
+.guild2d-vfx[data-school="arrow"]{--vfx-main:#f7d58d;--vfx-soft:#fff4cd;--vfx-dim:#9b7b4b}
+.guild2d-vfx[data-school="shadow"]{--vfx-main:#ac78de;--vfx-soft:#efd4ff;--vfx-dim:#594187}
+.guild2d-vfx[data-school="arcane"]{--vfx-main:#7db8ff;--vfx-soft:#e5c4ff;--vfx-dim:#4e4cbd}
+.guild2d-vfx[data-school="holy"]{--vfx-main:#ffe998;--vfx-soft:#fffdea;--vfx-dim:#d6a449}
+.guild2d-vfx[data-school="nature"]{--vfx-main:#9bf7b0;--vfx-soft:#e4ffcd;--vfx-dim:#4f9760}
+.guild2d-vfx[data-school="song"]{--vfx-main:#ffa3d9;--vfx-soft:#ffe3fa;--vfx-dim:#ac5aab}
+.guild2d-vfx[data-school="claw"]{--vfx-main:#f8a77d;--vfx-soft:#ffdeba;--vfx-dim:#a74438}
+.guild2d-vfx-origin,.guild2d-vfx-impact{position:absolute;left:var(--start-x);top:var(--start-y);
+ width:0;height:0;transform:translate(-50%,-50%);pointer-events:none}
+.guild2d-vfx-impact{left:calc(var(--start-x) + var(--flight-x));
+ top:calc(var(--start-y) + var(--flight-y))}
+.guild2d-vfx-origin>i,.guild2d-vfx-impact>i{position:absolute;display:block;left:50%;top:50%;pointer-events:none}
+.guild2d-vfx-sigil{
+ width:clamp(40px,10cqw,92px);height:clamp(40px,10cqw,92px);
+ margin:calc(clamp(40px,10cqw,92px) / -2);
+ border:2px solid var(--vfx-main);border-radius:50%;
+ box-shadow:0 0 18px var(--vfx-dim),inset 0 0 8px var(--vfx-main);
+ animation:guild2d-vfx-summon var(--vfx-clock) ease-out both;
+}
+.guild2d-vfx-sigil:before{content:"";position:absolute;inset:7px;border:1px dashed var(--vfx-soft);border-radius:50%}
+.guild2d-vfx-wind{width:22px;height:22px;margin:-11px;border-radius:50%;
+ background:radial-gradient(circle,var(--vfx-soft),var(--vfx-main) 29%,transparent 72%);
+ animation:guild2d-vfx-charge var(--vfx-clock) ease-out both}
+.guild2d-vfx-focus{width:64px;height:16px;margin:-8px -32px;border-top:2px solid var(--vfx-main);border-radius:50%;
+ animation:guild2d-vfx-focus var(--vfx-clock) ease-out both}
+.guild2d-vfx-flight{position:absolute;left:var(--start-x);top:var(--start-y);width:0;height:0;z-index:2;
+ animation:guild2d-vfx-fly var(--vfx-clock) cubic-bezier(.22,.78,.23,1) both;pointer-events:none}
+.guild2d-vfx-flight i{position:absolute;display:block;left:0;top:0;transform:translate(-50%,-50%);}
+.guild2d-vfx-comet{width:clamp(13px,3cqw,28px);height:clamp(13px,3cqw,28px);
+ border-radius:50%;background:radial-gradient(circle,#fff,var(--vfx-soft) 25%,var(--vfx-main) 58%,transparent 76%);
+ filter:drop-shadow(0 0 8px var(--vfx-main));}
+.guild2d-vfx-tail{width:clamp(25px,8cqw,72px);height:9px;opacity:.88;
+ background:linear-gradient(90deg,transparent,var(--vfx-dim),var(--vfx-soft));
+ transform-origin:100% 50%!important;transform:translate(-105%,-50%) rotate(var(--shot-angle))!important;
+ filter:blur(2px);}
+.guild2d-vfx-core{width:26px;height:26px;margin:-13px;
+ border-radius:50%;background:radial-gradient(circle,#fff,var(--vfx-soft) 26%,var(--vfx-main) 45%,transparent 78%);
+ box-shadow:0 0 17px var(--vfx-main);animation:guild2d-vfx-burst var(--vfx-clock) ease-out both}
+.guild2d-vfx-wave{width:70px;height:70px;margin:-35px;border:3px solid var(--vfx-main);
+ border-radius:50%;box-shadow:0 0 18px var(--vfx-dim);
+ animation:guild2d-vfx-wave var(--vfx-clock) ease-out both}
+.guild2d-vfx-slash{width:clamp(50px,15cqw,155px);height:clamp(50px,15cqw,155px);
+ transform:translate(-50%,-50%) rotate(-30deg);
+ border:solid var(--vfx-soft);border-width:0 0 5px 0;border-radius:0 0 95% 0;
+ filter:drop-shadow(0 0 5px var(--vfx-main));
+ animation:guild2d-vfx-slash var(--vfx-clock) ease-out both}
+.guild2d-vfx-particle{--particle-angle:calc(var(--ray) * 360deg / var(--particle-count));
+ width:clamp(4px,1.6cqw,9px);height:clamp(4px,1.6cqw,9px);border-radius:60% 30% 50% 50%;
+ background:var(--vfx-soft);box-shadow:0 0 7px var(--vfx-main);
+ animation:guild2d-vfx-splinter var(--vfx-clock) ease-out both}
+.guild2d-vfx[data-school="nature"] .guild2d-vfx-particle{border-radius:0 85% 0 85%;background:#b6f5a5}
+.guild2d-vfx[data-school="song"] .guild2d-vfx-wave{border-style:dashed}
+.guild2d-vfx[data-school="shadow"] .guild2d-vfx-sigil{border-style:dotted}
+.guild2d-vfx[data-school="claw"] .guild2d-vfx-sigil,
+.guild2d-vfx[data-school="claw"] .guild2d-vfx-flight{display:none}
+.guild2d-vfx[data-ranged="true"] .guild2d-vfx-slash,
+.guild2d-vfx[data-heal="true"] .guild2d-vfx-slash{display:none}
+.guild2d-vfx[data-ranged="false"] .guild2d-vfx-comet{display:none}
+.guild2d-vfx[data-critical="true"] .guild2d-vfx-wave{border-width:5px}
+.guild2d-vfx[data-heal="true"] .guild2d-vfx-core{background:radial-gradient(circle,#fff,var(--vfx-soft),transparent 75%)}
+@keyframes guild2d-vfx-summon{
+ 0%,4%{opacity:0;scale:.15;rotate:-32deg}
+ 18%{opacity:.9;scale:1;rotate:12deg}
+ 42%{opacity:.55;scale:1.15;rotate:46deg}
+ 53%,100%{opacity:0;scale:1.6;rotate:70deg}
+}
+@keyframes guild2d-vfx-charge{
+ 0%,7%{opacity:0;scale:.2}
+ 22%{opacity:.85;scale:1.9}
+ 40%{opacity:.8;scale:1.15}
+ 52%,100%{opacity:0;scale:.5}
+}
+@keyframes guild2d-vfx-focus{
+ 0%,14%{opacity:0;scale:.35}
+ 26%{opacity:.7;scale:1}
+ 55%,100%{opacity:0;scale:1.6}
+}
+@keyframes guild2d-vfx-fly{
+ 0%,25%{opacity:0;transform:translate(0,0) scale(.3)}
+ 36%{opacity:1;transform:translate(calc(var(--flight-x) * .1),calc(var(--flight-y) * .1)) scale(1)}
+ 54%{opacity:1;transform:translate(var(--flight-x),var(--flight-y)) scale(1.25)}
+ 60%,100%{opacity:0;transform:translate(var(--flight-x),var(--flight-y)) scale(.35)}
+}
+@keyframes guild2d-vfx-burst{
+ 0%,49%{opacity:0;transform:scale(.2)}
+ 55%{opacity:1;transform:scale(1.5)}
+ 66%{opacity:.85;transform:scale(2.8)}
+ 100%{opacity:0;transform:scale(4)}
+}
+@keyframes guild2d-vfx-wave{
+ 0%,52%{opacity:0;transform:scale(.12)}
+ 59%{opacity:.95;transform:scale(.9)}
+ 76%{opacity:.45;transform:scale(2)}
+ 100%{opacity:0;transform:scale(2.7)}
+}
+@keyframes guild2d-vfx-slash{
+ 0%,49%{opacity:0;scale:.3;rotate:-70deg}
+ 57%{opacity:1;scale:1.25;rotate:27deg}
+ 71%{opacity:.4;scale:1.65;rotate:50deg}
+ 100%{opacity:0;scale:2;rotate:64deg}
+}
+@keyframes guild2d-vfx-splinter{
+ 0%,52%{opacity:0;transform:rotate(var(--particle-angle)) translateY(0) scale(.2)}
+ 58%{opacity:1;transform:rotate(var(--particle-angle)) translateY(-14px) scale(1)}
+ 81%{opacity:.8;transform:rotate(var(--particle-angle)) translateY(-45px) scale(.9)}
+ 100%{opacity:0;transform:rotate(var(--particle-angle)) translateY(-68px) scale(.1)}
+}
+.guild-lite-mode .guild2d-vfx-flight,
+.guild-lite-mode .guild2d-vfx-sigil,
+.guild-lite-mode .guild2d-vfx-focus,
+.guild-lite-mode .guild2d-vfx-particle:nth-of-type(n+6){display:none}
+.guild-lite-mode .guild2d-vfx-core{box-shadow:none}
+@media(prefers-reduced-motion:reduce){.guild2d-vfx{display:none!important}}

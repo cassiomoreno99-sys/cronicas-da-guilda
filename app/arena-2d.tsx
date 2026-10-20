@@ -6,6 +6,7 @@ import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
 import {enemyArtSource,fullEnemyArtSource} from "@/lib/enemy-art";
 import {choreographyPlan,type MotionSchool} from "@/lib/combat-choreography";
+import {ArenaVfx} from "./arena-vfx";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -235,7 +236,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  return <section className="guild2d-shell battle-sheet" aria-label="Combate 2D real de até quatro contra quatro">
   <header className="guild2d-header"><strong>⚔️ Crônicas da Guilda <small>COMBATE 2D · ARENA REALISTA</small></strong><button type="button" onClick={close} aria-label="Fechar arena"><X size={19}/></button></header>
   <div className="guild2d-mission"><h2>{battle.title}</h2><span>Rodada {battle.rounds}{battle.objective?.targetRounds?"/"+battle.objective.targetRounds:""}</span><small>{battle.combat?.mission.location||battle.objective?.name||"Terras da Guilda"}</small></div>
-  <div ref={stageRef} className="guild2d-stage" data-cinematic="real-2d" role="group" aria-label={heroes.length+" heróis contra "+enemies.length+" inimigos"}>
+  <div ref={stageRef} className="guild2d-stage" data-cinematic="real-2d" data-vfx="enhanced" role="group" aria-label={heroes.length+" heróis contra "+enemies.length+" inimigos"}>
    <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
@@ -258,6 +259,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
       </span>
       {evt.kind==="critical"&&<span className="guild2d-cinema-flash"/>}
    </div>}
+   {playingEvent===evtKey&&evt&&visualPath&&<ArenaVfx key={"vfx-"+evtKey} school={school} kind={evt.kind} critical={evt.kind==="critical"} style={visualPath}/>}
    <div className="guild2d-hud-layer">{heroes.map(hud)}{enemies.map(hud)}</div>
    <div className="guild2d-ground"/>
    {!active&&<div className="guild2d-result"><strong>{battle.won?"🏆 VITÓRIA":battle.status==="retreated"?"EQUIPE RETIRADA":"☠️ DERROTA"}</strong></div>}

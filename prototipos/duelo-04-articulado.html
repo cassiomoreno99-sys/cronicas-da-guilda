@@ -1,0 +1,106 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crônicas da Guilda — Duelo 04 (Laboratório)</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#090e19;color:#ede6d9;font-family:system-ui,Segoe UI,sans-serif;display:grid;place-items:center;min-height:100svh}.wrap{width:min(100%,1100px)}.frame{position:relative;background:#0b0d13;overflow:hidden;border:1px solid #7d6040;box-shadow:0 24px 100px #000a;aspect-ratio:16/9}svg{display:block;width:100%;height:100%}.topbar{position:absolute;inset:0 0 auto 0;display:flex;align-items:center;justify-content:space-between;padding:2% 3%;pointer-events:none;text-shadow:0 2px 7px #000}.topbar .unit{width:33%}.topbar .unit:last-child{text-align:right}.name{font:700 clamp(10px,1.7vw,18px) Georgia,serif;letter-spacing:.12em;color:#f5e8c7}.health{height:clamp(5px,.9vw,10px);border:1px solid #b99b66;background:#250d0c;margin-top:6px;box-shadow:0 0 0 2px #0007}.health span{height:100%;display:block;background:linear-gradient(#d54c43,#77251f);width:100%}.hero-hp span{background:linear-gradient(#77d9b0,#23826b)}.chapter{font:600 clamp(10px,1.2vw,14px) Georgia,serif;letter-spacing:.2em;color:#d9bf83}.bottom{padding:15px 10px;display:flex;gap:12px;align-items:center;justify-content:center;background:#0b0d13}.bottom button{cursor:pointer;color:#f6e5c4;background:#30251c;border:1px solid #89764d;border-radius:8px;padding:10px 17px;font-weight:650}.bottom button:hover{background:#4a3724}.bottom span{font-size:12px;color:#9da2ad}.logo{position:absolute;left:0;right:0;bottom:4%;text-align:center;font:700 clamp(11px,1.5vw,20px) Georgia,serif;letter-spacing:.32em;color:#e1cd9d;text-shadow:0 2px 12px black;pointer-events:none}.status{position:absolute;left:0;right:0;top:22%;text-align:center;font:900 clamp(17px,3.3vw,42px) Georgia,serif;letter-spacing:.12em;text-shadow:0 4px 13px #000,0 0 15px #f0b75e;opacity:0;transform:translateY(9px);pointer-events:none}.status.block{color:#9be2ec}.status.counter{color:#ffe1a1}.scrim{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 36%,#03060d98 100%)}@media(max-width:500px){.bottom{flex-wrap:wrap}.bottom span{width:100%;text-align:center}.chapter{letter-spacing:0}.logo{letter-spacing:.13em}}
+</style></head><body><main class="wrap"><div class="frame" id="frame">
+<svg id="scene" viewBox="0 0 960 540" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Duelo 2D articulado: monstro investe, guerreiro bloqueia com o escudo e contra-ataca com espada">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#0a1728"/><stop offset=".45" stop-color="#253146"/><stop offset=".85" stop-color="#6f5d54"/><stop offset="1" stop-color="#bb875c"/></linearGradient>
+ <linearGradient id="ground" x2="0" y2="1"><stop stop-color="#524338"/><stop offset="1" stop-color="#101a1e"/></linearGradient>
+ <linearGradient id="steel" x2="1" y2=".2"><stop stop-color="#111c2b"/><stop offset=".3" stop-color="#8b9eae"/><stop offset=".55" stop-color="#273342"/><stop offset=".85" stop-color="#c8c1ac"/><stop offset="1" stop-color="#27303b"/></linearGradient>
+ <linearGradient id="gold" x2="1" y2="1"><stop stop-color="#ffe9ad"/><stop offset=".3" stop-color="#957043"/><stop offset=".65" stop-color="#d1af70"/><stop offset="1" stop-color="#654329"/></linearGradient>
+ <linearGradient id="shield" x2="1" y2=".5"><stop stop-color="#17293c"/><stop offset=".44" stop-color="#465e6b"/><stop offset="1" stop-color="#192431"/></linearGradient>
+ <linearGradient id="skin" x2="1" y2="1"><stop stop-color="#687f83"/><stop offset=".35" stop-color="#33484f"/><stop offset=".8" stop-color="#182c38"/><stop offset="1" stop-color="#0b1b22"/></linearGradient>
+ <linearGradient id="monster" x2="1" y2=".15"><stop stop-color="#0d171b"/><stop offset=".4" stop-color="#586a63"/><stop offset=".6" stop-color="#203639"/><stop offset="1" stop-color="#101c23"/></linearGradient>
+ <linearGradient id="claw" x2="0" y2="1"><stop stop-color="#ebd8a4"/><stop offset="1" stop-color="#7b897e"/></linearGradient>
+ <radialGradient id="sun"><stop stop-color="#ffe2a1" stop-opacity=".45"/><stop offset="1" stop-color="#eebc6d" stop-opacity="0"/></radialGradient>
+ <radialGradient id="flash"><stop stop-color="#fffde0"/><stop offset=".22" stop-color="#ffcb67" stop-opacity=".9"/><stop offset="1" stop-color="#f6a03d" stop-opacity="0"/></radialGradient>
+ <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>
+ <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feGaussianBlur stdDeviation="8"/></filter>
+ <pattern id="brick" width="60" height="26" patternUnits="userSpaceOnUse"><path d="M0 0H60 M0 13H60 M30 0V13 M0 13V26 M60 13V26" fill="none" stroke="#c4b09b" stroke-opacity=".12" stroke-width="2"/></pattern>
+</defs>
+<g id="camera">
+<rect width="960" height="540" fill="url(#sky)"/>
+<circle cx="675" cy="167" r="225" fill="url(#sun)"/>
+<g fill="#131f30"><path d="M0 278L95 165 170 218 252 130 349 220 427 154 509 266 600 174 715 279 806 167 960 279V410H0Z"/><path d="M0 311L137 236 217 301 332 215 443 306 556 218 640 282 752 222 895 300 960 249V424H0Z" fill="#1e2c37"/></g>
+<g opacity=".9"><path d="M145 286v-105l22-10v-34l23-11 17 11v36l23 8v100Z" fill="#23313b"/><path d="M155 181V142h10v-10h20v10h10v39" fill="#324450"/><path d="M726 311V178l20-11v-40l30-15 30 14v46l18 11v128" fill="#253039"/><path d="M742 175V125h10v-15h43v15h10v50" fill="#43505c"/><path d="M756 201h32v83h-32Z" fill="#101b26"/><path d="M0 302h960v100H0" fill="#73665a" opacity=".20"/></g>
+<g opacity=".65"><path d="M-30 370q190-84 400-21t620-8v87H0Z" fill="#353d3c"/><path d="M0 345h960v90H0" fill="url(#brick)"/></g>
+<g><path d="M0 394Q190 378 390 389T960 391V540H0Z" fill="url(#ground)"/><path d="M0 399Q200 389 405 398T960 400" fill="none" stroke="#c09265" stroke-width="5" opacity=".35"/><g stroke="#b49a78" opacity=".13" stroke-width="3"><path d="M10 453l200-35 145 10m51 40 222-50 240 39m-743 55 199-63m256 38 255-41m-503 64 378-16"/><path d="M145 407l-41 115m297-119-39 128m211-132-29 135m205-136-21 145"/></g></g>
+<g id="fog" opacity=".15" fill="#dec2a4"><ellipse cx="400" cy="370" rx="350" ry="22"/><ellipse cx="800" cy="383" rx="300" ry="14"/></g>
+<ellipse id="hero-shadow" cx="233" cy="426" rx="80" ry="14" fill="#030509" opacity=".75" filter="url(#shadow)"/>
+<ellipse id="monster-shadow" cx="740" cy="427" rx="118" ry="19" fill="#020409" opacity=".85" filter="url(#shadow)"/>
+<!-- HERO -->
+<g id="hero" transform="translate(230 425)">
+ <g id="hero-leg-back"><path d="M-20-86Q-40-66-37-38L-47-5 -11-3 -3-44 2-75Z" fill="#1c2932" stroke="#8c9b9b" stroke-width="3"/><path d="M-42-43h34l-3 27-38 1Z" fill="url(#steel)" stroke="#292e34" stroke-width="2"/><path d="M-48-12l36 0 4 13 -42 1 -13-4Z" fill="#2c3234" stroke="#9ca0a0" stroke-width="2"/></g>
+ <g id="hero-leg-front"><path d="M1-92Q24-74 20-46L31-8 1-5 -7-43 -15-76Z" fill="#384854" stroke="#b3b4a5" stroke-width="3"/><path d="M-11-78 25-69 26-44 -3-38Z" fill="url(#steel)" stroke="#202936" stroke-width="3"/><path d="M-4-41 30-44 38-15 3-10Z" fill="url(#steel)" stroke="#111c2b" stroke-width="3"/><path d="M2-15h34l15 13-54 1-9-5Z" fill="#46505b" stroke="#a9aa9e" stroke-width="2"/></g>
+ <g id="hero-body">
+  <path d="M-34-12 22-12 34 23 31 57 20 77 -26 76 -40 48Z" fill="url(#steel)" stroke="#101722" stroke-width="4"/>
+  <path d="M-27 6 2-4 28 6 20 48 1 58-24 45Z" fill="#394c57" stroke="url(#gold)" stroke-width="3"/>
+  <path d="M1-4V60m-26-12h51m-43-39-2 31M22 9l-2 31" fill="none" stroke="#bba675" stroke-width="3" opacity=".85"/>
+  <path d="M-42 46h76l-6 17h-61Z" fill="#4b382b" stroke="#ad945f" stroke-width="4"/>
+  <path d="M-33 59l17 5-15 40-15-9Z" fill="#8e2226" stroke="#d2a666" stroke-width="3"/>
+  <path d="M15 65 31 62 42 111 27 116Z" fill="#872222" opacity=".9"/>
+  <g id="hero-head"><path d="M-17-55Q-29-73-25-90l20-18 25 15 6 22 -11 17Z" fill="url(#steel)" stroke="#101827" stroke-width="4"/><path d="M-28-91Q-1-132 28-90L23-77 -25-77Z" fill="url(#steel)" stroke="url(#gold)" stroke-width="4"/><path d="M-7-119h13l3 42H-9Z" fill="url(#gold)"/><path d="M-24-75 23-75 10-57 -12-58Z" fill="#121c2a"/><path d="M-20-70 16-70" stroke="#d7c6a1" stroke-width="4"/><path d="M-14-67h30" stroke="#7eccde" stroke-width="3"/><path d="M-30-85Q-47-76-31-43" fill="none" stroke="#a89b81" stroke-width="7"/></g>
+  <g id="hero-sword-arm"><path d="M23 8Q42 1 49 26L63 51 47 67 30 35Z" fill="url(#steel)" stroke="#111b26" stroke-width="4"/><circle cx="48" cy="43" r="9" fill="url(#gold)"/>
+   <g id="hero-sword" transform="translate(55 56)"><path d="M-3 0 3 3 72-102 66-114 55-105Z" fill="url(#steel)" stroke="#d6d6c4" stroke-width="2"/><path d="M0 0 62-104" stroke="#f2efe1" stroke-width="2" opacity=".8"/><path d="M-15-1 13 12" stroke="#d7ae62" stroke-width="9" stroke-linecap="round"/><path d="M-5 6-20 33" stroke="#563f2a" stroke-width="8" stroke-linecap="round"/><circle cx="-20" cy="34" r="6" fill="url(#gold)"/></g>
+  </g>
+  <g id="hero-shield-arm"><path d="M-29 6Q-50 14-45 45L-33 64 -15 56 -22 29Z" fill="url(#steel)" stroke="#101827" stroke-width="4"/><path d="M-39 32 -17 34" stroke="#c9ba93" stroke-width="8"/>
+    <g id="hero-shield"><path d="M-62 6Q-21-11 7 17L0 73 -31 108 -67 70Z" fill="url(#shield)" stroke="url(#gold)" stroke-width="6"/><path d="M-50 21Q-19 8-5 22L-11 68 -31 92 -53 64Z" fill="none" stroke="#778a92" stroke-width="3"/><path d="M-34 24 -23 40 -34 55 -46 40Z" fill="#c2a067"/><path d="M-32 56v26" stroke="#c2a067" stroke-width="6"/><circle cx="-31" cy="50" r="9" fill="url(#gold)"/></g>
+  </g>
+ </g>
+</g>
+<!-- MONSTER -->
+<g id="monster-pos" transform="translate(745 426)"><g id="monster" transform="scale(-1 1)">
+<g id="monster-tail"><path d="M-37-114Q-158-109-130-22 -117-4-91-30" fill="none" stroke="#18272c" stroke-width="24" stroke-linecap="round"/><path d="M-100-38-87-6-75-43Z" fill="#5c665d" stroke="#12232c" stroke-width="4"/></g>
+<g id="monster-leg-back"><path d="M-40-103Q-65-72-66-43L-80-8-46-1-26-49-14-84Z" fill="url(#skin)" stroke="#08151b" stroke-width="5"/><path d="M-81-9 -98 5 -68 6 -58-4 -55 9-26 7 -47-10Z" fill="#263c3c" stroke="#07151d" stroke-width="4"/></g>
+<g id="monster-leg-front"><path d="M6-103Q43-78 36-44L58-13 29 1 -4-33-13-83Z" fill="url(#monster)" stroke="#0a161b" stroke-width="5"/><path d="M29-12 24 8 47 4 56-4 61 11 84 5 57-15Z" fill="#2d4541" stroke="#091d23" stroke-width="5"/><path d="M28-36 44-29 53-19" stroke="#8a8870" stroke-width="5" fill="none"/></g>
+<g id="monster-body"><path d="M-60-107Q-72-160-49-202L-16-221 39-200Q61-174 56-125L41-83 -38-87Z" fill="url(#monster)" stroke="#07161a" stroke-width="7"/><path d="M-48-180 0-189 40-179 30-126 -13-113 -48-139Z" fill="#596b62" stroke="#1a2f31" stroke-width="6"/><path d="M-31-161-10-139 13-158 26-142" stroke="#92a089" stroke-width="6" fill="none" opacity=".45"/><path d="M-38-108 37-100" stroke="#16191e" stroke-width="17"/><path d="M-41-105-24-70 9-65 43-92" stroke="#6e7764" stroke-width="5" fill="none"/>
+ <g id="monster-head"><path d="M-14-194Q-44-228-21-258L25-268 56-240 45-211 15-189Z" fill="url(#skin)" stroke="#081318" stroke-width="6"/>
+ <path d="M-13-247Q-49-304-23-322L-9-287 7-275Z" fill="url(#claw)" stroke="#101a20" stroke-width="5"/><path d="M21-258Q49-317 72-302L51-268 46-232Z" fill="url(#claw)" stroke="#101a20" stroke-width="5"/><path d="M16-228 53-235 64-222 37-204 5-212Z" fill="#1b2e2d" stroke="#09151b" stroke-width="5"/><path d="M27-218 56-223 48-206 31-204Z" fill="#7b5550"/><path d="M27-240 45-244" stroke="#f6bc66" stroke-width="8"/><path d="M27-239 44-241" stroke="#fff3c6" stroke-width="2"/><path d="M46-216l5 14 7-19M29-218l1 13 11-10" fill="url(#claw)" stroke="#101d21" stroke-width="2"/>
+ </g>
+ <g id="monster-back-arm"><path d="M-44-189Q-81-180-83-124L-98-88 -63-81 -51-123 -25-159Z" fill="url(#skin)" stroke="#08181c" stroke-width="6"/><path d="M-98-91-114-60-93-70-83-51-79-75-62-72" fill="url(#claw)" stroke="#152226" stroke-width="3"/></g>
+ <g id="monster-front-arm"><path d="M30-192Q70-202 82-170L109-113 79-94 55-148 20-161Z" fill="url(#monster)" stroke="#07161b" stroke-width="7"/><path d="M82-147 105-107 92-94 68-134" fill="#465a54" stroke="#111d22" stroke-width="4"/><path d="M84-102 120-91 150-60 119-69 131-45 105-66 108-40 88-62 70-85Z" fill="url(#skin)" stroke="#0c1c20" stroke-width="5"/><path d="M119-68 150-60 130-80M110-63 131-45 123-77M89-63 108-40 106-75" fill="url(#claw)" stroke="#0d2225" stroke-width="2"/></g>
+</g></g></g>
+<!-- effects -->
+<g id="dust" opacity="0"><ellipse cx="0" cy="0" rx="64" ry="12" fill="#e2ad72" opacity=".42"/><circle cx="-36" cy="-8" r="11" fill="#b4a089" opacity=".45"/><circle cx="15" cy="-16" r="13" fill="#ae9d8a" opacity=".35"/><circle cx="46" cy="-7" r="8" fill="#d4b18c" opacity=".4"/></g>
+<g id="shield-impact" opacity="0"><circle r="102" fill="url(#flash)"/><circle r="58" stroke="#e5eff0" stroke-width="5" fill="none"/><circle r="81" stroke="#98eaf5" stroke-width="2" fill="none" stroke-dasharray="12 24"/><path d="M-112 0h224M0-112v224M-77-77 77 77M77-77-77 77" stroke="#d3f6ff" stroke-width="3"/></g>
+<g id="blade-trail" opacity="0"><path d="M-115 92Q-22-96 122-124" fill="none" stroke="#e8f8ff" stroke-width="22" opacity=".32"/><path d="M-115 92Q-22-96 122-124" fill="none" stroke="#f5fbff" stroke-width="6" stroke-linecap="round"/><path d="M-112 100Q-15-86 127-118" fill="none" stroke="#ddc084" stroke-width="3"/></g>
+<g id="monster-hit" opacity="0"><circle r="103" fill="url(#flash)"/><path d="M-82-39 78 41M-20-92 23 91" stroke="#fff9e7" stroke-width="7"/><path d="M-108-20 82 58" stroke="#f3a962" stroke-width="21" opacity=".55"/></g>
+<g id="embers" fill="#f8d295" opacity="0"><circle cx="-20" cy="-60" r="3"/><circle cx="-60" cy="12" r="5"/><circle cx="34" cy="-82" r="3"/><circle cx="72" cy="-12" r="4"/><circle cx="21" cy="39" r="3"/></g>
+</g></svg><div class="scrim"></div>
+<div class="topbar"><div class="unit"><div class="name">GUERREIRO DA GUILDA</div><div class="health hero-hp"><span id="hero-hp"></span></div></div><div class="chapter">DUELO 04 · LABORATÓRIO</div><div class="unit"><div class="name">FERA DAS RUÍNAS</div><div class="health"><span id="monster-hp"></span></div></div></div>
+<div id="status" class="status"></div><div class="logo">CRÔNICAS DA GUILDA</div></div><div class="bottom"><button id="play" type="button">Pausar duelo</button><button id="restart" type="button">Repetir</button><span>1. Investida da fera → 2. Bloqueio com escudo → 3. Contra-ataque com espada</span></div></main>
+<script>
+(()=>{'use strict';const $=id=>document.getElementById(id);let started=performance.now(),playing=true,paused=0;const D=6.4;const ease=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)};
+// Every property is a keyed pose: moving bodies, legs and arms rather than a still sprite.
+const keys={hx:[[0,237],[1.1,235],[1.65,214],[2.2,207],[2.7,228],[3.05,244],[3.54,400],[4.0,419],[4.55,402],[5.6,254],[6.4,237]],
+ hy:[[0,0],[1.15,-4],[1.7,2],[2.4,0],[3.14,-16],[3.57,-1],[4.25,0],[6.4,0]],
+ hlean:[[0,-3],[1.2,-8],[1.55,-17],[1.82,-24],[2.2,-12],[2.9,0],[3.29,21],[3.64,39],[4.0,18],[5.1,-3],[6.4,-3]],
+ hshield:[[0,-7],[1.27,1],[1.56,-44],[1.79,-66],[2.22,-46],[2.75,-8],[3.5,-14],[5.05,-7],[6.4,-7]],
+ hsarm:[[0,5],[1.6,12],[2.28,-11],[3.06,-82],[3.38,-93],[3.69,88],[3.91,105],[4.48,17],[5.12,5],[6.4,5]],
+ hsword:[[0,-7],[3.04,10],[3.36,-18],[3.69,36],[3.91,51],[4.5,-7],[6.4,-7]],
+ hleg1:[[0,-4],[1.55,-22],[2.13,18],[2.81,-6],[3.35,-34],[3.64,30],[4.22,-13],[5.7,-4],[6.4,-4]],
+ hleg2:[[0,8],[1.56,10],[2.0,-25],[2.7,7],[3.34,39],[3.59,-17],[4.15,28],[5.7,8],[6.4,8]],
+ mx:[[0,745],[.72,735],[1.1,690],[1.66,405],[1.83,393],[2.33,454],[2.94,511],[3.56,512],[3.82,553],[4.37,610],[5.55,745],[6.4,745]],
+ my:[[0,0],[.77,-11],[1.4,-15],[1.75,5],[2.5,0],[3.7,0],[3.89,-24],[4.26,7],[5.7,0],[6.4,0]],
+ mlean:[[0,-5],[.87,-23],[1.55,28],[1.84,43],[2.14,5],[2.9,-7],[3.53,-7],[3.79,-34],[4.05,-46],[4.35,-18],[5.5,-5],[6.4,-5]],
+ marm:[[0,5],[.9,-39],[1.42,-77],[1.77,63],[2.13,28],[2.9,9],[3.56,8],[3.85,-35],[4.6,6],[6.4,5]],
+ mback:[[0,-3],[1.5,12],[1.83,-29],[2.18,15],[4.14,-30],[5.6,-3],[6.4,-3]],
+ mleg1:[[0,-3],[1.2,20],[1.63,-32],[1.96,38],[2.27,-15],[3.3,-3],[3.9,36],[4.35,-23],[5.5,-3],[6.4,-3]],
+ mleg2:[[0,12],[1.2,-27],[1.65,30],[1.92,-22],[2.21,26],[3.2,12],[3.9,-28],[4.33,30],[5.5,12],[6.4,12]]};
+function val(name,t){const a=keys[name];for(let i=1;i<a.length;i++)if(t<a[i][0]){let p=a[i-1],q=a[i];let u=ease((t-p[0])/(q[0]-p[0]));return p[1]+(q[1]-p[1])*u}return a[a.length-1][1]}
+function peak(t,c,w){return Math.max(0,1-Math.abs(t-c)/w)}function matrixTranslate(id,x,y){$(id).setAttribute('transform',`translate(${x.toFixed(2)} ${y.toFixed(2)})`)}function spin(id,deg,x,y){$(id).setAttribute('transform',`rotate(${deg.toFixed(2)} ${x} ${y})`)}
+function render(t){t=((t%D)+D)%D;const sway=Math.sin(t*4)*2;const hx=val('hx',t),mx=val('mx',t);const shake=peak(t,1.81,.14)*8+peak(t,3.78,.15)*9;matrixTranslate('camera',Math.sin(t*183)*shake,Math.cos(t*151)*shake*.36);
+ matrixTranslate('hero',hx,425+val('hy',t)+sway*.45);matrixTranslate('monster-pos',mx,426+val('my',t)+Math.sin(t*3.2)*1.8);
+ $('hero-body').setAttribute('transform',`translate(0 -130) rotate(${val('hlean',t).toFixed(2)} 0 45)`);$('hero-shield-arm').setAttribute('transform',`translate(69 0) rotate(${val('hshield',t).toFixed(2)} -28 8)`);spin('hero-sword-arm',val('hsarm',t),25,8);spin('hero-sword',val('hsword',t),55,56);spin('hero-leg-back',val('hleg1',t),-16,-76);spin('hero-leg-front',val('hleg2',t),5,-77);
+ spin('monster-body',val('mlean',t),0,-94);spin('monster-front-arm',val('marm',t),38,-168);spin('monster-back-arm',val('mback',t),-45,-180);spin('monster-leg-front',val('mleg1',t),5,-94);spin('monster-leg-back',val('mleg2',t),-38,-95);
+ spin('monster-head',Math.sin(t*3)*3+peak(t,3.82,.28)*21,14,-221);spin('hero-head',Math.sin(t*3)*1.7,0,-65);spin('monster-tail',Math.sin(t*4.2)*10,-38,-114);
+ $('hero-shadow').setAttribute('cx',hx);$('monster-shadow').setAttribute('cx',mx);let smoke=peak(t,1.6,.48)*.9+peak(t,3.51,.5)*.85;matrixTranslate('dust',t<2.6?mx-14:hx-18,412);$('dust').setAttribute('opacity',smoke.toFixed(2));
+ const shield=peak(t,1.81,.27);matrixTranslate('shield-impact',hx+60,315);$('shield-impact').setAttribute('opacity',shield.toFixed(2));$('shield-impact').setAttribute('transform',`translate(${(hx+58).toFixed(1)} 314) scale(${(.5+shield*.7).toFixed(2)})`);
+ const arc=peak(t,3.65,.36);$('blade-trail').setAttribute('transform',`translate(${(hx+80).toFixed(1)} 300) rotate(${(t-3.6)*70})`);$('blade-trail').setAttribute('opacity',arc.toFixed(2));
+ const hit=peak(t,3.8,.29);$('monster-hit').setAttribute('transform',`translate(${(mx-59).toFixed(1)} 302) scale(${(.65+hit*.45).toFixed(2)})`);$('monster-hit').setAttribute('opacity',hit.toFixed(2));
+ $('embers').setAttribute('transform',`translate(${(mx-63).toFixed(1)} ${ (310-hit*18).toFixed(1)})`);$('embers').setAttribute('opacity',(hit*.8).toFixed(2));
+ $('hero-hp').style.width=(100-peak(t,1.81,.4)*4)+'%';$('monster-hp').style.width=(100-(t>=3.8?26* Math.min(1,(t-3.8)/.4):0))+'%';
+ const label=$('status');if(t>=1.65&&t<2.36){label.textContent='BLOQUEIO PERFEITO';label.className='status block';label.style.opacity=Math.min(1,(t-1.65)*7,(2.36-t)*7).toFixed(2)}else if(t>=3.46&&t<4.34){label.textContent='CONTRA-ATAQUE!';label.className='status counter';label.style.opacity=Math.min(1,(t-3.46)*8,(4.34-t)*6).toFixed(2)}else{label.style.opacity='0'} }
+window.renderFrame=render;const tick=now=>{if(playing){let t=(now-started)/1000;render(t);paused=t%D}requestAnimationFrame(tick)};requestAnimationFrame(tick);
+$('play').addEventListener('click',()=>{playing=!playing;if(playing){started=performance.now()-paused*1000;$('play').textContent='Pausar duelo'}else $('play').textContent='Continuar duelo'});$('restart').addEventListener('click',()=>{started=performance.now();paused=0;render(0);playing=true;$('play').textContent='Pausar duelo'});
+})();
+</script></body></html>

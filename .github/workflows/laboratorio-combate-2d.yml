@@ -43,5 +43,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: laboratorio-combate-2d-capturas
-          path: |\n            visual-report/excelencia-2d-*.jpg\n            visual-report/lab-combate-*.webm\n            visual-report/lab-*.png
+          path: |
+            visual-report/excelencia-2d-*.jpg
+            visual-report/lab-combate-*.webm
+            visual-report/lab-*.png
           if-no-files-found: ignore

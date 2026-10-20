@@ -121,8 +121,8 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const cueSkill=skillForCue(battle.log,cue,actorHero?availableAbilities(actorHero):[]);
  const skillEffect=cueSkill?.ability.effect||"basic";
  const school=skillEffect==="venom"?"shadow":skillEffect==="renew"||skillEffect==="lifebloom"?"nature":visualSchool(actor,evt?.kind||"hit");
- const areaTargets=cueSkill&&["all-enemies","all-allies"].includes(cueSkill.ability.target)
-  ?cueSkill.targets.map(id=>{const f=all.find(x=>x.id===id);return f?pos(f.side,all.filter(x=>x.side===f.side).findIndex(x=>x.id===id)):undefined;}).filter((p):p is {x:number;y:number}=>!!p)
+ const areaTargets:{x:number;y:number}[]=cueSkill&&["all-enemies","all-allies"].includes(cueSkill.ability.target)
+  ?cueSkill.targets.flatMap(id=>{const f=all.find(x=>x.id===id);return f?[pos(f.side,all.filter(x=>x.side===f.side).findIndex(x=>x.id===id))]:[];})
   :[];
  const projectile=!!evt&&!!actor&&!!target&&isRangedVisual(school);
  const visualStart=actor?pos(actor.side,actorIndex):undefined;

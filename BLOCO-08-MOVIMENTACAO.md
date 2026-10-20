@@ -11,4 +11,4 @@
 - Testes em 6 larguras, dois sentidos, 9 escolas, colisões e retorno.
 
 ## Próximas etapas
-08B: integrar nos eventos reais do combate e sincronizar o rig do bloco 07. 08C: testes reais de navegador, 4×4, Android, acessibilidade, vídeo e salvamentos.
+08B: integração efetuada com o log do motor real, movimentação WAAPI na sprite e sombra independente, sem modificar posições ou HUD; sincronizada com as poses do rig 07. 08C: testes reais de navegador, 4×4, Android, acessibilidade, vídeo e salvamentos.

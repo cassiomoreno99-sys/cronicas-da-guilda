@@ -1244,3 +1244,27 @@
  .guild2d-unit .guild2d-sprite>img{opacity:1!important}
  .guild2d-rig-part{animation:none!important;will-change:auto!important}
 }
+
+/* BLOCO 08B — a posição aprovada e o HUD ficam estáveis.
+   Animações WAAPI movem somente a sprite e a sombra desta ação. */
+.guild2d-move-shadow{
+ position:absolute;z-index:0;left:13%;bottom:2%;width:74%;height:14px;
+ border-radius:50%;background:radial-gradient(ellipse,#010409b8 10%,#01040972 56%,transparent 75%);
+ opacity:0;pointer-events:none;will-change:transform,opacity;transform-origin:50% 50%;
+}
+.guild2d-unit[data-cinematic-actor="true"]:before{opacity:0}
+.guild2d-unit[data-cinematic-actor="true"] .guild2d-move-shadow{opacity:.27}
+.guild2d-unit[data-move-kind="charge"] .guild2d-rig-leg-front,
+.guild2d-unit[data-move-kind="charge"] .guild2d-rig-leg-back{animation-timing-function:cubic-bezier(.4,.05,.7,1)}
+.guild2d-unit[data-move-kind="pounce"] .guild2d-rig-torso{animation-timing-function:cubic-bezier(.18,.1,.4,.93)}
+.guild2d-unit[data-move-kind="sidestep"] .guild2d-rig-head{animation-timing-function:ease-out}
+.guild2d-unit[data-move-kind="cast"] .guild2d-rig-leg-front,
+.guild2d-unit[data-move-kind="cast"] .guild2d-rig-leg-back{animation:none}
+.guild2d-unit[data-move-kind="charge"] .guild2d-sprite,
+.guild2d-unit[data-move-kind="pounce"] .guild2d-sprite,
+.guild2d-unit[data-move-kind="sidestep"] .guild2d-sprite{transform-origin:50% 88%}
+.guild-lite-mode .guild2d-move-shadow{display:none!important;will-change:auto}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-move-shadow{display:none!important;will-change:auto}
+ .guild2d-unit[data-move-kind] .guild2d-rig-part{animation:none!important}
+}

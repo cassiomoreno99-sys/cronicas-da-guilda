@@ -20,6 +20,8 @@ jobs:
           node scripts/test-combat-body-rig-ui.mjs
       - name: Identidade real de cada habilidade
         run: node --experimental-strip-types scripts/test-combat-visual-cues.ts
+      - name: Bloco 08 - 6 resoluções e colisões
+        run: node --experimental-strip-types scripts/test-combat-arena-movement.ts
       - name: Coreografia real (6 dimensões)
         run: node --experimental-strip-types scripts/test-combat-choreography.ts
       - name: Validar camadas visuais

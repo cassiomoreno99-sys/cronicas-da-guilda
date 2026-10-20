@@ -6,6 +6,7 @@ import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
 import {enemyArtSource,fullEnemyArtSource} from "@/lib/enemy-art";
 import {choreographyPlan,type MotionSchool} from "@/lib/combat-choreography";
+import {arenaMovement} from "@/lib/combat-arena-movement";
 import {lastVisualCue,skillForCue} from "@/lib/combat-visual-cues";
 import {ArenaVfx} from "./arena-vfx";
 import {rigEligible,chooseRigPose} from "@/lib/combat-body-rig";
@@ -160,9 +161,27 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    school,kind:cue?.castOnly?"cast":evt.kind,from,to,width:stage.clientWidth,height:stage.clientHeight,
    duration,critical:evt.kind==="critical"
   });
-  // Mesmo elemento de imagem e mesmo estado do combate; só muda a interpolação visual.
-  const actorMotion=actorNode.animate(plan.actorFrames,{duration,easing:"linear",fill:"none"});
+  const stageSize={width:stage.clientWidth,height:stage.clientHeight};
+  const actorSize={width:actorNode.getBoundingClientRect().width,height:actorNode.getBoundingClientRect().height};
+  const targetSize={width:targetNode.getBoundingClientRect().width,height:targetNode.getBoundingClientRect().height};
+  const movement=arenaMovement({
+   from:{x:from.x*stageSize.width/100,y:from.y*stageSize.height/100},
+   to:{x:to.x*stageSize.width/100,y:to.y*stageSize.height/100},
+   stage:stageSize,actor:actorSize,target:targetSize,
+   school,kind:cue?.castOnly?"cast":evt.kind,critical:evt.kind==="critical",
+   obstacles:allUnits.filter(node=>node.dataset.fighterId!==actor.id&&node.dataset.fighterId!==target.id&&node.dataset.dead!=="true")
+    .map(node=>{
+     const rect=node.getBoundingClientRect();
+     const box=stage.getBoundingClientRect();
+     return {x:rect.left-box.left+rect.width/2,y:rect.top-box.top+rect.height/2,width:rect.width,height:rect.height};
+    })
+  });
+  // O sprite e sua sombra atravessam o MESMO caminho visual.
+  // Alvo, vida, formação, turno e salvamento continuam sob controle de lib/game.ts.
+  const actorMotion=actorNode.animate(movement.actorFrames,{duration,easing:"linear",fill:"none"});
   const motions:Animation[]=[actorMotion];
+  const movingShadow=allUnits.find(node=>node.dataset.fighterId===actor.id)?.querySelector<HTMLElement>(".guild2d-move-shadow");
+  if(movingShadow)motions.push(movingShadow.animate(movement.shadowFrames,{duration,easing:"linear",fill:"none"}));
   if(actor.id!==target.id){
    motions.push(targetNode.animate(evt.kind==="heal"?plan.healFrames:plan.targetFrames,{
     delay:plan.impactDelay,duration:plan.recoveryDuration,easing:"cubic-bezier(.2,.7,.18,1)",fill:"none"
@@ -196,9 +215,10 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={{...style,"--rig-duration":(stageRef.current?.closest(".guild-lite-mode")?520:cinemaDuration(school))+"ms"} as PosStyle} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
-    data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting} data-rig-candidate={rigCandidate} data-rig-pose={rigPose}
+    data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting} data-move-kind={acting?(projectile?"cast":school==="claw"?"pounce":school==="shadow"?"sidestep":"charge"):"idle"} data-rig-candidate={rigCandidate} data-rig-pose={rigPose}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
+    <span className="guild2d-move-shadow" aria-hidden="true"/>
     <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>
       {acting&&<i className={"guild2d-weapon-sweep guild2d-weapon-"+school} aria-hidden="true"/>}
      <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onLoad={e=>{

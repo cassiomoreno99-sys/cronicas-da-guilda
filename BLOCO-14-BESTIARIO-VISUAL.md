@@ -12,3 +12,10 @@
 - 14C: verificar XML/SVG, carregamento das 20 imagens, PNG preexistentes, quatro regiões, Chrome Android e PC; revisão visual humana antes de produção.
 
 **Natureza dos desenhos:** ilustrações vetoriais 2D experimentais, não arte pintada definitiva. A auditoria automática pode validar identidade e carregamento, mas a qualidade estética depende de aprovação explícita.
+
+## 14B — sprites e movimento entregues
+- 20 sprites vetoriais SVG de corpo inteiro, exclusivos das quatro últimas regiões (5 por região), sem dependências externas.
+- O catálogo escolhe o arquivo por nome exato. PNGs antigos continuam preservados, com miniaturas clássicas como fallback em falha de carregamento.
+- O rig humanoide não fragmenta os SVGs novos; animações decorativas leves são específicas para humanoide, monstro, limo, construto e entidade flutuante.
+- Movimento reduzido e modo leve desligam animações e halos.
+- A qualidade final de pintura/anatomia dos desenhos vetoriais precisa ser avaliada por uma pessoa antes da aprovação estética.

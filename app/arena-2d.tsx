@@ -5,6 +5,7 @@ import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,comba
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
 import {enemyArtSource,fullEnemyArtSource} from "@/lib/enemy-art";
+import {lateEnemyVisual} from "@/lib/bestiary-visual-plan";
 import {choreographyPlan,type MotionSchool} from "@/lib/combat-choreography";
 import {arenaMovement} from "@/lib/combat-arena-movement";
 import {lastVisualCue,skillForCue} from "@/lib/combat-visual-cues";
@@ -291,7 +292,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const struck=playingEvent===evtKey&&target?.id===f.id&&!!evt;
   const style:PosStyle={"--x":p.x+"%","--y":p.y+"%","--dash-x":acting&&targetPos?((targetPos.x-p.x)*.7)+"cqw":"0cqw","--dash-y":acting&&targetPos?((targetPos.y-p.y)*.7)+"cqh":"0cqh"};
   const image=combatArt(f,f.side==="hero"?state.heroes.find(h=>h.id===f.id):undefined);
-  const rigCandidate=rigEligible(f.side,f.name,image.src,image.full);
+  const lateIdentity=f.side==="enemy"?lateEnemyVisual(f.name):undefined;
+  // Preservar silhueta da ilustração vetorial; não fatiar SVG com rig humanoide.
+  const rigCandidate=!lateIdentity&&rigEligible(f.side,f.name,image.src,image.full);
   const rigPose=chooseRigPose(acting,struck,f.hp<=0,
    (spectacle?.kind!=="boss-rearguard"&&!!spectacle)||isRangedVisual(school));
   const aura=statusVisuals(f.statuses);
@@ -301,6 +304,10 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={{...style,"--rig-duration":(stageRef.current?.closest(".guild-lite-mode")?520:cinemaDuration(school))+"ms"} as PosStyle} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
+    data-bestiary-motion={lateIdentity?.motion||"classic"}
+    data-bestiary-tone={lateIdentity?.tone||"classic"}
+    data-bestiary-region={lateIdentity?.region||"classic"}
+    data-bestiary-slug={lateIdentity?.slug||"classic"}
     data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting} data-move-kind={acting?(spectacle&&spectacle.kind!=="boss-rearguard"?"cast":projectile?"cast":school==="claw"?"pounce":school==="shadow"?"sidestep":"charge"):"idle"} data-rig-candidate={rigCandidate} data-rig-pose={rigPose}
     data-physical-style={acting?physicalAttack?.style||"none":"none"}
     data-physical-variant={acting?physicalAttack?.variant:-1}

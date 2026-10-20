@@ -1729,3 +1729,71 @@
 @media(prefers-reduced-motion:reduce){
  .guild2d-quick-slot,.guild2d-skill-card{transition:none!important}
 }
+
+/* BLOCO 14B — 20 ilustrações vetoriais tardias. Sem alterar sprites PNG. */
+.guild2d-stage .guild2d-unit[data-bestiary-motion]:not([data-bestiary-motion="classic"])[data-full-art="true"]
+ .guild2d-sprite img{
+ object-fit:contain!important;object-position:center bottom!important;
+ transform-origin:50% 82%;will-change:transform;
+}
+.guild2d-stage .guild2d-unit[data-bestiary-motion="humanoid"][data-full-art="true"][data-dead="false"] .guild2d-sprite img{
+ animation:guild14-stance 3.2s ease-in-out infinite alternate
+}
+.guild2d-stage .guild2d-unit[data-bestiary-motion="beast"][data-full-art="true"][data-dead="false"] .guild2d-sprite img{
+ animation:guild14-beast 2.6s ease-in-out infinite alternate
+}
+.guild2d-stage .guild2d-unit[data-bestiary-motion="amorphous"][data-full-art="true"][data-dead="false"] .guild2d-sprite img{
+ animation:guild14-ooze 3.5s ease-in-out infinite alternate
+}
+.guild2d-stage .guild2d-unit[data-bestiary-motion="construct"][data-full-art="true"][data-dead="false"] .guild2d-sprite img{
+ animation:guild14-construct 4.1s steps(4,end) infinite
+}
+.guild2d-stage .guild2d-unit[data-bestiary-motion="floating"][data-full-art="true"][data-dead="false"] .guild2d-sprite img{
+ animation:guild14-float 3.7s ease-in-out infinite alternate
+}
+.guild2d-stage .guild2d-unit[data-bestiary-motion]:not([data-bestiary-motion="classic"])[data-dead="false"][data-full-art="true"] .guild2d-sprite::after{
+ content:"";position:absolute;inset:32% 15% 3%;z-index:-1;pointer-events:none;
+ background:radial-gradient(ellipse,var(--bestiary-energy),transparent 72%);
+ opacity:.25;animation:guild14-ambient 3.5s ease-in-out infinite alternate
+}
+.guild2d-unit[data-bestiary-tone="poison"]{--bestiary-energy:#83d4a5}
+.guild2d-unit[data-bestiary-tone="undead"]{--bestiary-energy:#d5ae94}
+.guild2d-unit[data-bestiary-tone="metal"]{--bestiary-energy:#91bed6}
+.guild2d-unit[data-bestiary-tone="arcane"]{--bestiary-energy:#b9b4f4}
+.guild2d-unit[data-bestiary-tone="abyss"]{--bestiary-energy:#b28ad3}
+.guild2d-unit[data-bestiary-tone="frost"]{--bestiary-energy:#b6f4ff}
+.guild2d-unit[data-bestiary-tone="radiant"]{--bestiary-energy:#f7d9a8}
+.guild2d-stage .guild2d-unit[data-bestiary-slug^="boss-"][data-full-art="true"] .guild2d-sprite img{
+ filter:drop-shadow(0 6px 6px #080c16) drop-shadow(0 0 6px var(--bestiary-energy))
+}
+@keyframes guild14-stance{
+ from{transform:translate3d(0,1px,0) rotate(-1.1deg) scale(1)}
+ to{transform:translate3d(0,-3px,0) rotate(1.2deg) scale(1.015)}
+}
+@keyframes guild14-beast{
+ from{transform:translate3d(-2px,3px,0) rotate(-1.6deg) scale(1,.97)}
+ to{transform:translate3d(3px,-4px,0) rotate(1.8deg) scale(1.035,1.03)}
+}
+@keyframes guild14-ooze{
+ from{transform:translate3d(0,3px,0) rotate(-1deg) scale(1.06,.95)}
+ to{transform:translate3d(0,-4px,0) rotate(1deg) scale(.96,1.05)}
+}
+@keyframes guild14-construct{
+ 0%,24%{transform:translate3d(0,0,0) rotate(-.5deg)}
+ 25%,49%{transform:translate3d(1px,-2px,0) rotate(.5deg)}
+ 50%,74%{transform:translate3d(0,0,0) rotate(-.2deg)}
+ 75%,100%{transform:translate3d(-2px,-1px,0) rotate(.7deg)}
+}
+@keyframes guild14-float{
+ from{transform:translate3d(0,5px,0) rotate(-2deg)}
+ to{transform:translate3d(0,-9px,0) rotate(2deg)}
+}
+@keyframes guild14-ambient{from{opacity:.13;transform:scale(.8)}to{opacity:.36;transform:scale(1.1)}}
+.guild-lite-mode .guild2d-stage .guild2d-unit[data-bestiary-motion] .guild2d-sprite img{
+ animation:none!important;will-change:auto!important
+}
+.guild-lite-mode .guild2d-stage .guild2d-unit[data-bestiary-motion] .guild2d-sprite::after{display:none!important}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-stage .guild2d-unit[data-bestiary-motion] .guild2d-sprite img{animation:none!important;will-change:auto!important}
+ .guild2d-stage .guild2d-unit[data-bestiary-motion] .guild2d-sprite::after{display:none!important}
+}

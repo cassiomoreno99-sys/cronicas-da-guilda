@@ -1,3 +1,5 @@
+import {lateEnemySource} from "./bestiary-visual-plan.ts";
+
 /** Ilustrações 2D do bestiário.
  * Quando o monstro ainda não tem ilustração própria, escolhemos a arte
  * ilustrativa disponível mais próxima da criatura — nunca um bandido genérico
@@ -119,6 +121,9 @@ const FULL_ENEMY_ART:Readonly<Record<string,string>>={
  "o trono do gelo partido":"boss-kharum",
 };
 export function fullEnemyArtSource(name:string):string|undefined{
+ // Só regiões finais recebem novos SVG; todo PNG anterior permanece intocado.
+ const late=lateEnemySource(name);
+ if(late)return late;
  const slug=FULL_ENEMY_ART[normalize(name).replace(/\s+\d+$/,"")];
  return slug?"/enemies/full/"+slug+".png":undefined;
 }

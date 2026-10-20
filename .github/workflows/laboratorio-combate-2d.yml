@@ -22,3 +22,22 @@ jobs:
         run: node --experimental-strip-types scripts/test-habilidades-laboratorio.ts
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
+      - name: Preparar navegador de auditoria (apenas CI)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.55.0
+          npx playwright install --with-deps chromium
+      - name: Iniciar servidor temporário do laboratório
+        run: |
+          npm run dev -- --host 127.0.0.1 > /tmp/guilda-laboratorio.log 2>&1 &
+          for i in {1..50}; do curl -fsS http://127.0.0.1:5173 >/dev/null && exit 0; sleep 1; done
+          cat /tmp/guilda-laboratorio.log
+          exit 1
+      - name: Fotografar e verificar arena (6 tamanhos, inclusive Android)
+        run: node scripts/test-excelencia-2d-browser.mjs
+      - name: Guardar capturas para revisão, sem publicar
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: laboratorio-combate-2d-capturas
+          path: visual-report/excelencia-2d-*.jpg
+          if-no-files-found: ignore

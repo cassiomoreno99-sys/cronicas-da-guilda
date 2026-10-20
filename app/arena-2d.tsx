@@ -143,7 +143,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const allUnits=[...stage.querySelectorAll<HTMLElement>(".guild2d-unit")];
   const actorNode=allUnits.find(node=>node.dataset.fighterId===actor.id)?.querySelector<HTMLElement>(".guild2d-sprite");
   const targetNode=allUnits.find(node=>node.dataset.fighterId===target.id)?.querySelector<HTMLElement>(".guild2d-sprite");
-  if(!actorNode||!targetNode)return;
+  if(!actorNode||!targetNode){setPlayingEvent(null);return;}
   const from=pos(actor.side,actorIndex),to=pos(target.side,targetIndex);
   const plan=choreographyPlan({
    school,kind:evt.kind,from,to,width:stage.clientWidth,height:stage.clientHeight,

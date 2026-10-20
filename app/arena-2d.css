@@ -1092,3 +1092,39 @@
  .guild2d-skills .guild2d-skill-card{min-height:73px}
 }
 @media(prefers-reduced-motion:reduce){.guild2d-quick-slot:active,.guild2d-skill-card:active{transform:none}}
+
+/* Laboratório fase 4 — acabamento de leitura e proteção de toque no celular. */
+.guild2d-stage .guild2d-number{
+ font-variant-numeric:tabular-nums;font-weight:900;letter-spacing:-.05em;
+ text-shadow:0 1px 2px #000,0 0 8px #e7533a,0 0 15px #d83221;
+ animation:guild2d-lab-float 1s cubic-bezier(.17,.84,.31,1) both;
+}
+.guild2d-stage .guild2d-healed{color:#c1ffe4;text-shadow:0 1px 2px #000,0 0 9px #4df1aa,0 0 16px #00845e}
+.guild2d-stage .guild2d-critical{
+ font-weight:1000;letter-spacing:.06em;text-shadow:0 1px 2px #000,0 0 10px #ffba43;
+}
+.guild2d-stage .guild2d-hud[data-selected="true"] strong{
+ border-color:#f3d389;box-shadow:0 0 0 1px #f9e5b077,0 0 14px #f6c65e66;
+}
+.guild2d-stage .guild2d-hud[data-dead="true"]{opacity:.29}
+.guild2d-quickbar button:focus-visible,.guild2d-skills button:focus-visible,.guild2d-ally-selector select:focus-visible{
+ outline:3px solid #fbe0a1;outline-offset:2px;
+}
+@keyframes guild2d-lab-float{
+ 0%{opacity:0;transform:translate(-50%,16px) scale(.6)}
+ 18%{opacity:1;transform:translate(-50%,-7px) scale(1.18)}
+ 36%{opacity:1;transform:translate(-50%,-12px) scale(1)}
+ 100%{opacity:0;transform:translate(-50%,-48px) scale(.95)}
+}
+@media(max-width:420px){
+ .guild2d-vfx-particle:nth-of-type(n+8){display:none}
+ .guild2d-vfx-comet,.guild2d-vfx-impact,.guild2d-vfx-sigil{filter:none!important}
+ .guild2d-quickbar button{touch-action:manipulation}
+ .guild2d-quickbar .guild2d-quick-slot{min-width:0}
+}
+.guild-lite-mode .guild2d-vfx-particle{box-shadow:none!important}
+.guild-lite-mode .guild2d-stage .guild2d-hud{filter:none}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-stage .guild2d-number{animation:none!important}
+ .guild2d-quickbar *{transition:none!important}
+}

@@ -90,27 +90,34 @@ try{
     capture=await page.evaluate(()=>window.__magic10Captured?.[0]);
     if(capture)break;
    }
-   // A verificação visual de todas as famílias não depende de a missão inicial
-   // disponibilizar magos ou um feitiço específico.
-   await stage.evaluate(el=>{
-    el.querySelector(".guild2d-advanced-spell")?.remove();
+   // A arena original pode ser desmontada após a vitória. A auditoria de CSS
+   // usa um palco de testes INDEPENDENTE, fora da árvore React e da campanha.
+   console.log("BLOCO_10C_REAL_CAST_STATUS",JSON.stringify({width,observed:!!capture,detail:capture||null}));
+   await page.evaluate(()=>{
+    const fixture=document.createElement("div");
+    fixture.id="magic10-fixture-stage";
+    fixture.className="guild2d-stage";
+    fixture.style.cssText="position:relative;width:min(92vw,680px);height:460px;min-height:460px;isolation:isolate";
     const temp=document.createElement("span");
     temp.className="guild2d-advanced-spell";
     temp.dataset.family="storm";
     temp.dataset.motion="lightning";
+    temp.dataset.testFixture="true";
     temp.style.cssText="--start-x:19%;--start-y:37%;--flight-x:55cqw;--flight-y:17cqh;--cinema-ms:960ms";
     temp.innerHTML='<span class="guild2d-magic-impact"><i class="guild2d-magic-lightning a"></i></span>';
-    el.append(temp);temp.dataset.testFixture="true";
+    fixture.append(temp);
+    document.body.append(fixture);
    });
-   await stage.scrollIntoViewIfNeeded();
+   const fixtureStage=page.locator("#magic10-fixture-stage");
+   await fixtureStage.scrollIntoViewIfNeeded();
    await page.waitForTimeout(190);
-   const lightning=await stage.locator('.guild2d-advanced-spell[data-test-fixture="true"] .guild2d-magic-lightning')
+   const lightning=await fixtureStage.locator(".guild2d-magic-lightning")
     .evaluate(el=>({animation:getComputedStyle(el).animationName,display:getComputedStyle(el).display}));
    assert.equal(lightning.animation,"magic10-strike");
    assert.notEqual(lightning.display,"none");
-   await stage.screenshot({path:"visual-report/magia10-raios-"+width+".png"});
+   await fixtureStage.screenshot({path:"visual-report/magia10-raios-"+width+".png"});
    await page.emulateMedia({reducedMotion:"reduce"});
-   assert.equal(await stage.locator('.guild2d-advanced-spell[data-test-fixture="true"]')
+   assert.equal(await fixtureStage.locator('.guild2d-advanced-spell[data-test-fixture="true"]')
      .evaluate(el=>getComputedStyle(el).display),"none");
    const saved=await page.evaluate(()=>localStorage.getItem("cronicas-da-guilda:standalone:v1")||"");
    assert.ok(!saved.includes("guild2d-advanced-spell")&&!saved.includes("magic10-"));

@@ -87,9 +87,14 @@ try{
     "Detalhes visuais não podem ser persistidos no save");
 
    await page.emulateMedia({reducedMotion:"reduce"});
-   assert.equal(await rig.evaluate(el=>getComputedStyle(el).display),"none","Preferência de movimento reduzido ignorada");
+   await page.waitForFunction(()=>document.querySelector('.guild2d-stage[data-cinematic="real-2d"]')?.dataset.quality==="static");
+   // O Bloco 15 não monta recortes quando a preferência é estática;
+   // as versões anteriores apenas ocultavam um rig ainda montado.
+   if(await rig.count())assert.equal(await rig.evaluate(el=>getComputedStyle(el).display),"none","Preferência de movimento reduzido ignorada");
+   else assert.equal(await unit.locator(".guild2d-body-rig").count(),0);
    assert.equal(await original.evaluate(el=>getComputedStyle(el).opacity),"1","Imagem original oculta no modo reduzido");
    await page.emulateMedia({reducedMotion:"no-preference"});
+   await page.waitForFunction(()=>document.querySelector('.guild2d-stage[data-cinematic="real-2d"]')?.dataset.quality!=="static");
    await page.evaluate(()=>document.querySelector(".guild2d-stage")?.classList.add("guild-lite-mode"));
    assert.equal(await rig.evaluate(el=>getComputedStyle(el).display),"none","Modo leve não desligou rig");
    assert.equal(await original.evaluate(el=>getComputedStyle(el).opacity),"1","Fallback invisível no modo leve");

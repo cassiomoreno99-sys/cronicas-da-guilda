@@ -19,3 +19,10 @@
 - O rig humanoide não fragmenta os SVGs novos; animações decorativas leves são específicas para humanoide, monstro, limo, construto e entidade flutuante.
 - Movimento reduzido e modo leve desligam animações e halos.
 - A qualidade final de pintura/anatomia dos desenhos vetoriais precisa ser avaliada por uma pessoa antes da aprovação estética.
+
+## 14C — Auditoria de imagens e movimentação
+- Testes Node verificam o inventário real de 16 criaturas + 4 chefes, correspondência de 20 SVGs de corpo inteiro e integridade de caminhos (inclusive sufixos numéricos).
+- Chromium Android (390 px) e desktop (1440 px) abrem a arena real sem alterar a campanha e carregam os vinte arquivos numa galeria visual isolada.
+- Os screenshots são **galerias de auditoria, não lutas reais** nas últimas regiões. Capturas separadas por Morn, Solkar, Nhal e Coroa.
+- Movimento por espécie, modo leve, movimento reduzido, preservação da arte anterior e ausência de gravação de apresentação no save.
+- Critério estético segue pendente da revisão das galerias por pessoa; não publicar automaticamente.

@@ -50,6 +50,12 @@ jobs:
         run: node --experimental-strip-types scripts/test-combat-ability-presentation.ts
       - name: Bloco 13B - integração do grimório
         run: node scripts/test-combat-ability-ui.mjs
+      - name: Bloco 14A - catálogo canônico tardio
+        run: node --experimental-strip-types scripts/test-bestiary-visual-plan.ts
+      - name: Bloco 14B - validar imagens exclusivas
+        run: |
+          node --experimental-strip-types scripts/test-bestiary-assets.ts
+          node scripts/test-bestiary-integration.mjs
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
       - name: Preparar navegador de auditoria (apenas CI)
@@ -78,6 +84,8 @@ jobs:
         run: node scripts/test-combat-spectacle-browser.mjs
       - name: Bloco 13C - barra de habilidades e ordens Android PC
         run: node scripts/test-combat-ability-browser.mjs
+      - name: Bloco 14C - validar bestiário tardio Android e desktop
+        run: node scripts/test-bestiary-browser.mjs
       - name: Gravar confronto animado e barra de habilidades (laboratório)
         run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
@@ -96,4 +104,5 @@ jobs:
             visual-report/bloco11-*.png
             visual-report/bloco12-*.png
             visual-report/bloco13-*.png
+            visual-report/bloco14-*.png
           if-no-files-found: ignore

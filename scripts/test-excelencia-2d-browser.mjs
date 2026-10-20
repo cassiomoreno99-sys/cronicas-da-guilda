@@ -83,7 +83,7 @@ try{
     const arr=[...stage.querySelectorAll(".guild2d-unit")].map(el=>{
       const r=el.getBoundingClientRect();
       return {side:el.classList.contains("guild2d-hero")?"hero":"enemy",
-        x:r.x+r.width/2,y:r.y+r.height/2,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,portraitRadius:getComputedStyle(el.querySelector(".guild2d-sprite")).borderRadius};
+        x:r.x+r.width/2,y:r.y+r.height/2,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height,portraitRadius:getComputedStyle(el.querySelector(".guild2d-sprite")).borderRadius,full:el.getAttribute("data-full-art")==="true",image:el.querySelector("img")?.getAttribute("src")};
     });
     const hud=[...stage.querySelectorAll(".guild2d-hud")].map(el=>{const r=el.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};});
     const ready=[...stage.querySelectorAll(".guild2d-unit img")].every(img=>img.complete&&img.naturalWidth>0);
@@ -100,8 +100,8 @@ try{
    // Regressão registrada por captura Android 18/10: retratos de lobo eram
    // gigantes e sobrepostos, ocupando a altura dos personagens humanos.
    const beasts=info.units.filter(u=>u.side==="enemy");
-   if(beasts.some(u=>u.width>98||u.height>108||!u.portraitRadius.includes("50%")))
-     throw Error("Inimigos estão como cartões verticais gigantes: "+JSON.stringify(beasts));
+   if(beasts.some(u=>u.full?u.width>135||u.height>190||!u.image?.startsWith("/enemies/full/"):u.width>98||u.height>108||!u.portraitRadius.includes("50%")))
+     throw Error("Inimigos sem proporção correta para o tipo de arte: "+JSON.stringify(beasts));
    for(let i=0;i<beasts.length;i++)for(let j=i+1;j<beasts.length;j++){
      const a=beasts[i],b=beasts[j];
      const overlapX=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left));

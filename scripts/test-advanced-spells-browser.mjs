@@ -130,7 +130,7 @@ try{
    // Se não ocorreu magia REAL na missão de teste, registrar explicitamente
    // a limitação em vez de mascará-la como aprovação funcional.
    if(!capture)console.log("BLOCO_10C_REAL_CAST_NAO_OBSERVADO largura="+width);
-   await stage.evaluate(()=>window.__magic10Observer?.disconnect());
+   await page.evaluate(()=>window.__magic10Observer?.disconnect());
   }finally{await page.close();}
  }
 }finally{await browser.close();}

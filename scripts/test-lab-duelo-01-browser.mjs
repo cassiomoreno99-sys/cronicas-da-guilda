@@ -103,7 +103,7 @@ try{
      if(phases[phases.length-1]?.phase!==f.phase)phases.push(f);
     };
     const obs=new MutationObserver(snap);
-    obs.observe(root,{attributes:true,attributeFilter:["data-phase","data-hero-x","data-monster-x"]});
+    obs.observe(root,{attributes:true,subtree:true,attributeFilter:["transform","data-phase","data-hero-x","data-monster-x"]});
     window.__heavyTrace=trace;window.__heavyPhases=phases;window.__stopHeavy=()=>obs.disconnect();
     snap();
    });

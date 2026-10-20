@@ -8,6 +8,8 @@ import {enemyArtSource,fullEnemyArtSource} from "@/lib/enemy-art";
 import {choreographyPlan,type MotionSchool} from "@/lib/combat-choreography";
 import {lastVisualCue,skillForCue} from "@/lib/combat-visual-cues";
 import {ArenaVfx} from "./arena-vfx";
+import {rigEligible,chooseRigPose} from "@/lib/combat-body-rig";
+import {BodyRig,rigImageSafe} from "./body-rig";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -189,15 +191,19 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const struck=playingEvent===evtKey&&target?.id===f.id&&!!evt;
   const style:PosStyle={"--x":p.x+"%","--y":p.y+"%","--dash-x":acting&&targetPos?((targetPos.x-p.x)*.7)+"cqw":"0cqw","--dash-y":acting&&targetPos?((targetPos.y-p.y)*.7)+"cqh":"0cqh"};
   const image=combatArt(f,f.side==="hero"?state.heroes.find(h=>h.id===f.id):undefined);
+  const rigCandidate=rigEligible(f.side,f.name,image.src,image.full);
+  const rigPose=chooseRigPose(acting,struck,f.hp<=0,isRangedVisual(school));
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
-    style={style} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
-    data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting}
+    style={{...style,"--rig-duration":(stageRef.current?.closest(".guild-lite-mode")?520:cinemaDuration(school))+"ms"} as PosStyle} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
+    data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting} data-rig-candidate={rigCandidate} data-rig-pose={rigPose}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>
       {acting&&<i className={"guild2d-weapon-sweep guild2d-weapon-"+school} aria-hidden="true"/>}
-     <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onError={e=>{
+     <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onLoad={e=>{
+      if(rigCandidate)e.currentTarget.closest(".guild2d-unit")?.setAttribute("data-rig-ready",String(rigImageSafe(e.currentTarget)));
+     }} onError={e=>{
       const node=e.currentTarget;
       const attempt=Number(node.dataset.fallback||"0");
       if(attempt>=3){node.style.visibility="hidden";return;}
@@ -206,11 +212,12 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
        ?(attempt===0?enemyArtSource(f.name):attempt===1?"/enemies/fallback.webp":"/battle/sprite-cultista.webp")
        :(attempt===0?portraitSource(f.name,f.id,f.class||"warrior",state.heroes.find(h=>h.id===f.id)?.race,state.heroes.find(h=>h.id===f.id)?.sex):"/battle/sprite-aric.webp");
       node.closest(".guild2d-unit")?.setAttribute("data-full-art","false");
+      node.closest(".guild2d-unit")?.setAttribute("data-rig-ready","false");
       stageRef.current?.querySelectorAll<HTMLElement>(".guild2d-hud").forEach(hud=>{
        if(hud.dataset.fighterId===f.id)hud.dataset.fullArt="false";
       });
      }}/>
-
+     {rigCandidate&&<BodyRig src={image.src}/>}
     </span>
     {acting&&<span key={"trail-"+evtKey} className={"guild2d-action-trail "+((evt?.kind==="ability"||evt?.kind==="heal")?"guild2d-action-magic":"")} aria-hidden="true"/>}
     {struck&&evt?.kind==="critical"&&<span key={"critical-"+evtKey} className="guild2d-critical" aria-hidden="true">CRÍTICO!</span>}

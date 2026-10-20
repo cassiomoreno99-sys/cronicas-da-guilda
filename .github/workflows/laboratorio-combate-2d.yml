@@ -14,6 +14,10 @@ jobs:
         with:
           node-version: "22"
       - run: npm install --no-audit --no-fund
+      - name: Verificar rig humanoide isolado
+        run: |
+          node --experimental-strip-types scripts/test-combat-body-rig.ts
+          node scripts/test-combat-body-rig-ui.mjs
       - name: Identidade real de cada habilidade
         run: node --experimental-strip-types scripts/test-combat-visual-cues.ts
       - name: Coreografia real (6 dimensões)

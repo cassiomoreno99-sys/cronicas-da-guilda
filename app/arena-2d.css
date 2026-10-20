@@ -1189,3 +1189,58 @@
 .guild-lite-mode .guild2d-vfx-aoe{box-shadow:none}
 @media(max-width:420px){.guild2d-vfx-arc i:nth-child(3){display:none}}
 @media(prefers-reduced-motion:reduce){.guild2d-vfx-arc,.guild2d-vfx-aoe,.guild2d-vfx-ward{display:none!important}}
+
+/* BLOCO 07B - seis partes reutilizam uma única textura aprovada.
+   Os pontos de giro são relativos à anatomia humanoide; retratos e animais não usam rig. */
+.guild2d-body-rig{position:absolute;inset:0;display:none;pointer-events:none;isolation:isolate;overflow:visible;transform:translateZ(0)}
+.guild2d-rig-part{position:absolute;inset:0;display:block;pointer-events:none;will-change:transform;backface-visibility:hidden;background:var(--rig-image) center bottom/contain no-repeat}
+.guild2d-rig-leg-back{clip-path:polygon(17% 56%,52% 56%,52% 100%,14% 100%);transform-origin:36% 60%;z-index:1}
+.guild2d-rig-leg-front{clip-path:polygon(47% 56%,83% 56%,85% 100%,45% 100%);transform-origin:63% 60%;z-index:2}
+.guild2d-rig-torso{clip-path:polygon(29% 22%,72% 22%,79% 68%,22% 68%);transform-origin:50% 58%;z-index:3}
+.guild2d-rig-arm-back{clip-path:polygon(7% 20%,45% 20%,47% 77%,5% 76%);transform-origin:35% 29%;z-index:2}
+.guild2d-rig-arm-front{clip-path:polygon(57% 20%,94% 21%,99% 76%,54% 77%);transform-origin:65% 29%;z-index:4}
+.guild2d-rig-head{clip-path:polygon(30% 0%,71% 0%,72% 29%,28% 29%);transform-origin:50% 27%;z-index:5}
+.guild2d-unit[data-rig-ready="true"][data-rig-candidate="true"] .guild2d-body-rig{display:block}
+.guild2d-unit[data-rig-ready="true"][data-rig-candidate="true"] .guild2d-sprite>img{opacity:0}
+.guild2d-unit[data-rig-pose="idle"] .guild2d-rig-torso{animation:rig07-breath 3.2s ease-in-out infinite alternate}
+.guild2d-unit[data-rig-pose="idle"] .guild2d-rig-head{animation:rig07-look 4s ease-in-out infinite alternate}
+.guild2d-unit[data-rig-pose="idle"] .guild2d-rig-arm-back{animation:rig07-idle-arm 3s ease-in-out infinite alternate}
+.guild2d-unit[data-rig-pose="idle"] .guild2d-rig-arm-front{animation:rig07-idle-arm 3.2s ease-in-out -.8s infinite alternate-reverse}
+.guild2d-unit[data-rig-pose="melee"] .guild2d-rig-leg-back{animation:rig07-step-back var(--rig-duration,820ms) linear both}
+.guild2d-unit[data-rig-pose="melee"] .guild2d-rig-leg-front{animation:rig07-step-front var(--rig-duration,820ms) linear both}
+.guild2d-unit[data-rig-pose="melee"] .guild2d-rig-torso{animation:rig07-strike-torso var(--rig-duration,820ms) ease-in-out both}
+.guild2d-unit[data-rig-pose="melee"] .guild2d-rig-head{animation:rig07-strike-head var(--rig-duration,820ms) ease-in-out both}
+.guild2d-unit[data-rig-pose="melee"] .guild2d-rig-arm-back{animation:rig07-guard var(--rig-duration,820ms) ease-in-out both}
+.guild2d-unit[data-rig-pose="melee"] .guild2d-rig-arm-front{animation:rig07-swing var(--rig-duration,820ms) cubic-bezier(.13,.65,.18,1) both}
+.guild2d-unit[data-rig-pose="cast"] .guild2d-rig-arm-back{animation:rig07-cast-back var(--rig-duration,820ms) ease-in-out both}
+.guild2d-unit[data-rig-pose="cast"] .guild2d-rig-arm-front{animation:rig07-cast-front var(--rig-duration,820ms) ease-in-out both}
+.guild2d-unit[data-rig-pose="cast"] .guild2d-rig-torso{animation:rig07-cast-torso var(--rig-duration,820ms) ease-in-out both}
+.guild2d-unit[data-rig-pose="cast"] .guild2d-rig-head{animation:rig07-cast-head var(--rig-duration,820ms) ease-in-out both}
+.guild2d-unit[data-rig-pose="hit"] .guild2d-rig-torso{animation:rig07-hit-torso var(--rig-duration,820ms) ease-out both}
+.guild2d-unit[data-rig-pose="hit"] .guild2d-rig-arm-back,
+.guild2d-unit[data-rig-pose="hit"] .guild2d-rig-arm-front{animation:rig07-hit-arm var(--rig-duration,820ms) ease-out both}
+.guild2d-unit[data-rig-pose="hit"] .guild2d-rig-head{animation:rig07-hit-head var(--rig-duration,820ms) ease-out both}
+.guild2d-unit[data-rig-pose="fall"] .guild2d-body-rig{transform:rotate(-7deg) translateY(8px);filter:grayscale(.6)}
+@keyframes rig07-breath{from{transform:translateY(1px) scaleX(.995)}to{transform:translateY(-2px) scaleX(1.012)}}
+@keyframes rig07-look{from{transform:rotate(-1deg)}to{transform:rotate(1deg)}}
+@keyframes rig07-idle-arm{from{transform:rotate(-1deg)}to{transform:rotate(2deg)}}
+@keyframes rig07-step-front{0%,12%,100%{transform:rotate(0)}25%{transform:rotate(-11deg)}48%,61%{transform:rotate(12deg)}78%{transform:rotate(-4deg)}}
+@keyframes rig07-step-back{0%,12%,100%{transform:rotate(0)}24%{transform:rotate(9deg)}48%,61%{transform:rotate(-10deg)}78%{transform:rotate(3deg)}}
+@keyframes rig07-strike-torso{0%,14%,100%{transform:rotate(0)}25%{transform:rotate(-5deg) translateY(3px)}48%,61%{transform:rotate(8deg) translateY(-3px)}85%{transform:rotate(-2deg)}}
+@keyframes rig07-strike-head{0%,20%,100%{transform:rotate(0)}44%{transform:rotate(-5deg)}55%,61%{transform:rotate(5deg)}}
+@keyframes rig07-guard{0%,13%,100%{transform:rotate(0)}26%{transform:rotate(-15deg)}53%,61%{transform:rotate(12deg)}}
+@keyframes rig07-swing{0%,16%,100%{transform:rotate(0)}29%{transform:rotate(-33deg)}49%{transform:rotate(25deg)}54%,61%{transform:rotate(47deg)}80%{transform:rotate(12deg)}}
+@keyframes rig07-cast-back{0%,11%,100%{transform:rotate(0)}30%{transform:rotate(-26deg)}45%,58%{transform:rotate(-33deg)}82%{transform:rotate(-10deg)}}
+@keyframes rig07-cast-front{0%,13%,100%{transform:rotate(0)}30%{transform:rotate(37deg)}45%,58%{transform:rotate(48deg)}81%{transform:rotate(12deg)}}
+@keyframes rig07-cast-torso{0%,10%,100%{transform:translateY(0)}28%{transform:translateY(-4px) scaleX(1.03)}48%,62%{transform:translateY(-7px) scaleX(1.04)}}
+@keyframes rig07-cast-head{0%,20%,100%{transform:rotate(0)}42%,60%{transform:rotate(-8deg)}}
+@keyframes rig07-hit-torso{0%,45%,100%{transform:rotate(0)}53%{transform:rotate(-13deg) translateY(2px)}68%{transform:rotate(5deg)}}
+@keyframes rig07-hit-arm{0%,44%,100%{transform:rotate(0)}54%{transform:rotate(-17deg)}70%{transform:rotate(7deg)}}
+@keyframes rig07-hit-head{0%,43%,100%{transform:rotate(0)}54%{transform:rotate(-11deg)}70%{transform:rotate(4deg)}}
+.guild-lite-mode .guild2d-unit .guild2d-body-rig{display:none!important}
+.guild-lite-mode .guild2d-unit .guild2d-sprite>img{opacity:1!important}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-unit .guild2d-body-rig{display:none!important}
+ .guild2d-unit .guild2d-sprite>img{opacity:1!important}
+ .guild2d-rig-part{animation:none!important;will-change:auto!important}
+}

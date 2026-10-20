@@ -1,0 +1,30 @@
+import assert from "node:assert/strict";
+import {qualityForDevice,visualBudget,resolvedVisualBudget,particleBudget,areaBudget} from "../lib/combat-visual-budget.ts";
+const d={width:1440,height:900,fighters:8,cores:8,memoryGB:8,coarsePointer:false};
+assert.equal(qualityForDevice(d),"full");
+assert.equal(qualityForDevice({...d,width:390,coarsePointer:true}),"economy");
+assert.equal(qualityForDevice({...d,width:390,fighters:3,coarsePointer:true}),"balanced");
+assert.equal(qualityForDevice({...d,width:768,coarsePointer:true}),"balanced");
+assert.equal(qualityForDevice({...d,width:390,cores:2}),"economy");
+assert.equal(qualityForDevice({...d,memoryGB:2}),"economy");
+assert.equal(qualityForDevice({...d,saveData:true}),"economy");
+assert.equal(qualityForDevice({...d,reducedMotion:true}),"static");
+assert.equal(qualityForDevice({...d,width:820,coarsePointer:false}),"full");
+assert.equal(resolvedVisualBudget({...d,reducedMotion:true},"full").quality,"static");
+assert.equal(resolvedVisualBudget({...d,width:390},"full").quality,"full");
+assert.equal(resolvedVisualBudget({...d,width:1440},"economy").quality,"economy");
+const tiers=["full","balanced","economy","static"] as const;
+assert.deepEqual(tiers.map(q=>visualBudget(q).particles),[12,6,3,0]);
+assert.deepEqual(tiers.map(q=>visualBudget(q).statusCount),[4,2,1,1]);
+assert.deepEqual(tiers.map(q=>visualBudget(q).areaMarks),[4,4,3,0]);
+for(const q of tiers){
+ const b=visualBudget(q);
+ assert.ok(b.particles<=12&&b.statusCount<=4&&b.areaMarks<=4);
+ assert.equal(particleBudget(25,b),b.particles);
+ assert.equal(particleBudget(-3,b),0);
+ assert.equal(particleBudget(NaN,b),0);
+ assert.equal(areaBudget([1,2,3,4,5],b).length,b.areaMarks);
+}
+assert.ok(visualBudget("full").rig&&!visualBudget("economy").rig);
+assert.ok(!visualBudget("balanced").cameraShake);
+console.log("BLOCO_15A_OK: quatro níveis determinísticos, 8 combatentes, orçamento visual sem salvar dados.");

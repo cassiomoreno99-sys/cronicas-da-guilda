@@ -22,7 +22,7 @@ const pulse=(p:number,at:number,width:number)=>Math.max(0,1-Math.abs(p-at)/width
 /** A single deterministic timeline, readable by both the animation and tests. */
 export function duelPose(ms:number):Pose{
  const t=Math.max(0,Math.min(LENGTH,ms));
- const p=t/LENGTH;
+ // Fases controladas em milissegundos, não em porcentagens arbitrárias.
  const phase:Phase=t<170?"anticipation":t<430?"dash":t<550?"plant":
   t<785?"swing":t<840?"impact":t<1110?"reaction":t<1330?"recover":
   t<1680?"return":"idle";
@@ -273,8 +273,8 @@ export default function DuelScene(){
  const slashPath="M0 -80 Q104 -132 184 -4";
  return <section className="duel-lab" aria-label="Laboratório isolado: guerreiro contra monstro" data-lab="duel-01" data-phase={pose.phase} data-hero-x={pose.heroX.toFixed(1)} data-monster-x={pose.monsterX.toFixed(1)}>
   <style>{STYLES}</style>
-  <div className="duel-lab__header"><h2>Duelo 01 — prova de movimento</h2>
-   <span className="duel-lab__note">CENA ISOLADA · SEM MOTOR DO JOGO</span></div>
+  <div className="duel-lab__header"><h2>Duelo 02 — movimento + arte</h2>
+   <span className="duel-lab__note">GOLPE ARTICULADO · ENSAIO ISOLADO</span></div>
   <div className="duel-lab__stage">
    <svg role="img" aria-label="Guerreiro articulado avança, golpeia o monstro e retorna à formação"
      viewBox="0 0 900 500" preserveAspectRatio="xMidYMid meet">
@@ -301,6 +301,15 @@ export default function DuelScene(){
     <circle cx="580" cy="115" r="30" fill="#d4dfeb" opacity=".62"/>
     <path d="M0 275 L90 172 170 238 295 139 393 237 510 170 605 255 720 134 820 210 900 170 900 360 0 360Z" fill="#162739"/>
     <path d="M0 322 L101 244 202 317 313 250 431 310 532 236 660 307 777 244 900 325 900 420 0 420Z" fill="#243347"/>
+    {/* Ruins in depth, not a new battlefield or gameplay component */}
+    <g opacity=".67" stroke="#121e2a" strokeWidth="4">
+      <path d="M49 389 L49 261 92 261 96 326 115 332 118 392Z" fill="#465466"/>
+      <path d="M52 278 L106 283 M55 312 L101 312 M72 267 L73 379" stroke="#718194" strokeWidth="2" opacity=".45"/>
+      <path d="M758 389 L766 240 809 239 816 386Z" fill="#45556a"/>
+      <path d="M753 267 L815 267 M761 309 L813 308 M788 242 L790 385" stroke="#93a0a6" strokeWidth="2" opacity=".35"/>
+      <path d="M789 241 L843 216 847 236 813 260Z" fill="#303f50"/>
+    </g>
+    <path d="M0 398 L900 394" stroke="#6c8293" strokeWidth="3" opacity=".23"/>
     <path d="M0 417 L900 417 900 500 0 500Z" fill="url(#duel-floor)"/>
     {Array.from({length:13},(_,i)=><path key={i} d={"M"+(i*92-110)+" 435 l105 -16 50 81"} fill="none" stroke="#79818a" opacity=".21" strokeWidth="2"/>)}
     <path d="M0 453 Q420 429 900 457" stroke="#96a1ad" opacity=".18" strokeWidth="4" fill="none"/>
@@ -311,19 +320,34 @@ export default function DuelScene(){
       <ellipse cx={pose.heroX-24} cy="424" rx="60" ry="15" fill="#b7b4aa" opacity=".32"/>
       <circle cx={pose.heroX-53} cy="400" r="9" fill="#c0bbc0" opacity=".42"/>
       <circle cx={pose.heroX+12} cy="406" r="6" fill="#c0bbc0" opacity=".32"/>
+      {Array.from({length:5},(_,i)=><g key={i} transform={"translate("+(pose.heroX-52+i*19)+" "+(412-(i%3)*9)+")"}>
+       <path d="M-5 2 L0 -7 8 1Z" fill="#c1b7a1" opacity=".55"/>
+      </g>)}
      </g>}
      {pose.slash>0&&<g data-testid="duel-slash" transform="translate(589 280)" opacity={pose.slash}>
-      <path d={slashPath} fill="none" stroke="#d8f3ff" strokeWidth="17" opacity=".3" strokeLinecap="round"/>
-      <path d={slashPath} fill="none" stroke="#f5faff" strokeWidth="5" strokeLinecap="round"/>
+      <path d={slashPath} fill="none" stroke="#72d7ff" strokeWidth="26" opacity=".17" strokeLinecap="round"/>
+      <path d={slashPath} fill="none" stroke="#d8f3ff" strokeWidth="14" opacity=".45" strokeLinecap="round"/>
+      <path d={slashPath} fill="none" stroke="#fcffff" strokeWidth="4" strokeLinecap="round"/>
+      <path d="M26 -66 Q104 -104 166 -10" fill="none" stroke="#99daff" strokeWidth="2" opacity=".58"/>
      </g>}
      {pose.hit>0&&<g data-testid="duel-impact" opacity={pose.hit}>
-      <circle cx="689" cy="293" r={40+pose.hit*26} fill="none" stroke="#ffeaa8" strokeWidth="7"/>
-      <path d="M689 223 V195 M689 364 V394 M620 292 H587 M755 292 H790 M642 246 l-28 -28 M741 246 l28 -28" stroke="#fff2b5" strokeWidth="8" strokeLinecap="round"/>
+      <circle cx="689" cy="293" r={39+pose.hit*26} fill="none" stroke="#ffeaa8" strokeWidth="6"/>
+      <circle cx="689" cy="293" r={26+pose.hit*14} fill="none" stroke="#ffffff" strokeWidth="3" opacity=".7"/>
+      <path d="M689 223 V195 M689 364 V394 M620 292 H587 M755 292 H790 M642 246 l-28 -28 M741 246 l28 -28" stroke="#fff2b5" strokeWidth="7" strokeLinecap="round"/>
+      {Array.from({length:8},(_,i)=>{
+       const a=i*Math.PI/4;
+       const x=689+Math.cos(a)*67,y=293+Math.sin(a)*67;
+       return <path key={i} d={"M"+x.toFixed(1)+" "+y.toFixed(1)+" l"+(Math.cos(a)*13).toFixed(1)+" "+(Math.sin(a)*13).toFixed(1)} stroke={i%2?"#fff2b5":"#b8eeff"} strokeWidth={3+i%3} strokeLinecap="round"/>;
+      })}
+      <g transform={"translate("+(744+pose.monsterX)+" 416)"}>
+       <ellipse cx="0" cy="0" rx={36+pose.hit*18} ry={10+pose.hit*4} fill="#b0ae9b" opacity=".35"/>
+       <path d="M-18 -9 l-8 -11 -8 13 M19 -8 l12 -17 10 13 M0 -6 l3 -21 8 8" fill="none" stroke="#ded3b8" strokeWidth="3"/>
+      </g>
      </g>}
     </g>
     <rect x="15" y="16" width="292" height="39" rx="8" fill="#0c1c31" opacity=".88"/>
     <text x="30" y="43" fill="#ffdfac" fontSize="19" fontWeight="bold">GUERREIRO vs MONSTRO</text>
-    <text x="24" y="483" fill="#d5e5eb" fontSize="16">Articulação real de braços, pernas, arma e torso</text>
+    <text x="24" y="483" fill="#d5e5eb" fontSize="16">Armadura, arma e criatura com articulações independentes</text>
    </svg>
   </div>
   <div className="duel-lab__controls">

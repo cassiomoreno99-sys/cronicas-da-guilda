@@ -29,16 +29,20 @@ try{
     ["swing","corte"],["impact","impacto"],["reaction","reacao"],
     ["recover","recuperacao"],["return","retorno"]
    ];
-   const phases=[],xs=[];
+   const phases=[],xs=[],articulations=[];
    for(const [phase,name] of times){
     await page.waitForFunction(expected=>document.querySelector('[data-lab="duel-01"]')?.getAttribute("data-phase")===expected,phase,{timeout:6000,polling:20});
     const result=await root.evaluate(el=>({
      heroX:Number(el.getAttribute("data-hero-x")),
      enemyX:Number(el.getAttribute("data-monster-x")),
      sword:el.querySelector('[data-testid="duel-sword-arm"]')?.getAttribute("transform"),
+     leg:el.querySelector('[data-testid="duel-front-leg"]')?.getAttribute("transform"),
+     torso:el.querySelector('[data-testid="duel-torso"]')?.getAttribute("transform"),
+     enemy:el.querySelector('[data-testid="duel-monster-torso"]')?.getAttribute("transform"),
+     head:el.querySelector('[data-testid="duel-monster-head"]')?.getAttribute("transform"),
      body:el.querySelector('[data-testid="duel-warrior"]')?.getAttribute("transform")
     }));
-    phases.push(phase);xs.push(result.heroX);
+    phases.push(phase);xs.push(result.heroX);articulations.push(result);
     if(["preparacao","avanco","base","corte","impacto","reacao","retorno"].includes(name))
      await root.screenshot({path:"visual-report/duelo01-"+name+"-"+width+".png"});
     assert.ok(result.sword?.includes("rotate"),"Braço sem articulação: "+phase);
@@ -46,6 +50,13 @@ try{
    // A fase dash começa ANTES de avançar. Verificar a posição em 'plant',
    // quando o deslocamento já terminou, em vez de no início da corrida.
    assert.ok(xs[2]>initialX+340,"Avanço insuficiente até o inimigo");
+   assert.notEqual(articulations[0].sword,articulations[3].sword,"Braço e espada não se articulam");
+   assert.notEqual(articulations[1].leg,articulations[2].leg,"As pernas estão estáticas");
+   assert.notEqual(articulations[2].torso,articulations[3].torso,"Tronco não participa do golpe");
+   assert.notEqual(articulations[2].enemy,articulations[5].enemy,"Monstro não inclina ao sofrer dano");
+   assert.notEqual(articulations[2].head,articulations[5].head,"Cabeça do monstro não reage");
+   assert.ok(await hero.locator("path").count()>30,"Armadura perdeu detalhes");
+   assert.ok(await monster.locator("path").count()>30,"Monstro perdeu detalhes");
    assert.ok(xs[4]>=xs[2]-1,"O guerreiro perdeu a posição no contato");
    // A fase 'return' começa ainda junto do inimigo; o deslocamento de volta
    // ocorre DURANTE os 350ms seguintes. Validar a posição final, não o início.

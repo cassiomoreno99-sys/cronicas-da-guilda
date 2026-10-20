@@ -46,7 +46,12 @@ export function skillForCue(log:readonly BattleLog[],cue:VisualCue|undefined,abi
   const found=abilities.find(a=>normalize(item.text)===normalize(hit.actorId||"")+" usa "+normalize(a.name)+"."
     ||normalize(item.text).endsWith(" usa "+normalize(a.name)+"."));
   if(item.kind==="ability"&&!item.amount&&found){castIndex=i;ability??=found;break;}
-  if(i!==cue.index&&item.amount&&damaging.has(item.kind))break;
+  if(i!==cue.index&&item.amount&&damaging.has(item.kind)){
+   // Uma magia de área produz vários acertos consecutivos no mesmo turno:
+   // atravessá-los até a linha original "usa habilidade".
+   const sameSkill=!!ability&&normalize(item.text).startsWith(normalize(ability.name)+" ");
+   if(!sameSkill)break;
+  }
  }
  if(!ability)return undefined;
  if(castIndex<0)castIndex=cue.index;

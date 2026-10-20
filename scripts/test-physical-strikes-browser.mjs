@@ -73,7 +73,7 @@ try{
    }
    assert.ok(strike,"O combate real não produziu golpe físico");
    assert.ok(styles.includes(strike.style),JSON.stringify(strike));
-   assert.ok(strike.actualFX&&strike.windup&&strike.particles>=6&&!strike.generic,
+   assert.ok(strike.actualFX&&strike.windup&&strike.particles>=3&&!strike.generic,
     "Efeitos físicos duplicados ou incompletos: "+JSON.stringify(strike));
    assert.ok(original.ids.length>=2);
    await page.emulateMedia({reducedMotion:"reduce"});

@@ -27,6 +27,12 @@ try{
    }
    assert.ok(await send.isEnabled(),"Equipe não pronta para iniciar a arena");
    await send.click();
+   const qualitySwitch=page.locator(".guild2d-quality-control");
+   await qualitySwitch.waitFor({state:"visible"});
+   // Este teste verifica RIG COMPLETO; em aparelho fraco, o padrão econômico
+   // preserva a imagem original e suprime o rig intencionalmente.
+   if(await page.locator('.guild2d-stage[data-quality="economy"]').count())
+    await qualitySwitch.click();
    const stage=page.locator(".guild2d-stage");
    await stage.waitFor({state:"visible",timeout:15000});
    await page.waitForFunction(()=>[...document.querySelectorAll(".guild2d-unit img")].every(i=>i.complete&&i.naturalWidth>0),null,{timeout:20000});

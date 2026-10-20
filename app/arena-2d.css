@@ -1797,3 +1797,68 @@
  .guild2d-stage .guild2d-unit[data-bestiary-motion] .guild2d-sprite img{animation:none!important;will-change:auto!important}
  .guild2d-stage .guild2d-unit[data-bestiary-motion] .guild2d-sprite::after{display:none!important}
 }
+
+/* BLOCO 15B — custo de oito sprites na arena móvel.
+   O tipo de combate e as nove poses de deslocamento permanecem os mesmos. */
+.guild2d-quality-control{
+ display:inline-flex;align-items:center;justify-content:center;
+ margin:7px auto 0;padding:5px 9px;min-height:32px;border:1px solid #8096a8;
+ border-radius:6px;background:#172e43;color:#f7dba8;font:700 10px system-ui;
+ touch-action:manipulation;
+}
+.guild2d-quality-control:focus-visible{outline:2px solid #fff2bc;outline-offset:2px}
+.guild2d-stage[data-quality="economy"] .guild2d-sprite,
+.guild2d-stage[data-quality="static"] .guild2d-sprite{
+ animation:none!important;will-change:auto!important
+}
+.guild2d-stage[data-quality="economy"] .guild2d-unit,
+.guild2d-stage[data-quality="static"] .guild2d-unit{
+ filter:none!important;transition:opacity .18s!important
+}
+.guild2d-stage[data-quality="economy"] .guild2d-move-shadow,
+.guild2d-stage[data-quality="static"] .guild2d-move-shadow,
+.guild2d-stage[data-quality="economy"] .guild2d-body-rig,
+.guild2d-stage[data-quality="static"] .guild2d-body-rig{display:none!important}
+.guild2d-stage[data-quality="economy"] .guild2d-unit .guild2d-sprite>img,
+.guild2d-stage[data-quality="static"] .guild2d-unit .guild2d-sprite>img{
+ opacity:1!important
+}
+.guild2d-stage[data-quality="economy"] .guild2d-status-loop,
+.guild2d-stage[data-quality="economy"] .guild2d-status-core,
+.guild2d-stage[data-quality="economy"] .guild2d-boss-presence i,
+.guild2d-stage[data-quality="economy"] .guild2d-bestiary-ambient,
+.guild2d-stage[data-quality="static"] .guild2d-status-loop,
+.guild2d-stage[data-quality="static"] .guild2d-status-core,
+.guild2d-stage[data-quality="static"] .guild2d-boss-presence i{animation:none!important}
+.guild2d-stage[data-quality="economy"] .guild2d-status-core,
+.guild2d-stage[data-quality="economy"] .guild2d-reaction-particle,
+.guild2d-stage[data-quality="economy"] .guild2d-reaction-symbol,
+.guild2d-stage[data-quality="economy"] .guild2d-physical-swing.echo,
+.guild2d-stage[data-quality="economy"] .guild2d-physical-arrow .tail,
+.guild2d-stage[data-quality="economy"] .guild2d-magic-inner-circle,
+.guild2d-stage[data-quality="economy"] .guild2d-magic-glyph,
+.guild2d-stage[data-quality="economy"] .guild2d-magic-ripple.second{
+ display:none!important
+}
+.guild2d-stage[data-quality="economy"] .guild2d-sprite img,
+.guild2d-stage[data-quality="static"] .guild2d-sprite img{
+ animation:none!important;will-change:auto!important
+}
+.guild2d-stage[data-quality="economy"] .guild2d-physical-spark,
+.guild2d-stage[data-quality="economy"] .guild2d-magic-particle,
+.guild2d-stage[data-quality="economy"] .guild2d-vfx-particle,
+.guild2d-stage[data-quality="economy"] .guild2d-spectacle-shard{
+ box-shadow:none!important;filter:none!important
+}
+.guild2d-stage[data-quality="economy"] .guild2d-unit[data-bestiary-motion]:not([data-bestiary-motion="classic"]) .guild2d-sprite::after,
+.guild2d-stage[data-quality="static"] .guild2d-unit[data-bestiary-motion]:not([data-bestiary-motion="classic"]) .guild2d-sprite::after{display:none!important}
+.guild2d-stage[data-quality="static"] .guild2d-physical-strike,
+.guild2d-stage[data-quality="static"] .guild2d-advanced-spell,
+.guild2d-stage[data-quality="static"] .guild2d-spectacle,
+.guild2d-stage[data-quality="static"] .guild2d-vfx,
+.guild2d-stage[data-quality="static"] .guild2d-reaction-flash{display:none!important}
+@media(prefers-reduced-motion:reduce){
+ .guild2d-stage .guild2d-sprite,.guild2d-stage .guild2d-unit{
+  animation:none!important;transition:none!important;will-change:auto!important
+ }
+}

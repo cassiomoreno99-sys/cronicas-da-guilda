@@ -4,10 +4,10 @@ import type {SpellPlan} from "@/lib/combat-spell-plan.ts";
 /** Efeitos puramente visuais. Não altera ações, dano, escudos ou status.
  * Conjuração → movimento → contato 54% → dissipação.
  */
-export function AdvancedSpellFX({plan,style,targets}:{plan:SpellPlan;style:CSSProperties;targets?:ReadonlyArray<{x:number;y:number}>}){
+export function AdvancedSpellFX({plan,style,targets,particleCount:budgetCount}:{plan:SpellPlan;style:CSSProperties;targets?:ReadonlyArray<{x:number;y:number}>;particleCount?:number}){
  const bursts=targets&&targets.length>1?targets:[];
  const projectile=["projectile","drain","lightning"].includes(plan.motion);
- const particleCount=plan.particleCount;
+ const particleCount=Math.max(0,Math.min(plan.particleCount,Math.floor(budgetCount??plan.particleCount)));
  return <div className="guild2d-advanced-spell" style={style} aria-hidden="true" role="presentation"
   data-family={plan.family} data-motion={plan.motion} data-effect={plan.effect}
   data-heal={plan.healing} data-protect={plan.protecting} data-multi={plan.multiTarget}>
@@ -36,7 +36,7 @@ export function AdvancedSpellFX({plan,style,targets}:{plan:SpellPlan;style:CSSPr
     <i className="guild2d-magic-helix a"/>
     <i className="guild2d-magic-helix b"/>
     {Array.from({length:particleCount},(_,n)=><i key={n} className="guild2d-magic-particle"
-     style={{"--magic-ray":n,"--magic-count":particleCount} as CSSProperties}/>)}
+     style={{"--magic-ray":n,"--magic-count":Math.max(1,particleCount)} as CSSProperties}/>)}
    </span>
    {bursts.map((p,i)=><span className="guild2d-magic-area" key={i} style={{
     left:p.x+"%",top:p.y+"%",animationDelay:i*30+"ms"

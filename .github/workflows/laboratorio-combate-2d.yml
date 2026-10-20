@@ -56,6 +56,10 @@ jobs:
         run: |
           node --experimental-strip-types scripts/test-bestiary-assets.ts
           node scripts/test-bestiary-integration.mjs
+      - name: Bloco 15A - orçamento Android adaptativo
+        run: node --experimental-strip-types scripts/test-combat-visual-budget.ts
+      - name: Bloco 15B - integração de orçamento no React e CSS
+        run: node scripts/test-combat-visual-budget-ui.mjs
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
       - name: Preparar navegador de auditoria (apenas CI)

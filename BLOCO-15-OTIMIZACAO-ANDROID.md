@@ -19,3 +19,12 @@
 - Testes puros de budget, integração, browser Android (320/390) e desktop, estresse DOM com até 8 unidades, regressão 6 telas, capturas e vídeos.
 - Medir número de nós, animações ativas e tempo amostrado de frames em **Chromium emulando viewport**; documentar a limitação.
 - Manter `main` e Vercel intactas. Revisão estética/telefone real ainda necessária.
+
+## 15B — implementação efetiva
+- A arena escolhe a qualidade por largura, combatentes ativos e sinais de hardware disponíveis, com atualização em orientação/movimento reduzido.
+- Controle acessível **Visual**: alterna automático/completo/equilibrado/econômico; a preferência de movimento reduzido prevalece.
+- `particleBudget` é aplicado na criação real de nós DOM de quatro camadas (arma, magia, suprema e efeito genérico); não apenas `display:none`.
+- `areaBudget` limita marcas secundárias de área sem tocar a lista verdadeira de alvos do motor.
+- Status e recortes do rig não são montados além do orçamento; a imagem original permanece sempre.
+- No econômico, aura/bestiário/idle contínuos não animam, sombra e filtros pesados são desligados, mantendo os quadros oficiais de coreografia para não perder timing e colisão.
+- Tremor de câmera apenas no modo completo; HUD, danos, cooldowns e objetos não alterados.

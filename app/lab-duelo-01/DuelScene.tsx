@@ -6,13 +6,14 @@ import type {CSSProperties} from "react";
  * Self-contained articulated SVG duel: no game imports, no save, no production route.
  * Controls: ATTACK / ENTER / SPACE; client-side animation only.
  */
-type Phase="idle"|"anticipation"|"dash"|"plant"|"swing"|"impact"|"reaction"|"recover"|"return";
-export type AttackStyle="slash"|"heavy";
+type Phase="idle"|"anticipation"|"dash"|"plant"|"swing"|"impact"|"reaction"|"recover"|"return"|"enemyApproach"|"enemyWindup"|"block"|"counterWindup"|"counterSwing"|"counterImpact"|"stagger"|"disengage";
+export type AttackStyle="slash"|"heavy"|"exchange";
 const HEAVY_LENGTH=2280;
+const EXCHANGE_LENGTH=3000;
 type Pose={
  phase:Phase;heroX:number;heroY:number;heroTorso:number;heroBackLeg:number;heroFrontLeg:number;
  swordArm:number;heroElbow:number;heroWrist:number;shieldArm:number;cape:number;monsterX:number;monsterTorso:number;monsterY:number;monsterFrontLeg:number;monsterBackLeg:number;
- monsterHead:number;monsterArm:number;monsterSquash:number;slash:number;dust:number;hit:number;
+ monsterHead:number;monsterArm:number;monsterSquash:number;slash:number;dust:number;hit:number;blockFx:number;clawFx:number;
 };
 const LENGTH=1700;
 const lerp=(a:number,b:number,t:number)=>a+(b-a)*Math.max(0,Math.min(1,t));
@@ -68,7 +69,7 @@ export function duelPose(ms:number):Pose{
   monsterSquash:isRecoil?lerp(1,.87,recoil):t>=1320?lerp(.87,1,ease((t-1320)/350)):1,
   slash:phase==="swing"?pulse(swing,.84,.44):phase==="impact"?1:0,
   dust:phase==="dash"?pulse((t-170)/260,.66,.5):phase==="plant"?1-plant:0,
-  hit:phase==="impact"?1:phase==="reaction"?1-ease((t-840)/260):0
+  hit:phase==="impact"?1:phase==="reaction"?1-ease((t-840)/260):0,blockFx:0,clawFx:0
  };
 }
 
@@ -118,6 +119,89 @@ export function duelHeavyPose(ms:number):Pose{
   monsterSquash:recoiling?lerp(1,.74,after):scaled>=1320?lerp(.74,1,reset):1,
   slash:base.phase==="swing"?pulse(swing,.79,.52):base.slash,
   hit:base.hit
+ };
+}
+
+
+/** Duelo 04: an honest reciprocal exchange, not two characters doing idle poses.
+ * Monster crosses arena on articulated legs, telegraphs a claw strike,
+ * warrior moves shield into the attack path, absorbs hit, counterattacks,
+ * monster staggers with staggered legs, both disengage.
+ * No game engine events or fake damage are created.
+ */
+export function duelExchangePose(ms:number):Pose{
+ const t=Math.max(0,Math.min(EXCHANGE_LENGTH,ms));
+ const base=duelPose(LENGTH);
+ const phase:Phase=t<500?"enemyApproach":t<780?"enemyWindup":t<1020?"block":
+  t<1260?"counterWindup":t<1670?"counterSwing":t<1780?"counterImpact":
+  t<2300?"stagger":t<2990?"disengage":"idle";
+ const arrival=easeOut(t/500);
+ const brace=ease((t-500)/280);
+ const claw=ease((t-780)/240);
+ const counterReady=ease((t-1020)/240);
+ const sword=ease((t-1260)/410);
+ const recoil=easeOut((t-1780)/350);
+ const retreat=ease((t-2300)/690);
+ const monsterAt=730-310*arrival;
+ const monsterX=t<1020?monsterAt-730:
+  t<1780?-310+20*ease((t-1020)/760):
+  t<2300?-290+125*recoil:
+  -165+165*retreat;
+ const heroX=t<500?185+60*arrival:
+  t<1020?245+60*brace:
+  t<1260?305:
+  t<1780?305+43*sword:
+  t<2300?348:348-163*retreat;
+ const attackArm=t<500?14:
+  t<780?lerp(14,-132,brace):
+  t<1020?lerp(-132,62,claw):
+  t<1260?lerp(62,20,counterReady):
+  t<1780?20:
+  t<2300?lerp(20,-31,recoil):lerp(-31,0,retreat);
+ const blockGrip=t<500?8:
+  t<780?lerp(8,-171,brace):
+  t<1020?-171:
+  t<1260?lerp(-171,-9,counterReady):
+  t<2300?-9:lerp(-9,8,retreat);
+ const swordArm=t<1020?-27:
+  t<1260?lerp(-27,-124,counterReady):
+  t<1670?lerp(-124,69,sword):
+  t<2300?69:lerp(69,-28,retreat);
+ const braceStrike=t>=780&&t<1020;
+ const contact=t>=1670&&t<1780;
+ return {...base,phase,
+  heroX,heroY:t>=780&&t<1020?3*claw:t>=1260&&t<1670?-3*Math.sin(sword*Math.PI):0,
+  heroTorso:t<500?0:t<1020?lerp(0,-15,brace):
+   t<1260?lerp(-15,-29,counterReady):
+   t<1670?lerp(-29,32,sword):
+   t<2300?32:lerp(32,0,retreat),
+  heroBackLeg:t<500?-6*Math.sin(t/70):
+   t<1260?-22:t<2300?-35:lerp(-35,0,retreat),
+  heroFrontLeg:t<500?6*Math.sin(t/70):
+   t<1260?26:t<2300?33:lerp(33,0,retreat),
+  shieldArm:blockGrip,swordArm,
+  heroElbow:t<1020?-10:t<1260?lerp(-10,-45,counterReady):
+   t<1670?lerp(-45,43,sword):t<2300?43:lerp(43,-10,retreat),
+  heroWrist:t<1260?0:t<1670?lerp(-13,22,sword):t<2300?22:lerp(22,0,retreat),
+  cape:t<500?-11:t<1020?-8:t<1780?18:t<2300?-5:lerp(-5,0,retreat),
+  monsterX,
+  monsterY:t>=1780&&t<2300?10*recoil:t>=2300?lerp(10,0,retreat):0,
+  monsterFrontLeg:t<500?31*Math.sin(t/83):
+   t<1780?24:t<2300?lerp(24,37,recoil):lerp(37,0,retreat),
+  monsterBackLeg:t<500?-31*Math.sin(t/83):
+   t<1780?-22:t<2300?lerp(-22,-34,recoil):lerp(-34,0,retreat),
+  monsterTorso:t<500?-9:t<780?lerp(-9,-27,brace):
+   t<1020?lerp(-27,22,claw):
+   t<1780?lerp(22,4,ease((t-1020)/650)):
+   t<2300?lerp(4,46,recoil):lerp(46,0,retreat),
+  monsterHead:t<1780?-6:t<2300?33*recoil:lerp(33,0,retreat),
+  monsterArm:attackArm,
+  monsterSquash:t<1780?1:t<2300?lerp(1,.75,recoil):lerp(.75,1,retreat),
+  slash:t>=1260&&t<1780?(contact?1:pulse(sword,.85,.45)):0,
+  dust:t<500?pulse(t/500,.5,.55):t>=2300?pulse(retreat,.4,.45):0,
+  hit:contact?1:t>=1780&&t<2020?1-ease((t-1780)/240):0,
+  blockFx:braceStrike?pulse(claw,.8,.38):0,
+  clawFx:t>=780&&t<1020?pulse(claw,.65,.55):0
  };
 }
 
@@ -277,8 +361,8 @@ const STYLES=[
  '.duel-lab__stage{width:100%;background:#101e30;border-radius:10px;overflow:hidden;position:relative;border:1px solid #6a788b}',
  '.duel-lab__stage svg{display:block;width:100%;height:auto;min-height:245px;max-height:550px}',
  '.duel-lab__controls{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:10px}',
- '.duel-lab__selector{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0 3px}',
- '.duel-lab__selector button{background:#233952;color:#d3e3ee;border:1px solid #6b859b;min-width:0;padding:9px 8px;font-size:13px}',
+ '.duel-lab__selector{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0 3px}',
+ '.duel-lab__selector button{background:#233952;color:#d3e3ee;border:1px solid #6b859b;min-width:0;padding:9px 5px;font-size:12px}',
  '.duel-lab__selector button[aria-pressed=true]{border:2px solid #f2cb8b;background:#4d3b2d;color:#ffedcb;box-shadow:inset 0 0 0 1px #b3905b}',
  '.duel-lab button{min-height:47px;min-width:140px;background:linear-gradient(#ffda96,#c68f53);color:#13283a;border:2px solid #ffe9bc;border-radius:9px;padding:10px 18px;font-weight:850;font-size:15px;cursor:pointer;touch-action:manipulation}',
  '.duel-lab button:disabled{filter:grayscale(.7);cursor:wait;opacity:.8}',
@@ -317,12 +401,12 @@ export default function DuelScene(){
  const attack=useCallback(()=>{
   if(raf.current!==null)return;
   if(prefersReduced){
-   setMs(selectedStyle==="heavy"?Math.round(805*HEAVY_LENGTH/LENGTH):805);
+   setMs(selectedStyle==="exchange"?1720:selectedStyle==="heavy"?Math.round(805*HEAVY_LENGTH/LENGTH):805);
    window.setTimeout(()=>setMs(null),450);
    return;
   }
   clock.current=performance.now();
-  const length=selectedStyle==="heavy"?HEAVY_LENGTH:LENGTH;
+  const length=selectedStyle==="exchange"?EXCHANGE_LENGTH:selectedStyle==="heavy"?HEAVY_LENGTH:LENGTH;
   const tick=(now:number)=>{
    const elapsed=Math.min(length,now-clock.current);
    setMs(elapsed);
@@ -332,17 +416,21 @@ export default function DuelScene(){
   raf.current=requestAnimationFrame(tick);
  },[prefersReduced,selectedStyle]);
  useEffect(()=>()=>{if(raf.current!==null)cancelAnimationFrame(raf.current);},[]);
- const pose=ms===null?IdlePose(idleMs):(selectedStyle==="heavy"?duelHeavyPose(ms):duelPose(ms));
+ const pose=ms===null?IdlePose(idleMs):(selectedStyle==="exchange"?duelExchangePose(ms):selectedStyle==="heavy"?duelHeavyPose(ms):duelPose(ms));
  const label=ms===null?"PRONTO":({
   anticipation:"PREPARANDO","dash":"AVANÇANDO","plant":"FIRMANDO A BASE",
   swing:"GOLPE DE ESPADA","impact":"IMPACTO","reaction":"INIMIGO RECUANDO",
-  recover:"RECUPERANDO","return":"RETORNANDO","idle":"PRONTO"
+  recover:"RECUPERANDO","return":"RETORNANDO","idle":"PRONTO",
+  enemyApproach:"MONSTRO AVANÇA",enemyWindup:"MONSTRO ARMA A GARRA",
+  block:"ESCUDO BLOQUEIA",counterWindup:"PREPARANDO CONTRAGOLPE",
+  counterSwing:"CONTRA-ATAQUE",counterImpact:"GOLPE CONECTADO",
+  stagger:"MONSTRO TROPEÇA",disengage:"RECUANDO À FORMAÇÃO"
  } as Record<Phase,string>)[pose.phase];
  const camera=ms!==null&&pose.hit>0?"translate("+(Math.sin(ms*.22)*pose.hit*(selectedStyle==="heavy"?4:2.5)).toFixed(1)+" 0)":"";
  const slashPath="M0 -80 Q104 -132 184 -4";
  return <section className="duel-lab" aria-label="Laboratório isolado: guerreiro contra monstro" data-lab="duel-01" data-style={selectedStyle} data-phase={pose.phase} data-hero-x={pose.heroX.toFixed(1)} data-monster-x={pose.monsterX.toFixed(1)}>
   <style>{STYLES}</style>
-  <div className="duel-lab__header"><h2>Duelo 03 — dois golpes reais</h2>
+  <div className="duel-lab__header"><h2>Duelo 04 — defesa e contra-ataque</h2>
    <span className="duel-lab__note">GOLPE ARTICULADO · ENSAIO ISOLADO</span></div>
   <div className="duel-lab__stage">
    <svg role="img" aria-label="Guerreiro articulado avança, golpeia o monstro e retorna à formação"
@@ -393,22 +481,31 @@ export default function DuelScene(){
        <path d="M-5 2 L0 -7 8 1Z" fill="#c1b7a1" opacity=".55"/>
       </g>)}
      </g>}
-     {pose.slash>0&&<g data-testid="duel-slash" transform="translate(589 280)" opacity={pose.slash}>
+     {pose.slash>0&&<g data-testid="duel-slash" transform={selectedStyle==="exchange"?"translate(340 265)":"translate(589 280)"} opacity={pose.slash}>
       <path d={slashPath} fill="none" stroke="#72d7ff" strokeWidth="26" opacity=".17" strokeLinecap="round"/>
       <path d={slashPath} fill="none" stroke="#d8f3ff" strokeWidth="14" opacity=".45" strokeLinecap="round"/>
       <path d={slashPath} fill="none" stroke="#fcffff" strokeWidth="4" strokeLinecap="round"/>
       <path d="M26 -66 Q104 -104 166 -10" fill="none" stroke="#99daff" strokeWidth="2" opacity=".58"/>
      </g>}
+     {pose.clawFx>0&&<g data-testid="duel-claw" opacity={pose.clawFx}>
+       <path d="M420 250 Q365 265 341 331 M429 268 Q370 286 351 343 M437 287 Q383 301 365 355"
+        fill="none" stroke="#b9ff9d" strokeWidth="7" strokeLinecap="round"/>
+     </g>}
+     {pose.blockFx>0&&<g data-testid="duel-shield-block" opacity={pose.blockFx}>
+       <circle cx="350" cy="320" r={23+15*pose.blockFx} fill="none" stroke="#e8eeff" strokeWidth="6"/>
+       <path d="M350 281 V265 M350 360 V376 M314 320 H295 M388 320 H404 M326 296 L309 279 M376 296 L391 279"
+        stroke="#f9e5a1" strokeWidth="6" strokeLinecap="round"/>
+     </g>}
      {pose.hit>0&&<g data-testid="duel-impact" opacity={pose.hit}>
-      <circle cx="689" cy="293" r={39+pose.hit*26} fill="none" stroke="#ffeaa8" strokeWidth="6"/>
-      <circle cx="689" cy="293" r={26+pose.hit*14} fill="none" stroke="#ffffff" strokeWidth="3" opacity=".7"/>
-      <path d="M689 223 V195 M689 364 V394 M620 292 H587 M755 292 H790 M642 246 l-28 -28 M741 246 l28 -28" stroke="#fff2b5" strokeWidth="7" strokeLinecap="round"/>
+      <circle cx={selectedStyle==="exchange"?460:689} cy="293" r={39+pose.hit*26} fill="none" stroke="#ffeaa8" strokeWidth="6"/>
+      <circle cx={selectedStyle==="exchange"?460:689} cy="293" r={26+pose.hit*14} fill="none" stroke="#ffffff" strokeWidth="3" opacity=".7"/>
+      <path d={selectedStyle==="exchange"?"M460 223 V195 M460 364 V394 M392 292 H359 M526 292 H561 M413 246 l-28 -28 M512 246 l28 -28":"M689 223 V195 M689 364 V394 M620 292 H587 M755 292 H790 M642 246 l-28 -28 M741 246 l28 -28"} stroke="#fff2b5" strokeWidth="7" strokeLinecap="round"/>
       {Array.from({length:8},(_,i)=>{
        const a=i*Math.PI/4;
-       const x=689+Math.cos(a)*67,y=293+Math.sin(a)*67;
+       const x=(selectedStyle==="exchange"?460:689)+Math.cos(a)*67,y=293+Math.sin(a)*67;
        return <path key={i} d={"M"+x.toFixed(1)+" "+y.toFixed(1)+" l"+(Math.cos(a)*13).toFixed(1)+" "+(Math.sin(a)*13).toFixed(1)} stroke={i%2?"#fff2b5":"#b8eeff"} strokeWidth={3+i%3} strokeLinecap="round"/>;
       })}
-      <g transform={"translate("+(744+pose.monsterX)+" 416)"}>
+      <g transform={"translate("+(selectedStyle==="exchange"?730+pose.monsterX:744+pose.monsterX)+" 416)"}>
        <ellipse cx="0" cy="0" rx={36+pose.hit*18} ry={10+pose.hit*4} fill="#b0ae9b" opacity=".35"/>
        <path d="M-18 -9 l-8 -11 -8 13 M19 -8 l12 -17 10 13 M0 -6 l3 -21 8 8" fill="none" stroke="#ded3b8" strokeWidth="3"/>
       </g>
@@ -424,12 +521,14 @@ export default function DuelScene(){
     disabled={ms!==null} data-style-option="slash" onClick={()=>setSelectedStyle("slash")}>Corte rápido</button>
    <button type="button" aria-label="Selecionar golpe pesado" aria-pressed={selectedStyle==="heavy"}
     disabled={ms!==null} data-style-option="heavy" onClick={()=>setSelectedStyle("heavy")}>Golpe pesado</button>
+   <button type="button" aria-label="Selecionar defesa e contra-ataque" aria-pressed={selectedStyle==="exchange"}
+    disabled={ms!==null} data-style-option="exchange" onClick={()=>setSelectedStyle("exchange")}>Defesa + contra-ataque</button>
   </div>
   <div className="duel-lab__controls">
    <button type="button" onClick={attack} disabled={ms!==null} aria-label="Atacar o monstro e ver a animação completa">
     {ms===null?"⚔ ATACAR / REPETIR":"GOLPE EM ANDAMENTO"}
    </button>
-   <span role="status" className="duel-lab__status"><strong>{selectedStyle==="heavy"?"Golpe pesado":"Corte rápido"}</strong> · {label}</span>
+   <span role="status" className="duel-lab__status"><strong>{selectedStyle==="exchange"?"Defesa + contra-ataque":selectedStyle==="heavy"?"Golpe pesado":"Corte rápido"}</strong> · {label}</span>
   </div>
   <p className="duel-lab__footer">Protótipo visual independente. Nenhum ponto de vida, inventário ou progresso do jogo é alterado.
    {prefersReduced?" Movimento reduzido: exibição de impacto sem sequência acelerada.":""}</p>

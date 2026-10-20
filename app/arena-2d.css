@@ -860,3 +860,39 @@
 }
 .guild-lite-mode .guild2d-claw-mark i{box-shadow:none}
 @media(prefers-reduced-motion:reduce){.guild2d-claw-mark{display:none!important;animation:none!important}}
+
+/* Artes reais de corpo inteiro: sem moldura, sem avatar redondo, em todos os
+   tamanhos de tela. O fallback continua como retrato compacto. */
+.guild2d-stage .guild2d-unit.guild2d-enemy[data-enemy-bestiary="true"][data-full-art="true"]{
+  width:clamp(65px,21cqw,125px)!important;
+  height:clamp(104px,27cqh,184px)!important;
+  min-width:0!important;min-height:0!important;
+  max-width:none!important;max-height:none!important;
+  overflow:visible!important;
+  background:transparent!important;
+}
+.guild2d-stage .guild2d-unit.guild2d-enemy[data-full-art="true"] .guild2d-sprite{
+  display:block;width:100%!important;height:100%!important;flex:1 1 100%!important;
+  margin:0!important;border:0!important;border-radius:0!important;
+  overflow:visible!important;box-shadow:none!important;background:transparent!important;
+}
+.guild2d-stage .guild2d-unit.guild2d-enemy[data-full-art="true"] .guild2d-sprite img{
+  width:100%!important;height:100%!important;
+  object-fit:contain!important;object-position:center bottom!important;
+  mask-image:none!important;-webkit-mask-image:none!important;
+  filter:drop-shadow(0 5px 6px #000d);
+}
+.guild2d-stage .guild2d-unit.guild2d-enemy[data-full-art="true"] .guild2d-sprite::before{display:none!important}
+.guild2d-stage .guild2d-hud.guild2d-hud-enemy[data-full-art="true"]{
+  width:clamp(76px,21cqw,129px)!important;
+  transform:translate(-50%,calc(clamp(104px,27cqh,184px) * .48))!important;
+}
+.guild2d-stage .guild2d-unit.guild2d-enemy[data-full-art="true"][data-selected="true"] .guild2d-sprite{
+  filter:drop-shadow(0 0 7px #ffe6a8);
+}
+@media(max-width:420px){
+  .guild2d-stage .guild2d-hud.guild2d-hud-enemy[data-full-art="true"] strong{
+    font-size:8px;line-height:1.1;white-space:nowrap;text-overflow:ellipsis;
+  }
+}
+.guild-lite-mode .guild2d-unit.guild2d-enemy[data-full-art="true"] .guild2d-sprite img{filter:none!important}

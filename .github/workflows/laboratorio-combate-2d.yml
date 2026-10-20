@@ -90,6 +90,8 @@ jobs:
         run: node scripts/test-combat-ability-browser.mjs
       - name: Bloco 14C - validar bestiário tardio Android e desktop
         run: node scripts/test-bestiary-browser.mjs
+      - name: Bloco 15C - budgets e carga de oito sprites Android/PC
+        run: node scripts/test-combat-visual-performance-browser.mjs
       - name: Gravar confronto animado e barra de habilidades (laboratório)
         run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
@@ -109,4 +111,6 @@ jobs:
             visual-report/bloco12-*.png
             visual-report/bloco13-*.png
             visual-report/bloco14-*.png
+            visual-report/bloco15-*.png
+            visual-report/bloco15-*.json
           if-no-files-found: ignore

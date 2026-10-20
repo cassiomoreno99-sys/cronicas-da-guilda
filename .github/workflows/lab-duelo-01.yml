@@ -1,4 +1,4 @@
-name: Duelo 01 — prova visual isolada (sem deploy)
+name: Duelo 03 — dois ataques articulados (sem deploy)
 on:
   push:
     branches: [laboratorio-combate-2d-fluido-20261020]
@@ -39,19 +39,19 @@ jobs:
           set -euo pipefail
           mkdir -p public/lab-duelo-01
           FFMPEG="$(node -p "require('ffmpeg-static')")"
-          "$FFMPEG" -hide_banner -loglevel error -y -i visual-report/duelo01-movimento-390.webm -c:v libx264 -pix_fmt yuv420p -profile:v baseline -level 3.1 -movflags +faststart -an public/lab-duelo-01/duelo01-android.mp4
-          "$FFMPEG" -hide_banner -loglevel error -y -i visual-report/duelo01-movimento-960.webm -c:v libx264 -pix_fmt yuv420p -movflags +faststart -an public/lab-duelo-01/duelo01-pc.mp4
+          "$FFMPEG" -hide_banner -loglevel error -y -i visual-report/duelo03-movimento-390.webm -c:v libx264 -pix_fmt yuv420p -profile:v baseline -level 3.1 -movflags +faststart -an public/lab-duelo-01/duelo03-android.mp4
+          "$FFMPEG" -hide_banner -loglevel error -y -i visual-report/duelo03-movimento-960.webm -c:v libx264 -pix_fmt yuv420p -movflags +faststart -an public/lab-duelo-01/duelo03-pc.mp4
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/lab-duelo-01/duelo01-android.mp4 public/lab-duelo-01/duelo01-pc.mp4
+          git add public/lab-duelo-01/duelo03-android.mp4 public/lab-duelo-01/duelo03-pc.mp4
           git commit -m "assets(lab): vídeos MP4 do duelo para assistir no Chrome"
           git push origin "HEAD:${GITHUB_REF_NAME}"
       - name: Vídeos e capturas — NÃO publica o jogo
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: duelo-01-comprovacao-visual
+          name: duelo-03-comprovacao-visual
           path: |
-            visual-report/duelo01-*.png
-            visual-report/duelo01-*.webm
+            visual-report/duelo03-*.png
+            visual-report/duelo03-*.webm
           if-no-files-found: ignore

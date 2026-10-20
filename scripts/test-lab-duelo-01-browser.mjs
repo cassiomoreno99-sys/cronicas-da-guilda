@@ -86,6 +86,49 @@ try{
     articulatedArm:true,independentLegs:true,torsoTwist:true,
     monsterHeadAndTorsoReaction:true,videoRecorded:true
    }));
+   // Segundo duelo na MESMA gravação: adversário reage ao golpe pesado.
+   await page.locator('[data-style-option="heavy"]').click();
+   assert.equal(await root.getAttribute("data-style"),"heavy");
+   await root.screenshot({path:"visual-report/duelo03-heavy-pronto-"+width+".png"});
+   await page.evaluate(()=>{
+    const root=document.querySelector('[data-lab="duel-01"]');
+    const trace=[],phases=[];
+    const part=id=>root.querySelector('[data-testid="'+id+'"]')?.getAttribute("transform")||"";
+    const snap=()=>{
+     const f={phase:root.dataset.phase,x:Number(root.dataset.heroX),m:Number(root.dataset.monsterX),
+      elbow:part("duel-forearm"),wrist:part("duel-wrist"),
+      knee:part("duel-front-leg"),foeKnee:part("duel-monster-front-leg"),
+      sword:part("duel-sword-arm"),head:part("duel-monster-head")};
+     trace.push(f);
+     if(phases[phases.length-1]?.phase!==f.phase)phases.push(f);
+    };
+    const obs=new MutationObserver(snap);
+    obs.observe(root,{attributes:true,attributeFilter:["data-phase","data-hero-x","data-monster-x"]});
+    window.__heavyTrace=trace;window.__heavyPhases=phases;window.__stopHeavy=()=>obs.disconnect();
+    snap();
+   });
+   await root.getByRole("button",{name:/Atacar o monstro/}).click();
+   await page.waitForFunction(()=>{
+    const root=document.querySelector('[data-lab="duel-01"]');
+    return root?.dataset.phase==="idle"&&(window.__heavyPhases||[]).some(x=>x.phase==="return");
+   },null,{timeout:8500,polling:25});
+   const heavy=await page.evaluate(()=>{
+    window.__stopHeavy?.();
+    return {trace:window.__heavyTrace||[],phases:window.__heavyPhases||[]};
+   });
+   for(const phase of ["anticipation","dash","plant","swing","impact","reaction","recover","return"])
+    assert.ok(heavy.phases.some(x=>x.phase===phase),"Golpe pesado perdeu "+phase);
+   assert.ok(Math.max(...heavy.trace.map(x=>x.m))>43,"Monstro não recua mais no golpe pesado");
+   assert.ok(new Set(heavy.trace.map(x=>x.elbow)).size>10,"Cotovelo sem articulação");
+   assert.ok(new Set(heavy.trace.map(x=>x.wrist)).size>6,"Punho sem articulação");
+   assert.ok(new Set(heavy.trace.map(x=>x.foeKnee)).size>6,"Joelho do monstro parado");
+   assert.ok(new Set(heavy.trace.map(x=>x.knee)).size>6,"Perna do guerreiro parada");
+   assert.ok(Math.max(...heavy.trace.map(x=>x.x))>560,"Golpe pesado não alcança inimigo");
+   assert.equal(Number(await root.getAttribute("data-hero-x")),185,"Guerreiro pesado não retornou");
+   await root.screenshot({path:"visual-report/duelo03-heavy-final-"+width+".png"});
+   console.log("LAB_DUELO_03_HEAVY_OK",JSON.stringify({width,recoil:Math.max(...heavy.trace.map(x=>x.m)),
+    elbowFrames:new Set(heavy.trace.map(x=>x.elbow)).size,
+    wristFrames:new Set(heavy.trace.map(x=>x.wrist)).size,styles:["slash","heavy"]}));
    assert.deepEqual(errors,[],"Erros JS: "+errors.join(" | "));
 
   }finally{
@@ -93,7 +136,7 @@ try{
    const video=await page.video()?.path();
    if(video){
     const {copyFile}=await import("node:fs/promises");
-    await copyFile(video,"visual-report/duelo01-movimento-"+width+".webm");
+    await copyFile(video,"visual-report/duelo03-movimento-"+width+".webm");
    }
   }
  }

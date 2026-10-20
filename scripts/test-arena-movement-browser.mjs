@@ -37,9 +37,14 @@ try{
       bars:el.querySelectorAll('.guild2d-hud [role="progressbar"]').length};
    });
    assert.ok(before.bars>=2);
-   const initial=await stage.evaluate(el=>([...el.querySelectorAll(".guild2d-hud")].map(h=>{
-     const r=h.getBoundingClientRect();return {id:h.dataset.fighterId,x:r.x,y:r.y};
-   })));
+   const initial=await stage.evaluate(el=>{
+    const scene=el.getBoundingClientRect();
+    window.__guildMotionImages=new Map([...el.querySelectorAll(".guild2d-unit")].map(u=>[u.dataset.fighterId,u.querySelector("img")]));
+    return [...el.querySelectorAll(".guild2d-hud")].map(h=>{
+     const r=h.getBoundingClientRect();
+     return {id:h.dataset.fighterId,x:r.x-scene.x,y:r.y-scene.y};
+    });
+   });
    const attack=page.getByRole("button",{name:/^Atacar/}).first();
    await attack.waitFor({state:"visible",timeout:15000});
    assert.ok(await attack.isEnabled(),"Botão atacar bloqueado");
@@ -70,13 +75,17 @@ try{
    await page.waitForTimeout(1200);
    const stable=await stage.evaluate((el,refs)=>{
     const units=[...el.querySelectorAll(".guild2d-unit")];
-    const stableImages=units.every(u=>u.querySelector("img")?.complete&&u.querySelector("img")?.naturalWidth>0);
+    const stableImages=units.every(u=>{
+     const img=u.querySelector("img");
+     return img?.complete&&img?.naturalWidth>0&&window.__guildMotionImages?.get(u.dataset.fighterId)===img;
+    });
     const noDuplicate=new Set(units.map(u=>u.dataset.fighterId)).size===units.length;
+    const scene=el.getBoundingClientRect();
     const hud=refs.every(ref=>{
      const node=[...el.querySelectorAll(".guild2d-hud")].find(h=>h.dataset.fighterId===ref.id);
      if(!node)return false;
      const rect=node.getBoundingClientRect();
-     return Math.abs(rect.x-ref.x)<2&&Math.abs(rect.y-ref.y)<2;
+     return Math.abs((rect.x-scene.x)-ref.x)<2&&Math.abs((rect.y-scene.y)-ref.y)<2;
     });
     return {stableImages,noDuplicate,hud};
    },initial);

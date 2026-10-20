@@ -25,3 +25,10 @@
 - Eventos `status` finais de escudo, esquiva, atordoamento e efeito periódico geram movimento temporário mesmo quando não há agressor no log.
 - O HUD original mantém os nomes e a duração; elementos novos são decorativos, sem leitura dupla por acessibilidade.
 - Modo leve desliga partículas e halos secundários, movimento reduzido desativa flashes e rotações contínuas.
+
+## 11C — testes de navegador e regressão
+- Chromium Android (390x844) e desktop (1440x900) no combate real.
+- Observação dos flashes e estados reais que surgirem no log, sem fabricar eventos ou alterar a campanha.
+- Ensaio visual isolado de três estados (escudo, veneno, atordoamento) e reação crítica, para não depender do sorteio da missão inicial.
+- Movimento reduzido e modo leve avaliados com CSS computado; salvamentos livres de efeitos de apresentação.
+- Capturas `visual-report/bloco11-*.png`; a aprovação estética continua dependente de revisão humana.

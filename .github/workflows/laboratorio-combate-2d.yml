@@ -40,6 +40,8 @@ jobs:
         run: node scripts/test-advanced-spells-integration.mjs
       - name: Bloco 11A - reações e estados do combate
         run: node --experimental-strip-types scripts/test-combat-reactions.ts
+      - name: Bloco 11B - elementos e acessibilidade
+        run: node scripts/test-combat-reactions-ui.mjs
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
       - name: Preparar navegador de auditoria (apenas CI)
@@ -62,6 +64,8 @@ jobs:
         run: node scripts/test-physical-strikes-browser.mjs
       - name: Bloco 10C - auditoria de magias Android e PC
         run: node scripts/test-advanced-spells-browser.mjs
+      - name: Bloco 11C - verificar dano e status no Android e desktop
+        run: node scripts/test-combat-reactions-browser.mjs
       - name: Gravar confronto animado e barra de habilidades (laboratório)
         run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
@@ -77,4 +81,5 @@ jobs:
             visual-report/rig08-*.png
             visual-report/rig09-*.png
             visual-report/magia10-*.png
+            visual-report/bloco11-*.png
           if-no-files-found: ignore

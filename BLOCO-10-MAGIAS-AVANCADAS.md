@@ -14,3 +14,10 @@
 - Selo duplo na origem, canalização, projétil opcional, partículas e explosão sincronizados ao instante de contato dos blocos anteriores.
 - Magias de área usam apenas posições válidas de alvos reais registradas no combate, limitadas a quatro.
 - Em modo leve/movimento reduzido, camadas extras desligadas. Nenhum novo feitiço nem mudança de `lib/game.ts`.
+
+## 10C — auditoria
+- Teste puro de todas as escolas e classes de movimento mágico.
+- Teste de integração exige exclusividade entre camadas físicas, genéricas e novas.
+- Chromium Android 390×844 e desktop 1440×900, comparando paleta, animação, modo reduzido e não persistência.
+- Tenta observar conjuração real de uma habilidade presente na equipe; registra explicitamente se a campanha inicial não oferecer magia dentro de 17 turnos, sem simular dano.
+- Capturas `magia10-*.png`, além do vídeo do laboratório. A aprovação estética é posterior e manual.

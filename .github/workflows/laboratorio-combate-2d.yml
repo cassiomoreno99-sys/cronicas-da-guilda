@@ -36,6 +36,8 @@ jobs:
         run: node scripts/test-combat-physical-integration.mjs
       - name: Bloco 10A - magias da campanha
         run: node --experimental-strip-types scripts/test-combat-spell-plan.ts
+      - name: Bloco 10B - integração exclusiva de magias
+        run: node scripts/test-advanced-spells-integration.mjs
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
       - name: Preparar navegador de auditoria (apenas CI)
@@ -56,6 +58,8 @@ jobs:
         run: node scripts/test-arena-movement-browser.mjs
       - name: Bloco 09C - golpes reais Android e PC
         run: node scripts/test-physical-strikes-browser.mjs
+      - name: Bloco 10C - auditoria de magias Android e PC
+        run: node scripts/test-advanced-spells-browser.mjs
       - name: Gravar confronto animado e barra de habilidades (laboratório)
         run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
@@ -70,4 +74,5 @@ jobs:
             visual-report/rig07-*.png
             visual-report/rig08-*.png
             visual-report/rig09-*.png
+            visual-report/magia10-*.png
           if-no-files-found: ignore

@@ -1,0 +1,32 @@
+import assert from "node:assert/strict";
+import {spellPlan,spellImpactPoints} from "../lib/combat-spell-plan.ts";
+import type {AbilityEffect,AbilityTarget} from "../lib/game.ts";
+const fighter={side:"hero" as const,class:"mage" as const};
+function spec(effect:AbilityEffect,kind:"ability"|"heal"="ability",target:AbilityTarget="enemy",name="Teste",n=1,light=false){
+ return spellPlan({fighter,event:{kind,amount:kind==="heal"?23:38},ability:{effect,name,target},castOnly:false,targetCount:n,lightMode:light});
+}
+assert.equal(spec("fireball","ability","all-enemies","Bola de Fogo",4)?.family,"flame");
+assert.equal(spec("fireball","ability","all-enemies","Bola de Fogo",4)?.motion,"nova");
+assert.equal(spec("storm")?.motion,"lightning");
+assert.equal(spec("restore","heal","ally")?.family,"radiant");
+assert.equal(spec("lifebloom","heal","ally")?.family,"verdant");
+assert.equal(spec("drain")?.motion,"drain");
+assert.equal(spec("fortress")?.motion,"barrier");
+assert.equal(spec("anthem")?.family,"resonance");
+assert.equal(spec("aegis")?.protecting,true);
+assert.equal(spec("supreme","ability","enemy","Coração Glacial")?.family,"frost");
+assert.equal(spec("supreme","ability","enemy","Raio do Abismo")?.family,"storm");
+assert.equal(spec("supreme","ability","enemy","Chamado da Chama")?.family,"flame");
+assert.equal(spec("supreme","ability","enemy","Poder Arcano")?.family,"arcane");
+assert.equal(spec("fireball","ability","all-enemies","Bola de Fogo",4)?.multiTarget,true);
+assert.equal(spec("fireball","ability","all-enemies","Bola de Fogo",1)?.multiTarget,false);
+assert.equal(spec("storm","ability","all-enemies","Tempestade",4, true)?.particleCount,4);
+assert.equal(spec("storm","ability","all-enemies","Tempestade",4, true)?.duration,520);
+for(const e of ["pinning","execution","chi"] as const)assert.equal(spec(e),undefined);
+assert.equal(spellPlan({fighter,event:{kind:"hit",amount:10},castOnly:false,targetCount:1}),undefined);
+assert.equal(spellPlan({fighter,event:{kind:"ability",amount:12},castOnly:false,targetCount:1}),undefined);
+assert.equal(spellPlan({fighter,event:{kind:"heal",amount:12},castOnly:false,targetCount:1})?.healing,true);
+assert.equal(spellPlan({fighter,event:{kind:"ability"},ability:{effect:"sanctuary",name:"Santuário",target:"all-allies"},castOnly:true,targetCount:0})?.protecting,true);
+assert.equal(spellPlan({fighter,event:{kind:"ability"},ability:{effect:"fireball",name:"Bola",target:"all-enemies"},castOnly:true,targetCount:0})?.motion,"nova");
+assert.deepEqual(spellImpactPoints([{x:22,y:31},{x:83,y:72},{x:220,y:-8},{x:NaN,y:3}]),[{x:22,y:31},{x:83,y:72},{x:100,y:0}]);
+console.log("BLOCO_10A_OK: habilidades reais, fogo/gelo/raio/sombra/cura/natureza/escudos e multi-alvo.");

@@ -32,6 +32,8 @@ jobs:
         run: node scripts/test-combat-arena-integration.mjs
       - name: Bloco 09A - estilos físicos e equipamentos
         run: node --experimental-strip-types scripts/test-combat-physical-strikes.ts
+      - name: Bloco 09B - integração física sem duplicar magia
+        run: node scripts/test-combat-physical-integration.mjs
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
       - name: Preparar navegador de auditoria (apenas CI)
@@ -50,6 +52,8 @@ jobs:
         run: node scripts/test-body-rig-browser.mjs
       - name: Bloco 08 - movimento real Android e desktop
         run: node scripts/test-arena-movement-browser.mjs
+      - name: Bloco 09C - golpes reais Android e PC
+        run: node scripts/test-physical-strikes-browser.mjs
       - name: Gravar confronto animado e barra de habilidades (laboratório)
         run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
@@ -63,4 +67,5 @@ jobs:
             visual-report/lab-*.png
             visual-report/rig07-*.png
             visual-report/rig08-*.png
+            visual-report/rig09-*.png
           if-no-files-found: ignore

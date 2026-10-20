@@ -15,3 +15,10 @@ O componente `PhysicalStrikeFX` substitui a camada genérica quando o log relata
 
 ## 09C — testes
 Validar a batalha real Android e desktop, regressão 4×4 em seis tamanhos, modo leve, acessibilidade, integridade de recursos e vídeos. As capturas são para revisão; testes automatizados **não** equivalem à aprovação estética.
+
+## 09C — auditoria da versão de laboratório
+- Testes unitários de dez estilos, equipamentos e eventos reais.
+- Verificação de que só a camada física aparece em ataques físicos, sem empilhar a VFX mágica.
+- Batalha real no Chromium em 390×844 Android e 1440×900 desktop; capturas `rig09-golpe-*.png`.
+- Segue validação geral 4×4, teste de articulação 07, movimento 08, compilação e salvamento.
+- A estética é experimental até revisão humana dos vídeos; publicar continua proibido.

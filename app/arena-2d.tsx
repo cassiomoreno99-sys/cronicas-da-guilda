@@ -210,7 +210,8 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    from:{x:from.x*stageSize.width/100,y:from.y*stageSize.height/100},
    to:{x:to.x*stageSize.width/100,y:to.y*stageSize.height/100},
    stage:stageSize,actor:actorSize,target:targetSize,
-   school,kind:cue?.castOnly?"cast":evt.kind,critical:evt.kind==="critical",
+   school:spectacle&&spectacle.kind!=="boss-rearguard"?"arcane":school,
+   kind:cue?.castOnly?"cast":evt.kind,critical:evt.kind==="critical",
    obstacles:allUnits.filter(node=>node.dataset.fighterId!==actor.id&&node.dataset.fighterId!==target.id&&node.dataset.dead!=="true")
     .map(node=>{
      const rect=node.getBoundingClientRect();
@@ -276,7 +277,8 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const style:PosStyle={"--x":p.x+"%","--y":p.y+"%","--dash-x":acting&&targetPos?((targetPos.x-p.x)*.7)+"cqw":"0cqw","--dash-y":acting&&targetPos?((targetPos.y-p.y)*.7)+"cqh":"0cqh"};
   const image=combatArt(f,f.side==="hero"?state.heroes.find(h=>h.id===f.id):undefined);
   const rigCandidate=rigEligible(f.side,f.name,image.src,image.full);
-  const rigPose=chooseRigPose(acting,struck,f.hp<=0,isRangedVisual(school));
+  const rigPose=chooseRigPose(acting,struck,f.hp<=0,
+   (spectacle?.kind!=="boss-rearguard"&&!!spectacle)||isRangedVisual(school));
   const aura=statusVisuals(f.statuses);
   const statusReaction=statusPlaying?.reaction.targetId===f.id?statusPlaying.reaction:undefined;
   const bossUnit=battle.combat?.mission.kind==="boss"&&f.side==="enemy"&&f.id==="enemy-0";
@@ -284,16 +286,17 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={{...style,"--rig-duration":(stageRef.current?.closest(".guild-lite-mode")?520:cinemaDuration(school))+"ms"} as PosStyle} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
-    data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting} data-move-kind={acting?(projectile?"cast":school==="claw"?"pounce":school==="shadow"?"sidestep":"charge"):"idle"} data-rig-candidate={rigCandidate} data-rig-pose={rigPose}
+    data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting} data-move-kind={acting?(spectacle&&spectacle.kind!=="boss-rearguard"?"cast":projectile?"cast":school==="claw"?"pounce":school==="shadow"?"sidestep":"charge"):"idle"} data-rig-candidate={rigCandidate} data-rig-pose={rigPose}
     data-physical-style={acting?physicalAttack?.style||"none":"none"}
     data-physical-variant={acting?physicalAttack?.variant:-1}
     data-status-count={aura.length} data-reaction={struck?eventReaction?.kind||"none":statusReaction?.kind||"none"}
     data-boss={bossUnit} data-boss-pressure={pressure||"none"}
+    data-spectacle={acting?spectacle?.kind||"none":"none"}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-move-shadow" aria-hidden="true"/>
     <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>
-      {acting&&!physicalAttack&&<i className={"guild2d-weapon-sweep guild2d-weapon-"+school} aria-hidden="true"/>}
+      {acting&&!physicalAttack&&!spectacle&&<i className={"guild2d-weapon-sweep guild2d-weapon-"+school} aria-hidden="true"/>}
      <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onLoad={e=>{
       // Um fallback pode carregar normalmente após a falha da arte de corpo inteiro;
       // jamais aplicar o rig da imagem antiga sobre o retrato de recuperação.
@@ -317,7 +320,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
      {struck&&eventReaction&&<ReactionFlash key={"reaction-"+evtKey} reaction={eventReaction}/>}
      {statusReaction&&<ReactionFlash key={statusPlaying?.key} reaction={statusReaction} variant="status"/>}
     </span>
-    {acting&&!physicalAttack&&<span key={"trail-"+evtKey} className={"guild2d-action-trail "+((evt?.kind==="ability"||evt?.kind==="heal")?"guild2d-action-magic":"")} aria-hidden="true"/>}
+    {acting&&!physicalAttack&&!spectacle&&<span key={"trail-"+evtKey} className={"guild2d-action-trail "+((evt?.kind==="ability"||evt?.kind==="heal")?"guild2d-action-magic":"")} aria-hidden="true"/>}
     {struck&&evt?.kind==="critical"&&<span key={"critical-"+evtKey} className="guild2d-critical" aria-hidden="true">CRÍTICO!</span>}
     {struck&&evt?.amount!=null&&evt.amount>0&&<span key={evtKey} className={"guild2d-number "+(evt.kind==="heal"?"guild2d-healed":"")}>{evt.kind==="heal"?"+":"−"}{evt.amount}</span>}
     {struck&&evt?.amount!=null&&evt.amount>0&&<span key={"spark-"+evtKey} className="guild2d-spark" aria-hidden="true"/>}

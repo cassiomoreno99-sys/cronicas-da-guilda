@@ -11,6 +11,9 @@ for(const t of ["bossSpectacle(battle.combat?.mission,actor,evt",
 "<SpectacleFX","<BossPresence pressure={pressure}/>"]){assert.ok(s.includes(t),"Integração: "+t)}
 for(const t of ["data-kind={plan.kind}","data-school={plan.school}","data-book={plan.book||\"\"}",
 "guild2d-spectacle-area","guild2d-spectacle-shard","data-pressure={pressure}"]){assert.ok(fx.includes(t),"Componente: "+t)}
+assert.ok(s.includes("acting&&!physicalAttack&&!spectacle&&<i className="),"Efeito de arma normal desativado");
+assert.ok(s.includes("acting&&!physicalAttack&&!spectacle&&<span key="),"Trilha normal desativada");
+assert.ok(s.includes('data-spectacle={acting?spectacle?.kind||"none":"none"}'));
 for(const t of ["sigil","charge","sweep","crush","shield","rift","nova","drain","shard","area","boss-aura","boss-crown"])
  assert.ok(css.includes("@keyframes guild12-"+t),"CSS "+t);
 assert.ok(css.includes("@media(prefers-reduced-motion:reduce)"));

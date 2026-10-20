@@ -1268,3 +1268,90 @@
  .guild2d-move-shadow{display:none!important;will-change:auto}
  .guild2d-unit[data-move-kind] .guild2d-rig-part{animation:none!important}
 }
+
+/* BLOCO 09B — camadas físicas; contato no mesmo 54% do bloco 08. */
+.guild2d-physical-strike{--hit:#ffe3b0;--glow:#e7a56d;--thick:5px;position:absolute;inset:0;z-index:19;overflow:hidden;pointer-events:none;--clock:var(--cinema-ms,820ms);contain:layout style}
+.guild2d-physical-strike[data-style="axe"]{--hit:#ffdaa0;--glow:#eb8a55;--thick:11px}
+.guild2d-physical-strike[data-style="spear"]{--hit:#edfaf7;--glow:#9abec5;--thick:3px}
+.guild2d-physical-strike[data-style="hammer"]{--hit:#fff0bd;--glow:#bca16f;--thick:12px}
+.guild2d-physical-strike[data-style="daggers"]{--hit:#f3dcff;--glow:#ac86dd;--thick:3px}
+.guild2d-physical-strike[data-style="bow"]{--hit:#ecffd4;--glow:#8aca9e;--thick:2px}
+.guild2d-physical-strike[data-style="claws"],.guild2d-physical-strike[data-style="bite"]{--hit:#ffd9c7;--glow:#df7b64;--thick:5px}
+.guild2d-physical-strike[data-style="tail"]{--hit:#c0ffe1;--glow:#71cca4;--thick:8px}
+.guild2d-physical-windup,.guild2d-physical-contact{position:absolute;left:var(--start-x);top:var(--start-y);width:0;height:0}
+.guild2d-physical-contact{left:calc(var(--start-x) + var(--flight-x));top:calc(var(--start-y) + var(--flight-y))}
+.guild2d-physical-windup i{position:absolute;display:block;left:-23px;top:-11px;width:46px;height:22px;border:2px solid var(--hit);border-radius:50%;
+ animation:physical09-prepare var(--clock) ease-out both}
+.guild2d-physical-windup i+ i{left:-9px;top:-34px;width:18px;height:29px;border-style:dashed;animation-delay:40ms}
+.guild2d-physical-swing,.guild2d-physical-stab,.guild2d-physical-rend,
+.guild2d-physical-shock,.guild2d-physical-core,.guild2d-physical-spark{position:absolute;display:block;left:0;top:0}
+.guild2d-physical-swing{width:clamp(58px,14cqw,142px);height:clamp(42px,10cqw,96px);
+ margin:calc(clamp(42px,10cqw,96px)*-.5) calc(clamp(58px,14cqw,142px)*-.5);
+ border:solid var(--hit);border-width:0 0 var(--thick) 0;border-radius:35% 85% 70% 30%;
+ filter:drop-shadow(0 0 5px var(--glow));animation:physical09-cleave var(--clock) ease-out both}
+.guild2d-physical-swing.echo{scale:.75;animation-delay:65ms}
+.guild2d-physical-strike[data-variant="1"] .guild2d-physical-swing.main{rotate:60deg}
+.guild2d-physical-strike[data-variant="2"] .guild2d-physical-swing.main{rotate:-58deg}
+.guild2d-physical-strike[data-style="hammer"] .guild2d-physical-swing{border-radius:25%;height:38px}
+.guild2d-physical-strike[data-style="tail"] .guild2d-physical-swing.main{rotate:115deg;scale:1.14}
+.guild2d-physical-strike[data-style="spear"] .guild2d-physical-swing,
+.guild2d-physical-strike[data-style="bow"] .guild2d-physical-swing,
+.guild2d-physical-strike[data-style="claws"] .guild2d-physical-swing,
+.guild2d-physical-strike[data-style="bite"] .guild2d-physical-swing{display:none}
+.guild2d-physical-strike[data-style="daggers"] .guild2d-physical-swing.echo{rotate:70deg;animation-delay:95ms}
+.guild2d-physical-stab{width:clamp(65px,16cqw,150px);height:4px;translate:-50% -50%;
+ background:linear-gradient(90deg,transparent,var(--glow),#fff,var(--glow),transparent);box-shadow:0 0 7px var(--hit);
+ rotate:var(--shot-angle);animation:physical09-stab var(--clock) ease-out both}
+.guild2d-physical-strike:not([data-style="spear"]):not([data-style="bow"]) .guild2d-physical-stab{display:none}
+.guild2d-physical-rend{width:clamp(13px,3cqw,27px);height:clamp(41px,10cqw,88px);translate:-50% -50%;border-right:var(--thick) solid var(--hit);
+ border-radius:0 90% 80% 0;filter:drop-shadow(0 0 5px var(--glow));animation:physical09-rend var(--clock) ease-out both}
+.guild2d-physical-rend.a{rotate:-23deg;left:-19px}
+.guild2d-physical-rend.b{left:0}
+.guild2d-physical-rend.c{rotate:23deg;left:19px}
+.guild2d-physical-strike[data-style="bite"] .guild2d-physical-rend.a{rotate:70deg;top:-10px}
+.guild2d-physical-strike[data-style="bite"] .guild2d-physical-rend.b{display:none}
+.guild2d-physical-strike[data-style="bite"] .guild2d-physical-rend.c{rotate:-70deg;top:10px}
+.guild2d-physical-strike:not([data-style="claws"]):not([data-style="bite"]) .guild2d-physical-rend{display:none}
+.guild2d-physical-shock{width:64px;height:64px;margin:-32px;border:3px solid var(--glow);border-radius:50%;animation:physical09-shock var(--clock) ease-out both}
+.guild2d-physical-strike[data-style="hammer"] .guild2d-physical-shock{scale:1.35}
+.guild2d-physical-strike[data-critical="true"] .guild2d-physical-shock{border-width:5px}
+.guild2d-physical-core{width:26px;height:26px;margin:-13px;border-radius:50%;background:radial-gradient(circle,#fff,var(--hit) 28%,transparent 76%);
+ filter:drop-shadow(0 0 8px var(--glow));animation:physical09-core var(--clock) ease-out both}
+.guild2d-physical-spark{--angle:calc(var(--ray)*360deg/var(--count));width:6px;height:10px;
+ border-radius:50% 0 50% 0;background:var(--hit);box-shadow:0 0 5px var(--glow);
+ animation:physical09-fragment var(--clock) ease-out both}
+.guild2d-physical-arrow{position:absolute;left:var(--start-x);top:var(--start-y);width:79px;height:35px;
+ rotate:var(--shot-angle);opacity:0;animation:physical09-arrow var(--clock) cubic-bezier(.24,.75,.16,1) both}
+.guild2d-physical-arrow i{position:absolute;display:block}
+.guild2d-physical-arrow .shaft{width:63px;height:3px;top:17px;left:0;background:linear-gradient(90deg,var(--glow),#fff)}
+.guild2d-physical-arrow .tip{width:13px;height:13px;right:1px;top:12px;clip-path:polygon(100% 50%,0 0,20% 50%,0 100%);background:var(--hit)}
+.guild2d-physical-arrow .feather{width:18px;height:18px;left:-4px;top:9px;background:linear-gradient(35deg,transparent 37%,var(--glow) 38% 55%,transparent 58%)}
+.guild2d-physical-arrow .tail{width:42px;height:6px;top:15px;left:-37px;background:linear-gradient(90deg,transparent,var(--glow));filter:blur(3px)}
+.guild2d-physical-strike[data-ranged="false"] .guild2d-physical-arrow{display:none}
+@keyframes physical09-prepare{0%,6%{opacity:0;transform:scale(.3)}22%{opacity:.85;transform:scale(.9)}38%{opacity:.45;transform:scale(1.2)}54%,100%{opacity:0;transform:scale(1.5)}}
+@keyframes physical09-cleave{0%,48%{opacity:0;transform:rotate(-79deg) scale(.3)}54%,61%{opacity:1;transform:rotate(18deg) scale(1.12)}78%{opacity:.48;transform:rotate(32deg) scale(1.5)}100%{opacity:0;transform:rotate(43deg) scale(1.8)}}
+@keyframes physical09-stab{0%,47%{opacity:0;transform:translateX(-30px) scaleX(.3)}54%,61%{opacity:1;transform:translateX(0) scaleX(1.1)}80%{opacity:.4;transform:translateX(15px) scaleX(1.55)}100%{opacity:0;transform:translateX(25px) scaleX(1.8)}}
+@keyframes physical09-rend{0%,48%{opacity:0;transform:translateY(-20px) scale(.3)}54%,61%{opacity:1;transform:translateY(0) scale(1.2)}82%{opacity:.45;transform:translateY(14px) scale(1.55)}100%{opacity:0;transform:translateY(22px) scale(1.8)}}
+@keyframes physical09-shock{0%,51%{opacity:0;transform:scale(.2)}59%{opacity:.9;transform:scale(.8)}78%{opacity:.48;transform:scale(1.8)}100%{opacity:0;transform:scale(2.5)}}
+@keyframes physical09-core{0%,50%{opacity:0;transform:scale(.2)}55%,61%{opacity:1;transform:scale(1.45)}83%{opacity:.5;transform:scale(2)}100%{opacity:0;transform:scale(2.4)}}
+@keyframes physical09-fragment{0%,51%{opacity:0;transform:rotate(var(--angle)) translateY(0) scale(.2)}57%{opacity:1;transform:rotate(var(--angle)) translateY(-12px) scale(1)}81%{opacity:.6;transform:rotate(var(--angle)) translateY(-45px) scale(.8)}100%{opacity:0;transform:rotate(var(--angle)) translateY(-65px) scale(.2)}}
+@keyframes physical09-arrow{0%,24%{opacity:0;transform:translate(0,0) scale(.6)}30%{opacity:1;transform:translate(0,0) scale(1)}54%,61%{opacity:1;transform:translate(var(--flight-x),var(--flight-y)) scale(1.14)}73%,100%{opacity:0;transform:translate(var(--flight-x),var(--flight-y)) scale(.4)}}
+/* O rig de seis peças recebe gesto por arma sem recriar a imagem. */
+.guild2d-unit[data-physical-style="axe"] .guild2d-rig-arm-front{animation-name:physical09-arm-axe}
+.guild2d-unit[data-physical-style="hammer"] .guild2d-rig-arm-front{animation-name:physical09-arm-hammer}
+.guild2d-unit[data-physical-style="daggers"] .guild2d-rig-arm-front,
+.guild2d-unit[data-physical-style="claws"] .guild2d-rig-arm-front{animation-name:physical09-arm-dagger}
+.guild2d-unit[data-physical-style="spear"] .guild2d-rig-arm-front{animation-name:physical09-arm-spear}
+.guild2d-unit[data-physical-style="bow"] .guild2d-rig-arm-front{animation-name:physical09-arm-bow}
+.guild2d-unit[data-physical-style="bow"] .guild2d-rig-arm-back{animation-name:physical09-arm-anchor}
+@keyframes physical09-arm-axe{0%,14%,100%{transform:rotate(0)}28%{transform:rotate(-45deg)}54%,61%{transform:rotate(60deg)}81%{transform:rotate(12deg)}}
+@keyframes physical09-arm-hammer{0%,12%,100%{transform:rotate(0)}35%{transform:rotate(-60deg)}54%,61%{transform:rotate(46deg) translateY(6px)}83%{transform:rotate(12deg)}}
+@keyframes physical09-arm-dagger{0%,12%,100%{transform:rotate(0)}31%{transform:rotate(-30deg)}43%{transform:rotate(35deg)}54%,61%{transform:rotate(-23deg)}74%{transform:rotate(26deg)}}
+@keyframes physical09-arm-spear{0%,12%,100%{transform:rotate(0)}32%{transform:rotate(-15deg)}54%,61%{transform:rotate(12deg) translateX(9px)}82%{transform:rotate(3deg)}}
+@keyframes physical09-arm-bow{0%,12%,100%{transform:rotate(0)}31%,44%{transform:rotate(24deg) translateX(-6px)}54%,61%{transform:rotate(-20deg) translateX(7px)}82%{transform:rotate(0)}}
+@keyframes physical09-arm-anchor{0%,12%,100%{transform:rotate(0)}32%,47%{transform:rotate(-28deg)}54%,61%{transform:rotate(12deg)}}
+.guild-lite-mode .guild2d-physical-swing.echo,.guild-lite-mode .guild2d-physical-arrow .tail,
+.guild-lite-mode .guild2d-physical-spark:nth-of-type(n+7){display:none!important}
+.guild-lite-mode .guild2d-physical-spark{box-shadow:none}
+@media(max-width:420px){.guild2d-physical-spark:nth-of-type(n+8){display:none}.guild2d-physical-arrow{scale:.78}}
+@media(prefers-reduced-motion:reduce){.guild2d-physical-strike{display:none!important}}

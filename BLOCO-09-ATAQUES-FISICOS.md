@@ -10,8 +10,8 @@
 - Três variantes determinísticas por sequência de ação; a coreografia nunca altera dados do combate.
 - Cura, conjuração, eventos sem dano e magias não são tratados como golpes físicos.
 
-## 09B — apresentação
-Implementar preparação, trilha específica por arma, trajetória da flecha, contato sincronizado em 54% da ação, reação ao crítico e recuperação; conciliar com movimento do bloco 08 e rig do bloco 07.
+## 09B — apresentação integrada
+O componente `PhysicalStrikeFX` substitui a camada genérica quando o log relata dano físico. Os arcos, flechas, golpes animais, ondas e partículas mudam conforme o equipamento/espécie e uma entre três variantes. O instante de contato coincide com 54% da coreografia dos blocos 07/08. O rig recebe gestos por arma. Nenhum dado de turno, vida ou inventário é modificado.
 
 ## 09C — testes
 Validar a batalha real Android e desktop, regressão 4×4 em seis tamanhos, modo leve, acessibilidade, integridade de recursos e vídeos. As capturas são para revisão; testes automatizados **não** equivalem à aprovação estética.

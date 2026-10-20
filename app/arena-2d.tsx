@@ -11,6 +11,8 @@ import {lastVisualCue,skillForCue} from "@/lib/combat-visual-cues";
 import {ArenaVfx} from "./arena-vfx";
 import {rigEligible,chooseRigPose} from "@/lib/combat-body-rig";
 import {BodyRig,rigImageSafe} from "./body-rig";
+import {isPhysicalStrike,physicalStyle,physicalStrikePlan} from "@/lib/combat-physical-strikes";
+import {PhysicalStrikeFX} from "./physical-strike-fx";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -127,6 +129,14 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
  const areaTargets:{x:number;y:number}[]=cueSkill&&["all-enemies","all-allies"].includes(cueSkill.ability.target)
   ?cueSkill.targets.flatMap(id=>{const f=all.find(x=>x.id===id);return f?[pos(f.side,all.filter(x=>x.side===f.side).findIndex(x=>x.id===id))]:[];})
   :[];
+ // A arma da campanha prevalece sobre o estilo genérico da classe.
+ const equipped=actor?.side==="hero"?state.chest.find(item=>item.equippedTo===actor.id&&
+  (item.equippedSlot==="weapon"||ITEMS[item.key]?.slot==="weapon")):undefined;
+ const catalogueWeapon=equipped?CATALOG_BY_ID[equipped.key]:undefined;
+ const physicalAttack=actor&&isPhysicalStrike(evt,actor,cueSkill?.ability.effect,cue?.castOnly||false)
+  ?physicalStrikePlan(physicalStyle(actor,catalogueWeapon
+    ?{name:catalogueWeapon.nome,subtype:catalogueWeapon.subcategoria}:undefined),
+    evtIndex,evt?.kind==="critical",cinemaDuration(school)):undefined;
  const projectile=!!evt&&!!actor&&!!target&&isRangedVisual(school);
  const visualStart=actor?pos(actor.side,actorIndex):undefined;
  const targetPos=target?pos(target.side,targetIndex):undefined;
@@ -216,11 +226,13 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   return <button key={f.id} type="button" className={"guild2d-unit "+(f.side==="hero"?"guild2d-hero":"guild2d-enemy")}
     style={{...style,"--rig-duration":(stageRef.current?.closest(".guild-lite-mode")?520:cinemaDuration(school))+"ms"} as PosStyle} data-dead={f.hp<=0} data-selected={selected} data-focused={focus?.id===f.id} data-full-art={image.full}
     data-class={f.side==="hero"?f.class:"enemy"} data-enemy-bestiary={f.side==="enemy"} data-line={f.position||"back"} data-fighter-id={f.id} data-cinematic-actor={acting} data-move-kind={acting?(projectile?"cast":school==="claw"?"pounce":school==="shadow"?"sidestep":"charge"):"idle"} data-rig-candidate={rigCandidate} data-rig-pose={rigPose}
+    data-physical-style={acting?physicalAttack?.style||"none":"none"}
+    data-physical-variant={acting?physicalAttack?.variant:-1}
     aria-label={f.name+" — "+f.hp+" de "+f.maxHp+" pontos de vida"}
     onClick={()=>{if(f.hp<=0)return;if(f.side==="hero")setHeroId(f.id);else setEnemyId(f.id);setTip("");}}>
     <span className="guild2d-move-shadow" aria-hidden="true"/>
     <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>
-      {acting&&<i className={"guild2d-weapon-sweep guild2d-weapon-"+school} aria-hidden="true"/>}
+      {acting&&!physicalAttack&&<i className={"guild2d-weapon-sweep guild2d-weapon-"+school} aria-hidden="true"/>}
      <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onLoad={e=>{
       // Um fallback pode carregar normalmente após a falha da arte de corpo inteiro;
       // jamais aplicar o rig da imagem antiga sobre o retrato de recuperação.
@@ -241,7 +253,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
      }}/>
      {rigCandidate&&<BodyRig src={image.src}/>}
     </span>
-    {acting&&<span key={"trail-"+evtKey} className={"guild2d-action-trail "+((evt?.kind==="ability"||evt?.kind==="heal")?"guild2d-action-magic":"")} aria-hidden="true"/>}
+    {acting&&!physicalAttack&&<span key={"trail-"+evtKey} className={"guild2d-action-trail "+((evt?.kind==="ability"||evt?.kind==="heal")?"guild2d-action-magic":"")} aria-hidden="true"/>}
     {struck&&evt?.kind==="critical"&&<span key={"critical-"+evtKey} className="guild2d-critical" aria-hidden="true">CRÍTICO!</span>}
     {struck&&evt?.amount!=null&&evt.amount>0&&<span key={evtKey} className={"guild2d-number "+(evt.kind==="heal"?"guild2d-healed":"")}>{evt.kind==="heal"?"+":"−"}{evt.amount}</span>}
     {struck&&evt?.amount!=null&&evt.amount>0&&<span key={"spark-"+evtKey} className="guild2d-spark" aria-hidden="true"/>}
@@ -281,7 +293,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
    <div className="guild2d-scene" aria-hidden="true"/>
    <div className="guild2d-label"><span>HERÓIS · {heroes.length}</span><b>{label}</b><span>{enemies.length} · INIMIGOS</span></div>
    {heroes.map(unit)}{enemies.map(unit)}
-   {playingEvent===evtKey&&evt&&visualPath&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} data-cast-only={cue?.castOnly||false} data-ability-effect={skillEffect} aria-hidden="true" style={visualPath}>
+   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&<div key={"cinema-"+evtKey} className={"guild2d-cinema guild2d-cinema-"+school} data-school={school} data-direction={actor?.side} data-ranged={projectile} data-cast-only={cue?.castOnly||false} data-ability-effect={skillEffect} aria-hidden="true" style={visualPath}>
        <span className="guild2d-windup"/>
        {!projectile&&!cue?.castOnly&&<span className="guild2d-step-dust"/>}
       {!projectile&&!cue?.castOnly&&school!=="claw"&&evt.kind!=="heal"&&<span className="guild2d-sword-strike"><i className="guild2d-sword-blade"/><i className="guild2d-sword-guard"/></span>}
@@ -300,7 +312,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
       </span>
       {evt.kind==="critical"&&<span className="guild2d-cinema-flash"/>}
    </div>}
-   {playingEvent===evtKey&&evt&&visualPath&&<ArenaVfx key={"vfx-"+evtKey} school={school} kind={cue?.castOnly?"cast":evt.kind} effect={skillEffect} targets={areaTargets} critical={evt.kind==="critical"} style={visualPath}/>}
+   {playingEvent===evtKey&&evt&&visualPath&&physicalAttack&&actor&&<PhysicalStrikeFX
+      key={"physical-"+evtKey} attack={physicalAttack} side={actor.side} style={visualPath}/>}
+   {playingEvent===evtKey&&evt&&visualPath&&!physicalAttack&&<ArenaVfx key={"vfx-"+evtKey} school={school} kind={cue?.castOnly?"cast":evt.kind} effect={skillEffect} targets={areaTargets} critical={evt.kind==="critical"} style={visualPath}/>}
    <div className="guild2d-hud-layer">{heroes.map(hud)}{enemies.map(hud)}</div>
    <div className="guild2d-ground"/>
    {!active&&<div className="guild2d-result"><strong>{battle.won?"🏆 VITÓRIA":battle.status==="retreated"?"EQUIPE RETIRADA":"☠️ DERROTA"}</strong></div>}

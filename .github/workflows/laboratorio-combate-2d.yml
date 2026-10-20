@@ -30,6 +30,8 @@ jobs:
         run: node --experimental-strip-types scripts/test-habilidades-laboratorio.ts
       - name: Integração de movimento e sombra
         run: node scripts/test-combat-arena-integration.mjs
+      - name: Bloco 09A - estilos físicos e equipamentos
+        run: node --experimental-strip-types scripts/test-combat-physical-strikes.ts
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
       - name: Preparar navegador de auditoria (apenas CI)

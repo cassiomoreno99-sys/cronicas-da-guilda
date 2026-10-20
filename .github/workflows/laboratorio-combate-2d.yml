@@ -28,6 +28,8 @@ jobs:
         run: node --experimental-strip-types scripts/test-combat-vfx.ts
       - name: Verificar habilidades reais
         run: node --experimental-strip-types scripts/test-habilidades-laboratorio.ts
+      - name: Integração de movimento e sombra
+        run: node scripts/test-combat-arena-integration.mjs
       - name: Verificar preservação de combate e TypeScript
         run: npm run build
       - name: Preparar navegador de auditoria (apenas CI)
@@ -44,6 +46,8 @@ jobs:
         run: node scripts/test-excelencia-2d-browser.mjs
       - name: Revisar articulação e fallback Android / desktop
         run: node scripts/test-body-rig-browser.mjs
+      - name: Bloco 08 - movimento real Android e desktop
+        run: node scripts/test-arena-movement-browser.mjs
       - name: Gravar confronto animado e barra de habilidades (laboratório)
         run: node scripts/gravar-combate-laboratorio.mjs
       - name: Guardar capturas para revisão, sem publicar
@@ -56,4 +60,5 @@ jobs:
             visual-report/lab-combate-*.webm
             visual-report/lab-*.png
             visual-report/rig07-*.png
+            visual-report/rig08-*.png
           if-no-files-found: ignore

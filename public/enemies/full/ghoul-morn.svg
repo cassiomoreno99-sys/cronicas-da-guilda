@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420" role="img" aria-labelledby="t d">
+<title id="t">Carniçal</title><desc id="d">Arte vetorial 2D de corpo inteiro do bestiário do laboratório.</desc>
+<defs>
+<linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#849385"/><stop offset=".54" stop-color="#31363d"/><stop offset="1" stop-color="#849385"/></linearGradient>
+<linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffae8a"/><stop offset=".45" stop-color="#849385"/><stop offset="1" stop-color="#31363d"/></linearGradient>
+<radialGradient id="light"><stop stop-color="#ffffff"/><stop offset=".38" stop-color="#ffae8a"/><stop offset="1" stop-color="#849385"/></radialGradient>
+</defs>
+<ellipse cx="150" cy="399" rx="95" ry="10" fill="#0c17278a"/>
+<g stroke-linejoin="round" stroke-linecap="round"><path d="M110 146 Q155 115 194 159 L221 256 188 285 181 345 206 379 176 385 132 324 100 379 74 370 90 274 60 248 32 296 17 280 52 194Z" fill="url(#metal)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M106 123 Q150 83 192 119 L181 172 137 194 102 165Z" fill="url(#shine)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M112 145 L181 144 164 163 123 164Z" fill="#0f1826" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="129" cy="151" rx="5" ry="3" fill="url(#light)"/><ellipse cx="157" cy="151" rx="5" ry="3" fill="url(#light)"/><path d="M106 216 L182 225 175 235 112 232Z" fill="url(#shine)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></g>
+</svg>

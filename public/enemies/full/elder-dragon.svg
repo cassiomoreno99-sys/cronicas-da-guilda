@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420" role="img" aria-labelledby="t d">
+<title id="t">Dragão ancião</title><desc id="d">Arte vetorial 2D de corpo inteiro do bestiário do laboratório.</desc>
+<defs>
+<linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#799bbc"/><stop offset=".54" stop-color="#2f455c"/><stop offset="1" stop-color="#799bbc"/></linearGradient>
+<linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ddf5ff"/><stop offset=".45" stop-color="#799bbc"/><stop offset="1" stop-color="#2f455c"/></linearGradient>
+<radialGradient id="light"><stop stop-color="#ffffff"/><stop offset=".38" stop-color="#ddf5ff"/><stop offset="1" stop-color="#799bbc"/></radialGradient>
+</defs>
+<ellipse cx="150" cy="399" rx="95" ry="10" fill="#0c17278a"/>
+<g stroke-linejoin="round" stroke-linecap="round"><path d="M117 173 Q69 85 13 91 L45 159 19 150 Q50 230 112 248Z" fill="url(#shine)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M184 173 Q237 85 288 97 L260 161 282 151 Q251 231 188 247Z" fill="url(#shine)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M79 223 Q138 151 196 199 L245 255 209 328 109 345 62 295Z" fill="url(#metal)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M187 200 Q209 114 186 94 L218 87 249 129 223 185Z" fill="url(#shine)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M204 95 Q238 59 265 93 L281 118 244 144 208 127Z" fill="url(#metal)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><circle cx="246" cy="111" r="5" fill="url(#light)"/><path d="M87 284 37 332 26 355 72 338 124 314Z" fill="url(#shine)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M113 317 92 386 125 386 150 335 179 331 186 386 223 384 207 314Z" fill="url(#metal)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></g>
+</svg>

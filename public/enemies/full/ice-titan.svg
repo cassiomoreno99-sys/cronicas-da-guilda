@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="420" viewBox="0 0 300 420" role="img" aria-labelledby="t d">
+<title id="t">Titã de gelo</title><desc id="d">Arte vetorial 2D de corpo inteiro do bestiário do laboratório.</desc>
+<defs>
+<linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#9fc7d5"/><stop offset=".54" stop-color="#3a5978"/><stop offset="1" stop-color="#9fc7d5"/></linearGradient>
+<linearGradient id="shine" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ecffff"/><stop offset=".45" stop-color="#9fc7d5"/><stop offset="1" stop-color="#3a5978"/></linearGradient>
+<radialGradient id="light"><stop stop-color="#ffffff"/><stop offset=".38" stop-color="#ecffff"/><stop offset="1" stop-color="#9fc7d5"/></radialGradient>
+</defs>
+<ellipse cx="150" cy="399" rx="95" ry="10" fill="#0c17278a"/>
+<g stroke-linejoin="round" stroke-linecap="round"><path d="M114 92 152 40 185 83 223 172 263 277 243 324 204 288 214 353 232 385 170 390 151 317 132 318 114 389 70 383 88 344 81 288 43 332 21 295 62 179Z" fill="url(#shine)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M110 86 151 47 193 89 202 140 180 180 118 176 92 139Z" fill="url(#metal)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M123 127 L184 126 171 148 137 148Z" fill="#27394a" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><ellipse cx="138" cy="137" rx="5" ry="3" fill="url(#light)"/><ellipse cx="166" cy="137" rx="5" ry="3" fill="url(#light)"/><path d="M101 199 188 191 216 251 190 311 107 311 77 250Z" fill="url(#metal)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M99 195 l12 -34 15 32Z" fill="url(#light)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M136 195 l12 -34 15 32Z" fill="url(#light)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/><path d="M173 195 l12 -34 15 32Z" fill="url(#light)" stroke="#101925" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/></g>
+</svg>

@@ -4,7 +4,7 @@ import { statusEmPortugues, textoEmPortugues } from "../lib/texto-portugues";
 import {availableAbilities,abilityCooldownRemaining,heroRace,TACTICS,ITEMS,combatReport,type Campaign,type Expedition,type Action,type BattleFighter,type BattleLog,type Hero} from "@/lib/game";
 import {CATALOG_BY_ID} from "@/lib/catalog-test";
 import {battleSource,portraitSource} from "@/lib/portraits";
-import {enemyArtSource} from "@/lib/enemy-art";
+import {enemyArtSource,fullEnemyArtSource} from "@/lib/enemy-art";
 import "./arena-2d.css";
 
 /** 2D da campanha real: HP, ações e vitória são exclusivamente do motor da expedição. */
@@ -22,9 +22,10 @@ const pos=(side:"hero"|"enemy",i:number)=>{
  * conserva-se a identidade da espécie pelo bestiário existente. */
 function combatArt(f:BattleFighter,hero?:Hero):{src:string;full:boolean}{
  if(f.side==="enemy"){
-  // O bestiário fornece 22 artes de criaturas distintas.
-  // Ilustrações recebem moldura própria, não são esticadas como sprites de corpo inteiro.
-  return {src:enemyArtSource(f.name),full:false};
+  // Arte de corpo inteiro associada ao nome REAL da missão.
+  // O bestiário antigo fica como fallback para as criaturas ainda pendentes.
+  const whole=fullEnemyArtSource(f.name);
+  return whole?{src:whole,full:true}:{src:enemyArtSource(f.name),full:false};
  }
  const race=hero?heroRace(hero):"human";
  if(!hero)return {src:portraitSource(f.name,f.id,f.class||"warrior",race),full:false};
@@ -217,7 +218,7 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
   const selected=f.side==="hero"?hero?.id===f.id:enemy?.id===f.id;
   return <div key={f.id} className={"guild2d-hud "+(f.side==="hero"?"guild2d-hud-hero":"guild2d-hud-enemy")}
     style={{"--x":p.x+"%","--y":p.y+"%"} as CSSProperties} data-dead={f.hp<=0} data-selected={selected}
-    data-class={f.side==="hero"?f.class:"enemy"} data-line={f.position||"back"}>
+    data-class={f.side==="hero"?f.class:"enemy"} data-full-art={combatArt(f).full} data-line={f.position||"back"}>
      <strong>{f.name.split(" ").slice(0,2).join(" ")}</strong>
      <div className="guild2d-meter" role="progressbar" aria-label={"Pontos de vida de "+f.name} aria-valuemin={0} aria-valuemax={f.maxHp} aria-valuenow={Math.max(0,f.hp)}><span style={{width:hpWidth(f.hp,f.maxHp)}}/></div>
      <small>{Math.max(0,f.hp)} / {f.maxHp} PV</small>

@@ -67,3 +67,59 @@ export function enemyArtKey(name:string):EnemyArtKey{
  return "fallback";
 }
 export function enemyArtSource(name:string){return "/enemies/"+enemyArtKey(name)+".webp";}
+
+/** Artes de corpo inteiro, geradas e armazenadas no próprio jogo. Não usar
+ * miniaturas 128×128 como substitutos de corpo inteiro. Se não houver arte
+ * específica, a função devolve undefined e a arena mantém o bestiário antigo.
+ * Os nomes são os nomes REAIS das missões e dos chefes no motor de jogo. */
+const FULL_ENEMY_ART:Readonly<Record<string,string>>={
+ "bandido":"bandit",
+ "saqueador":"raider",
+ "lobo sombrio":"wolf",
+ "esqueleto":"skeleton",
+ "emboscador":"ambusher",
+ "pantera das brumas":"panther",
+ "aranha ancestral":"spider",
+ "trol":"troll",
+ "troll":"troll",
+ "cultista":"cultist",
+ "espectro":"specter",
+ "guardiao antigo":"ancient-guardian",
+ "cavaleiro espectral":"spectral-knight",
+ "draco selvagem":"wild-drake",
+ "salteador draconico":"draconic-raider",
+ "guerreiro draco":"drake-warrior",
+ "guardiao de obsidiana":"obsidian-guardian",
+ "escorpiao gigante":"giant-scorpion",
+ "saqueador do deserto":"desert-raider",
+ "mumia real":"royal-mummy",
+ "genio corrompido":"corrupted-djinn",
+ "djinn corrompido":"corrupted-djinn",
+ "pirata":"pirate",
+ "serpente marinha":"sea-serpent",
+ "afogado":"drowned",
+ "corsario espectral":"spectral-corsair",
+ "guardiao arboreo corrompido":"corrupt-tree-guardian",
+ "ent corrompido":"corrupted-tree",
+ "cacador feerico":"fae-hunter",
+ "fera lunar":"lunar-beast",
+ "espirito selvagem":"wild-spirit",
+ "golem de pedra":"stone-golem",
+ "ieti":"yeti",
+ "yeti":"yeti",
+ "rebelde das minas":"mine-rebel",
+ "dragao de gelo":"ice-dragon",
+ "chefe regional · vale de valen":"boss-valen",
+ "o vigia da nevoa":"boss-brumavale",
+ "o cavaleiro das cinzas":"boss-ashen",
+ "o coracao da fortaleza obsidiana":"boss-dragon-frontier",
+ "o trono de areia eterna":"boss-sahir",
+ "o almirante sem porto":"boss-namar",
+ "o ultimo guardiao verde":"boss-elarin",
+ "o trono do gelo partido":"boss-kharum",
+};
+export function fullEnemyArtSource(name:string):string|undefined{
+ const slug=FULL_ENEMY_ART[normalize(name).replace(/\s+\d+$/,"")];
+ return slug?"/enemies/full/"+slug+".png":undefined;
+}
+export const FULL_ENEMY_NAMES=Object.freeze(Object.keys(FULL_ENEMY_ART));

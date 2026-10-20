@@ -44,7 +44,8 @@ export function spellPlan(input:{
  if(!fighter||!event)return undefined;
  const effect=ability?.effect;
  if(effect&&physical.has(effect))return undefined;
- if(!castOnly&&event.kind!=="ability"&&event.kind!=="heal")return undefined;
+ if(!castOnly&&event.kind!=="ability"&&event.kind!=="heal"&&
+   !(event.kind==="fall"&&!!effect))return undefined;
  // Nunca criar magia para um acerto físico sem habilidade conhecida.
  if(event.kind==="ability"&&!effect)return undefined;
  if(event.kind==="heal"&&!effect&&fighter.side!=="hero")return undefined;

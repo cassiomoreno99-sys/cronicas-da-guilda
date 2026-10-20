@@ -28,5 +28,7 @@ assert.equal(spellPlan({fighter,event:{kind:"ability",amount:12},castOnly:false,
 assert.equal(spellPlan({fighter,event:{kind:"heal",amount:12},castOnly:false,targetCount:1})?.healing,true);
 assert.equal(spellPlan({fighter,event:{kind:"ability"},ability:{effect:"sanctuary",name:"Santuário",target:"all-allies"},castOnly:true,targetCount:0})?.protecting,true);
 assert.equal(spellPlan({fighter,event:{kind:"ability"},ability:{effect:"fireball",name:"Bola",target:"all-enemies"},castOnly:true,targetCount:0})?.motion,"nova");
+assert.equal(spellPlan({fighter,event:{kind:"fall",amount:99},ability:{effect:"fireball",name:"Explosão Arcana",target:"enemy"},castOnly:false,targetCount:1})?.family,"flame");
+assert.equal(spellPlan({fighter,event:{kind:"fall",amount:99},castOnly:false,targetCount:1}),undefined);
 assert.deepEqual(spellImpactPoints([{x:22,y:31},{x:83,y:72},{x:220,y:-8},{x:NaN,y:3}]),[{x:22,y:31},{x:83,y:72},{x:100,y:0}]);
 console.log("BLOCO_10A_OK: habilidades reais, fogo/gelo/raio/sombra/cura/natureza/escudos e multi-alvo.");

@@ -33,5 +33,12 @@ const restored:BattleLog[]=[
 assert.equal(lastVisualCue(restored)?.index,0);
 assert.equal(lastVisualCue([{round:10,kind:"status",text:"sem ação"}]),undefined);
 assert.equal(skillForCue(ring,cue,[fire]),undefined);
+const lethal:BattleLog[]=[
+ {round:4,kind:"ability",actorId:"hero-1",targetId:"enemy-1",text:"Aric usa Explosão Arcana."},
+ {round:4,kind:"fall",actorId:"hero-1",targetId:"enemy-1",amount:99,text:"Explosão Arcana atinge Lobo: 99 de dano. Fora de combate."}
+];
+assert.equal(skillForCue(lethal,lastVisualCue(lethal),[fire])?.ability.effect,"fireball");
+const swordFall:BattleLog[]=[{round:4,kind:"fall",actorId:"hero-1",targetId:"enemy-1",amount:20,text:"Aric ataca Lobo: 20 de dano. Fora de combate."}];
+assert.equal(skillForCue(swordFall,lastVisualCue(swordFall),[fire]),undefined);
 assert.equal(lastVisualCue([]),undefined);
 console.log("EVENTOS VISUAIS OK: combo multi-alvo, defesa sem dano, identidade estável e ação real.");

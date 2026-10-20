@@ -25,7 +25,10 @@ export type VisualSkill={ability:AbilitySpec;targets:string[];castIndex:number};
 export function skillForCue(log:readonly BattleLog[],cue:VisualCue|undefined,abilities:readonly AbilitySpec[]):VisualSkill|undefined{
  if(!cue||!abilities.length||!cue.entry.actorId||cue.index>=log.length||log[cue.index]!==cue.entry)return undefined;
  const hit=cue.entry;
- if(!cue.castOnly&&hit.kind!=="ability"&&hit.kind!=="heal")return undefined;
+ // Acerto letal tem kind="fall", mas ainda foi uma magia real se o log
+ // começa com o nome da habilidade executada neste turno.
+ if(!cue.castOnly&&hit.kind!=="ability"&&hit.kind!=="heal"&&
+   !(hit.kind==="fall"&&abilities.some(a=>normalize(hit.text).startsWith(normalize(a.name)+" "))))return undefined;
  let castIndex=-1;
  let ability:AbilitySpec|undefined;
  // Dano real registra o nome da habilidade no começo da frase.

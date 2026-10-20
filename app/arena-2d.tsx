@@ -202,7 +202,9 @@ export default function Arena2D({state,expedition,act,close,returnToTeam,busy}:{
     <span className="guild2d-sprite" data-school={acting?school:""} data-cinematic-actor={acting} data-cinematic-target={struck}>
       {acting&&<i className={"guild2d-weapon-sweep guild2d-weapon-"+school} aria-hidden="true"/>}
      <img src={image.src} alt="" draggable={false} decoding="async" loading="eager" fetchPriority={f.side==="hero"?"high":"auto"} onLoad={e=>{
-      if(rigCandidate)e.currentTarget.closest(".guild2d-unit")?.setAttribute("data-rig-ready",String(rigImageSafe(e.currentTarget)));
+      // Um fallback pode carregar normalmente após a falha da arte de corpo inteiro;
+      // jamais aplicar o rig da imagem antiga sobre o retrato de recuperação.
+      if(rigCandidate&&!e.currentTarget.dataset.fallback)e.currentTarget.closest(".guild2d-unit")?.setAttribute("data-rig-ready",String(rigImageSafe(e.currentTarget)));
      }} onError={e=>{
       const node=e.currentTarget;
       const attempt=Number(node.dataset.fallback||"0");

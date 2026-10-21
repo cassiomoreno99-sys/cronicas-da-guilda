@@ -1,0 +1,194 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Crônicas da Guilda — Duelo 06 — Confronto Cinematográfico (Laboratório)</title><style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#090e19;color:#ede6d9;font-family:system-ui,Segoe UI,sans-serif;display:grid;place-items:center;min-height:100svh}.wrap{width:min(100%,1100px)}.frame{position:relative;background:#0b0d13;overflow:hidden;border:1px solid #7d6040;box-shadow:0 24px 100px #000a;aspect-ratio:16/9}svg{display:block;width:100%;height:100%}.topbar{position:absolute;inset:0 0 auto 0;display:flex;align-items:center;justify-content:space-between;padding:2% 3%;pointer-events:none;text-shadow:0 2px 7px #000}.topbar .unit{width:33%}.topbar .unit:last-child{text-align:right}.name{font:700 clamp(10px,1.7vw,18px) Georgia,serif;letter-spacing:.12em;color:#f5e8c7}.health{height:clamp(5px,.9vw,10px);border:1px solid #b99b66;background:#250d0c;margin-top:6px;box-shadow:0 0 0 2px #0007}.health span{height:100%;display:block;background:linear-gradient(#d54c43,#77251f);width:100%}.hero-hp span{background:linear-gradient(#77d9b0,#23826b)}.chapter{font:600 clamp(10px,1.2vw,14px) Georgia,serif;letter-spacing:.2em;color:#d9bf83}.bottom{padding:15px 10px;display:flex;gap:12px;align-items:center;justify-content:center;background:#0b0d13}.bottom button{cursor:pointer;color:#f6e5c4;background:#30251c;border:1px solid #89764d;border-radius:8px;padding:10px 17px;font-weight:650}.bottom button:hover{background:#4a3724}.bottom span{font-size:12px;color:#9da2ad}.bottom button:focus-visible{outline:3px solid #e4bf7f;outline-offset:2px}.logo{position:absolute;left:0;right:0;bottom:4%;text-align:center;font:700 clamp(11px,1.5vw,20px) Georgia,serif;letter-spacing:.32em;color:#e1cd9d;text-shadow:0 2px 12px black;pointer-events:none}.status{position:absolute;left:0;right:0;top:22%;text-align:center;font:900 clamp(17px,3.3vw,42px) Georgia,serif;letter-spacing:.12em;text-shadow:0 4px 13px #000,0 0 15px #f0b75e;opacity:0;transform:translateY(9px);pointer-events:none}.status.block{color:#9be2ec}.status.counter{color:#ffe1a1}.scrim{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 36%,#03060d98 100%)}@media(max-width:500px){.bottom{flex-wrap:wrap}.bottom span{width:100%;text-align:center}.chapter{letter-spacing:0}.logo{letter-spacing:.13em}}
+
+.frame{isolation:isolate}.chapter{letter-spacing:.08em}.logo{bottom:3.2%;font-size:clamp(9px,1.4vw,16px)}
+.combo{position:absolute;left:2.8%;top:27%;font:900 clamp(20px,4vw,49px) Georgia,serif;letter-spacing:.03em;color:#ffd78b;text-shadow:0 2px 5px #000,0 0 25px #d77922;opacity:0;pointer-events:none}
+.timeline-head{display:flex;justify-content:space-between;padding:11px 15px 2px;color:#e9c994;font-size:12px;letter-spacing:.08em;background:#0b0d13}
+#scrub{display:block;accent-color:#cc9655;width:calc(100% - 30px);margin:5px 15px;background:#0b0d13;cursor:pointer}
+.bottom{padding:9px 10px 14px}.bottom button{font-size:12px;padding:9px 12px}.status{top:17%;z-index:5;letter-spacing:.09em}
+@media(max-width:500px){.topbar{padding:2%}.name{font-size:9px}.bottom{gap:6px}.bottom button{padding:9px 7px}.bottom span{font-size:10px}}
+</style></head><body><main class="wrap"><div class="frame" id="frame">
+<svg id="scene" viewBox="0 0 960 540" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Duelo 06: combate completo com investida, bloqueio, esquiva, combinação de golpes, lançamento da fera e finalização">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#0a1728"/><stop offset=".45" stop-color="#253146"/><stop offset=".85" stop-color="#6f5d54"/><stop offset="1" stop-color="#bb875c"/></linearGradient>
+ <linearGradient id="ground" x2="0" y2="1"><stop stop-color="#524338"/><stop offset="1" stop-color="#101a1e"/></linearGradient>
+ <linearGradient id="steel" x2="1" y2=".2"><stop stop-color="#111c2b"/><stop offset=".3" stop-color="#8b9eae"/><stop offset=".55" stop-color="#273342"/><stop offset=".85" stop-color="#c8c1ac"/><stop offset="1" stop-color="#27303b"/></linearGradient>
+ <linearGradient id="gold" x2="1" y2="1"><stop stop-color="#ffe9ad"/><stop offset=".3" stop-color="#957043"/><stop offset=".65" stop-color="#d1af70"/><stop offset="1" stop-color="#654329"/></linearGradient>
+ <linearGradient id="shield" x2="1" y2=".5"><stop stop-color="#17293c"/><stop offset=".44" stop-color="#465e6b"/><stop offset="1" stop-color="#192431"/></linearGradient>
+ <linearGradient id="skin" x2="1" y2="1"><stop stop-color="#687f83"/><stop offset=".35" stop-color="#33484f"/><stop offset=".8" stop-color="#182c38"/><stop offset="1" stop-color="#0b1b22"/></linearGradient>
+ <linearGradient id="monster" x2="1" y2=".15"><stop stop-color="#0d171b"/><stop offset=".4" stop-color="#586a63"/><stop offset=".6" stop-color="#203639"/><stop offset="1" stop-color="#101c23"/></linearGradient>
+ <linearGradient id="claw" x2="0" y2="1"><stop stop-color="#ebd8a4"/><stop offset="1" stop-color="#7b897e"/></linearGradient>
+ <radialGradient id="sun"><stop stop-color="#ffe2a1" stop-opacity=".45"/><stop offset="1" stop-color="#eebc6d" stop-opacity="0"/></radialGradient>
+ <radialGradient id="flash"><stop stop-color="#fffde0"/><stop offset=".22" stop-color="#ffcb67" stop-opacity=".9"/><stop offset="1" stop-color="#f6a03d" stop-opacity="0"/></radialGradient>
+ <filter id="glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="7"/></filter>
+ <filter id="shadow" x="-40%" y="-40%" width="180%" height="190%"><feGaussianBlur stdDeviation="8"/></filter>
+ <pattern id="brick" width="60" height="26" patternUnits="userSpaceOnUse"><path d="M0 0H60 M0 13H60 M30 0V13 M0 13V26 M60 13V26" fill="none" stroke="#c4b09b" stroke-opacity=".12" stroke-width="2"/></pattern>
+</defs>
+<g id="camera">
+<rect width="960" height="540" fill="url(#sky)"/>
+<circle cx="675" cy="167" r="225" fill="url(#sun)"/>
+<g id="parallax-mountains" fill="#131f30"><path d="M0 278L95 165 170 218 252 130 349 220 427 154 509 266 600 174 715 279 806 167 960 279V410H0Z"/><path d="M0 311L137 236 217 301 332 215 443 306 556 218 640 282 752 222 895 300 960 249V424H0Z" fill="#1e2c37"/></g>
+<g id="parallax-towers" opacity=".9"><path d="M145 286v-105l22-10v-34l23-11 17 11v36l23 8v100Z" fill="#23313b"/><path d="M155 181V142h10v-10h20v10h10v39" fill="#324450"/><path d="M726 311V178l20-11v-40l30-15 30 14v46l18 11v128" fill="#253039"/><path d="M742 175V125h10v-15h43v15h10v50" fill="#43505c"/><path d="M756 201h32v83h-32Z" fill="#101b26"/><path d="M0 302h960v100H0" fill="#73665a" opacity=".20"/></g>
+<g opacity=".65"><path d="M-30 370q190-84 400-21t620-8v87H0Z" fill="#353d3c"/><path d="M0 345h960v90H0" fill="url(#brick)"/></g>
+<g><path d="M0 394Q190 378 390 389T960 391V540H0Z" fill="url(#ground)"/><path d="M0 399Q200 389 405 398T960 400" fill="none" stroke="#c09265" stroke-width="5" opacity=".35"/><g stroke="#b49a78" opacity=".13" stroke-width="3"><path d="M10 453l200-35 145 10m51 40 222-50 240 39m-743 55 199-63m256 38 255-41m-503 64 378-16"/><path d="M145 407l-41 115m297-119-39 128m211-132-29 135m205-136-21 145"/></g></g>
+<g id="fog" opacity=".15" fill="#dec2a4"><ellipse cx="400" cy="370" rx="350" ry="22"/><ellipse cx="800" cy="383" rx="300" ry="14"/></g>
+<ellipse id="hero-shadow" cx="233" cy="426" rx="80" ry="14" fill="#030509" opacity=".75" filter="url(#shadow)"/>
+<ellipse id="monster-shadow" cx="740" cy="427" rx="118" ry="19" fill="#020409" opacity=".85" filter="url(#shadow)"/>
+<!-- HERO -->
+<g id="hero" transform="translate(230 425)">
+ <g id="hero-leg-back"><path d="M-20-86Q-40-66-37-38L-47-5 -11-3 -3-44 2-75Z" fill="#1c2932" stroke="#8c9b9b" stroke-width="3"/><path d="M-42-43h34l-3 27-38 1Z" fill="url(#steel)" stroke="#292e34" stroke-width="2"/><path d="M-48-12l36 0 4 13 -42 1 -13-4Z" fill="#2c3234" stroke="#9ca0a0" stroke-width="2"/></g>
+ <g id="hero-leg-front"><path d="M1-92Q24-74 20-46L31-8 1-5 -7-43 -15-76Z" fill="#384854" stroke="#b3b4a5" stroke-width="3"/><path d="M-11-78 25-69 26-44 -3-38Z" fill="url(#steel)" stroke="#202936" stroke-width="3"/><path d="M-4-41 30-44 38-15 3-10Z" fill="url(#steel)" stroke="#111c2b" stroke-width="3"/><path d="M2-15h34l15 13-54 1-9-5Z" fill="#46505b" stroke="#a9aa9e" stroke-width="2"/></g>
+ <g id="hero-cape" opacity=".96"><path d="M-20-119Q-62-130-87-99L-67-32 -49-42 -35-88Z" fill="#76272e" stroke="#c5a16c" stroke-width="4"/><path d="M-45-106 -69-43" stroke="#c98e75" stroke-width="3" opacity=".65"/></g>
+ <g id="hero-body">
+  <path d="M-34-12 22-12 34 23 31 57 20 77 -26 76 -40 48Z" fill="url(#steel)" stroke="#101722" stroke-width="4"/>
+  <path d="M-27 6 2-4 28 6 20 48 1 58-24 45Z" fill="#394c57" stroke="url(#gold)" stroke-width="3"/>
+  <path d="M-25 12Q-5-1 20 12L12 20 -6 15 -19 31Z" fill="#dbcfac" opacity=".32"/><path d="M1-4V60m-26-12h51m-43-39-2 31M22 9l-2 31" fill="none" stroke="#bba675" stroke-width="3" opacity=".85"/>
+  <path d="M-42 46h76l-6 17h-61Z" fill="#4b382b" stroke="#ad945f" stroke-width="4"/>
+  <path d="M-33 59l17 5-15 40-15-9Z" fill="#8e2226" stroke="#d2a666" stroke-width="3"/>
+  <path d="M15 65 31 62 42 111 27 116Z" fill="#872222" opacity=".9"/>
+  <g id="hero-head"><path d="M-17-55Q-29-73-25-90l20-18 25 15 6 22 -11 17Z" fill="url(#steel)" stroke="#101827" stroke-width="4"/><path d="M-28-91Q-1-132 28-90L23-77 -25-77Z" fill="url(#steel)" stroke="url(#gold)" stroke-width="4"/><path d="M-7-119h13l3 42H-9Z" fill="url(#gold)"/><path d="M-24-75 23-75 10-57 -12-58Z" fill="#121c2a"/><path d="M-20-70 16-70" stroke="#d7c6a1" stroke-width="4"/><path d="M-14-67h30" stroke="#7eccde" stroke-width="3"/><path d="M-30-85Q-47-76-31-43" fill="none" stroke="#a89b81" stroke-width="7"/></g>
+  <g id="hero-sword-arm"><path d="M23 8Q42 1 49 26L63 51 47 67 30 35Z" fill="url(#steel)" stroke="#111b26" stroke-width="4"/><circle cx="48" cy="43" r="9" fill="url(#gold)"/>
+   <g id="hero-sword" transform="translate(55 56)"><path d="M-3 0 3 3 72-102 66-114 55-105Z" fill="url(#steel)" stroke="#d6d6c4" stroke-width="2"/><path d="M0 0 62-104" stroke="#f2efe1" stroke-width="2" opacity=".8"/><path d="M-15-1 13 12" stroke="#d7ae62" stroke-width="9" stroke-linecap="round"/><path d="M-5 6-20 33" stroke="#563f2a" stroke-width="8" stroke-linecap="round"/><circle cx="-20" cy="34" r="6" fill="url(#gold)"/></g>
+  </g>
+  <g id="hero-shield-arm"><path d="M-29 6Q-50 14-45 45L-33 64 -15 56 -22 29Z" fill="url(#steel)" stroke="#101827" stroke-width="4"/><path d="M-39 32 -17 34" stroke="#c9ba93" stroke-width="8"/>
+    <g id="hero-shield"><path d="M-62 6Q-21-11 7 17L0 73 -31 108 -67 70Z" fill="url(#shield)" stroke="url(#gold)" stroke-width="6"/><path d="M-50 21Q-19 8-5 22L-11 68 -31 92 -53 64Z" fill="none" stroke="#778a92" stroke-width="3"/><path d="M-34 24 -23 40 -34 55 -46 40Z" fill="#c2a067"/><path d="M-32 56v26" stroke="#c2a067" stroke-width="6"/><circle cx="-31" cy="50" r="9" fill="url(#gold)"/></g>
+  </g>
+ </g>
+</g>
+<!-- MONSTER -->
+<g id="monster-pos" transform="translate(745 426)"><g id="monster" transform="scale(-1 1)">
+<g id="monster-tail"><path d="M-37-114Q-158-109-130-22 -117-4-91-30" fill="none" stroke="#18272c" stroke-width="24" stroke-linecap="round"/><path d="M-100-38-87-6-75-43Z" fill="#5c665d" stroke="#12232c" stroke-width="4"/></g>
+<g id="monster-leg-back"><path d="M-40-103Q-65-72-66-43L-80-8-46-1-26-49-14-84Z" fill="url(#skin)" stroke="#08151b" stroke-width="5"/><path d="M-81-9 -98 5 -68 6 -58-4 -55 9-26 7 -47-10Z" fill="#263c3c" stroke="#07151d" stroke-width="4"/></g>
+<g id="monster-leg-front"><path d="M6-103Q43-78 36-44L58-13 29 1 -4-33-13-83Z" fill="url(#monster)" stroke="#0a161b" stroke-width="5"/><path d="M29-12 24 8 47 4 56-4 61 11 84 5 57-15Z" fill="#2d4541" stroke="#091d23" stroke-width="5"/><path d="M28-36 44-29 53-19" stroke="#8a8870" stroke-width="5" fill="none"/></g>
+<g id="monster-body"><path d="M-60-107Q-72-160-49-202L-16-221 39-200Q61-174 56-125L41-83 -38-87Z" fill="url(#monster)" stroke="#07161a" stroke-width="7"/><path d="M-48-180 0-189 40-179 30-126 -13-113 -48-139Z" fill="#596b62" stroke="#1a2f31" stroke-width="6"/><path d="M-47-179 -15-180 -33-145Z M-5-186 20-178 7-160Z" fill="#91b0a2" opacity=".22"/><path d="M-31-161-10-139 13-158 26-142" stroke="#92a089" stroke-width="6" fill="none" opacity=".45"/><path d="M-38-108 37-100" stroke="#16191e" stroke-width="17"/><path d="M-41-105-24-70 9-65 43-92" stroke="#6e7764" stroke-width="5" fill="none"/>
+ <g id="monster-head"><path d="M-14-194Q-44-228-21-258L25-268 56-240 45-211 15-189Z" fill="url(#skin)" stroke="#081318" stroke-width="6"/>
+ <path d="M-13-247Q-49-304-23-322L-9-287 7-275Z" fill="url(#claw)" stroke="#101a20" stroke-width="5"/><path d="M21-258Q49-317 72-302L51-268 46-232Z" fill="url(#claw)" stroke="#101a20" stroke-width="5"/><path d="M16-228 53-235 64-222 37-204 5-212Z" fill="#1b2e2d" stroke="#09151b" stroke-width="5"/><path d="M27-218 56-223 48-206 31-204Z" fill="#7b5550"/><path d="M27-240 45-244" stroke="#f6bc66" stroke-width="8"/><path d="M27-239 44-241" stroke="#fff3c6" stroke-width="2"/><path d="M46-216l5 14 7-19M29-218l1 13 11-10" fill="url(#claw)" stroke="#101d21" stroke-width="2"/>
+ </g>
+ <g id="monster-back-arm"><path d="M-44-189Q-81-180-83-124L-98-88 -63-81 -51-123 -25-159Z" fill="url(#skin)" stroke="#08181c" stroke-width="6"/><path d="M-98-91-114-60-93-70-83-51-79-75-62-72" fill="url(#claw)" stroke="#152226" stroke-width="3"/></g>
+ <g id="monster-front-arm"><path d="M30-192Q70-202 82-170L109-113 79-94 55-148 20-161Z" fill="url(#monster)" stroke="#07161b" stroke-width="7"/><path d="M82-147 105-107 92-94 68-134" fill="#465a54" stroke="#111d22" stroke-width="4"/><path d="M84-102 120-91 150-60 119-69 131-45 105-66 108-40 88-62 70-85Z" fill="url(#skin)" stroke="#0c1c20" stroke-width="5"/><path d="M119-68 150-60 130-80M110-63 131-45 123-77M89-63 108-40 106-75" fill="url(#claw)" stroke="#0d2225" stroke-width="2"/></g>
+</g></g></g>
+<!-- effects -->
+<g id="hero-step-dust" opacity="0"><ellipse cx="0" cy="0" rx="49" ry="8" fill="#b9a185" opacity=".55"/><path d="M-32-6q-13-21-26-18M1-4q7-25 21-30M19-8q26-18 37-6" fill="none" stroke="#d5b79a" stroke-width="5" opacity=".42"/></g>
+<g id="monster-step-dust" opacity="0"><ellipse cx="0" cy="0" rx="67" ry="12" fill="#bba58a" opacity=".45"/><path d="M-40-6q-32-29-50-26M-13-5q-2-23 22-34M37-6q27-18 45-18" fill="none" stroke="#cbb49c" stroke-width="5" opacity=".38"/></g>
+<g id="ground-crack" opacity="0" stroke="#e1bb78" stroke-width="2.5" fill="none"><path d="M0 0l-27 12 -34-4 -20 17M0 0l19 18 29-5 39 19M0 0l-4 24 -23 25M0 0l47-11 22-24"/></g>
+<g id="dust" opacity="0"><ellipse cx="0" cy="0" rx="64" ry="12" fill="#e2ad72" opacity=".42"/><circle cx="-36" cy="-8" r="11" fill="#b4a089" opacity=".45"/><circle cx="15" cy="-16" r="13" fill="#ae9d8a" opacity=".35"/><circle cx="46" cy="-7" r="8" fill="#d4b18c" opacity=".4"/></g>
+<g id="shield-impact" opacity="0"><circle r="102" fill="url(#flash)"/><circle r="58" stroke="#e5eff0" stroke-width="5" fill="none"/><circle r="81" stroke="#98eaf5" stroke-width="2" fill="none" stroke-dasharray="12 24"/><path d="M-112 0h224M0-112v224M-77-77 77 77M77-77-77 77" stroke="#d3f6ff" stroke-width="3"/></g>
+<g id="blade-trail" opacity="0"><path d="M-115 92Q-22-96 122-124" fill="none" stroke="#e8f8ff" stroke-width="22" opacity=".32"/><path d="M-115 92Q-22-96 122-124" fill="none" stroke="#f5fbff" stroke-width="6" stroke-linecap="round"/><path d="M-112 100Q-15-86 127-118" fill="none" stroke="#ddc084" stroke-width="3"/></g>
+<g id="monster-hit" opacity="0"><circle r="103" fill="url(#flash)"/><path d="M-82-39 78 41M-20-92 23 91" stroke="#fff9e7" stroke-width="7"/><path d="M-108-20 82 58" stroke="#f3a962" stroke-width="21" opacity=".55"/></g>
+<g id="embers" fill="#f8d295" opacity="0"><circle cx="-20" cy="-60" r="3"/><circle cx="-60" cy="12" r="5"/><circle cx="34" cy="-82" r="3"/><circle cx="72" cy="-12" r="4"/><circle cx="21" cy="39" r="3"/></g>
+
+<!-- DUEL06: independent kinetic effects layer; deterministic 60 fps capable -->
+<g id="v6-weather" opacity=".45"></g>
+<g id="v6-trails" fill="none" stroke-linecap="round" pointer-events="none">
+<path id="v6-arc-1" stroke="#e3f8ff" stroke-width="15" opacity="0"/>
+<path id="v6-arc-2" stroke="#ffe7a3" stroke-width="23" opacity="0"/>
+<path id="v6-arc-3" stroke="#fff3c1" stroke-width="31" opacity="0"/>
+</g>
+<g id="v6-sparks" pointer-events="none"></g>
+<g id="v6-shock" opacity="0" fill="none"><ellipse rx="100" ry="22" stroke="#f8c477" stroke-width="7"/><ellipse rx="140" ry="32" stroke="#f7ead0" stroke-width="2"/></g>
+<g id="v6-dynamic-dust" fill="#d3b39c" pointer-events="none"></g>
+<g id="v6-flash" opacity="0"><rect width="960" height="540" fill="#ffe4af"/></g>
+</g></svg><div class="scrim"></div>
+<div class="topbar"><div class="unit"><div class="name">GUERREIRO DA GUILDA</div><div class="health hero-hp"><span id="hero-hp"></span></div></div><div class="chapter">DUELO 06 · COREOGRAFIA AVANÇADA</div><div class="unit"><div class="name">FERA DAS RUÍNAS</div><div class="health"><span id="monster-hp"></span></div></div></div>
+<div id="status" class="status"></div><div id="combo" class="combo"></div><div class="logo">CRÔNICAS DA GUILDA</div></div><div class="bottom"><button id="play" type="button">Pausar duelo</button><button id="restart" type="button">Repetir</button><button id="speed" type="button">Velocidade: 1×</button><button id="sound" type="button">Ativar som</button><span>Investida → bloqueio → recuperação → golpe carregado → reação e recuo</span></div></main>
+<audio id="audio-track" preload="auto" loop></audio><script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),D=12.4,TAU=Math.PI*2;
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x)),smooth=x=>{x=clamp(x);return x*x*(3-2*x)},pct=(t,a,b)=>smooth((t-a)/(b-a));
+const lerp=(a,b,u)=>a+(b-a)*u;
+const tracks={
+ hx:[[0,223],[1.05,223],[1.4,235],[1.76,237],[2.34,240],[2.88,237],[3.16,205],[3.7,150],[4.06,185],[4.4,255],[4.67,320],[5.15,403],[5.42,443],[5.7,446],[6.0,456],[6.42,505],[6.82,520],[7.15,502],[7.45,469],[7.85,420],[8.05,419],[8.33,422],[8.73,487],[9.0,500],[9.28,506],[9.65,517],[10.25,507],[11.12,500],[12.4,500]],
+ hy:[[0,0],[1.55,0],[1.77,11],[2.0,4],[2.8,0],[3.23,-10],[3.68,-23],[3.9,-15],[4.19,0],[4.65,4],[5.1,-7],[5.4,3],[5.95,4],[6.39,-8],[6.9,0],[7.4,-8],[7.84,0],[8.31,-24],[8.55,-47],[8.83,-75],[9.06,-7],[9.31,6],[9.75,0],[12.4,0]],
+ hlean:[[0,-3],[1.45,-3],[1.7,19],[1.89,28],[2.10,17],[2.42,-14],[2.95,-9],[3.22,-32],[3.49,-42],[3.75,-48],[4.05,-15],[4.35,14],[4.68,22],[5.08,27],[5.48,4],[5.78,-22],[6.07,-13],[6.42,24],[6.83,28],[7.05,-9],[7.45,-19],[7.92,-13],[8.35,-44],[8.65,-37],[8.93,56],[9.15,32],[9.53,-10],[10.1,-4],[12.4,-3]],
+ hcrouch:[[0,0],[1.55,0],[1.82,11],[2.1,7],[2.47,-2],[3.15,6],[3.55,22],[3.77,27],[4.10,5],[4.72,-5],[5.37,6],[6,7],[6.51,14],[6.85,3],[7.3,8],[7.9,4],[8.43,25],[8.82,-29],[9.02,10],[9.6,0],[12.4,0]],
+ hshield:[[0,-3],[1.48,-4],[1.72,-39],[1.83,-75],[2.03,-72],[2.29,-40],[2.5,-8],[3.28,-10],[3.77,-25],[4.24,-3],[5.4,-15],[5.95,-3],[6.58,-21],[7.48,-7],[8.77,-45],[9.12,-8],[12.4,-4]],
+ hsarm:[[0,5],[1.49,5],[1.77,11],[1.95,-15],[2.25,-4],[2.68,-55],[3.14,-94],[3.55,-90],[3.83,-34],[4.2,8],[4.44,-71],[4.71,-112],[5.06,73],[5.24,126],[5.55,38],[5.89,-65],[6.12,-101],[6.35,-104],[6.6,62],[6.86,116],[7.1,32],[7.58,-5],[7.97,-103],[8.39,-145],[8.75,-154],[8.95,115],[9.18,154],[9.52,39],[10.12,4],[12.4,5]],
+ hsword:[[0,-7],[3.85,-7],[4.28,8],[4.8,-18],[5.12,41],[5.36,5],[6.0,-24],[6.64,38],[6.94,6],[8.2,-32],[8.88,6],[9.13,65],[9.63,7],[10.07,-7],[12.4,-7]],
+ hleg1:[[0,-2],[1.36,8],[1.83,-34],[2.18,23],[2.51,-3],[3.15,25],[3.55,-37],[3.9,21],[4.3,-27],[4.7,27],[5.1,-22],[5.5,11],[6.05,-27],[6.44,21],[6.8,-15],[7.52,14],[8.25,-45],[8.81,-16],[9.04,34],[9.54,-7],[10.2,-2],[12.4,-2]],
+ hleg2:[[0,8],[1.36,-6],[1.83,24],[2.18,-26],[2.51,10],[3.15,-21],[3.55,32],[3.9,-24],[4.3,26],[4.7,-20],[5.1,27],[5.5,-12],[6.05,20],[6.44,-22],[6.8,20],[7.52,-12],[8.25,40],[8.81,14],[9.04,-35],[9.54,11],[10.2,8],[12.4,8]],
+ mx:[[0,747],[.72,742],[1.1,699],[1.43,593],[1.7,457],[1.86,393],[2.03,385],[2.31,430],[2.76,496],[3.05,540],[3.46,510],[3.82,406],[4.06,355],[4.29,346],[4.55,379],[4.76,456],[5.0,486],[5.24,521],[5.48,584],[5.8,574],[6.03,561],[6.38,518],[6.62,514],[6.84,549],[7.14,617],[7.51,702],[7.76,748],[8.25,731],[8.6,706],[8.95,681],[9.25,692],[9.65,706],[10.35,723],[12.4,723]],
+ my:[[0,0],[1.35,2],[1.7,-15],[1.87,9],[2.06,7],[2.4,-6],[2.86,0],[3.33,1],[3.64,-23],[3.87,-38],[4.13,-12],[4.38,17],[4.64,0],[5.15,0],[5.34,-9],[5.55,0],[6.0,2],[6.31,-10],[6.57,-22],[6.77,-44],[7.02,-96],[7.32,-135],[7.61,-164],[7.85,-142],[8.2,-83],[8.51,8],[8.9,0],[9.17,0],[12.4,0]],
+ mlean:[[0,-5],[1.13,-20],[1.52,-34],[1.86,49],[2.10,47],[2.45,-18],[3.19,-5],[3.53,-25],[3.83,-60],[4.10,63],[4.32,52],[4.68,-37],[5.09,-55],[5.47,21],[5.85,-9],[6.29,-30],[6.57,31],[6.81,51],[7.15,65],[7.5,95],[7.85,165],[8.12,239],[8.53,280],[8.88,279],[9.3,270],[9.7,267],[12.4,265]],
+ marm:[[0,5],[1.18,-44],[1.58,-101],[1.84,89],[2.22,36],[2.75,7],[3.52,-43],[3.82,-111],[4.07,85],[4.42,118],[4.8,-55],[5.05,-80],[5.31,57],[5.55,103],[6.06,-20],[6.5,57],[7.3,-32],[7.9,78],[8.43,104],[9.2,30],[12.4,15]],
+ mback:[[0,-3],[1.45,32],[1.86,-39],[2.19,33],[2.75,-3],[3.8,57],[4.1,-23],[4.34,55],[5.1,-55],[5.46,-82],[5.85,-13],[6.6,-40],[7.5,-91],[8.3,54],[9.2,8],[12.4,5]],
+ mleg1:[[0,-3],[1.14,21],[1.4,-31],[1.69,35],[1.91,-34],[2.23,35],[2.55,-28],[3.38,5],[3.77,27],[4.07,-35],[4.38,22],[4.83,-24],[5.3,26],[5.63,-17],[6.3,20],[6.77,-45],[7.12,34],[7.51,70],[8.17,-27],[8.7,24],[9.3,0],[12.4,0]],
+ mleg2:[[0,12],[1.14,-24],[1.4,31],[1.69,-26],[1.91,35],[2.23,-31],[2.55,27],[3.38,-3],[3.77,-25],[4.07,37],[4.38,-29],[4.83,25],[5.3,-25],[5.63,20],[6.3,-24],[6.77,37],[7.12,-40],[7.51,-65],[8.17,33],[8.7,-22],[9.3,0],[12.4,0]]
+};
+function key(name,t){let q=tracks[name];for(let i=1;i<q.length;i++){if(t<q[i][0]){let a=q[i-1],b=q[i];return lerp(a[1],b[1],smooth((t-a[0])/(b[0]-a[0])))} }return q.at(-1)[1]}
+function pulse(t,c,w){return Math.pow(clamp(1-Math.abs(t-c)/w),1.4)}
+function trans(id,x,y){$(id).setAttribute('transform',`translate(${x.toFixed(2)} ${y.toFixed(2)})`)}
+function rot(id,d,x,y){$(id).setAttribute('transform',`rotate(${d.toFixed(2)} ${x} ${y})`)}
+const S='http://www.w3.org/2000/svg',P=(tag,attrs,parent)=>{let x=document.createElementNS(S,tag);for(let [k,v]of Object.entries(attrs))x.setAttribute(k,v);parent.appendChild(x);return x};
+const sparks=[];for(let i=0;i<72;i++){let d=i%4===0?P('circle',{r:1.9+(i%5),fill:i%3?'#ffe7b4':'#9aedef'},$('v6-sparks')):P('path',{d:'M0 0 L'+(7+i%20)+' 0',stroke:i%4?'#ffd586':'#d4fcff','stroke-width':1+(i%3), 'stroke-linecap':'round'},$('v6-sparks'));sparks.push(d)}
+const rain=[];for(let i=0;i<44;i++)rain.push(P('path',{d:`M0 0 l${-6-i%8} ${14+i%20}`,stroke:i%6===0?'#f6d5a3':'#b6c6c7','stroke-width':i%7===0?1.3:.6,opacity:'.29'},$('v6-weather')));
+const dust=[];for(let i=0;i<52;i++)dust.push(P('circle',{r:2+(i*7)%12,opacity:'.1'},$('v6-dynamic-dust')));
+let first=performance.now(),paused=0,playing=true,speed=1,sound=false,lastBeat=-1;
+const manual=new URLSearchParams(location.search).has('capture'),audio=$('audio-track');
+const chapters=[[0,'01 · CONFRONTO'],[1.03,'02 · INVESTIDA'],[1.73,'03 · BLOQUEIO PERFEITO'],[3.2,'04 · ESQUIVA'],[4.35,'05 · CONTRA-ATAQUE'],[6.0,'06 · COMBO DUPLO'],[7.1,'07 · LANÇAMENTO'],[8.13,'08 · FINALIZAÇÃO'],[9.6,'09 · VITÓRIA']];
+function render(t){t=clamp(t,0,D);
+let hx=key('hx',t),hy=key('hy',t),mx=key('mx',t),my=key('my',t);
+let blocks=pulse(t,1.87,.19)+pulse(t,4.05,.17),hits=pulse(t,5.06,.18)+pulse(t,6.67,.18)+pulse(t,8.99,.19);
+const shutter=pulse(t,1.86,.115)*6+pulse(t,4.07,.13)*5+pulse(t,5.08,.14)*9+pulse(t,6.67,.16)*13+pulse(t,9.0,.18)*20;
+// Directional camera and zoom reacts to actual attacks instead of generic constant shake.
+let zoom=1+.025*pct(t,1.2,1.6)-.025*pct(t,2.4,2.8)+.115*pulse(t,1.87,.32)+.07*pulse(t,5.07,.42)+.12*pulse(t,6.7,.42)+.20*pulse(t,9,.62);
+let camX=lerp(0,-38,pct(t,4.2,5.2))+38*pct(t,7.0,8.5);
+camX+=Math.sin(t*140)*shutter*.75;let camY=Math.cos(t*181)*shutter*.5;
+$('camera').setAttribute('transform',`translate(${(480*(1-zoom)+camX).toFixed(2)} ${(270*(1-zoom)+camY).toFixed(2)}) scale(${zoom.toFixed(4)})`);
+$('parallax-mountains').setAttribute('transform',`translate(${(-camX*.15).toFixed(2)} 0)`);
+$('parallax-towers').setAttribute('transform',`translate(${(-camX*.27).toFixed(2)} 0)`);
+let breath=Math.sin(t*3.2)*1.5;trans('hero',hx,425+hy+breath);trans('monster-pos',mx,426+my+breath*.35);
+$('hero-body').setAttribute('transform',`translate(0 ${(-130+key('hcrouch',t)).toFixed(2)}) rotate(${key('hlean',t).toFixed(2)} 0 45)`);
+rot('hero-cape',-key('hlean',Math.max(0,t-.16))*.30+Math.sin(t*8)*4-18*pulse(t,5.1,.5)-16*pulse(t,6.68,.4),-13,-118);
+rot('hero-head',Math.sin(t*3)*2-8*pulse(t,1.88,.3)+12*pulse(t,9.06,.3),0,-65);
+$('hero-shield-arm').setAttribute('transform',`translate(69 0) rotate(${key('hshield',t).toFixed(2)} -28 8)`);
+rot('hero-sword-arm',key('hsarm',t),25,8);rot('hero-sword',key('hsword',t),55,56);
+rot('hero-leg-back',key('hleg1',t),-16,-76);rot('hero-leg-front',key('hleg2',t),5,-77);
+rot('monster-body',key('mlean',t),0,-94);rot('monster-front-arm',key('marm',t),38,-168);rot('monster-back-arm',key('mback',t),-45,-180);
+rot('monster-leg-front',key('mleg1',t),5,-94);rot('monster-leg-back',key('mleg2',t),-38,-95);
+rot('monster-head',Math.sin(t*4)*3+25*pulse(t,5.12,.6)+35*pulse(t,6.78,.65),14,-221);
+rot('monster-tail',Math.sin(t*8)*15+key('mlean',t)*-.13,-38,-114);
+$('hero-shadow').setAttribute('cx',hx);$('hero-shadow').setAttribute('rx',(78+13*pulse(t,5.0,.6)).toFixed(2));$('hero-shadow').setAttribute('opacity',Math.max(.2,.7+hy/120).toFixed(2));
+$('monster-shadow').setAttribute('cx',mx);$('monster-shadow').setAttribute('opacity',Math.max(.18,.8+my/170).toFixed(2));$('monster-shadow').setAttribute('rx',(116+(-my)*.20).toFixed(2));
+let a=blocks+.2*pulse(t,3.85,.3);$('shield-impact').setAttribute('transform',`translate(${(hx+72).toFixed(2)} ${(305+hy).toFixed(2)}) scale(${(.3+.8*a).toFixed(2)})`);$('shield-impact').setAttribute('opacity',Math.min(1,a*.85).toFixed(2));
+$('monster-hit').setAttribute('transform',`translate(${(mx-47).toFixed(2)} ${(298+my).toFixed(2)}) scale(${(.45+hits*.95).toFixed(2)})`);$('monster-hit').setAttribute('opacity',Math.min(.88,hits*.72).toFixed(2));
+$('embers').setAttribute('transform',`translate(${(mx-57).toFixed(2)} ${(292+my).toFixed(2)}) rotate(${(t*25).toFixed(1)})`);$('embers').setAttribute('opacity',Math.min(1,hits).toFixed(2));
+let ground=pulse(t,9.08,.42);$('ground-crack').setAttribute('transform',`translate(${(mx+15).toFixed(2)} 421) scale(${(1+ground*1.7).toFixed(2)})`);$('ground-crack').setAttribute('opacity',(ground*.95).toFixed(2));
+$('v6-shock').setAttribute('transform',`translate(${(mx+7).toFixed(2)} 419) scale(${(0.6+2.6*pct(t,8.96,9.32)).toFixed(2)})`);$('v6-shock').setAttribute('opacity',(ground*.95).toFixed(2));
+// Independent arcs: three discrete slashes with their own trajectories and timing.
+let slashes=[[4.92,5.25,'v6-arc-1',.85],[6.5,6.87,'v6-arc-2',1.15],[8.83,9.18,'v6-arc-3',1.5]];
+for(let [a,b,id,scale] of slashes){let q=clamp((t-a)/(b-a)),fade=Math.sin(Math.PI*q);let x=lerp(hx+15,mx-26,.6),y=lerp(270+hy,290+my,.5);let radius=100*scale,sw=id.endsWith('3')?15:8;let angle=(q-.5)*2.2,fromX=x-radius*Math.cos(angle),fromY=y+radius*Math.sin(angle),toX=x+radius*Math.cos(angle),toY=y-radius*Math.sin(angle);let path=`M${fromX.toFixed(1)} ${fromY.toFixed(1)} Q${x.toFixed(1)} ${(y-radius*1.3).toFixed(1)} ${toX.toFixed(1)} ${toY.toFixed(1)}`;$(id).setAttribute('d',path);$(id).setAttribute('opacity',clamp(fade*fade*.95).toFixed(3))}
+$('blade-trail').setAttribute('opacity','0');
+// Sparks burst from the attack center only on collision windows.
+let events=[{t:1.88,x:hx+72,y:305+hy,c:0},{t:4.06,x:mx-42,y:299+my,c:1},{t:5.08,x:mx-45,y:299+my,c:2},{t:6.68,x:mx-40,y:286+my,c:3},{t:9.02,x:mx,y:395+my,c:4}];
+for(let i=0;i<sparks.length;i++){let e=events[Math.floor(i/15)%5],age=t-e.t,r=(i*17.71)%6.283,v=90+(i*37)%195,dist=Math.max(0,age)*v;let visible=age>=0&&age<(e.c===4?.92:.53),alpha=visible?Math.pow(1-age/(e.c===4?.92:.53),2):0;let xx=e.x+Math.cos(r)*dist,yy=e.y+Math.sin(r)*dist+100*age*age;let obj=sparks[i];obj.setAttribute('transform',`translate(${xx.toFixed(2)} ${yy.toFixed(2)}) rotate(${(r*180/Math.PI).toFixed(1)})`);obj.setAttribute('opacity',alpha.toFixed(3))}
+for(let i=0;i<rain.length;i++){let x=(i*127.1+ Math.sin(i*11)*43+t*27)%1050-45,y=(i*83.5+t*(33+i%4*17))%535;rain[i].setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)})`)}
+let dustEvents=[{t:1.50,x:mx,y:419},{t:1.88,x:hx+60,y:415},{t:3.77,x:hx,y:415},{t:5.19,x:mx,y:419},{t:6.85,x:hx,y:421},{t:8.55,x:mx,y:418},{t:9.04,x:mx,y:419}];
+for(let i=0;i<dust.length;i++){let e=dustEvents[Math.floor(i/8)%dustEvents.length],age=t-e.t;let visible=age>0&&age<1.25;let spread=age*(20+(i*19)%90),r=(i*1.618)%6.283;let xx=e.x+Math.cos(r)*spread,yy=e.y-Math.abs(Math.sin(r))*age*60;let obj=dust[i];obj.setAttribute('transform',`translate(${xx.toFixed(2)} ${yy.toFixed(2)}) scale(${(1+age*.8).toFixed(2)})`);obj.setAttribute('opacity',(visible?Math.max(0,(1-age/1.25)*.27):0).toFixed(2))}
+$('hero-step-dust').setAttribute('opacity',(Math.min(.6,pulse(t,3.5,.35)+pulse(t,4.5,.38)+pulse(t,6.47,.4))).toFixed(2));trans('hero-step-dust',hx,423);
+$('monster-step-dust').setAttribute('opacity',(Math.min(.85,pulse(t,1.52,.4)+pulse(t,3.7,.4)+pulse(t,8.54,.4))).toFixed(2));trans('monster-step-dust',mx,423);
+$('dust').setAttribute('opacity',(Math.min(.6,ground*.5)).toFixed(2));trans('dust',mx,417);
+$('v6-flash').setAttribute('opacity',(.08*blocks+.16*hits+.15*ground).toFixed(3));
+let hpLoss=t<5.05?0:t<6.69?20*pct(t,5.03,5.26):20+25*pct(t,6.65,6.89);hpLoss+=35*pct(t,8.98,9.4);
+$('monster-hp').style.width=(100-hpLoss).toFixed(2)+'%';$('hero-hp').style.width=(100-12*pct(t,1.8,2.08)).toFixed(2)+'%';
+let status='',tone='',u=0;
+const messages=[[1.75,2.4,'BLOQUEIO PERFEITO','block'],[3.47,4.28,'ESQUIVA','block'],[4.87,5.43,'PRIMEIRO CORTE','counter'],[6.51,7.17,'GOLPE ASCENDENTE','counter'],[8.78,9.70,'IMPACTO FINAL','counter'],[10.05,12.4,'VITÓRIA','counter']];
+for(let [a,b,label,k]of messages)if(t>=a&&t<b){status=label;tone=k;u=Math.min(1,(t-a)*7,(b-t)*4)}
+$('status').textContent=status;$('status').className='status '+tone;$('status').style.opacity=Math.max(0,u).toFixed(2);
+let combo=t>=5.12&&t<9.6?(t>=9.04?'3 GOLPES':t>=6.7?'2 GOLPES':'1 GOLPE'):'';
+$('combo').textContent=combo;$('combo').style.opacity=combo?Math.min(.9,pulse(t,5.2,.8)+pulse(t,6.8,.8)+pulse(t,9.1,.8)+.38):0;
+$('chapter').textContent=chapters.filter(x=>t>=x[0]).at(-1)[1];$('clock').textContent=`00:${String(Math.floor(t)).padStart(2,'0')} / 00:12`;
+$('scrub').value=t.toFixed(2);
+}
+window.renderFrame=render;window.__renderManual=manual;
+function tick(n){if(playing&&!manual){const t=((n-first)/1000*speed)%D;render(t);paused=t}requestAnimationFrame(tick)}requestAnimationFrame(tick);
+function restart(){first=performance.now();paused=0;playing=true;render(0);$('play').textContent='⏸ Pausar';audio.pause();audio.currentTime=0;if(sound)audio.play().catch(()=>{})}
+$('play').onclick=()=>{playing=!playing;if(playing){first=performance.now()-paused*1000/speed;$('play').textContent='⏸ Pausar';if(sound)audio.play().catch(()=>{})}else{$('play').textContent='▶ Continuar';audio.pause()}};
+$('restart').onclick=restart;
+$('speed').onclick=()=>{speed=speed===1?.65:speed===.65?1.25:1;first=performance.now()-paused*1000/speed;audio.playbackRate=speed;$('speed').textContent=speed+'× velocidade'};
+$('sound').onclick=()=>{sound=!sound;$('sound').textContent=sound?'🔊 Som ligado':'🔇 Som desligado';if(sound&&playing){audio.currentTime=paused;audio.play().catch(()=>{})}else audio.pause()};
+$('scrub').oninput=()=>{paused=Number($('scrub').value);render(paused);first=performance.now()-paused*1000/speed;if(sound&&playing){audio.currentTime=paused;audio.play().catch(()=>{})}};
+window.addEventListener('keydown',e=>{if(e.code==='Space'&&e.target.tagName!=='INPUT'){e.preventDefault();$('play').click()}if(e.key==='r'||e.key==='R')restart()});
+render(0);
+})();
+
+</script></body></html>
